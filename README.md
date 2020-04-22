@@ -44,6 +44,7 @@ class BookLinksPageObject(WebPageObject):
 
 response = urllib.request.urlopen('http://books.toscrape.com')
 page_object = build(BookLinksPageObject, response)
+print(page_object.serialize())
 
 ```
 
