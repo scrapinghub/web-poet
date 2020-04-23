@@ -1,12 +1,12 @@
 import parsel
 
+from core_po.responses import HTMLResponse
+
 
 class HTMLResponseShortcutsMixin:
-    """A mixin with common shortcut methods for working with HTML responses.
-
-    It requires the ``html_response`` attribute to be present.
-    """
+    """Common shortcut methods for working with HTML responses."""
     _cached_selector = None
+    html_response: HTMLResponse
 
     @property
     def selector(self) -> parsel.Selector:

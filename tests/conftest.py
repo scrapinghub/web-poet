@@ -2,6 +2,8 @@ import os
 
 import pytest
 
+from core_po.responses import HTMLResponse
+
 
 def read_fixture(path):
     path = os.path.join(os.path.dirname(__file__), path)
@@ -10,5 +12,10 @@ def read_fixture(path):
 
 
 @pytest.fixture
-def book_list():
-    return read_fixture('fixtures/books_list.html')
+def book_list_html():
+    return read_fixture('fixtures/book_list.html')
+
+
+@pytest.fixture
+def book_list_html_response(book_list_html):
+    return HTMLResponse('http://book.toscrape.com/', book_list_html)
