@@ -36,7 +36,7 @@ Usage
 =====
 
 Check the following script that uses ``urllib.request`` to query data from
-books_to_scrape_.
+`books.toscrape.com`_.
 
 .. code-block:: python
 
@@ -92,4 +92,4 @@ Output should be similar to this:
         ]
     }
 
-.. _books_to_scrape: http://books.toscrape.com
+.. _`books.toscrape.com`: http://books.toscrape.com
