@@ -1,6 +1,6 @@
 import parsel
 
-from core_po.responses import HTMLResponse
+from core_po.page_inputs import HTMLResponse
 
 
 class HTMLResponseShortcutsMixin:

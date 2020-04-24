@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from core_po.responses import HTMLResponse
+from core_po.page_inputs import HTMLResponse
 
 
 def read_fixture(path):

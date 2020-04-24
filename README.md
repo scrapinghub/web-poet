@@ -11,7 +11,7 @@ Check the following script that uses ``urllib.request`` to query data from
 import urllib.request
 
 from core_po.objects import WebPageObject
-from core_po.responses import HTMLResponse
+from core_po.page_inputs import HTMLResponse
 
 
 class BookLinksPageObject(WebPageObject):

@@ -1,4 +1,4 @@
-from core_po.responses import HTMLResponse
+from core_po.page_inputs import HTMLResponse
 
 
 def test_html_response():

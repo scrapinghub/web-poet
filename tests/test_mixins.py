@@ -1,7 +1,7 @@
 import pytest
 
 from core_po.mixins import HTMLResponseShortcutsMixin
-from core_po.responses import HTMLResponse
+from core_po.page_inputs import HTMLResponse
 
 
 class MyClass(HTMLResponseShortcutsMixin):
