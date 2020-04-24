@@ -25,7 +25,7 @@ def is_injectable(obj: typing.Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, Injectable)
 
 
-class PageObject(Injectable, abc.ABC):
+class ItemPage(Injectable, abc.ABC):
     """Describes the base Page Object.
 
      Page Objects require the ``serialize`` method to be implemented in order
@@ -39,7 +39,7 @@ class PageObject(Injectable, abc.ABC):
 
 
 @attr.s(auto_attribs=True)
-class WebPageObject(PageObject, HTMLResponseShortcutsMixin, abc.ABC):
+class ItemWebPage(ItemPage, HTMLResponseShortcutsMixin, abc.ABC):
     """Describes the base Web Page Object.
 
     It's a Page Object that depends on basic response data to provide XPath
