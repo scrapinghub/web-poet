@@ -8,7 +8,7 @@ with open('README.md') as f:
 setup(
     name='core-po',
     version='0.0.1',
-    description="Scrapinghub's Page Object pattern for Scrapy",
+    description="Scrapinghub's Page Object pattern for web scraping",
     long_description=long_description,
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
