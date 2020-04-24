@@ -32,14 +32,16 @@ class ItemPage(Injectable, abc.ABC):
      to expose acquired data.
      """
 
+    # FIXME: rename back to to_item
     @abc.abstractmethod
     def serialize(self) -> dict:
         """Serializes Page Object's data as a dictionary."""
         pass
 
 
+# FIXME: rename mixin
 @attr.s(auto_attribs=True)
-class ItemWebPage(ItemPage, HTMLResponseShortcutsMixin, abc.ABC):
+class WebPage(Injectable, HTMLResponseShortcutsMixin):
     """Describes the base Web Page Object.
 
     It's a Page Object that depends on basic response data to provide XPath
@@ -48,3 +50,11 @@ class ItemWebPage(ItemPage, HTMLResponseShortcutsMixin, abc.ABC):
     This class should be used as a base for other Web Page Objects.
     """
     response: ResponseData
+
+
+@attr.s(auto_attribs=True)
+class ItemWebPage(WebPage, ItemPage):
+    """
+    ``WebPage`` that implements the ``to_item`` method.
+    """
+    pass
