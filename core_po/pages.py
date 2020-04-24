@@ -2,7 +2,7 @@ import abc
 import attr
 import typing
 
-from core_po.mixins import HTMLResponseShortcutsMixin
+from core_po.mixins import ResponseShortcutsMixin
 from core_po.page_inputs import ResponseData
 
 
@@ -34,14 +34,13 @@ class ItemPage(Injectable, abc.ABC):
 
     # FIXME: rename back to to_item
     @abc.abstractmethod
-    def serialize(self) -> dict:
+    def to_item(self) -> dict:
         """Serializes Page Object's data as a dictionary."""
         pass
 
 
-# FIXME: rename mixin
 @attr.s(auto_attribs=True)
-class WebPage(Injectable, HTMLResponseShortcutsMixin):
+class WebPage(Injectable, ResponseShortcutsMixin):
     """Describes the base Web Page Object.
 
     It's a Page Object that depends on basic response data to provide XPath

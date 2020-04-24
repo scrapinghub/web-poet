@@ -1,10 +1,10 @@
 import pytest
 
-from core_po.mixins import HTMLResponseShortcutsMixin
+from core_po.mixins import ResponseShortcutsMixin
 from core_po.page_inputs import ResponseData
 
 
-class MyClass(HTMLResponseShortcutsMixin):
+class MyClass(ResponseShortcutsMixin):
 
     def __init__(self, response: ResponseData):
         self.response = response
