@@ -1,20 +1,8 @@
-import abc
 import attr
 
 
-class PageObjectResponse(abc.ABC):
-    """Represents a basic response.
-
-    Responses are used by PageObjects to serialize data.
-    """
-    pass
-
-
 @attr.s(auto_attribs=True)
-class ResponseData(PageObjectResponse):
-    """Represents an HTML response.
-
-    Every HTML response should contain a URL and a textual content.
-    """
+class ResponseData:
+    """Represents response containing its URL and HTML content."""
     url: str
     html: str
