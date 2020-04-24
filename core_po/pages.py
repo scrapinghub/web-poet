@@ -28,14 +28,13 @@ def is_injectable(obj: typing.Any) -> bool:
 class ItemPage(Injectable, abc.ABC):
     """Describes the base Page Object.
 
-     Page Objects require the ``serialize`` method to be implemented in order
+     Page Objects require the ``to_item`` method to be implemented in order
      to expose acquired data.
      """
 
-    # FIXME: rename back to to_item
     @abc.abstractmethod
-    def to_item(self) -> dict:
-        """Serializes Page Object's data as a dictionary."""
+    def to_item(self):
+        """Exposes Page Object's data."""
         pass
 
 
