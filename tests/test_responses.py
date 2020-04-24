@@ -1,7 +1,7 @@
-from core_po.page_inputs import HTMLResponse
+from core_po.page_inputs import ResponseData
 
 
 def test_html_response():
-    response = HTMLResponse('url', 'content')
+    response = ResponseData('url', 'content')
     assert response.url == 'url'
     assert response.content == 'content'

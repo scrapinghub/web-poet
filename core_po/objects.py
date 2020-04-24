@@ -3,7 +3,7 @@ import attr
 import typing
 
 from core_po.mixins import HTMLResponseShortcutsMixin
-from core_po.page_inputs import HTMLResponse
+from core_po.page_inputs import ResponseData
 
 
 class Injectable(abc.ABC):
@@ -47,4 +47,4 @@ class WebPageObject(PageObject, HTMLResponseShortcutsMixin, abc.ABC):
 
     This class should be used as a base for other Web Page Objects.
     """
-    html_response: HTMLResponse
+    html_response: ResponseData

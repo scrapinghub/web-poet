@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from core_po.page_inputs import HTMLResponse
+from core_po.page_inputs import ResponseData
 
 
 def read_fixture(path):
@@ -18,4 +18,4 @@ def book_list_html():
 
 @pytest.fixture
 def book_list_html_response(book_list_html):
-    return HTMLResponse('http://book.toscrape.com/', book_list_html)
+    return ResponseData('http://book.toscrape.com/', book_list_html)

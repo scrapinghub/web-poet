@@ -11,7 +11,7 @@ class PageObjectResponse(abc.ABC):
 
 
 @attr.s(auto_attribs=True)
-class HTMLResponse(PageObjectResponse):
+class ResponseData(PageObjectResponse):
     """Represents an HTML response.
 
     Every HTML response should contain a URL and a textual content.

@@ -11,7 +11,7 @@ Check the following script that uses ``urllib.request`` to query data from
 import urllib.request
 
 from core_po.objects import WebPageObject
-from core_po.page_inputs import HTMLResponse
+from core_po.page_inputs import ResponseData
 
 
 class BookLinksPageObject(WebPageObject):
@@ -26,7 +26,7 @@ class BookLinksPageObject(WebPageObject):
         }
 
 response = urllib.request.urlopen('http://books.toscrape.com')
-html_response = HTMLResponse(response.url, response.read().decode('utf-8'))
+html_response = ResponseData(response.url, response.read().decode('utf-8'))
 page_object = BookLinksPageObject(html_response)
 
 print(page_object.serialize())
