@@ -24,7 +24,7 @@ class HTMLResponseShortcutsMixin:
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
-        return self.html_response.content
+        return self.html_response.html
 
     def xpath(self, query, **kwargs):
         """Shortcut to XPath selector."""

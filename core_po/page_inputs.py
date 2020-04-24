@@ -17,4 +17,4 @@ class ResponseData(PageObjectResponse):
     Every HTML response should contain a URL and a textual content.
     """
     url: str
-    content: str
+    html: str
