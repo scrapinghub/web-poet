@@ -10,7 +10,7 @@ Check the following script that uses ``urllib.request`` to query data from
 ```python
 import urllib.request
 
-from core_po.objects import WebPageObject
+from core_po.pages import WebPageObject
 from core_po.page_inputs import ResponseData
 
 

@@ -1,6 +1,6 @@
 import pytest
 
-from core_po.objects import PageObject, WebPageObject
+from core_po.pages import PageObject, WebPageObject
 
 
 def test_abstract_page_object():
