@@ -6,8 +6,8 @@ from core_po.page_inputs import ResponseData
 
 class MyClass(HTMLResponseShortcutsMixin):
 
-    def __init__(self, html_response: ResponseData):
-        self.html_response = html_response
+    def __init__(self, response: ResponseData):
+        self.response = response
 
 
 @pytest.fixture

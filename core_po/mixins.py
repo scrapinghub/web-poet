@@ -6,7 +6,7 @@ from core_po.page_inputs import ResponseData
 class HTMLResponseShortcutsMixin:
     """Common shortcut methods for working with HTML responses."""
     _cached_selector = None
-    html_response: ResponseData
+    response: ResponseData
 
     @property
     def selector(self) -> parsel.Selector:
@@ -19,12 +19,12 @@ class HTMLResponseShortcutsMixin:
     @property
     def url(self):
         """Shortcut to HTML Response's URL."""
-        return self.html_response.url
+        return self.response.url
 
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
-        return self.html_response.html
+        return self.response.html
 
     def xpath(self, query, **kwargs):
         """Shortcut to XPath selector."""

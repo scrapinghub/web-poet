@@ -47,4 +47,4 @@ class ItemWebPage(ItemPage, HTMLResponseShortcutsMixin, abc.ABC):
 
     This class should be used as a base for other Web Page Objects.
     """
-    html_response: ResponseData
+    response: ResponseData
