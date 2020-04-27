@@ -2,8 +2,8 @@ import abc
 import attr
 import typing
 
-from core_po.mixins import ResponseShortcutsMixin
-from core_po.page_inputs import ResponseData
+from web_poet.mixins import ResponseShortcutsMixin
+from web_poet.page_inputs import ResponseData
 
 
 class Injectable(abc.ABC):

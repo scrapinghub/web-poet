@@ -6,14 +6,14 @@ with open('README.rst') as f:
 
 
 setup(
-    name='core-po',
+    name='web-poet',
     version='0.0.1',
     description="Scrapinghub's Page Object pattern for web scraping",
     long_description=long_description,
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
     # FIXME: change url when repository is moved to Scrapinghub's organization
-    url='https://github.com/victor-torres/core-po',
+    url='https://github.com/victor-torres/web-poet',
     packages=find_packages(
         exclude=(
             'tests',

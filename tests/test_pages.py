@@ -1,6 +1,6 @@
 import pytest
 
-from core_po.pages import ItemPage, ItemWebPage, is_injectable
+from web_poet.pages import ItemPage, ItemWebPage, is_injectable
 
 
 def test_abstract_page_object():

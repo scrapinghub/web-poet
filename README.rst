@@ -1,27 +1,27 @@
 =======
-core-po
+web-poet
 =======
 
-.. image:: https://img.shields.io/pypi/v/core-po.svg
-   :target: https://pypi.python.org/pypi/core-po
+.. image:: https://img.shields.io/pypi/v/web-poet.svg
+   :target: https://pypi.python.org/pypi/web-poet
    :alt: PyPI Version
 
-.. image:: https://img.shields.io/pypi/pyversions/core-po.svg
-   :target: https://pypi.python.org/pypi/core-po
+.. image:: https://img.shields.io/pypi/pyversions/web-poet.svg
+   :target: https://pypi.python.org/pypi/web-poet
    :alt: Supported Python Versions
 
-.. image:: https://travis-ci.com/scrapinghub/core-po.svg?branch=master
-   :target: https://travis-ci.com/scrapinghub/core-po
+.. image:: https://travis-ci.com/scrapinghub/web-poet.svg?branch=master
+   :target: https://travis-ci.com/scrapinghub/web-poet
    :alt: Build Status
 
-.. image:: https://codecov.io/github/scrapinghub/core-po/coverage.svg?branch=master
-   :target: https://codecov.io/gh/scrapinghub/core-po
+.. image:: https://codecov.io/github/scrapinghub/web-poet/coverage.svg?branch=master
+   :target: https://codecov.io/gh/scrapinghub/web-poet
    :alt: Coverage report
 
 .. warning::
     Current status is "experimental".
 
-``core-po`` implements Page Object pattern for web scraping.
+``web-poet`` implements Page Object pattern for web scraping.
 
 License is BSD 3-clause.
 
@@ -30,7 +30,7 @@ Installation
 
 ::
 
-    pip install core-po
+    pip install web-poet
 
 Usage
 =====
@@ -42,8 +42,8 @@ Check the following script that uses ``urllib.request`` to query data from
 
     import urllib.request
 
-    from core_po.pages import ItemWebPage
-    from core_po.page_inputs import ResponseData
+    from web_poet.pages import ItemWebPage
+    from web_poet.page_inputs import ResponseData
 
 
     class BookLinksPage(ItemWebPage):

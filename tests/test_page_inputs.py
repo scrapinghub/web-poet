@@ -1,4 +1,4 @@
-from core_po.page_inputs import ResponseData
+from web_poet.page_inputs import ResponseData
 
 
 def test_html_response():
