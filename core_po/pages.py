@@ -35,7 +35,6 @@ class ItemPage(Injectable, abc.ABC):
     @abc.abstractmethod
     def to_item(self):
         """Exposes Page Object's data."""
-        pass
 
 
 @attr.s(auto_attribs=True)
