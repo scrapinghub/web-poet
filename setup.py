@@ -10,6 +10,7 @@ setup(
     version='0.0.1',
     description="Scrapinghub's Page Object pattern for web scraping",
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
     # FIXME: change url when repository is moved to Scrapinghub's organization

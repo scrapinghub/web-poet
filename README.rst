@@ -1,6 +1,6 @@
-=======
+========
 web-poet
-=======
+========
 
 .. image:: https://img.shields.io/pypi/v/web-poet.svg
    :target: https://pypi.python.org/pypi/web-poet
