@@ -5,7 +5,9 @@ matrix:
     env: TOXENV=py36
   - python: 3.7
     env: TOXENV=py37
-  - python: 3.7
+  - python: 3.8
+    env: TOXENV=py38
+  - python: 3.8
     env: TOXENV=mypy
 install:
 - pip install -U tox codecov
@@ -20,5 +22,5 @@ deploy:
   on:
     tags: true
     repo: scrapinghub/web-poet
-    condition: "$TOXENV == py37"
+    condition: "$TOXENV == py38"
   distributions: sdist bdist_wheel
