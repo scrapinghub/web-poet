@@ -4,7 +4,6 @@ Contributing
 ``web-po`` is an open-source project and we'd love to accept your
 contributions. There are just a few small guidelines that you need to follow.
 
-
 How to report issues
 --------------------
 
@@ -17,7 +16,6 @@ Please, create a new issue on this repository if you have:
 Make sure to include all necessary details that could help other contributors
 to understand or to reproduce your use case.
 
-
 How to submit a patch
 ---------------------
 
@@ -28,7 +26,6 @@ How to submit a patch
 
 Ideally, tests should keep passing and coverage should not decrease after a
 commit.
-
 
 How to release a new version
 ----------------------------
