@@ -10,12 +10,12 @@ web-poet
    :target: https://pypi.python.org/pypi/web-poet
    :alt: Supported Python Versions
 
-.. image:: https://travis-ci.com/scrapinghub/web-poet.svg?branch=master
-   :target: https://travis-ci.com/scrapinghub/web-poet
+.. image:: https://travis-ci.org/victor-torres/web-poet.svg?branch=master
+   :target: https://travis-ci.org/victor-torres/web-poet
    :alt: Build Status
 
-.. image:: https://codecov.io/github/scrapinghub/web-poet/coverage.svg?branch=master
-   :target: https://codecov.io/gh/scrapinghub/web-poet
+.. image:: https://codecov.io/github/victor-torres/web-poet/coverage.svg?branch=master
+   :target: https://codecov.io/gh/victor-torres/web-poet
    :alt: Coverage report
 
 .. warning::
