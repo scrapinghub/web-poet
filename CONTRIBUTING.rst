@@ -1,7 +1,7 @@
 Contributing
 ============
 
-``web-po`` is an open-source project and we'd love to accept your
+``web-poet`` is an open-source project and we'd love to accept your
 contributions. There are just a few small guidelines that you need to follow.
 
 How to report issues
