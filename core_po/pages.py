@@ -20,9 +20,9 @@ class Injectable(abc.ABC):
 Injectable.register(type(None))
 
 
-def is_injectable(obj: typing.Any) -> bool:
-    """Checks if an object inherits from ``Injectable``."""
-    return isinstance(obj, type) and issubclass(obj, Injectable)
+def is_injectable(cls: typing.Any) -> bool:
+    """Checks if a class inherits from ``Injectable``."""
+    return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
 class ItemPage(Injectable, abc.ABC):

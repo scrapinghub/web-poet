@@ -1,6 +1,6 @@
 import pytest
 
-from core_po.pages import ItemPage, ItemWebPage
+from core_po.pages import ItemPage, ItemWebPage, is_injectable
 
 
 def test_abstract_page_object():
@@ -49,3 +49,24 @@ def test_web_page_object(book_list_html_response):
         'url': 'http://book.toscrape.com/',
         'title': 'All products | Books to Scrape - Sandbox',
     }
+
+
+def test_is_injectable():
+
+    class MyClass:
+        pass
+
+    class MyItemPage(ItemPage):
+
+        def to_item(self) -> dict:
+            return {
+                'foo': 'bar',
+            }
+
+    assert is_injectable(None) is False
+    assert is_injectable(MyClass) is False
+    assert is_injectable(MyClass()) is False
+    assert is_injectable(MyItemPage) is True
+    assert is_injectable(MyItemPage()) is False
+    assert is_injectable(ItemPage) is True
+    assert is_injectable(ItemWebPage) is True
