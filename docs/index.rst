@@ -21,6 +21,7 @@ Please, see also our Installation guide and our Tutorial for a quick start.
    :maxdepth: 2
    :hidden:
 
+   api_reference
    contributing
    changelog
    license
