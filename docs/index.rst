@@ -9,7 +9,7 @@ extraction logic from crawling. They could be easily tested and distributed
 across different projects. Also, they could make use of different backends,
 for example, acquiring data from `Splash`_ and `AutoExtract`_ API.
 
-Please, see also our :ref:`intro-install` and our Tutorial for a quick start.
+Please, see also our :ref:`intro-install` and our :ref:`intro-tutorial` for a quick start.
 
 :ref:`license` is BSD 3-clause.
 
@@ -22,6 +22,7 @@ Please, see also our :ref:`intro-install` and our Tutorial for a quick start.
    :hidden:
 
    intro/install
+   intro/tutorial
 
 .. toctree::
    :caption: Reference
