@@ -11,7 +11,7 @@ for example, acquiring data from `Splash`_ and `AutoExtract`_ API.
 
 Please, see also our Installation guide and our Tutorial for a quick start.
 
-License is BSD 3-clause.
+:ref:`license` is BSD 3-clause.
 
 .. _`AutoExtract`: https://scrapinghub.com/autoextract
 .. _`Splash`: https://scrapinghub.com/splash
@@ -20,3 +20,5 @@ License is BSD 3-clause.
 .. toctree::
    :maxdepth: 2
    :hidden:
+
+   license
