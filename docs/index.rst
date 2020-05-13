@@ -9,7 +9,7 @@ extraction logic from crawling. They could be easily tested and distributed
 across different projects. Also, they could make use of different backends,
 for example, acquiring data from `Splash`_ and `AutoExtract`_ API.
 
-Please, see also our Installation guide and our Tutorial for a quick start.
+Please, see also our :ref:`intro-install` and our Tutorial for a quick start.
 
 :ref:`license` is BSD 3-clause.
 
@@ -18,6 +18,13 @@ Please, see also our Installation guide and our Tutorial for a quick start.
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 
 .. toctree::
+   :caption: Getting started
+   :hidden:
+
+   intro/install
+
+.. toctree::
+   :caption: Reference
    :maxdepth: 2
    :hidden:
 

@@ -13,15 +13,13 @@ setup(
     long_description_content_type='text/x-rst',
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
-    # FIXME: change url when repository is moved to Scrapinghub's organization
-    url='https://github.com/victor-torres/web-poet',
+    url='https://github.com/scrapinghub/web-poet',
     packages=find_packages(
         exclude=(
             'tests',
         )
     ),
     install_requires=(
-        'andi>=0.3',
         'attrs',
         'parsel',
     ),
