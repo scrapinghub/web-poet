@@ -18,6 +18,10 @@ web-poet
    :target: https://codecov.io/gh/scrapinghub/web-poet
    :alt: Coverage report
 
+.. image:: https://readthedocs.org/projects/web-poet/badge/?version=latest
+   :target: https://web-poet.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 .. warning::
     Current status is "experimental".
 
