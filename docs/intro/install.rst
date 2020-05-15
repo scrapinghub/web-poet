@@ -19,10 +19,6 @@ web-poet and its dependencies from PyPI with:
 Things that are good to know
 ============================
 
-web-poet is written in pure Python and depends on two key Python packages:
+web-poet is written in pure Python and uses parsel_ for css and xpath selectors
 
-- attrs_, reduces boilerplate when creating data-classes
-- parsel_, responsible for css and xpath selectors
-
-.. _attrs: https://github.com/python-attrs/attrs
 .. _parsel: https://github.com/scrapinghub/parsel
