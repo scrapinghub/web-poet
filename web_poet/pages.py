@@ -21,14 +21,14 @@ Injectable.register(type(None))
 
 
 def is_injectable(cls: typing.Any) -> bool:
-    """Checks if a class inherits from ``Injectable``."""
+    """Check if a class inherits from :class:`~.Injectable`."""
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
 class ItemPage(Injectable, abc.ABC):
     """Describes the base Page Object.
 
-     Page Objects require the ``to_item`` method to be implemented in order
+     Page Objects require the :meth:`to_item` method to be implemented in order
      to expose acquired data.
      """
 
@@ -52,6 +52,6 @@ class WebPage(Injectable, ResponseShortcutsMixin):
 @attr.s(auto_attribs=True)
 class ItemWebPage(WebPage, ItemPage):
     """
-    ``WebPage`` that implements the ``to_item`` method.
+    :class:`WebPage` that implements the :meth:`to_item` method.
     """
     pass
