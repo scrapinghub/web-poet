@@ -3,3 +3,4 @@
 .tox/
 dist/
 htmlcov/
+docs/_build
