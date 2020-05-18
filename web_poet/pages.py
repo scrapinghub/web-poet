@@ -52,6 +52,7 @@ class WebPage(Injectable, ResponseShortcutsMixin):
 @attr.s(auto_attribs=True)
 class ItemWebPage(WebPage, ItemPage):
     """
-    :class:`WebPage` that implements the :meth:`to_item` method.
+    :class:`WebPage` that requires the :meth:`to_item` method to
+    be implemented.
     """
     pass

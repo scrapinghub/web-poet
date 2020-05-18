@@ -18,6 +18,7 @@ Pages
 
 .. autoclass:: web_poet.pages.WebPage
    :members:
+   :inherited-members:
    :no-special-members:
 
 .. autoclass:: web_poet.pages.ItemWebPage

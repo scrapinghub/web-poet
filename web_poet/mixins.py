@@ -10,7 +10,7 @@ class ResponseShortcutsMixin:
 
     @property
     def selector(self) -> parsel.Selector:
-        """Creates a ``parsel.Selector`` instance for the HTML Response."""
+        """``parsel.Selector`` instance for the HTML Response."""
         if self._cached_selector is None:
             self._cached_selector = parsel.Selector(self.html)
 
