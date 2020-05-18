@@ -1,8 +1,8 @@
 .. _`intro-tutorial`:
 
-========
-Tutorial
-========
+=====================
+web-poet on a surface
+=====================
 
 In this tutorial, we’ll assume that web-poet is already installed on your
 system. If that’s not the case, see :ref:`intro-install`.

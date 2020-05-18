@@ -23,18 +23,20 @@ and then reuse in a simple script which uses ``requests`` library.
 To install it, run ``pip install web-poet``. It requires Python 3.6+.
 :ref:`license` is BSD 3-clause.
 
+If you want to quickly learn how to write web-poet Page Objects,
+see :ref:`intro-tutorial`. To understand better all the ``web-poet`` concepts
+and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
 
 .. toctree::
    :caption: Getting started
-   :hidden:
+   :maxdepth: 1
 
-   intro/install
+   intro/from-ground-up
    intro/tutorial
 
 .. toctree::
    :caption: Reference
-   :maxdepth: 2
-   :hidden:
+   :maxdepth: 1
 
    api_reference
    contributing
