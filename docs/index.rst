@@ -31,8 +31,8 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    :caption: Getting started
    :maxdepth: 1
 
-   intro/from-ground-up
    intro/tutorial
+   intro/from-ground-up
 
 .. toctree::
    :caption: Reference

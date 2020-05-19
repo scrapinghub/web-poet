@@ -536,3 +536,7 @@ A take-away from this tutorial:
 2. ``web-poet`` prescribes certain things and limits what you can do,
    but not too much, and as a return you're getting better testability
    and reusability of your code.
+
+3. Basic ``web-poet`` usage looks similar to how one could have had
+   refactored the extraction code anyways.
+
