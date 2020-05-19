@@ -30,6 +30,7 @@ Page Inputs
 
 .. autoclass:: web_poet.page_inputs.ResponseData
    :members:
+   :undoc-members:
    :no-special-members:
 
 Mixins
