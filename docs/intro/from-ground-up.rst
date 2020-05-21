@@ -434,10 +434,13 @@ to process, and that's it.
 
 The role of ``web-poet`` is to define standard on how to write the
 extraction logic, and allow it to be reused in different frameworks.
-``web-poet`` Page Objects can be used with synchronous and async frameworks,
-callback-based and ``async def / await`` based, single node and distributed,
-with different underlying HTTP implementations - or without HTTP support
-at all, etc.
+``web-poet`` Page Objects should be flexible enough to be used with
+
+* synchronous or async frameworks, callback-based and
+  ``async def / await`` based,
+* single node and distributed systems,
+* different underlying HTTP implementations - or without HTTP support
+  at all, etc.
 
 
 Page Objects
@@ -474,6 +477,9 @@ Page Object Inputs
 Here we got to the last, and probably the most complicated and important part
 of ``web-poet``. So far we've been passing :class:`~.ResponseData` to
 the page objects. But is it enough?
+
+If that'd be enough, there wouldn't be ``web-poet``. We would say "please
+write ``def extract(url, html): ...`` functions, and call it a day.
 
 In practice you may need to use other information to extract data from
 a web page, not only :class:`~.ResponseData` (which is URL of this page and
