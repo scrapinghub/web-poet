@@ -326,6 +326,120 @@ pages and pagination URLs:
         def page_urls(self):
             return self.css(".paginator a::attr(href)").getall()
 
+
+Web Scraping Frameworks
+=======================
+
+Let's recall the example we started with:
+
+.. code-block:: python
+
+    import requests
+    import parsel
+
+
+    def extract_book(url):
+        """ Extract book information from a book page on
+        http://books.toscrape.com website, e.g. from
+        http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+        """
+        resp = requests.get(url)
+        sel = parsel.Selector(resp)
+        return {
+            'url': resp.url,
+            'title': sel.css('h1').get(),
+            'description': sel.css('#product_description+ p').get().strip(),
+            # ...
+        }
+
+    item = extract_book("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+
+And this is what we ended up with:
+
+.. code-block:: python
+
+    import requests
+    from web_poet import ItemWebPage, ResponseData
+
+
+    # === Extraction code
+    class BookPage(ItemWebPage):
+        """ A book page on http://books.toscrape.com website, e.g.
+        http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+        """
+        def to_item(self):
+            return {
+                'url': self.url,
+                'title': self.css('h1').get(),
+                'description': self.css('#product_description+ p').get().strip(),
+                # ...
+            }
+
+    # === Framework-specific I/O code
+    def download_sync(url):
+        resp = requests.get(url)
+        return ResponseData(url=resp.url, html=resp.text)
+
+    async def download_async(session, url):
+        async with session.get(url) as resp:
+            text = await resp.text()
+        return ResponseData(url=resp.url, html=text)
+
+    # === Usage example
+    def get_item(page_cls: ItemWebPage, resp_data: ResponseData) -> dict:
+        page = page_cls(response=resp_data)
+        return page.to_item()
+
+    # the way to get resp_data depends on an HTTP client
+    resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    item = get_item(BookPage, resp_data=resp_data)
+
+We created a monster!!! The examples in this tutorial are becoming
+longer and longer, harder and harder to understand. What's going on?
+
+To understand better why this is happening, let's check the ``web-poet``
+example in more detail. There are 3 main sections:
+
+1. Extraction code
+2. Lower-level I/O code
+3. "Usage example" - it connects (1) and (2) to get the extracted data.
+
+Extraction code needs to be written for every new web site.
+But the I/O code and the "Usage example" can, and should be written only once!
+
+In other words, we've been creating a web scraping framework here, and that's
+where most of the complexity is coming from.
+
+In a real world, a developer who needs to extract data from a web page
+would only need to write the "extraction" part:
+
+.. code-block:: python
+
+    from web_poet import ItemWebPage
+
+    class BookPage(ItemWebPage):
+        """ A book page on http://books.toscrape.com website, e.g.
+        http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+        """
+        def to_item(self):
+            return {
+                'url': self.url,
+                'title': self.css('h1').get(),
+                'description': self.css('#product_description+ p').get().strip(),
+                # ...
+            }
+
+Then point the framework to the ``BookPage`` class, tell which web page
+to process, and that's it.
+
+The role of ``web-poet`` is to define standard on how to write the
+extraction logic, and allow it to be reused in different frameworks.
+``web-poet`` Page Objects can be used with synchronous and async frameworks,
+callback-based and ``async def / await`` based, single node and distributed,
+with different underlying HTTP implementations - or without HTTP support
+at all, etc.
+
+
 Page Objects
 ============
 
