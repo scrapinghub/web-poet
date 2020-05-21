@@ -479,7 +479,7 @@ of ``web-poet``. So far we've been passing :class:`~.ResponseData` to
 the page objects. But is it enough?
 
 If that'd be enough, there wouldn't be ``web-poet``. We would say "please
-write ``def extract(url, html): ...`` functions, and call it a day.
+write ``def extract(url, html): ...`` functions", and call it a day.
 
 In practice you may need to use other information to extract data from
 a web page, not only :class:`~.ResponseData` (which is URL of this page and
