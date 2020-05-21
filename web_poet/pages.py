@@ -7,8 +7,7 @@ from web_poet.page_inputs import ResponseData
 
 
 class Injectable(abc.ABC):
-    """
-    Base Page Object class, which all Page Objects should inherit from
+    """Base Page Object class, which all Page Objects should inherit from
     (probably through Injectable subclasses).
 
     Frameworks which are using ``web-poet`` Page Objects should use
@@ -57,8 +56,7 @@ class WebPage(Injectable, ResponseShortcutsMixin):
 
 @attr.s(auto_attribs=True)
 class ItemWebPage(WebPage, ItemPage):
-    """
-    :class:`WebPage` that requires the :meth:`to_item` method to
+    """:class:`WebPage` that requires the :meth:`to_item` method to
     be implemented.
     """
     pass

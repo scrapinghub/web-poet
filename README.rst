@@ -45,11 +45,11 @@ web data extraction code.
 
 If web scraping code is written as web-poet Page Objects, it can be reused
 in different contexts. For example, such code can be developed in an
-IPython notebook, then tested in isolation, and then plugged
-into a Scrapy spider, or used as a part of some custom aiohttp-based
+`IPython notebook`_, then tested in isolation, and then plugged
+into a Scrapy_ spider, or used as a part of some custom aiohttp_-based
 web scraping framework.
 
-Currently the following integrations are available:
+Currently, the following integrations are available:
 
 * Scrapy, via scrapy-poet_
 
@@ -57,3 +57,6 @@ See Documentation_ for more.
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 .. _Documentation: https://web-poet.readthedocs.io/en/latest/
+.. _Scrapy: https://scrapy.org/
+.. _aiohttp: https://github.com/aio-libs/aiohttp
+.. _IPython notebook: https://jupyter.org/

@@ -411,7 +411,7 @@ Previously we decoupled "Extraction code" section from the
 "Framework-specific I/O code" section. But how can we
 decouple "Extraction code" from the "Usage example", how do we actually
 call the extraction code in a generic way? Is it possible to have a method
-like the following this?
+like the following?
 
 .. code-block:: python
 

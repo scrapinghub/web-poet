@@ -3,7 +3,7 @@ import attr
 
 @attr.s(auto_attribs=True)
 class ResponseData:
-    """ A container for URL and HTML content of a response, downloaded
+    """A container for URL and HTML content of a response, downloaded
     directly using an HTTP client.
 
     ``url`` should be an URL of the response (after all redirects),

@@ -5,7 +5,7 @@ web-poet on a surface
 =====================
 
 In this tutorial, we’ll assume that web-poet is already installed on your
-system. If that’s not the case, see :ref:`intro-install`.
+system.
 
 We are going to scrape `books.toscrape.com <http://books.toscrape.com/>`_,
 a website that lists books from famous authors.
