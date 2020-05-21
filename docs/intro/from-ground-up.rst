@@ -232,7 +232,7 @@ is implemented. Let's change the code to follow this standard:
 
 As the method name is now standardized, the code which creates a Page Object
 instance can now work for other Page Objects like that. For example, you can
-have ToscrapeBookPage and BamazonBookPage classes, and
+have ``ToscrapeBookPage`` and ``BamazonBookPage`` classes, and
 
 .. code-block:: python
 
@@ -242,10 +242,16 @@ have ToscrapeBookPage and BamazonBookPage classes, and
 
 would work for both.
 
-You could have noticed that before the example was converted to ``web-poet``,
-``extract_book`` function had the same benefit for free - just call a
-function, no need to agree on ``to_item`` name and have a base class
-to check the method is implemented. Why bother with classes then?
+But wait. Before the example was converted to ``web-poet``, we were getting
+it for free:
+
+.. code-block:: python
+
+    def get_item(extract_func, resp_data: ResponseData) -> dict:
+        return extract_func(url=resp_data.url, html=resp_data.html)
+
+No need to agree on ``to_item`` name and have a base class to check that the
+method is implemented. Why bother with classes then?
 
 Classes for web scraping code
 =============================
@@ -279,7 +285,8 @@ For example, we can extract logic for different attributes into properties:
 
 You may write some base class to make it nicer - e.g. helper descriptors
 to define properties from CSS selectors, and a default ``to_item``
-implementation. This is currently not implemented in ``web-poet``, but
+implementation (so, no need to define ``to_item``).
+This is currently not implemented in ``web-poet``, but
 nothing prevents us from having a DSL like this:
 
 .. code-block:: python
@@ -341,10 +348,8 @@ data from there. Page Object must
    a ``response`` parameter of type :class:`~.ResponseData`, and
    stores it as ``.response`` attribute.
 2. Provide methods or properties to extract structured information, using
-   the attributes saved in ``__init__``. For example, if you're defining
-   a :class:`~.ItemWebPage` subclass for the web
-   page with a single data record, you're going to define ``.to_item()``
-   method, and other helper methods, if you want; these methods would work
+   the attributes saved in ``__init__``. For example, you may define
+   ``.to_item()`` method, and other helper methods; these methods would work
    with ``.response`` attribute, likely through shortcuts like
    ``self.css(...)``.
 
@@ -352,7 +357,7 @@ data from there. Page Object must
 Page Object Inputs
 ==================
 
-Here we got to a last, and probably the most complicated and important part
+Here we got to the last, and probably the most complicated and important part
 of ``web-poet``. So far we've been passing :class:`~.ResponseData` to
 the page objects. But is it enough?
 
@@ -399,13 +404,18 @@ functions, for Bamazon and for books.toscrape.com:
         # ...
 
     # === Usage example
-    # the way to get inputs to an extraction function depends
-    # on an environment (HTTP client)
+    # The way to get inputs to the extraction function depends
+    # on an environment (e.g. an HTTP client or a framework used),
+    # but which inputs to compute depends on the extraction function.
     resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    crawl_state = {"seed": "http://books.toscrape.com/catalogue/category/books/poetry_23/index.html"}
 
-    # But what actually is needed to be passed as an input depends
-    # on the extraction function. FIXME.
-    item = extract_book_toscrape(html=resp_data['text'], crawl_state={'??'})
+    # How to call the extraction function depends on the extraction function,
+    # as arguments are not the same.
+    item = extract_book_toscrape(
+        html=resp_data['text'],
+        crawl_state=crawl_state
+    )
 
 Previously we decoupled "Extraction code" section from the
 "Framework-specific I/O code" section. But how can we
@@ -443,13 +453,13 @@ But now it gets complicated:
   in case of ``extract_book_bamazon`` output of a headless browser
   (Splash in particular) is expected.
 
-Ideally, we would like to have a way to
+Ideally, we would like to
 
 1. Write extraction code which defines the inputs it needs
    (such as "body of HTTP response", "Chrome DOM tree snapshot",
    "crawl state"). The extraction code shouldn't fetch these inputs itself,
    it should receive them, for better testability and reusability.
-2. Create the inputs in different ways. For example, for tests it
+2. Be able to create the inputs in different ways. For example, for tests it
    can be static data, in Scrapy necessary HTTP requests can be made through
    Scrapy, and in simple scripts data can be fetched using ``requests``
    library.
