@@ -144,7 +144,8 @@ The same, but using web-poet
 
     # === Extraction code
     class BookPage(WebPage):
-        """ A book page on http://books.toscrape.com website, e.g.
+        """
+        A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
         def extract_book(self):
@@ -215,7 +216,8 @@ is implemented. Let's change the code to follow this standard:
 
     # === Extraction code
     class BookPage(ItemWebPage):
-        """ A book page on http://books.toscrape.com website, e.g.
+        """
+        A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
         def to_item(self):
@@ -263,7 +265,8 @@ For example, we can extract logic for different attributes into properties:
 .. code-block:: python
 
     class BookPage(ItemWebPage):
-        """ A book page on http://books.toscrape.com website, e.g.
+        """
+        A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
 
@@ -430,9 +433,13 @@ would only need to write the "extraction" part:
             }
 
 Then point the framework to the ``BookPage`` class, tell which web page
-to process, and that's it.
+to process, and that's it:
 
-The role of ``web-poet`` is to define standard on how to write the
+.. code-block:: python
+
+    item = some_framework.extract(url, BookPage)
+
+The role of ``web-poet`` is to define a standard on how to write the
 extraction logic, and allow it to be reused in different frameworks.
 ``web-poet`` Page Objects should be flexible enough to be used with
 
@@ -456,20 +463,42 @@ what are they?
     but they are not the same.
 
 Essentially, the idea is to create an object which represents a web page
-(or a part of web page - see Pagination example), and allows to extract
-data from there. Page Object must
+(or a part of web page - recall the ``Pagination`` example), and allows
+to extract data from there. Page Object must
 
 1. Define all the inputs needed in its ``__init__`` method.
    Usually these inputs are then stored as attributes.
-   For example, ``__init__`` method of :class:`~.WebPage` base class has
-   a ``response`` parameter of type :class:`~.ResponseData`, and
-   stores it as ``.response`` attribute.
-2. Provide methods or properties to extract structured information, using
-   the attributes saved in ``__init__``. For example, you may define
-   ``.to_item()`` method, and other helper methods; these methods would work
-   with ``.response`` attribute, likely through shortcuts like
-   ``self.css(...)``.
 
+2. Provide methods or properties to extract structured information,
+   using the data saved in ``__init__``.
+
+3. Inherit from :class:`~.Injectable`; this inheritance is used as a marker.
+
+For example, a very basic Page Object could look like this:
+
+   .. code-block:: python
+
+        from parsel import Selector
+        from web_poet.pages import Injectable
+        from web_poet.page_inputs import ResponseData
+
+
+        class BookPage(Injectable):
+            def __init__(self, response: ResponseData):
+                self.response = response
+
+            def to_item(self) -> dict:
+                sel = Selector(response.html)
+                return {
+                    'url': self.response.url,
+                    'title': sel.css("h1::text").get()
+                }
+
+There is no *need* to use other base classes and mixins
+defined by ``web-poet`` (:class:`~.WebPage`, :class:`~.ResponseShortcutsMixin`,
+:class:`~.ItemPage`, :class:`~.ItemWebPage`, etc.), but it can be a good
+idea to familiarize yourself with them, as they are taking some of
+the boilerplate out.
 
 Page Object Inputs
 ==================
@@ -498,151 +527,160 @@ to
 .. _Splash: https://github.com/scrapinghub/splash
 .. _AutoExtract: https://scrapinghub.com/automatic-data-extraction-api
 
-The information you need can depend on a web site. For example,
-Splash can be required for extracting book information from Bamazon,
-while for http://books.toscrape.com you may need HTTP response body
+The information you need can depend on a web site.
+For example, Splash can be required for extracting book information from
+Bamazon, while for http://books.toscrape.com you may need HTTP response body
 and some crawl state (not really, but let's imagine it is needed).
-
-If we go to the original, non-poetic example, we would have two extract
-functions, for Bamazon and for books.toscrape.com:
+You may define page objects for this task:
 
 .. code-block:: python
 
-    # === Extraction code
-    def extract_book_toscrape(html, crawl_state):
-        # ...
+    class BamazonBookPage(Injectable):
+        def __init__(self, response: SplashResponseData):
+            self.response = response
 
-    def extract_book_bamazon(html):
-        # ...
+        def to_item(self):
+            # ...
 
-    # === Framework-specific I/O code
-    def download_sync(url):
-        resp = requests.get(url)
-        return {'url': resp.url, 'text': resp.text}
+    class ToScrapeBookPage(Injectable):
+        def __init__(self, response: ResponseData, crawl_state: dict):
+            self.response = response
+            self.crawl_state = crawl_state
 
-    async def download_async(session, url):
-        # ...
+        def to_item(self):
+            # ...
 
-    # === Usage example
-    # The way to get inputs to the extraction function depends
-    # on an environment (e.g. an HTTP client or a framework used),
-    # but which inputs to compute depends on the extraction function.
-    resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
-    crawl_state = {"seed": "http://books.toscrape.com/catalogue/category/books/poetry_23/index.html"}
-
-    # How to call the extraction function depends on the extraction function,
-    # as arguments are not the same.
-    item = extract_book_toscrape(
-        html=resp_data['text'],
-        crawl_state=crawl_state
-    )
-
-Previously we decoupled "Extraction code" section from the
-"Framework-specific I/O code" section. But how can we
-decouple "Extraction code" from the "Usage example", how do we actually
-call the extraction code in a generic way? Is it possible to have a method
-like the following?
+Then, we would like to use these page objects in some web scraping
+framework, like we did before:
 
 .. code-block:: python
 
-    def get_item(url, extraction_func):
-        # TODO: build kwargs with all the inputs needed
-        return extraction_func(**kwargs)
+    item1 = some_framework.extract(bamazon_url, BamazonBookPage)
+    item2 = some_framework.extract(toscrape_url, ToScrapeBookPage)
 
-    item = get_item("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
-                    extraction_func=extract_book_toscrape)
+To be able to implement the imaginary ``some_framework.extract`` method,
+some_framework must
 
-It was kind-of decoupled before, as extraction code has been always receiving
-"text" and "url":
+1. Figure out somehow which inputs the Page Objects need.
+2. Create these inputs. If needed, make a Splash request, make a direct HTTP
+   request, get a dictionary with the crawl state from somewhere. These
+   actions can be costly; framework should avoid doing unnecessary work here.
+3. Pass the obtained data as keyword arguments to ``__init__`` method.
+
+`(2)` and `(3)` are straightforward, once the framework knows that
+"To create BamazonBookPage, I need to pass output of Splash as
+a ``response`` keyword argument", i.e. once `(1)` is done.
+
+``web-poets`` uses  **type annotations** of ``__init__`` arguments
+to declare Page Object dependencies. So, type annotations in the
+examples like the following were not just a nice-thing-to-have:
 
 .. code-block:: python
 
-    def get_item(url, extraction_func):
-        resp_data = download_sync(url)
-        kwargs = dict(text=resp_data['text'], url=resp_data['url'])
-        return extraction_func(**kwargs)
+    class BookPage(Injectable):
+        def __init__(self, response: ResponseData):
+            self.response = response
 
-But now it gets complicated:
+By annotating ``__init__`` arguments we were actually
+telling ``web-poet`` (or, more precisely, a framework
+which uses ``web-poet``):
 
-* Caller code can't pass "url" and "text" arguments always,
-  function arguments can vary.
-* To call these functions, their arguments need to be created first.
-  Some of the possible inputs can be resource-intensive to create
-  (e.g. headless browser response); they shouldn't be created, unless asked.
-* in case of ``extract_book_toscrape`` "html" should be downloaded directly;
-  in case of ``extract_book_bamazon`` output of a headless browser
-  (Splash in particular) is expected.
-
-Ideally, we would like to
-
-1. Write extraction code which defines the inputs it needs
-   (such as "body of HTTP response", "Chrome DOM tree snapshot",
-   "crawl state"). The extraction code shouldn't fetch these inputs itself,
-   it should receive them, for better testability and reusability.
-2. Be able to create the inputs in different ways. For example, for tests it
-   can be static data, in Scrapy necessary HTTP requests can be made through
-   Scrapy, and in simple scripts data can be fetched using ``requests``
-   library.
-3. Figure out automatically which inputs the extraction code needs.
-   Create (maybe fetch) them in a way specific for an environment -
-   e.g. using Scrapy if a page object is used with Scrapy. Call the
-   extraction code, passing it all the input data needed.
-
-``web-poet``'s approach for this is the following:
-
-1. Page Objects define which inputs they need by using type annotations
-   in ``__init__`` methods. For example, :class:`~.WebPage` asks for
-   ``response`` argument of a type :class:`~.ResponseData` in its
-   ``__init__`` method.
-
-   .. code-block:: python
-
-        class WebPage(Injectable):
-            def __init__(self, response: ResponseData):
-                self.response = ResponseData
-                super().__init__()
-
-   What to pass is specified as a type annotation. Argument name doesn't
-   matter.
-
-2. It is a responsibility of a framework (caller) to inspect a Page Object,
-   figure out what it needs, create all necessary inputs, and
-   create the instance.
-   For example, web-poet + Scrapy integration package (scrapy-poet_)
-   may inspect a WebPage subclass you defined, figure out it needs
-   :class:`~.ResponseData` and nothing else, fetch scrapy's TextResponse,
-   create ``ResponseData`` instance from it, and finally create your
-   Page Object instance.
+    To create a ``BookPage`` instance, please obtain :class:`~.ResponseData`
+    instance somehow, and pass it as a ``response`` keyword argument.
+    That's all you need to create a ``BookPage`` instance.
 
 .. note::
 
     If it sounds like Dependency Injection, you're right.
 
-To help developing such frameworks there is an andi_ library, which allows
-to inspect function signatures and create a plan on how to satisfy the
-dependencies. For example, scrapy-poet_ uses andi_.
+If something other than :class:`~.ResponseData` needs to be passed,
+a different type annotation should be used:
+
+.. code-block:: python
+
+    class BamazonBookPage(Injectable):
+        def __init__(self, response: SplashResponseData):
+            self.response = response
+
+    class ToScrapeBookPage(Injectable):
+        def __init__(self, response: ResponseData, crawl_state: CrawlState):
+            self.response = response
+            self.crawl_state = crawl_state
+
+For each possible input a separate class needs to be defined, even if the
+data has the same format. For example, both ``ResponseData`` and
+``SplashResponseData`` may have the same ``url`` and ``html`` fields,
+but they can't be the same class, because they need to work as
+"markers" - tell frameworks if the html should be taken from HTTP
+response body or from Splash DOM snapshot.
+
+``CrawlState`` in the example above can be defined as a class with
+some specific properties, or maybe even
+as a ``class CrawlState(dict): pass`` - an important thing is that it is
+an unique type, and that we agree on what should be put into
+arguments annotated as ``CrawlState``.
+
+web-poet role
+=============
+
+How do you actually inspect the ``__init__`` method signature - e.g.
+if you're working on supporting ``web-poet`` page objects in some
+framework? ``web-poet`` itself doesn't provide any helpers for doing this.
+
+Use andi_ library. For example, scrapy-poet_ uses andi_.
+In addition to signature inspection, it also handles
+typing.Optional and typing.Union, and allows to create a build plan
+for dependency trees, indirect dependencies: that's allowed to annotate
+an argument as another :class:`~.Injectable` subclass.
 
 ``web-poet`` is not using andi_ on its own; ``web-poet``'s role
-is mostly to standardize things + provide some helpers to write the
-extraction code easier.
+is to standardize things + provide some helpers to write the
+extraction code easier:
 
-``web-poet``'s goal is to standardize:
-
-1. A list of possible inputs for the page objects. This helps with
+1. Standardize a list of possible inputs for the page objects. This helps with
    reusability of extraction code across different environments. For example,
    if you want to support extraction from raw HTTP response bodies, you
    need to figure out how to populate :class:`~.ResponseData` in the
    given environment, and that's all.
 
-   Users are free to define their own inputs, but they may be less portable
-   across environments.
+   Users are free to define their own inputs (input types), but they
+   may be less portable across environments - which can be fine.
 
    Currently only :class:`~.ResponseData` is defined in web-poet.
 
-2. Interface for the Page Object itself. This allows to have a code which can
-   instantiate and use a Page Object without knowing about its
-   implementation upfront. ``web-poet`` requires you to use a base class,
-   and defines the semantics of ``to_item()`` method.
+2. Define an interface for the Page Object itself. This allows to
+   have a code which can instantiate and use a Page Object without knowing
+   about its implementation upfront. ``web-poet`` requires you to
+   use a base class (:class:`~.Injectable`), and defines the
+   semantics of ``to_item()`` method.
+
+
+Then, framework's role is to:
+
+1. Figure out which inputs a Page Object needs, likely using andi_ library.
+2. Create all the necessary inputs. For example, creating
+   :class:`~.ResponseData` instance may involve making an HTTP request.
+3. Create a Page Object instance, passing it the inputs it needs.
+4. Depending on a task, either return a newly created Page Object
+   instance to the user, or call some predefined method
+   (a common case is ``to_item``).
+
+For example, web-poet + Scrapy integration package (scrapy-poet_)
+may inspect a WebPage subclass you defined, figure out it needs
+:class:`~.ResponseData` and nothing else, fetch scrapy's TextResponse,
+create ``ResponseData`` instance from it, create your
+Page Object instance, and pass it to a spider callback.
+
+Finally, the Developer's role is to:
+
+1. Write a Page Object class, likely website-specific, following ``web-poet``
+   standards. The extraction code should define the inputs it needs
+   (such as "body of HTTP response", "Chrome DOM tree snapshot",
+   "crawl state"); it shouldn't fetch these inputs itself.
+2. Pass the Page Object class to a framework, in a way defined by the
+   framework.
+3. Depending on a task, either get a Page Object instance, or get the data
+   extracted using this Page Object.
 
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
@@ -667,6 +705,8 @@ A take-away from this tutorial:
    but not too much, and as a return you're getting better testability
    and reusability of your code.
 
-3. Basic ``web-poet`` usage looks similar to how one could have had
-   refactored the extraction code anyways.
+3. Hopefully, now you understand how to write a web scraping framework
+   which uses ``web-poet``.
 
+4. Basic ``web-poet`` usage looks similar to how one could have had
+   refactored the extraction code anyways.
