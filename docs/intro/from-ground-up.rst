@@ -620,6 +620,29 @@ as a ``class CrawlState(dict): pass`` - an important thing is that it is
 an unique type, and that we agree on what should be put into
 arguments annotated as ``CrawlState``.
 
+Pro tip: defining classes like
+
+.. code-block:: python
+
+    class ToScrapeBookPage(Injectable):
+        def __init__(self, response: ResponseData, crawl_state: CrawlState):
+            self.response = response
+            self.crawl_state = crawl_state
+
+can get tedious; Python's :mod:`dataclasses`
+(or `attr.s`_, if that's your preference) make it nicer:
+
+.. code-block:: python
+
+    from dataclasses import dataclass
+
+    @dataclass
+    class ToScrapeBookPage(Injectable):
+        response: ResponseData
+        crawl_state: CrawlState
+
+.. _attr.s: https://github.com/python-attrs/attrs
+
 web-poet role
 =============
 
