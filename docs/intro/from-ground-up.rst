@@ -682,7 +682,9 @@ Then, framework's role is to:
 
 1. Figure out which inputs a Page Object needs, likely using andi_ library.
 2. Create all the necessary inputs. For example, creating
-   :class:`~.ResponseData` instance may involve making an HTTP request.
+   :class:`~.ResponseData` instance may involve making an HTTP request;
+   creating ``CrawlState`` (from the previous examples) may involve getting
+   some data from the shared storage, or from an in-memory data structure.
 3. Create a Page Object instance, passing it the inputs it needs.
 4. Depending on a task, either return a newly created Page Object
    instance to the user, or call some predefined method
@@ -702,8 +704,10 @@ Finally, the Developer's role is to:
    "crawl state"); it shouldn't fetch these inputs itself.
 2. Pass the Page Object class to a framework, in a way defined by the
    framework.
-3. Depending on a task, either get a Page Object instance, or get the data
-   extracted using this Page Object.
+3. Get a Page Object *instance* from the framework; call its extraction methods
+   (e.g. ``to_item``). Depending on a framework and on a task, a framework
+   may be calling ``to_item`` (or other methods) automatically; in this case
+   user code would be getting the extracted data, not a Page Object instance.
 
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
