@@ -704,7 +704,7 @@ Finally, the Developer's role is to:
    "crawl state"); it shouldn't fetch these inputs itself.
 2. Pass the Page Object class to a framework, in a way defined by the
    framework.
-3. Get a Page Object *instance* from the framework; call its extraction methods
+3. Receive a Page Object *instance* from the framework; call its extraction methods
    (e.g. ``to_item``). Depending on the framework and on the task, the framework
    may be calling ``to_item`` (or other methods) automatically; in this case
    user code would be getting the extracted data, not a Page Object instance.
