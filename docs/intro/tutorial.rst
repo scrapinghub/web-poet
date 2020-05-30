@@ -1,11 +1,11 @@
 .. _`intro-tutorial`:
 
-========
-Tutorial
-========
+=====================
+web-poet on a surface
+=====================
 
 In this tutorial, we’ll assume that web-poet is already installed on your
-system. If that’s not the case, see :ref:`intro-install`.
+system.
 
 We are going to scrape `books.toscrape.com <http://books.toscrape.com/>`_,
 a website that lists books from famous authors.
@@ -129,3 +129,6 @@ As you can see, it's possible to use web-poet with built-in libraries such as
 :mod:`urllib.request`, but it's also possible to use
 :ref:`Scrapy <scrapy:topics-index>` with the help of
 `scrapy-poet <https://scrapy-poet.readthedocs.io/en/latest/>`_.
+
+If you want to understand the idea behind web-poet better,
+check the :ref:`from-ground-up` tutorial.

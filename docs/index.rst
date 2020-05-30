@@ -1,35 +1,49 @@
-======================
-web-poet documentation
-======================
+========
+web-poet
+========
 
-web-poet implements Page Object pattern for web scraping.
+.. warning::
 
-The goal of this project is to make reusable Page Objects that separates
-extraction logic from crawling. They could be easily tested and distributed
-across different projects. Also, they could make use of different backends,
-for example, acquiring data from `Splash`_ and `AutoExtract`_ API.
+    web-poet is in early stages of development; backwards incompatible
+    changes are possible.
 
-Please, see also our :ref:`intro-install` and our :ref:`intro-tutorial` for a quick start.
+``web-poet`` implements Page Object pattern for web scraping.
+It defines a standard for writing web data extraction code, which allows
+the code to be portable & reusable.
 
+The main idea is to separate the extraction logic from all other concerns.
+``web-poet`` Page Objects `don't do I/O <https://sans-io.readthedocs.io>`_,
+and they're not dependent on any particular framework like Scrapy_.
+
+This allows the code written using ``web-poet`` to be testable and reusable.
+For example, one can write a web-poet Page Object in an IPython notebook,
+plug it into a Scrapy spider, write tests for them using unittest or pytest,
+and then reuse in a simple script which uses ``requests`` library.
+
+To install it, run ``pip install web-poet``. It requires Python 3.6+.
 :ref:`license` is BSD 3-clause.
 
-.. _`AutoExtract`: https://scrapinghub.com/autoextract
-.. _`Splash`: https://scrapinghub.com/splash
-.. _`web-poet`: https://github.com/scrapinghub/web-poet
+If you want to quickly learn how to write web-poet Page Objects,
+see :ref:`intro-tutorial`. To understand better all the ``web-poet`` concepts
+and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
 
 .. toctree::
    :caption: Getting started
-   :hidden:
+   :maxdepth: 1
 
-   intro/install
    intro/tutorial
+   intro/from-ground-up
 
 .. toctree::
    :caption: Reference
-   :maxdepth: 2
-   :hidden:
+   :maxdepth: 1
 
    api_reference
    contributing
    changelog
    license
+
+.. _`web-poet`: https://github.com/scrapinghub/web-poet
+.. _Scrapy: https://scrapy.org/
+.. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
+
