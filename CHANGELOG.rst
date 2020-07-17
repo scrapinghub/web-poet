@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.1 (TBA)
----------
+0.1.0 (2020-07-18)
+------------------
 
 * Documentation
 * WebPage, ItemPage, ItemWebPage, Injectable and ResponseData are available
