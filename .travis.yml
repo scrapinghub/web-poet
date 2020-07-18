@@ -23,7 +23,7 @@ after_success:
 - codecov
 deploy:
   provider: pypi
-  user: scrapinghub
+  username: "__token__"
   on:
     tags: true
     repo: scrapinghub/web-poet
