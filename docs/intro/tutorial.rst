@@ -128,7 +128,7 @@ Next Steps
 As you can see, it's possible to use web-poet with built-in libraries such as
 :mod:`urllib.request`, but it's also possible to use
 :ref:`Scrapy <scrapy:topics-index>` with the help of
-`scrapy-poet <https://scrapy-poet.readthedocs.io/en/latest/>`_.
+`scrapy-poet <https://scrapy-poet.readthedocs.io>`_.
 
 If you want to understand the idea behind web-poet better,
 check the :ref:`from-ground-up` tutorial.

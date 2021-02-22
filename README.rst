@@ -56,7 +56,7 @@ Currently, the following integrations are available:
 See Documentation_ for more.
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
-.. _Documentation: https://web-poet.readthedocs.io/en/latest/
+.. _Documentation: https://web-poet.readthedocs.io
 .. _Scrapy: https://scrapy.org/
 .. _aiohttp: https://github.com/aio-libs/aiohttp
 .. _IPython notebook: https://jupyter.org/
