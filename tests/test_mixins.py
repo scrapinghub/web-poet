@@ -32,3 +32,32 @@ def test_xpath(my_page):
 def test_css(my_page):
     title = my_page.css('title::text').get().strip()
     assert title == 'All products | Books to Scrape - Sandbox'
+
+
+def test_baseurl(my_page):
+    assert my_page.base_url == 'http://books.toscrape.com/index.html'
+
+
+def test_urljoin(my_page):
+    assert my_page.urljoin("foo") == 'http://books.toscrape.com/foo'
+
+
+def test_custom_baseurl():
+    html = """
+    <html>
+    <head>
+        <base href="http://example.com/foo/">
+    </head>
+    <body><body>
+    </html>
+    """
+    response = ResponseData(
+        url="http://www.example.com/path",
+        html=html,
+    )
+    page = MyPage(response=response)
+
+    assert page.url == 'http://www.example.com/path'
+    assert page.base_url == 'http://example.com/foo/'
+    assert page.urljoin("bar") == 'http://example.com/foo/bar'
+    assert page.urljoin("http://example.com/1") == "http://example.com/1"
