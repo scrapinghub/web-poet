@@ -18,4 +18,4 @@ def book_list_html():
 
 @pytest.fixture
 def book_list_html_response(book_list_html):
-    return ResponseData('http://book.toscrape.com/', book_list_html)
+    return ResponseData('http://books.toscrape.com/index.html', book_list_html)

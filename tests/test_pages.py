@@ -46,7 +46,7 @@ def test_web_page_object(book_list_html_response):
 
     page_object = MyWebPage(book_list_html_response)
     assert page_object.to_item() == {
-        'url': 'http://book.toscrape.com/',
+        'url': 'http://books.toscrape.com/index.html',
         'title': 'All products | Books to Scrape - Sandbox',
     }
 
