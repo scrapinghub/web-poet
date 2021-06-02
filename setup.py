@@ -7,7 +7,7 @@ with open('README.rst') as f:
 
 setup(
     name='web-poet',
-    version='0.1.0',
+    version='0.1.1',
     description="Scrapinghub's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type='text/x-rst',
