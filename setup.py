@@ -22,7 +22,7 @@ setup(
     install_requires=(
         'attrs',
         'parsel',
-        'url-matcher @ git+ssh://git@github.com/zytedata/url-matcher@main#egg=url-matcher',
+        'url-matcher @ git+https://git@github.com/zytedata/url-matcher@main#egg=url-matcher',
         'tabulate',
     ),
     classifiers=(
