@@ -13,6 +13,7 @@ OVERRIDES_NAMESPACES_KEY = "_overrides_namespaces_"
 
 @dataclass(frozen=True)
 class HandleUrlsSpec:
+    """Meta information used by the :py:func:`web_poet.handle_urls` decorator"""
     patterns: Patterns
     overrides: Callable
     meta: Dict[str, Any] = field(default_factory=dict)
@@ -20,6 +21,7 @@ class HandleUrlsSpec:
 
 @dataclass(frozen=True)
 class OverrideRule:
+    """A single override rule. Specify when a page object should be used instead of another"""
     for_patterns: Patterns
     use: Callable
     instead_of: Callable
@@ -54,15 +56,15 @@ def handle_urls(include: Union[str, Iterable[str]],
     Class decorator that indicates that the decorated Page Object should be used instead of the overridden one
     for a particular set the URLs.
 
-    Which Page Object is overridden is determined by the `overrides` parameter.
+    Which Page Object is overridden is determined by the ``overrides`` parameter.
 
-    Over which URLs the override happens is determined by the `include`, `exclude` and `priority` parameters.
-    See the documentation of the `url-matcher` package for more information about them.
+    Over which URLs the override happens is determined by the ``include``, ``exclude`` and ``priority`` parameters.
+    See the documentation of the ``url-matcher`` package for more information about them.
 
     Different namespaces can be used to create different groups of annotations. The default namespace is the empty
     string.
 
-    For the example, the following Page Object is decorated with the `handle_urls` decorator:
+    For the example, the following Page Object is decorated with the ``handle_urls`` decorator:
 
     .. code-block:: python
 
@@ -70,8 +72,8 @@ def handle_urls(include: Union[str, Iterable[str]],
         class ExampleComProductPage(ItemPage):
             ...
 
-    The annotation indicates that the `ExampleComProductPage` Page Object should be used
-    instead of the `ProductPageObject` Page Object for all the URLs whose top level domain is `example.com`.
+    The annotation indicates that the ``ExampleComProductPage`` Page Object should be used
+    instead of the ``ProductPageObject`` Page Object for all the URLs whose top level domain is ``example.com``.
 
     Any extra parameters are stored as meta information that can be later used.
 
@@ -127,7 +129,7 @@ def find_page_object_overrides(module: str, namespace: str = "") -> List[Overrid
     """
     Find all the Page Objects overrides in the given module/package and it submodules.
 
-    The page objects that have been decorated with the `handle_urls` decorator will be returned.
+    The page objects that have been decorated with the ``handle_urls`` decorator will be returned.
 
     Note that this will import the module and its submodules.
 

@@ -45,3 +45,13 @@ Mixins
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
    :no-special-members:
+
+
+Overrides
+=========
+
+.. autofunction:: web_poet.handle_urls
+
+.. automodule:: web_poet.overrides
+   :members:
+   :exclude-members: handle_urls
