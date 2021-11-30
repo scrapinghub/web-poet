@@ -2,6 +2,11 @@
 Changelog
 =========
 
+TBR
+------------------
+
+* ``handle_urls`` decorator and ``find_page_object_overrides`` function added.
+
 0.1.1 (2021-06-02)
 ------------------
 

@@ -48,7 +48,7 @@ def handle_urls(include: Union[str, Iterable[str]],
                 exclude: Union[str, Iterable[str], None] = None,
                 priority: int = 500,
                 namespace: str = "",
-                **kwargs: Dict[str, Any]
+                **kwargs
                 ):
     """
     Class decorator that indicates that the decorated Page Object should be used instead of the overridden one
@@ -104,7 +104,7 @@ def handle_urls(include: Union[str, Iterable[str]],
     return wrapper
 
 
-def walk_modules(module: str) -> Iterable[type]:
+def walk_modules(module: str) -> Iterable:
     """
     Return all modules from a module recursively. Note that this will import all the modules and submodules.
     It returns the provided module as well.
@@ -135,7 +135,7 @@ def find_page_object_overrides(module: str, namespace: str = "") -> List[Overrid
     :param namespace: Only return page objects overrides in this namespace
     :return: Return a list of :py:class:`web_poet.overrides.OverrideRule` metadata.
     """
-    page_objects = {}
+    page_objects: Dict[Callable, HandleUrlsSpec] = {}
     for module in walk_modules(module):
         handle_urls_dict = getattr(module, OVERRIDES_NAMESPACES_KEY, {})
         page_objects.update(handle_urls_dict.get(namespace) or {})
