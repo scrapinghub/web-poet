@@ -1,6 +1,6 @@
 from url_matcher import Patterns
 
-from web_poet.meta import handle_urls
+from web_poet import handle_urls
 
 
 class POTopLevelOverriden1:
@@ -17,6 +17,7 @@ class POTopLevelOverriden2:
 class POTopLevel1:
     expected_overrides = POTopLevelOverriden1
     expected_patterns = Patterns(["example.com"], ["/*.jpg|"], priority=300)
+    expected_meta = {}
 
 
 # The second annotation is for a different namespace
@@ -25,3 +26,4 @@ class POTopLevel1:
 class POTopLevel2:
     expected_overrides = POTopLevelOverriden2
     expected_patterns = Patterns(["example.com"])
+    expected_meta = {}

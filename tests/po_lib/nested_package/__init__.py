@@ -1,6 +1,6 @@
 from url_matcher import Patterns
 
-from web_poet.meta import handle_urls
+from web_poet import handle_urls
 
 
 class PONestedPkgOverriden:
@@ -11,3 +11,4 @@ class PONestedPkgOverriden:
 class PONestedPkg(object):
     expected_overrides = PONestedPkgOverriden
     expected_patterns = Patterns(["example.com", "example.org"], ["/*.jpg|"])
+    expected_meta = {}
