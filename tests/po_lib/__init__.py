@@ -1,3 +1,6 @@
+"""
+This package is just for overrides testing purposes.
+"""
 from url_matcher import Patterns
 
 from web_poet import handle_urls
