@@ -1,36 +1,19 @@
-import sys
-from pathlib import Path
-
 import pytest
 from url_matcher import Patterns
 
-from po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
-from po_lib.a_module import POModule
-from po_lib.nested_package import PONestedPkg
-from po_lib.nested_package.a_nested_module import PONestedModule, PONestedModuleOverridenSecondary
+from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
+from tests.po_lib.a_module import POModule
+from tests.po_lib.nested_package import PONestedPkg
+from tests.po_lib.nested_package.a_nested_module import PONestedModule, PONestedModuleOverridenSecondary
 from web_poet.overrides import find_page_object_overrides
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
 
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_tests(tmpdir):
-    """Fixture to execute asserts before and after a test is run in this module"""
-
-    # Ensuring po_lib is in the packages path
-    tests_path = str(Path(__file__).absolute().parent)
-    sys.path.append(tests_path)
-
-    yield  # this is where the testing happens
-
-    # Cleaning up path
-    del sys.path[-1]
-
-
 def test_list_page_objects_from_pkg():
     """Tests that metadata is extracted properly from the po_lib package"""
-    rules = find_page_object_overrides("po_lib")
+    rules = find_page_object_overrides("tests.po_lib")
     assert {po.use for po in rules} == POS
 
     for rule in rules:
@@ -40,7 +23,7 @@ def test_list_page_objects_from_pkg():
 
 
 def test_list_page_objects_from_module():
-    rules = find_page_object_overrides("po_lib.a_module")
+    rules = find_page_object_overrides("tests.po_lib.a_module")
     assert len(rules) == 1
     rule = rules[0]
     assert rule.use == POModule
@@ -49,22 +32,22 @@ def test_list_page_objects_from_module():
 
 
 def test_list_page_objects_from_empty_module():
-    rules = find_page_object_overrides("po_lib.an_empty_module")
+    rules = find_page_object_overrides("tests.po_lib.an_empty_module")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_empty_pkg():
-    rules = find_page_object_overrides("po_lib.an_empty_package")
+    rules = find_page_object_overrides("tests.po_lib.an_empty_package")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_unknown_module():
     with pytest.raises(ImportError):
-        find_page_object_overrides("po_lib.unknown_module")
+        find_page_object_overrides("tests.po_lib.unknown_module")
 
 
 def test_list_page_objects_from_namespace():
-    rules = find_page_object_overrides("po_lib", namespace="secondary")
+    rules = find_page_object_overrides("tests.po_lib", namespace="secondary")
     assert len(rules) == 2
     rule_for = {po.use: po for po in rules}
 
@@ -78,9 +61,9 @@ def test_list_page_objects_from_namespace():
 
 
 def test_list_page_objects_from_empty_namespace():
-    assert find_page_object_overrides("po_lib", namespace="foo") == []
+    assert find_page_object_overrides("tests.po_lib", namespace="foo") == []
 
 
 def test_cmd():
     from  web_poet.__main__ import main
-    main(["po_lib"])
+    main(["tests.po_lib"])
