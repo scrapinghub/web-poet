@@ -24,7 +24,7 @@ def main(args=None):
         default=""
     )
     args = parser.parse_args(args)
-    table = [("Use this", "instead of that", "for URL patterns", "else these URL patterns", "with priority", "meta")]
+    table = [("Use this", "instead of", "for the URL patterns", "except for the patterns", "with priority", "meta")]
     table += [(qualified_name(rule.use), qualified_name(rule.instead_of), rule.for_patterns.include, rule.for_patterns.exclude, rule.for_patterns.priority, rule.meta)
               for rule in find_page_object_overrides(args.module, args.namespace)]
     print(tabulate.tabulate(table, headers="firstrow"))
