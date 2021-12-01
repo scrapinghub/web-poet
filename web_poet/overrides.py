@@ -59,7 +59,8 @@ def handle_urls(include: Union[str, Iterable[str]],
     Which Page Object is overridden is determined by the ``overrides`` parameter.
 
     Over which URLs the override happens is determined by the ``include``, ``exclude`` and ``priority`` parameters.
-    See the documentation of the ``url-matcher`` package for more information about them.
+    See the documentation of the `url-matcher <https://url-matcher.readthedocs.io/>`_
+    package for more information about them.
 
     Different namespaces can be used to create different groups of annotations. The default namespace is the empty
     string.
