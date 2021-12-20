@@ -5,7 +5,7 @@ from typing import Dict, Any, Callable
 
 from url_matcher import Patterns
 
-from web_poet import handle_urls
+from web_poet import handle_urls, PageObjectRegistry
 
 
 class POBase:
@@ -22,7 +22,10 @@ class POTopLevelOverriden2:
     ...
 
 
-# This first annotation is ignored. A single annotation per namespace per class is allowed
+secondary_registry = PageObjectRegistry(name="secondary")
+
+
+# This first annotation is ignored. A single annotation per registry is allowed
 @handle_urls("example.com", POTopLevelOverriden1)
 @handle_urls("example.com", POTopLevelOverriden1, exclude="/*.jpg|", priority=300)
 class POTopLevel1(POBase):
@@ -31,9 +34,9 @@ class POTopLevel1(POBase):
     expected_meta = {}  # type: ignore
 
 
-# The second annotation is for a different namespace
+# The second annotation is for a different registry
 @handle_urls("example.com", POTopLevelOverriden2)
-@handle_urls("example.org", POTopLevelOverriden2, namespace="secondary")
+@secondary_registry.handle_urls("example.org", POTopLevelOverriden2)
 class POTopLevel2(POBase):
     expected_overrides = POTopLevelOverriden2
     expected_patterns = Patterns(["example.com"])

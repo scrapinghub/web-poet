@@ -46,8 +46,8 @@ def test_list_page_objects_from_unknown_module():
         find_page_object_overrides("tests.po_lib.unknown_module")
 
 
-def test_list_page_objects_from_namespace():
-    rules = find_page_object_overrides("tests.po_lib", namespace="secondary")
+def test_list_page_objects_from_imported_registry():
+    rules = find_page_object_overrides("tests.po_lib", registry="secondary")
     assert len(rules) == 2
     rule_for = {po.use: po for po in rules}
 
@@ -60,8 +60,8 @@ def test_list_page_objects_from_namespace():
     assert pones.instead_of == PONestedModuleOverridenSecondary
 
 
-def test_list_page_objects_from_empty_namespace():
-    assert find_page_object_overrides("tests.po_lib", namespace="foo") == []
+def test_list_page_objects_from_non_existing_registry():
+    assert find_page_object_overrides("tests.po_lib", registry="not-exist") == []
 
 
 def test_cmd():

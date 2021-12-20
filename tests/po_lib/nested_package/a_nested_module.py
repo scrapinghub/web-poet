@@ -1,6 +1,6 @@
 from url_matcher import Patterns
 
-from tests.po_lib import POBase
+from tests.po_lib import POBase, secondary_registry
 from web_poet import handle_urls
 
 
@@ -13,7 +13,7 @@ class PONestedModuleOverridenSecondary:
 
 
 @handle_urls(include=["example.com", "example.org"], exclude=["/*.jpg|"], overrides=PONestedModuleOverriden)
-@handle_urls("example.com", PONestedModuleOverridenSecondary, namespace="secondary")
+@secondary_registry.handle_urls("example.com", PONestedModuleOverridenSecondary)
 class PONestedModule(POBase):
     expected_overrides = PONestedModuleOverriden
     expected_patterns = Patterns(include=["example.com", "example.org"], exclude=["/*.jpg|"])
