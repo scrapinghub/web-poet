@@ -2,6 +2,13 @@
 Changelog
 =========
 
+TBR
+------------------
+
+* removed support for Python 3.6
+* added support for Python 3.10
+
+
 0.1.1 (2021-06-02)
 ------------------
 
