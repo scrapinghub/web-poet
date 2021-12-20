@@ -14,6 +14,7 @@ setup(
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
     url='https://github.com/scrapinghub/web-poet',
+    entry_points={'console_scripts': ['web_poet = web_poet.__main__:main']},
     packages=find_packages(
         exclude=(
             'tests',

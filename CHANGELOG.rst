@@ -6,6 +6,7 @@ TBR
 ------------------
 
 * ``handle_urls`` decorator and ``find_page_object_overrides`` function added.
+* new CLI tool for displaying all available Page Objects: ``web_poet <path>``
 * removed support for Python 3.6
 * added support for Python 3.10
 
