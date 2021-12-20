@@ -6,6 +6,8 @@ TBR
 ------------------
 
 * ``handle_urls`` decorator and ``find_page_object_overrides`` function added.
+* removed support for Python 3.6
+* added support for Python 3.10
 
 0.1.1 (2021-06-02)
 ------------------

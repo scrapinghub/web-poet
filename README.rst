@@ -35,7 +35,7 @@ Installation
 
     pip install web-poet
 
-It requires Python 3.6+.
+It requires Python 3.7+.
 
 Overview
 ========

@@ -20,7 +20,7 @@ For example, one can write a web-poet Page Object in an IPython notebook,
 plug it into a Scrapy spider, write tests for them using unittest or pytest,
 and then reuse in a simple script which uses ``requests`` library.
 
-To install it, run ``pip install web-poet``. It requires Python 3.6+.
+To install it, run ``pip install web-poet``. It requires Python 3.7+.
 :ref:`license` is BSD 3-clause.
 
 If you want to quickly learn how to write web-poet Page Objects,
