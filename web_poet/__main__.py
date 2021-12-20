@@ -48,7 +48,7 @@ def main(args=None):
             rule.for_patterns.priority,
             rule.meta,
         )
-        for rule in find_page_object_overrides(args.module, registry=args.registry)
+        for rule in find_page_object_overrides(args.module, registry_name=args.registry)
     ]
     print(tabulate.tabulate(table, headers="firstrow"))
 

@@ -81,8 +81,8 @@ class PageObjectRegistry:
 
         po_path = "my_scrapy_project.page_objects"
 
-        rules_main = find_page_object_overrides(po_path, registry="main")
-        rules_secondary = find_page_object_overrides(po_path, registry="secondary")
+        rules_main = find_page_object_overrides(po_path, registry_name="main")
+        rules_secondary = find_page_object_overrides(po_path, registry_name="secondary")
 
     However, ``web-poet`` already contains a default Registry named ``"default"``.
     It can be directly accessed via:
@@ -192,7 +192,7 @@ class PageObjectRegistry:
         return {
             cls: spec
             for cls, spec in self.data.items()
-            if cls.__module__.startswith(module.__name__)
+            if cls.__module__.startswith(module)
         }
 
     def __repr__(self) -> str:
@@ -228,7 +228,7 @@ def walk_modules(module: str) -> Iterable:
 
 
 def find_page_object_overrides(
-    module: str, registry: str = "default"
+    module: str, registry_name: str = "default"
 ) -> List[OverrideRule]:
     """
     Find all the Page Objects overrides in the given module/package and its
@@ -240,20 +240,20 @@ def find_page_object_overrides(
     Note that this will explore the `module` and traverse its `submodules`.
 
     :param module: The module or package to search in
-    :param registry: Only return page objects overrides in this registry
+    :param registry_name: Only return page objects overrides in this registry
     :return: Return a list of :py:class:`web_poet.overrides.OverrideRule` metadata.
     """
 
     page_objects: Dict[Callable, HandleUrlsSpec] = {}
-    for module in walk_modules(module):
-        handle_urls_dict = getattr(module, REGISTRY_MODULE_ANCHOR, {})
+    for mod in walk_modules(module):
+        handle_urls_dict = getattr(mod, REGISTRY_MODULE_ANCHOR, {})
 
         # A module could have multiple non-default PageObjectRegistry instances
-        registry = handle_urls_dict.get(registry)
+        registry = handle_urls_dict.get(registry_name)
         if not registry:
             continue
 
-        page_objects.update(registry.get_data_from_module(module))
+        page_objects.update(registry.get_data_from_module(mod.__name__))
 
     return [
         OverrideRule(
