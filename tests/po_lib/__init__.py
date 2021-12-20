@@ -1,8 +1,7 @@
 """
 This package is just for overrides testing purposes.
 """
-from collections import Callable
-from typing import Dict, Any
+from typing import Dict, Any, Callable
 
 from url_matcher import Patterns
 
