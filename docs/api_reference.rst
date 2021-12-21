@@ -1,3 +1,5 @@
+.. _`api-reference`:
+
 =============
 API Reference
 =============
@@ -46,6 +48,8 @@ Mixins
    :members:
    :no-special-members:
 
+
+.. _`api-overrides`:
 
 Overrides
 =========
