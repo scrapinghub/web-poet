@@ -211,8 +211,8 @@ def walk_modules(module: str) -> Iterable:
     It returns the provided module as well.
     """
 
-    def onerror(_):
-        raise
+    def onerror(err):
+        raise err  # pragma: no cover
 
     spec = importlib.util.find_spec(module)
     if not spec:

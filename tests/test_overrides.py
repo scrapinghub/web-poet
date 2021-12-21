@@ -4,8 +4,11 @@ from url_matcher import Patterns
 from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
 from tests.po_lib.a_module import POModule
 from tests.po_lib.nested_package import PONestedPkg
-from tests.po_lib.nested_package.a_nested_module import PONestedModule, PONestedModuleOverridenSecondary
-from web_poet.overrides import find_page_object_overrides
+from tests.po_lib.nested_package.a_nested_module import (
+    PONestedModule,
+    PONestedModuleOverridenSecondary,
+)
+from web_poet.overrides import find_page_object_overrides, PageObjectRegistry
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
@@ -65,5 +68,11 @@ def test_list_page_objects_from_non_existing_registry():
 
 
 def test_cmd():
-    from  web_poet.__main__ import main
-    main(["tests.po_lib"])
+    from web_poet.__main__ import main
+
+    assert main(["tests.po_lib"]) is None
+
+
+def test_registry_repr():
+    registry = PageObjectRegistry(name="test")
+    assert "name='test'" in str(registry)
