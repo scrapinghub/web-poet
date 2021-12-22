@@ -96,16 +96,19 @@ Viewing all available Overrides
 
 A convenience function is available discover and retrieve all rules from your
 project. Make sure to check out :ref:`Overrides API section <api-overrides>`
-to see the other functionalities of ``find_page_object_overrides``.
+to see the other functionalities.
 
 .. code-block::
 
-    from web_poet import find_page_object_overrides
+    from web_poet import default_registry
 
-    rules = find_page_object_overrides("my_project.page_objects")
+    # Retrieves all rules that were registered in the registry
+    rules = default_registry.get_overrides() 
+
+    # Or, we could also filter out the rules by the module they were defined in
+    rules = default_registry.get_overrides_from_module("my_project.page_objects")
 
     print(len(rules))  # 3
-
     print(rules[0])  # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
 
 

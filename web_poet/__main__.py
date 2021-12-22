@@ -1,9 +1,11 @@
+"""Returns all Override Rules from the default registry."""
+
 import argparse
 from typing import Callable
 
 import tabulate
 
-from web_poet.overrides import find_page_object_overrides
+from web_poet import default_registry
 
 
 def qualified_name(cls: Callable) -> str:
@@ -19,14 +21,6 @@ def main(args=None):
         metavar="PKG_OR_MODULE",
         type=str,
         help="A package or module to list overrides from",
-    )
-    parser.add_argument(
-        "--registry",
-        "-n",
-        metavar="REGISTRY_NAME",
-        type=str,
-        help="Registry name to list overrides from",
-        default="default",
     )
     args = parser.parse_args(args)
     table = [
@@ -48,7 +42,7 @@ def main(args=None):
             rule.for_patterns.priority,
             rule.meta,
         )
-        for rule in find_page_object_overrides(args.module, registry_name=args.registry)
+        for rule in default_registry.get_overrides_from_module(args.module)
     ]
     print(tabulate.tabulate(table, headers="firstrow"))
 

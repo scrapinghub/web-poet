@@ -1,24 +1,45 @@
 import pytest
 from url_matcher import Patterns
 
-from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
+from tests.po_sub_lib import POSubLib
+from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2, secondary_registry
 from tests.po_lib.a_module import POModule
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import (
     PONestedModule,
     PONestedModuleOverridenSecondary,
 )
-from web_poet.overrides import find_page_object_overrides, PageObjectRegistry
+from web_poet.overrides import PageObjectRegistry, default_registry
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
 
 
+def test_list_page_objects_all():
+    rules = default_registry.get_overrides()
+
+    page_objects = {po.use for po in rules}
+
+    # Ensure that ALL Override Rules are returned as long as the given
+    # registry's @handle_urls annotation was used.
+    assert page_objects == POS.union({POSubLib})
+    for rule in rules:
+        assert rule.instead_of == rule.use.expected_overrides, rule.use
+        assert rule.for_patterns == rule.use.expected_patterns, rule.use
+        assert rule.meta == rule.use.expected_meta, rule.use
+
+
 def test_list_page_objects_from_pkg():
     """Tests that metadata is extracted properly from the po_lib package"""
-    rules = find_page_object_overrides("tests.po_lib")
-    assert {po.use for po in rules} == POS
+    rules = default_registry.get_overrides_from_module("tests.po_lib")
+    page_objects = {po.use for po in rules}
 
+    # Ensure that the "tests.po_lib", which imports another module named
+    # "tests.po_sub_lib" which contains @handle_urls decorators, does not
+    # retrieve the override rules from the external package.
+    assert POSubLib not in page_objects
+
+    assert page_objects == POS
     for rule in rules:
         assert rule.instead_of == rule.use.expected_overrides, rule.use
         assert rule.for_patterns == rule.use.expected_patterns, rule.use
@@ -26,7 +47,7 @@ def test_list_page_objects_from_pkg():
 
 
 def test_list_page_objects_from_module():
-    rules = find_page_object_overrides("tests.po_lib.a_module")
+    rules = default_registry.get_overrides_from_module("tests.po_lib.a_module")
     assert len(rules) == 1
     rule = rules[0]
     assert rule.use == POModule
@@ -35,22 +56,22 @@ def test_list_page_objects_from_module():
 
 
 def test_list_page_objects_from_empty_module():
-    rules = find_page_object_overrides("tests.po_lib.an_empty_module")
+    rules = default_registry.get_overrides_from_module("tests.po_lib.an_empty_module")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_empty_pkg():
-    rules = find_page_object_overrides("tests.po_lib.an_empty_package")
+    rules = default_registry.get_overrides_from_module("tests.po_lib.an_empty_package")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_unknown_module():
     with pytest.raises(ImportError):
-        find_page_object_overrides("tests.po_lib.unknown_module")
+        default_registry.get_overrides_from_module("tests.po_lib.unknown_module")
 
 
 def test_list_page_objects_from_imported_registry():
-    rules = find_page_object_overrides("tests.po_lib", registry_name="secondary")
+    rules = secondary_registry.get_overrides_from_module("tests.po_lib")
     assert len(rules) == 2
     rule_for = {po.use: po for po in rules}
 
@@ -63,16 +84,7 @@ def test_list_page_objects_from_imported_registry():
     assert pones.instead_of == PONestedModuleOverridenSecondary
 
 
-def test_list_page_objects_from_non_existing_registry():
-    assert find_page_object_overrides("tests.po_lib", registry_name="not-exist") == []
-
-
 def test_cmd():
     from web_poet.__main__ import main
 
     assert main(["tests.po_lib"]) is None
-
-
-def test_registry_repr():
-    registry = PageObjectRegistry(name="test")
-    assert "name='test'" in str(registry)

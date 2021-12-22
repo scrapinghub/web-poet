@@ -2,29 +2,16 @@ import importlib
 import importlib.util
 import warnings
 import pkgutil
-import sys
 from dataclasses import dataclass, field
 from typing import Iterable, Union, List, Callable, Dict, Any
 
 from url_matcher import Patterns
 
-# Used by ``PageObjectRegistry`` to declare itself in a module so that it's
-# easily discovered by ``find_page_object_overrides()`` later on.
-REGISTRY_MODULE_ANCHOR = "_registry_module_anchor_"
-
-
-@dataclass(frozen=True)
-class HandleUrlsSpec:
-    """Meta information used by the :py:func:`web_poet.handle_urls` decorator"""
-
-    patterns: Patterns
-    overrides: Callable
-    meta: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass(frozen=True)
 class OverrideRule:
-    """A single override rule. Specify when a page object should be used instead of another"""
+    """A single override rule that specifies when a page object should be used
+    instead of another."""
 
     for_patterns: Patterns
     use: Callable
@@ -59,8 +46,8 @@ class PageObjectRegistry:
 
         from web_poet import PageObjectRegistry
 
-        main_registry = PageObjectRegistry(name="main")
-        secondary_registry = PageObjectRegistry(name="secondary")
+        main_registry = PageObjectRegistry()
+        secondary_registry = PageObjectRegistry()
 
         @main_registry.handle_urls("example.com", overrides=ProductPageObject)
         @secondary_registry.handle_urls("example.com", overrides=ProductPageObject)
@@ -77,55 +64,38 @@ class PageObjectRegistry:
 
     .. code-block:: python
 
-        from web_poet import find_page_object_overrides
+        rules_main = main_registry.get_overrides()
+        rules_secondary = main_registry.get_overrides()
 
-        po_path = "my_scrapy_project.page_objects"
-
-        rules_main = find_page_object_overrides(po_path, registry_name="main")
-        rules_secondary = find_page_object_overrides(po_path, registry_name="secondary")
-
-    However, ``web-poet`` already contains a default Registry named ``"default"``.
-    It can be directly accessed via:
+    On the other hand, ``web-poet`` already provides a default Registry named
+    ``default_registry`` for convenience. It can be directly accessed via:
 
     .. code-block:: python
 
-        from web_poet import handle_urls, find_page_object_overrides
+        from web_poet import handle_urls, default_registry
 
         @handle_urls("example.com", overrides=ProductPageObject)
         class ExampleComProductPage(ItemPage):
             ...
 
-        # The `registry` is already set to 'default'
-        find_page_object_overrides("my_scrapy_project.page_objects")
+        override_rules = default_registry.get_overrides()
 
-    Notice that there was no need to directly use the ``PageObjectRegistry`` as
-    the convenience functions would suffice. In addition, if you need to organize
-    your Page Objects in your Scrapy project, a single (1) instance of the
-    ``PageObjectRegistry`` would work, as long as you organize your files
-    into modules. The rules could then be accessed like:
+    Notice that the ``handle_urls`` that we've imported is a part of
+    ``default_registry``. This provides a shorter and quicker way to interact
+    with the built-in default Registry.
 
-    * ``find_page_object_overrides("my_scrapy_project.page_objects.site_A")``
-    * ``find_page_object_overrides("my_scrapy_project.page_objects.site_B")``
+    In addition, if you need to organize your Page Objects in your project, a
+    single (1) default instance of the ``PageObjectRegistry`` would work, as
+    long as you organize your files into modules.
+
+    The rules could then be accessed using this method:
+
+    * ``default_registry.get_overrides_from_module("my_scrapy_project.page_objects.site_A")``
+    * ``default_registry.get_overrides_from_module("my_scrapy_project.page_objects.site_B")``
     """
 
-    def __init__(self, name: str = ""):
-        self.name = name
-        self.data: Dict[Callable, HandleUrlsSpec] = {}
-
-    def _declare_registry_in_module(self, cls):
-        """This allows the Registry to be easily discovered later on by
-        ``find_page_object_overrides()`` by explicitly declaring its presence
-        on the given module.
-        """
-
-        module = sys.modules[cls.__module__]
-        if not hasattr(module, REGISTRY_MODULE_ANCHOR):
-            registries = {self.name: self}
-        else:
-            registries = getattr(module, REGISTRY_MODULE_ANCHOR)
-            registries[self.name] = self
-
-        setattr(module, REGISTRY_MODULE_ANCHOR, registries)
+    def __init__(self):
+        self.data: Dict[Callable, OverrideRule] = {}
 
     def handle_urls(
         self,
@@ -157,20 +127,19 @@ class PageObjectRegistry:
         """
 
         def wrapper(cls):
-            self._declare_registry_in_module(cls)
-
-            spec = HandleUrlsSpec(
-                patterns=Patterns(
+            rule = OverrideRule(
+                for_patterns=Patterns(
                     include=_as_list(include),
                     exclude=_as_list(exclude),
                     priority=priority,
                 ),
-                overrides=overrides,
+                use=cls,
+                instead_of=overrides,
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
             if cls not in self.data:
-                self.data[cls] = spec
+                self.data[cls] = rule
             else:
                 warnings.warn(
                     f"Multiple @handle_urls annotations with the same 'overrides' "
@@ -182,33 +151,44 @@ class PageObjectRegistry:
 
         return wrapper
 
-    def get_data_from_module(self, module: str) -> Dict[Callable, HandleUrlsSpec]:
-        """Returns the override mappings that were declared using ``handle_urls``
+    def get_overrides(self) -> List[OverrideRule]:
+        """Returns all override rules that were declared using ``@handle_urls``."""
+        return list(self.data.values())
+
+    def get_overrides_from_module(self, module: str) -> List[OverrideRule]:
+        """Returns the override rules that were declared using ``@handle_urls``
         in a specific module.
 
         This is useful if you've organized your Page Objects into multiple
-        submodules in your project.
+        submodules in your project as you can filter them easily.
         """
+        rules: Dict[Callable, OverrideRule] = {}
+
+        for mod in walk_modules(module):
+            # Dict ensures that no duplicates are collected and returned.
+            rules.update(self._filter_from_module(mod.__name__))
+
+        return list(rules.values())
+
+    def _filter_from_module(self, module: str) -> Dict[Callable, OverrideRule]:
         return {
-            cls: spec
-            for cls, spec in self.data.items()
+            cls: rule
+            for cls, rule in self.data.items()
             if cls.__module__.startswith(module)
         }
-
-    def __repr__(self) -> str:
-        return f"PageObjectRegistry(name='{self.name}')"
 
 
 # For ease of use, we'll create a default registry so that users can simply
 # use its `handles_url()` method directly by `from web_poet import handles_url`
-default_registry = PageObjectRegistry(name="default")
+default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls
 
 
 def walk_modules(module: str) -> Iterable:
-    """
-    Return all modules from a module recursively. Note that this will import all the modules and submodules.
-    It returns the provided module as well.
+    """Return all modules from a module recursively.
+
+    Note that this will import all the modules and submodules. It returns the
+    provided module as well.
     """
 
     def onerror(err):
@@ -225,42 +205,3 @@ def walk_modules(module: str) -> Iterable:
         ):
             mod = importlib.import_module(info.name)
             yield mod
-
-
-def find_page_object_overrides(
-    module: str, registry_name: str = "default"
-) -> List[OverrideRule]:
-    """
-    Find all the Page Objects overrides in the given module/package and its
-    submodules.
-
-    The Page Objects that have been decorated with the ``handle_urls`` decorator
-    from the specified Registry ``name`` will be returned.
-
-    Note that this will explore the `module` and traverse its `submodules`.
-
-    :param module: The module or package to search in
-    :param registry_name: Only return page objects overrides in this registry
-    :return: Return a list of :py:class:`web_poet.overrides.OverrideRule` metadata.
-    """
-
-    page_objects: Dict[Callable, HandleUrlsSpec] = {}
-    for mod in walk_modules(module):
-        handle_urls_dict = getattr(mod, REGISTRY_MODULE_ANCHOR, {})
-
-        # A module could have multiple non-default PageObjectRegistry instances
-        registry = handle_urls_dict.get(registry_name)
-        if not registry:
-            continue
-
-        page_objects.update(registry.get_data_from_module(mod.__name__))
-
-    return [
-        OverrideRule(
-            for_patterns=spec.patterns,
-            use=po,
-            instead_of=spec.overrides,
-            meta=spec.meta,
-        )
-        for po, spec in page_objects.items()
-    ]
