@@ -86,9 +86,44 @@ The code above declares that:
       when we're parsing pages from ``anotherexample.com`` which doesn't contain
       ``/digital-goods/`` in its URL path.
 
-The override mechanism that ``web-poet`` offers could also still be further
+The override mechanism that ``web-poet`` offers could still be further
 customized. You can read some of the specific parameters and alternative ways
 to organize the rules via the :ref:`Overrides API section <api-overrides>`.
+
+To demonstrate another alternative way to declare the Override rules, see the
+code example below:
+
+.. code-block:: python
+
+    from web_poet.pages import ItemWebPage
+    from web_poet import PageObjectRegistry
+
+    primary_registry = PageObjectRegistry()
+    secondary_registry = PageObjectRegistry()
+
+    class GenericProductPage(ItemWebPage):
+        def to_item(self):
+            return {"product title": self.css("title::text").get()}
+
+    @primary_registry.handle_urls("example.com", overrides=GenericProductPage)
+    class ExampleProductPage(ItemWebPage):
+        def to_item(self):
+            ...  # more specific parsing
+
+    @secondary_registry.handle_urls("anotherexample.com", overrides=GenericProductPage, exclude="/digital-goods/")
+    class AnotherExampleProductPage(ItemWebPage):
+        def to_item(self):
+            ...  # more specific parsing
+
+    @primary_registry.handle_urls(["dualexample.com", "dualexample.net"], overrides=GenericProductPage)
+    @secondary_registry.handle_urls(["dualexample.com", "dualexample.net"], overrides=GenericProductPage)
+    class DualExampleProductPage(ItemWebPage):
+        def to_item(self):
+
+If you need more control over the Registry, you could instantiate your very
+own :class:`~.PageObjectRegistry` and use its ``@handle_urls`` to annotate and
+register the rules. This might benefit you in certain project use cases where you
+need more organizational control over your rules.
 
 
 Viewing all available Overrides
@@ -111,6 +146,13 @@ to see the other functionalities.
     print(len(rules))  # 3
     print(rules[0])  # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
 
+.. note::
+
+    Notice in the code sample above where we could filter out the Override rules
+    per module via :meth:`~.PageObjectRegistry.get_overrides_from_module`. This
+    could also offer another alternative way to organize your Page Object rules
+    using only the ``default_registry``. There's no need to declare multiple
+    :class:`~.PageObjectRegistry` instances and use multiple annotations.
 
 A handy CLI tool is also available at your disposal to quickly see the available
 Override rules in a given module in your project. For example, invoking something
