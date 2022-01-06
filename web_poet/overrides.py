@@ -2,7 +2,9 @@ import importlib
 import importlib.util
 import warnings
 import pkgutil
+from collections import deque
 from dataclasses import dataclass, field
+from types import ModuleType
 from typing import Iterable, Union, List, Callable, Dict, Any
 
 from url_matcher import Patterns
@@ -164,7 +166,7 @@ class PageObjectRegistry:
         """
         rules: Dict[Callable, OverrideRule] = {}
 
-        for mod in walk_modules(module):
+        for mod in walk_module(module):
             # Dict ensures that no duplicates are collected and returned.
             rules.update(self._filter_from_module(mod.__name__))
 
@@ -191,7 +193,7 @@ default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls
 
 
-def walk_modules(module: str) -> Iterable:
+def walk_module(module: str) -> Iterable:
     """Return all modules from a module recursively.
 
     Note that this will import all the modules and submodules. It returns the
@@ -212,3 +214,41 @@ def walk_modules(module: str) -> Iterable:
         ):
             mod = importlib.import_module(info.name)
             yield mod
+
+
+def consume_modules(*modules: str) -> None:
+    """A quick wrapper for :func:`~.walk_module` to efficiently consume the
+    generator and recursively load all packages/modules.
+
+    This function is essential to be run before calling :meth:`~.PageObjectRegistry.get_overrides`
+    from the :class:`~.PageObjectRegistry`. It essentially ensures that the
+    ``@handle_urls`` are properly acknowledged for modules/packages that are not
+    imported.
+
+    Let's take a look at an example:
+
+    .. code-block:: python
+
+        # my_page_obj_project/load_rules.py
+
+        from web_poet import default_registry, consume_modules
+
+        consume_modules("other_external_pkg.po", "another_pkg.lib")
+        rules = default_registry.get_overrides()
+
+    For this case, the Override rules are coming from:
+
+        - ``my_page_obj_project`` `(since it's the same module as the file above)`
+        - ``other_external_pkg.po``
+        - ``another_pkg.lib``
+
+    So if the ``default_registry`` had other ``@handle_urls`` annotations outside
+    of the packages/modules list above, then the Override rules won't be returned.
+    """
+
+    for module in modules:
+        gen = walk_module(module)
+
+        # Inspired by itertools recipe: https://docs.python.org/3/library/itertools.html
+        # Using a deque() results in a tiny bit performance improvement that list().
+        deque(gen, maxlen=0)

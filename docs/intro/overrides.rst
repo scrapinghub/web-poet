@@ -161,6 +161,31 @@ to see the other functionalities.
     using only the ``default_registry``. There's no need to declare multiple
     :class:`~.PageObjectRegistry` instances and use multiple annotations.
 
+.. warning::
+
+    :meth:`~.PageObjectRegistry.get_overrides` relies on the fact that all essential
+    packages/modules which contains the :meth:`~.PageObjectRegistry.handle_urls`
+    annotations are properly loaded.
+
+    Thus, for cases like importing Page Objects from another external package, you'd
+    need to properly load all :meth:`~.PageObjectRegistry.handle_urls` annotations
+    from the external module. This ensures that the external Page Objects' have
+    their annotations properly loaded.
+
+    This can be done via the function named :func:`~.web_poet.overrides.consume_modules`.
+    Here's an example:
+
+    .. code-block:: python
+
+        from web_poet import default_registry, consume_modules
+
+        consume_modules("external_package_A.po", "another_ext_package.lib")
+        rules = default_registry.get_overrides()
+
+    **NOTE**: :func:`~.web_poet.overrides.consume_modules` must be called before
+    :meth:`~.PageObjectRegistry.get_overrides` for the imports to properly load.
+
+
 A handy CLI tool is also available at your disposal to quickly see the available
 Override rules in a given module in your project. For example, invoking something
 like ``web_poet my_project.page_objects`` would produce the following:
@@ -226,7 +251,7 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
 
 .. code-block:: python
 
-    from web_poet import default_registry
+    from web_poet import default_registry, consume_modules
 
     # We can do it per website.
     rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site")
@@ -236,11 +261,16 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us")
     rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr")
 
-    # or even drill down further to the specific module.
+    # Or even drill down further to the specific module.
     rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.products")
     rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
 
-    # Or simply all of Override rules ever declared.
+    # Or simply all of the Override rules ever declared.
+    rules = default_registry.get_overrides()
+
+    # Lastly, you'd need to properly load external packages/modules for the
+    # @handle_urls annotation to be correctly read.
+    consume_modules("external_package_A.po", "another_ext_package.lib")
     rules = default_registry.get_overrides()
 
 Multiple Registry Approach

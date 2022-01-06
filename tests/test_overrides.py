@@ -9,6 +9,7 @@ from tests.po_lib.nested_package.a_nested_module import (
     PONestedModule,
     PONestedModuleOverridenSecondary,
 )
+from web_poet import consume_modules
 from web_poet.overrides import PageObjectRegistry, default_registry
 
 
@@ -17,8 +18,18 @@ POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
 
 def test_list_page_objects_all():
     rules = default_registry.get_overrides()
-
     page_objects = {po.use for po in rules}
+
+    # Note that the 'tests_extra.po_lib_sub_not_imported.POLibSubNotImported'
+    # Page Object is not included here since it was never imported anywhere in
+    # our test package. It would only be included if we run any of the following
+    # below. (Note that they should run before `get_overrides` is called.)
+    #   - from tests_extra import po_lib_sub_not_imported
+    #   - import tests_extra.po_lib_sub_not_imported
+    #   - web_poet.consume_modules("tests_extra")
+    # Merely having `import tests_extra` won't work since the subpackages and
+    # modules needs to be traversed and imported as well.
+    assert all(["po_lib_sub_not_imported" not in po.__module__ for po in page_objects])
 
     # Ensure that ALL Override Rules are returned as long as the given
     # registry's @handle_urls annotation was used.
@@ -27,6 +38,16 @@ def test_list_page_objects_all():
         assert rule.instead_of == rule.use.expected_overrides, rule.use
         assert rule.for_patterns == rule.use.expected_patterns, rule.use
         assert rule.meta == rule.use.expected_meta, rule.use
+
+
+def test_list_page_objects_all_consume_modules():
+    """A test similar to the one above but calls ``consume_modules()`` to properly
+    load the @handle_urls annotations from other modules/packages.
+    """
+    consume_modules("tests_extra")
+    rules = default_registry.get_overrides()
+    page_objects = {po.use for po in rules}
+    assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
 
 def test_list_page_objects_from_pkg():
