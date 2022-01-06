@@ -5,7 +5,7 @@ from typing import Dict, Any, Callable
 
 from url_matcher import Patterns
 
-from .. import po_sub_lib  # NOTE: this module contains a PO with @handle_rules
+from .. import po_lib_sub # NOTE: this module contains a PO with @handle_rules
 from web_poet import handle_urls, PageObjectRegistry
 
 

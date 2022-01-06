@@ -174,12 +174,19 @@ class PageObjectRegistry:
         return {
             cls: rule
             for cls, rule in self.data.items()
-            if cls.__module__.startswith(module)
+
+            # A "." is added at the end to prevent incorrect matching on cases
+            # where package names are substrings of one another. For example,
+            # if module = "my_project.po_lib", then it filters like so:
+            #   - "my_project.po_lib_sub.POLibSub"                (filtered out)
+            #   - "my_project.po_lib.POTopLevel1"                 (accepted)
+            #   - "my_project.po_lib.nested_package.PONestedPkg"  (accepted)
+            if cls.__module__.startswith(module + ".") or cls.__module__ == module
         }
 
 
 # For ease of use, we'll create a default registry so that users can simply
-# use its `handles_url()` method directly by `from web_poet import handles_url`
+# use its `handle_urls()` method directly by `from web_poet import handle_urls`
 default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls
 

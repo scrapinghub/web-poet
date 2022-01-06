@@ -14,12 +14,12 @@ class POBase:
     expected_meta: Dict[str, Any]
 
 
-class POSubLibOverriden:
+class POLibSubOverriden:
     ...
 
 
-@handle_urls("sub_example.com", POSubLibOverriden)
-class POSubLib(POBase):
-    expected_overrides = POSubLibOverriden
+@handle_urls("sub_example.com", POLibSubOverriden)
+class POLibSub(POBase):
+    expected_overrides = POLibSubOverriden
     expected_patterns = Patterns(["sub_example.com"])
     expected_meta = {}  # type: ignore

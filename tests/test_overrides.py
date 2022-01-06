@@ -1,7 +1,7 @@
 import pytest
 from url_matcher import Patterns
 
-from tests.po_sub_lib import POSubLib
+from tests.po_lib_sub import POLibSub
 from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2, secondary_registry
 from tests.po_lib.a_module import POModule
 from tests.po_lib.nested_package import PONestedPkg
@@ -22,7 +22,7 @@ def test_list_page_objects_all():
 
     # Ensure that ALL Override Rules are returned as long as the given
     # registry's @handle_urls annotation was used.
-    assert page_objects == POS.union({POSubLib})
+    assert page_objects == POS.union({POLibSub})
     for rule in rules:
         assert rule.instead_of == rule.use.expected_overrides, rule.use
         assert rule.for_patterns == rule.use.expected_patterns, rule.use
@@ -35,9 +35,9 @@ def test_list_page_objects_from_pkg():
     page_objects = {po.use for po in rules}
 
     # Ensure that the "tests.po_lib", which imports another module named
-    # "tests.po_sub_lib" which contains @handle_urls decorators, does not
+    # "tests.po_lib_sub" which contains @handle_urls decorators, does not
     # retrieve the override rules from the external package.
-    assert POSubLib not in page_objects
+    assert POLibSub not in page_objects
 
     assert page_objects == POS
     for rule in rules:
