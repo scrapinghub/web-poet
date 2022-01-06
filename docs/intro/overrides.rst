@@ -70,21 +70,28 @@ Let's take a look at how the following code is structured:
         def to_item(self):
             ...  # more specific parsing
 
-    @handle_urls(["dualexample.com", "dualexample.net"], overrides=GenericProductPage)
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
     class DualExampleProductPage(ItemWebPage):
         def to_item(self):
             ...  # more specific parsing
 
 The code above declares that:
 
-    - For sites that matches the ``example.com`` pattern, ``ExampleProductPage``
+    - For sites that match the ``example.com`` pattern, ``ExampleProductPage``
       would be used instead of ``GenericProductPage``.
-    - The same is true for ``YetAnotherExampleProductPage`` where it is used
-      instead of ``GenericProductPage`` for two URLs: ``dualexample.com`` and
-      ``dualexample.net``.
-    - However, ``AnotherExampleProductPage`` is only used instead of ``GenericProductPage``
-      when we're parsing pages from ``anotherexample.com`` which doesn't contain
-      ``/digital-goods/`` in its URL path.
+    - The same is true for ``DualExampleProductPage`` where it is used
+      instead of ``GenericProductPage`` for two URL patterns which works as:
+
+      - **(match)** https://www.dualexample.com/shop/electronics/?product=123
+      - **(match)** https://www.dualexample.com/shop/books/paperback/?product=849
+      - (NO match) https://www.dualexample.com/on-sale/books/?product=923
+      - **(match)** https://www.dualexample.net/store/kitchen/?pid=776
+      - **(match)** https://www.dualexample.net/store/?pid=892
+      - (NO match) https://www.dualexample.net/new-offers/fitness/?pid=892
+
+    - On the other hand, ``AnotherExampleProductPage`` is only used instead of
+      ``GenericProductPage`` when we're parsing pages from ``anotherexample.com``
+      which doesn't contain ``/digital-goods/`` in its URL path.
 
 The override mechanism that ``web-poet`` offers could still be further
 customized. You can read some of the specific parameters and alternative ways
@@ -115,10 +122,11 @@ code example below:
         def to_item(self):
             ...  # more specific parsing
 
-    @primary_registry.handle_urls(["dualexample.com", "dualexample.net"], overrides=GenericProductPage)
-    @secondary_registry.handle_urls(["dualexample.com", "dualexample.net"], overrides=GenericProductPage)
+    @primary_registry.handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
+    @secondary_registry.handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
     class DualExampleProductPage(ItemWebPage):
         def to_item(self):
+            ...  # more specific parsing
 
 If you need more control over the Registry, you could instantiate your very
 own :class:`~.PageObjectRegistry` and use its ``@handle_urls`` to annotate and
@@ -159,11 +167,11 @@ like ``web_poet my_project.page_objects`` would produce the following:
 
 .. code-block::
 
-    Use this                                              instead of                                  for the URL patterns                    except for the patterns      with priority  meta
-    ----------------------------------------------------  ------------------------------------------  --------------------------------------  -------------------------  ---------------  ------
-    my_project.page_objects.ExampleProductPage            my_project.page_objects.GenericProductPage  ['example.com']                         []                                     500  {}
-    my_project.page_objects.AnotherExampleProductPage     my_project.page_objects.GenericProductPage  ['anotherexample.com']                  ['/digital-goods/']                    500  {}
-    my_project.page_objects.DualExampleProductPage        my_project.page_objects.GenericProductPage  ['dualexample.com', 'dualexample.net']  []                                     500  {}
+    Use this                                              instead of                                  for the URL patterns                                                 except for the patterns      with priority  meta
+    ----------------------------------------------------  ------------------------------------------  --------------------------------------                               -------------------------  ---------------  ------
+    my_project.page_objects.ExampleProductPage            my_project.page_objects.GenericProductPage  ['example.com']                                                      []                                     500  {}
+    my_project.page_objects.AnotherExampleProductPage     my_project.page_objects.GenericProductPage  ['anotherexample.com']                                               ['/digital-goods/']                    500  {}
+    my_project.page_objects.DualExampleProductPage        my_project.page_objects.GenericProductPage  ['dualexample.com/shop/?product=*', 'dualexample.net/store/?pid=*']  []                                     500  {}
 
 Organizing Page Object Overrides
 --------------------------------
