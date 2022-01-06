@@ -90,8 +90,8 @@ class PageObjectRegistry:
 
     The rules could then be accessed using this method:
 
-    * ``default_registry.get_overrides_from_module("my_scrapy_project.page_objects.site_A")``
-    * ``default_registry.get_overrides_from_module("my_scrapy_project.page_objects.site_B")``
+    * ``default_registry.get_overrides_from("my_scrapy_project.page_objects.site_A")``
+    * ``default_registry.get_overrides_from("my_scrapy_project.page_objects.site_B")``
     """
 
     def __init__(self):
@@ -155,7 +155,7 @@ class PageObjectRegistry:
         """Returns all override rules that were declared using ``@handle_urls``."""
         return list(self.data.values())
 
-    def get_overrides_from_module(self, module: str) -> List[OverrideRule]:
+    def get_overrides_from(self, module: str) -> List[OverrideRule]:
         """Returns the override rules that were declared using ``@handle_urls``
         in a specific module.
 

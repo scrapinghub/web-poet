@@ -42,7 +42,7 @@ def main(args=None):
             rule.for_patterns.priority,
             rule.meta,
         )
-        for rule in default_registry.get_overrides_from_module(args.module)
+        for rule in default_registry.get_overrides_from(args.module)
     ]
     print(tabulate.tabulate(table, headers="firstrow"))
 

@@ -148,7 +148,7 @@ to see the other functionalities.
     rules = default_registry.get_overrides()
 
     # Or, we could also filter out the rules by the module they were defined in
-    rules = default_registry.get_overrides_from_module("my_project.page_objects")
+    rules = default_registry.get_overrides_from("my_project.page_objects")
 
     print(len(rules))  # 3
     print(rules[0])  # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
@@ -156,7 +156,7 @@ to see the other functionalities.
 .. note::
 
     Notice in the code sample above where we could filter out the Override rules
-    per module via :meth:`~.PageObjectRegistry.get_overrides_from_module`. This
+    per module via :meth:`~.PageObjectRegistry.get_overrides_from`. This
     could also offer another alternative way to organize your Page Object rules
     using only the ``default_registry``. There's no need to declare multiple
     :class:`~.PageObjectRegistry` instances and use multiple annotations.
@@ -229,16 +229,16 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     from web_poet import default_registry
 
     # We can do it per website.
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site")
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.furniture_site")
+    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site")
+    rules = default_registry.get_overrides_from("my_page_obj_project.furniture_site")
 
     # It can also drill down to the country domains on a given site.
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.us")
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.fr")
+    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us")
+    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr")
 
     # or even drill down further to the specific module.
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.us.products")
-    rules = default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.us.product_listings")
+    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.products")
+    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
 
     # Or simply all of Override rules ever declared.
     rules = default_registry.get_overrides()
@@ -262,7 +262,7 @@ hierarchy** like this:
     ├── furniture_shop_products.py
     └── furniture_shop_product_listings.py
 
-As such, calling ``default_registry.get_overrides_from_module()`` would not work
+As such, calling ``default_registry.get_overrides_from()`` would not work
 on projects with a **flat hierarchy**. Thus, we can organize them using our own
 instances of the :class:`~.PageObjectRegistry` instead:
 
@@ -347,9 +347,9 @@ retrieve such rules would be:
     from web_poet import default_registry
 
     product_listing_rules = [
-        default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.us.product_listings")
-        + default_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site.fr.product_listings")
-        + default_registry.get_overrides_from_module("my_page_obj_project.furniture_shop.product_listings")
+        default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
+        + default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr.product_listings")
+        + default_registry.get_overrides_from("my_page_obj_project.furniture_shop.product_listings")
     ]
 
 On the other hand, we can also create another :class:`~.PageObjectRegistry` instance
@@ -392,4 +392,4 @@ Retrieving all of the Product Listing Override rules would simply be:
     rules = product_listings_registry.get_overrides()
 
     # We can also filter it down further on a per site basis if needed.
-    rules = product_listings_registry.get_overrides_from_module("my_page_obj_project.cool_gadget_site")
+    rules = product_listings_registry.get_overrides_from("my_page_obj_project.cool_gadget_site")

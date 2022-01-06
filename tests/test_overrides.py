@@ -31,7 +31,7 @@ def test_list_page_objects_all():
 
 def test_list_page_objects_from_pkg():
     """Tests that metadata is extracted properly from the po_lib package"""
-    rules = default_registry.get_overrides_from_module("tests.po_lib")
+    rules = default_registry.get_overrides_from("tests.po_lib")
     page_objects = {po.use for po in rules}
 
     # Ensure that the "tests.po_lib", which imports another module named
@@ -47,7 +47,7 @@ def test_list_page_objects_from_pkg():
 
 
 def test_list_page_objects_from_module():
-    rules = default_registry.get_overrides_from_module("tests.po_lib.a_module")
+    rules = default_registry.get_overrides_from("tests.po_lib.a_module")
     assert len(rules) == 1
     rule = rules[0]
     assert rule.use == POModule
@@ -56,22 +56,22 @@ def test_list_page_objects_from_module():
 
 
 def test_list_page_objects_from_empty_module():
-    rules = default_registry.get_overrides_from_module("tests.po_lib.an_empty_module")
+    rules = default_registry.get_overrides_from("tests.po_lib.an_empty_module")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_empty_pkg():
-    rules = default_registry.get_overrides_from_module("tests.po_lib.an_empty_package")
+    rules = default_registry.get_overrides_from("tests.po_lib.an_empty_package")
     assert len(rules) == 0
 
 
 def test_list_page_objects_from_unknown_module():
     with pytest.raises(ImportError):
-        default_registry.get_overrides_from_module("tests.po_lib.unknown_module")
+        default_registry.get_overrides_from("tests.po_lib.unknown_module")
 
 
 def test_list_page_objects_from_imported_registry():
-    rules = secondary_registry.get_overrides_from_module("tests.po_lib")
+    rules = secondary_registry.get_overrides_from("tests.po_lib")
     assert len(rules) == 2
     rule_for = {po.use: po for po in rules}
 
