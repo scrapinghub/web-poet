@@ -67,13 +67,28 @@ def test_list_page_objects_from_pkg():
         assert rule.meta == rule.use.expected_meta, rule.use
 
 
-def test_list_page_objects_from_module():
+def test_list_page_objects_from_single():
     rules = default_registry.get_overrides_from("tests.po_lib.a_module")
     assert len(rules) == 1
     rule = rules[0]
     assert rule.use == POModule
     assert rule.for_patterns == POModule.expected_patterns
     assert rule.instead_of == POModule.expected_overrides
+
+def test_list_page_objects_from_multiple():
+    rules = default_registry.get_overrides_from(
+        "tests.po_lib.a_module",
+        "tests.po_lib.nested_package.a_nested_module"
+    )
+    assert len(rules) == 2
+
+    assert rules[0].use == POModule
+    assert rules[0].for_patterns == POModule.expected_patterns
+    assert rules[0].instead_of == POModule.expected_overrides
+
+    assert rules[1].use == PONestedModule
+    assert rules[1].for_patterns == PONestedModule.expected_patterns
+    assert rules[1].instead_of == PONestedModule.expected_overrides
 
 
 def test_list_page_objects_from_empty_module():

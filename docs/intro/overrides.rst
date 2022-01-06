@@ -254,16 +254,16 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     from web_poet import default_registry, consume_modules
 
     # We can do it per website.
-    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site")
-    rules = default_registry.get_overrides_from("my_page_obj_project.furniture_site")
+    rules_gadget = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site")
+    rules_furniture = default_registry.get_overrides_from("my_page_obj_project.furniture_site")
 
     # It can also drill down to the country domains on a given site.
-    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us")
-    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr")
+    rules_gadget_us = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us")
+    rules_gadget_fr = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr")
 
     # Or even drill down further to the specific module.
-    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.products")
-    rules = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
+    rules_gadget_us_products = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.products")
+    rules_gadget_us_listings = default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
 
     # Or simply all of the Override rules ever declared.
     rules = default_registry.get_overrides()
@@ -272,6 +272,12 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     # @handle_urls annotation to be correctly read.
     consume_modules("external_package_A.po", "another_ext_package.lib")
     rules = default_registry.get_overrides()
+
+.. warning::
+
+    Remember to consider calling :func:`~.web_poet.overrides.consume_modules`
+    when using :meth:`~.PageObjectRegistry.get_overrides` in case you have some
+    external package containing Page Objects of interest.
 
 Multiple Registry Approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -376,11 +382,11 @@ retrieve such rules would be:
 
     from web_poet import default_registry
 
-    product_listing_rules = [
-        default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.us.product_listings")
-        + default_registry.get_overrides_from("my_page_obj_project.cool_gadget_site.fr.product_listings")
-        + default_registry.get_overrides_from("my_page_obj_project.furniture_shop.product_listings")
-    ]
+    product_listing_rules = default_registry.get_overrrides_from(
+        "my_page_obj_project.cool_gadget_site.us.product_listings",
+        "my_page_obj_project.cool_gadget_site.fr.product_listings",
+        "my_page_obj_project.furniture_shop.product_listings"
+    )
 
 On the other hand, we can also create another :class:`~.PageObjectRegistry` instance
 that we'll be using aside from the ``default_registry`` to help us better organize

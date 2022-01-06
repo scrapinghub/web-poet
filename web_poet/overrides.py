@@ -157,18 +157,19 @@ class PageObjectRegistry:
         """Returns all override rules that were declared using ``@handle_urls``."""
         return list(self.data.values())
 
-    def get_overrides_from(self, module: str) -> List[OverrideRule]:
+    def get_overrides_from(self, *pkgs_or_modules: str) -> List[OverrideRule]:
         """Returns the override rules that were declared using ``@handle_urls``
-        in a specific module.
+        in a specific modules/packages.
 
         This is useful if you've organized your Page Objects into multiple
         submodules in your project as you can filter them easily.
         """
+        # Dict ensures that no duplicates are collected and returned.
         rules: Dict[Callable, OverrideRule] = {}
 
-        for mod in walk_module(module):
-            # Dict ensures that no duplicates are collected and returned.
-            rules.update(self._filter_from_module(mod.__name__))
+        for item in pkgs_or_modules:
+            for mod in walk_module(item):
+                rules.update(self._filter_from_module(mod.__name__))
 
         return list(rules.values())
 
