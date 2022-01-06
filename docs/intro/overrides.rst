@@ -279,6 +279,9 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     when using :meth:`~.PageObjectRegistry.get_overrides` in case you have some
     external package containing Page Objects of interest.
 
+    This enables the :meth:`~.PageObjectRegistry.handle_urls` that annotates
+    the external Page Objects to be properly loadeded.
+
 Multiple Registry Approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

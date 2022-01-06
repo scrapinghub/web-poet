@@ -154,7 +154,17 @@ class PageObjectRegistry:
         return wrapper
 
     def get_overrides(self) -> List[OverrideRule]:
-        """Returns all override rules that were declared using ``@handle_urls``."""
+        """Returns all override rules that were declared using ``@handle_urls``.
+
+        .. warning::
+
+            Remember to consider calling :func:`~.web_poet.overrides.consume_modules`
+            when using :meth:`~.PageObjectRegistry.get_overrides` in case you have
+            some external package containing Page Objects of interest.
+
+            This enables the :meth:`~.PageObjectRegistry.handle_urls` that annotates
+            the external Page Objects to be properly loadeded.
+        """
         return list(self.data.values())
 
     def get_overrides_from(self, *pkgs_or_modules: str) -> List[OverrideRule]:
