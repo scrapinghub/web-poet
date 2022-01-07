@@ -10,7 +10,7 @@ from typing import Iterable, Union, List, Callable, Dict, Any
 from url_matcher import Patterns
 
 
-@dataclass(frozen=True)
+@dataclass
 class OverrideRule:
     """A single override rule that specifies when a page object should be used
     instead of another."""
@@ -97,7 +97,7 @@ class PageObjectRegistry:
     """
 
     def __init__(self):
-        self.data: Dict[Callable, OverrideRule] = {}
+        self._data: Dict[Callable, OverrideRule] = {}
 
     def handle_urls(
         self,
@@ -140,8 +140,8 @@ class PageObjectRegistry:
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
-            if cls not in self.data:
-                self.data[cls] = rule
+            if cls not in self._data:
+                self._data[cls] = rule
             else:
                 warnings.warn(
                     f"Multiple @handle_urls annotations with the same 'overrides' "
@@ -165,7 +165,7 @@ class PageObjectRegistry:
             This enables the :meth:`~.PageObjectRegistry.handle_urls` that annotates
             the external Page Objects to be properly loadeded.
         """
-        return list(self.data.values())
+        return list(self._data.values())
 
     def get_overrides_from(self, *pkgs_or_modules: str) -> List[OverrideRule]:
         """Returns the override rules that were declared using ``@handle_urls``
@@ -186,7 +186,7 @@ class PageObjectRegistry:
     def _filter_from_module(self, module: str) -> Dict[Callable, OverrideRule]:
         return {
             cls: rule
-            for cls, rule in self.data.items()
+            for cls, rule in self._data.items()
 
             # A "." is added at the end to prevent incorrect matching on cases
             # where package names are substrings of one another. For example,
@@ -196,6 +196,22 @@ class PageObjectRegistry:
             #   - "my_project.po_lib.nested_package.PONestedPkg"  (accepted)
             if cls.__module__.startswith(module + ".") or cls.__module__ == module
         }
+
+    @property
+    def data(self) -> Dict[Callable, OverrideRule]:
+        return self._data  # pragma: no cover
+
+    @data.setter
+    def data(self, value: Dict[Callable, OverrideRule]) -> None:
+        self._data = value  # pragma: no cover
+
+    def data_from(self, *pkgs_or_modules: str) -> Dict[Callable, OverrideRule]:
+        """Return ``data`` values that are filtered by package/module."""
+
+        results = {}
+        for item in pkgs_or_modules:
+            results.update(self._filter_from_module(item))
+        return results
 
 
 # For ease of use, we'll create a default registry so that users can simply

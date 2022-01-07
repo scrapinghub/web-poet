@@ -119,6 +119,12 @@ def test_list_page_objects_from_imported_registry():
     assert pones.for_patterns == Patterns(["example.com"])
     assert pones.instead_of == PONestedModuleOverridenSecondary
 
+def test_registry_data_from():
+    data = default_registry.data_from("tests.po_lib.nested_package")
+
+    assert len(data) == 2
+    assert PONestedModule in data
+    assert PONestedPkg in data
 
 def test_cmd():
     from web_poet.__main__ import main
