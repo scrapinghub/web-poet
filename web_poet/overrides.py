@@ -5,14 +5,16 @@ import pkgutil
 from collections import deque
 from dataclasses import dataclass, field
 from types import ModuleType
-from typing import Iterable, Union, List, Callable, Dict, Any
+from typing import Iterable, Optional, Union, List, Callable, Dict, Any
 
 from url_matcher import Patterns
+
+Strings = Union[str, Iterable[str]]
 
 
 @dataclass
 class OverrideRule:
-    """A single override rule that specifies when a page object should be used
+    """A single override rule that specifies when a Page Object should be used
     instead of another."""
 
     for_patterns: Patterns
@@ -21,7 +23,7 @@ class OverrideRule:
     meta: Dict[str, Any] = field(default_factory=dict)
 
 
-def _as_list(value: Union[str, Iterable[str], None]) -> List[str]:
+def _as_list(value: Optional[Strings]) -> List[str]:
     """
     >>> _as_list(None)
     []
@@ -92,8 +94,8 @@ class PageObjectRegistry:
 
     The rules could then be accessed using this method:
 
-    * ``default_registry.get_overrides_from("my_scrapy_project.page_objects.site_A")``
-    * ``default_registry.get_overrides_from("my_scrapy_project.page_objects.site_B")``
+    * ``default_registry.get_overrides(filters="my_scrapy_project.page_objects.site_A")``
+    * ``default_registry.get_overrides(filters="my_scrapy_project.page_objects.site_B")``
     """
 
     def __init__(self):
@@ -101,10 +103,10 @@ class PageObjectRegistry:
 
     def handle_urls(
         self,
-        include: Union[str, Iterable[str]],
+        include: Strings,
         overrides: Callable,
         *,
-        exclude: Union[str, Iterable[str], None] = None,
+        exclude: Optional[Strings] = None,
         priority: int = 500,
         **kwargs,
     ):
@@ -153,41 +155,46 @@ class PageObjectRegistry:
 
         return wrapper
 
-    def get_overrides(self) -> List[OverrideRule]:
-        """Returns all override rules that were declared using ``@handle_urls``.
+    def get_overrides(
+        self, consume: Optional[Strings] = None, filters: Optional[Strings] = None
+    ) -> List[OverrideRule]:
+        """Returns all Override Rules that were declared using ``@handle_urls``.
+
+        :param consume: packages/modules that need to be imported so that it can
+            properly load the :meth:`~.PageObjectRegistry.handle_urls` annotations.
+        :param filters: packages/modules that are of interest can be declared
+            here to easily extract the rules from them. Use this when you need
+            to pinpoint specific rules.
 
         .. warning::
 
-            Remember to consider calling :func:`~.web_poet.overrides.consume_modules`
-            when using :meth:`~.PageObjectRegistry.get_overrides` in case you have
-            some external package containing Page Objects of interest.
+            Remember to consider using the ``consume`` parameter to properly load
+            the :meth:`~.PageObjectRegistry.handle_urls` from external Page
+            Objects
 
-            This enables the :meth:`~.PageObjectRegistry.handle_urls` that annotates
-            the external Page Objects to be properly loadeded.
+            The ``consume`` parameter provides a convenient shortcut for calling
+            :func:`~.web_poet.overrides.consume_modules`.
         """
-        return list(self._data.values())
+        if consume:
+            consume_modules(*_as_list(consume))
 
-    def get_overrides_from(self, *pkgs_or_modules: str) -> List[OverrideRule]:
-        """Returns the override rules that were declared using ``@handle_urls``
-        in a specific modules/packages.
+        if not filters:
+            return list(self._data.values())
 
-        This is useful if you've organized your Page Objects into multiple
-        submodules in your project as you can filter them easily.
-        """
-        # Dict ensures that no duplicates are collected and returned.
-        rules: Dict[Callable, OverrideRule] = {}
+        else:
+            # Dict ensures that no duplicates are collected and returned.
+            rules: Dict[Callable, OverrideRule] = {}
 
-        for item in pkgs_or_modules:
-            for mod in walk_module(item):
-                rules.update(self._filter_from_module(mod.__name__))
+            for item in _as_list(filters):
+                for mod in walk_module(item):
+                    rules.update(self._filter_from_module(mod.__name__))
 
-        return list(rules.values())
+            return list(rules.values())
 
     def _filter_from_module(self, module: str) -> Dict[Callable, OverrideRule]:
         return {
             cls: rule
             for cls, rule in self._data.items()
-
             # A "." is added at the end to prevent incorrect matching on cases
             # where package names are substrings of one another. For example,
             # if module = "my_project.po_lib", then it filters like so:
@@ -247,10 +254,9 @@ def consume_modules(*modules: str) -> None:
     """A quick wrapper for :func:`~.walk_module` to efficiently consume the
     generator and recursively load all packages/modules.
 
-    This function is essential to be run before calling :meth:`~.PageObjectRegistry.get_overrides`
-    from the :class:`~.PageObjectRegistry`. It essentially ensures that the
-    ``@handle_urls`` are properly acknowledged for modules/packages that are not
-    imported.
+    This function is essential to be run before attempting to retrieve all
+    :meth:`~.PageObjectRegistry.handle_urls` annotations from :class:`~.PageObjectRegistry`
+    to ensure that they are properly acknowledge by importing them in runtime.
 
     Let's take a look at an example:
 
@@ -270,7 +276,19 @@ def consume_modules(*modules: str) -> None:
         - ``another_pkg.lib``
 
     So if the ``default_registry`` had other ``@handle_urls`` annotations outside
-    of the packages/modules list above, then the Override rules won't be returned.
+    of the packages/modules listed above, then the Override rules won't be returned.
+
+    .. note::
+
+        :meth:`~.PageObjectRegistry.get_overrides` provides a shortcut for this
+        using its ``consume`` parameter. Thus, the code example above could be
+        shortened even further by:
+
+        .. code-block:: python
+
+            from web_poet import default_registry
+
+            rules = default_registry.get_overrides(consume=["other_external_pkg.po", "another_pkg.lib"])
     """
 
     for module in modules:
