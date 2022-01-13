@@ -105,8 +105,8 @@ code example below:
     from web_poet.pages import ItemWebPage
     from web_poet import PageObjectRegistry
 
-    primary_registry = PageObjectRegistry()
-    secondary_registry = PageObjectRegistry()
+    primary_registry = PageObjectRegistry(name="primary")
+    secondary_registry = PageObjectRegistry(name="secondary")
 
     class GenericProductPage(ItemWebPage):
         def to_item(self):
@@ -196,11 +196,22 @@ like ``web_poet my_project.page_objects`` would produce the following:
 
 .. code-block::
 
-    Use this                                              instead of                                  for the URL patterns                                                 except for the patterns      with priority  meta
-    ----------------------------------------------------  ------------------------------------------  --------------------------------------                               -------------------------  ---------------  ------
-    my_project.page_objects.ExampleProductPage            my_project.page_objects.GenericProductPage  ['example.com']                                                      []                                     500  {}
-    my_project.page_objects.AnotherExampleProductPage     my_project.page_objects.GenericProductPage  ['anotherexample.com']                                               ['/digital-goods/']                    500  {}
-    my_project.page_objects.DualExampleProductPage        my_project.page_objects.GenericProductPage  ['dualexample.com/shop/?product=*', 'dualexample.net/store/?pid=*']  []                                     500  {}
+    Registry   Use this                                              instead of                                  for the URL patterns                                                 except for the patterns      with priority  meta
+    ---------  ----------------------------------------------------  ------------------------------------------  -------------------------------------------------------------------  -------------------------  ---------------  ------
+    default    my_project.page_objects.ExampleProductPage            my_project.page_objects.GenericProductPage  ['example.com']                                                      []                                     500  {}
+    default    my_project.page_objects.AnotherExampleProductPage     my_project.page_objects.GenericProductPage  ['anotherexample.com']                                               ['/digital-goods/']                    500  {}
+    default    my_project.page_objects.DualExampleProductPage        my_project.page_objects.GenericProductPage  ['dualexample.com/shop/?product=*', 'dualexample.net/store/?pid=*']  []                                     500  {}
+
+You can also filter them via the **name** of :class:`~.PageObjectRegistry`. For example,
+invoking ``web_poet my_project.page_objects --registry_name=custom`` would produce
+something like:
+
+.. code-block::
+
+    Registry    Use this                                              instead of                                  for the URL patterns    except for the patterns      with priority  meta
+    ----------  ----------------------------------------------------  ------------------------------------------  ----------------------  -------------------------  ---------------  ------
+    custom      my_project.page_objects.CustomProductPage             my_project.page_objects.GenericProductPage  ['example.com']         []                                     500  {}
+    custom      my_project.page_objects.AnotherCustomProductPage      my_project.page_objects.GenericProductPage  ['anotherexample.com']  ['/digital-goods/']                    500  {}
 
 Organizing Page Object Overrides
 --------------------------------
@@ -320,10 +331,52 @@ organize them using our own instances of the :class:`~.PageObjectRegistry` inste
 
     from web_poet import PageObjectRegistry
 
-    cool_gadget_registry = PageObjectRegistry()
-    cool_gadget_us_registry = PageObjectRegistry()
-    cool_gadget_fr_registry = PageObjectRegistry()
-    furniture_shop_registry = PageObjectRegistry()
+    cool_gadget_registry = PageObjectRegistry(name="cool_gadget")
+    cool_gadget_us_registry = PageObjectRegistry(name="cool_gadget_us")
+    cool_gadget_fr_registry = PageObjectRegistry(name="cool_gadget_fr")
+    furniture_shop_registry = PageObjectRegistry(name="furniture_shop")
+
+Note that you can access all of the :class:`~.PageObjectRegistry` that were
+ever instantiated via ``web_poet.registry_pool`` which is simply a mapping
+structured as ``Dict[str, PageObjectRegistry]``:
+
+.. code-block:: python
+
+    from web_poet import registry_pool
+
+    print(registry_pool)
+    # {
+    #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
+    #     'cool_gadget' = <my_page_obj_project.PageObjectRegistry object at 0x7f47d654382a>,
+    #     'cool_gadget_us' = <my_page_obj_project.PageObjectRegistry object at 0xb247d65433c3>,
+    #     'cool_gadget_fr' = <my_page_obj_project.PageObjectRegistry object at 0xd93746549dea>,
+    #     'furniture_shop' = <my_page_obj_project.PageObjectRegistry object at 0x82n78654441b>
+    # }
+
+.. warning::
+
+    Please be aware that there might be some :class:`~.PageObjectRegistry`
+    that are not available, most especially if you're using them from external
+    packages.
+
+    Thus, it's imperative to use :func:`~.web_poet.overrides.consume_modules`
+    beforehand:
+
+    .. code-block:: python
+
+        from web_poet import registry_pool, consume_modules
+
+        consume_modules("external_pkg")
+
+        print(registry_pool)
+        # {
+        #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
+        #     'cool_gadget' = <my_page_obj_project.PageObjectRegistry object at 0x7f47d654382a>,
+        #     'cool_gadget_us' = <my_page_obj_project.PageObjectRegistry object at 0xb247d65433c3>,
+        #     'cool_gadget_fr' = <my_page_obj_project.PageObjectRegistry object at 0xd93746549dea>,
+        #     'furniture_shop' = <my_page_obj_project.PageObjectRegistry object at 0x82n78654441b>,
+        #     'ecommerce': <external_pkg.PageObjectRegistry object at 0xbc45d8328420>
+        # }
 
 After declaring the :class:`~.PageObjectRegistry` instances, they can be used
 in each of the Page Object packages like so:
@@ -412,7 +465,7 @@ our Override Rules.
 
     from web_poet import PageObjectRegistry
 
-    product_listings_registry = PageObjectRegistry()
+    product_listings_registry = PageObjectRegistry(name="product_listings")
 
 Using the additional registry instance above, we'll use it to provide another
 annotation for the Page Objects in each of the ``product_listings.py`` module.
@@ -477,7 +530,7 @@ packages** in your project, you can do it like:
     # attribute of the registry even before calling `PageObjectRegistry.get_overrides()`
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
 
-    combined_registry = PageObjectRegistry()
+    combined_registry = PageObjectRegistry(name="combined")
     combined_registry.data = {
         # Since ecommerce_page_objects is using web_poet.default_registry, then
         # it functions like a global registry which we can access as:

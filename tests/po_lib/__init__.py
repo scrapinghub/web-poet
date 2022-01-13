@@ -23,7 +23,7 @@ class POTopLevelOverriden2:
     ...
 
 
-secondary_registry = PageObjectRegistry()
+secondary_registry = PageObjectRegistry(name="secondary")
 
 
 # This first annotation is ignored. A single annotation per registry is allowed

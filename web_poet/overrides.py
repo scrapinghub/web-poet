@@ -50,13 +50,18 @@ class PageObjectRegistry:
 
         from web_poet import PageObjectRegistry
 
-        main_registry = PageObjectRegistry()
-        secondary_registry = PageObjectRegistry()
+        main_registry = PageObjectRegistry(name="main")
+        secondary_registry = PageObjectRegistry(name="secondary")
 
         @main_registry.handle_urls("example.com", overrides=ProductPageObject)
         @secondary_registry.handle_urls("example.com", overrides=ProductPageObject)
         class ExampleComProductPage(ItemPage):
             ...
+
+    .. warning::
+
+        Each :class:`~.PageObjectRegistry` instance should have a unique **name**
+        value. Otherwise, a ``ValueError`` is raised.
 
     The annotation indicates that the ``ExampleComProductPage``
     Page Object should be used instead of the ``ProductPageObject`` Page
@@ -64,7 +69,7 @@ class PageObjectRegistry:
 
     Moreover, this rule is available for the two (2) registries we've declared.
     This could be useful in cases wherein you want to categorize the rules by
-    ``PageObjectRegistry``. They could each be accessed via:
+    :class:`~.PageObjectRegistry`. They could each be accessed via:
 
     .. code-block:: python
 
@@ -89,17 +94,60 @@ class PageObjectRegistry:
     with the built-in default Registry.
 
     In addition, if you need to organize your Page Objects in your project, a
-    single (1) default instance of the ``PageObjectRegistry`` would work, as
-    long as you organize your files into modules.
+    single (1) default instance of the :class:`~.PageObjectRegistry` would work,
+    as long as you organize your files into modules.
 
     The rules could then be accessed using this method:
 
     * ``default_registry.get_overrides(filters="my_scrapy_project.page_objects.site_A")``
     * ``default_registry.get_overrides(filters="my_scrapy_project.page_objects.site_B")``
+
+    Lastly, you can access all of the :class:`~.PageObjectRegistry` that were
+    ever instantiated via ``web_poet.registry_pool`` which is simply a mapping
+    structured as ``Dict[str, PageObjectRegistry]``:
+
+    .. code-block:: python
+
+        from web_poet import registry_pool
+
+        print(registry_pool)
+        # {
+        #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
+        #     'main': <web_poet.overrides.PageObjectRegistry object at 0x7f47d525c3d0>,
+        #     'secondary': <web_poet.overrides.PageObjectRegistry object at 0x7f47d52024c0>
+        # }
+
+    .. warning::
+
+        Please be aware that there might be some :class:`~.PageObjectRegistry`
+        that are not available, most especially if you're using them from external
+        packages.
+
+        Thus, it's imperative to use :func:`~.web_poet.overrides.consume_modules`
+        beforehand:
+
+        .. code-block:: python
+
+            from web_poet import registry_pool, consume_modules
+
+            consume_modules("external_pkg")
+
+            print(registry_pool)
+            # {
+            #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
+            #     'main': <web_poet.overrides.PageObjectRegistry object at 0x7f47d525c3d0>,
+            #     'secondary': <web_poet.overrides.PageObjectRegistry object at 0x7f47d52024c0>
+            #     'ecommerce': <external_pkg.PageObjectRegistry object at 0x7f47d8328420>
+            # }
     """
 
-    def __init__(self):
+    def __init__(self, name: str):
         self._data: Dict[Callable, OverrideRule] = {}
+
+        if name in registry_pool:
+            raise ValueError(f"A registry named '{name}' already exists.")
+        registry_pool[name] = self
+        self.name = name
 
     def handle_urls(
         self,
@@ -221,10 +269,9 @@ class PageObjectRegistry:
         return results
 
 
-# For ease of use, we'll create a default registry so that users can simply
-# use its `handle_urls()` method directly by `from web_poet import handle_urls`
-default_registry = PageObjectRegistry()
-handle_urls = default_registry.handle_urls
+# When the `PageObjectRegistry` class is instantiated, it records itself to
+# this pool so that all instances can easily be accessed later on.
+registry_pool: Dict[str, PageObjectRegistry] = {}
 
 
 def walk_module(module: str) -> Iterable:
@@ -256,7 +303,7 @@ def consume_modules(*modules: str) -> None:
 
     This function is essential to be run before attempting to retrieve all
     :meth:`~.PageObjectRegistry.handle_urls` annotations from :class:`~.PageObjectRegistry`
-    to ensure that they are properly acknowledge by importing them in runtime.
+    to ensure that they are properly acknowledged by importing them in runtime.
 
     Let's take a look at an example:
 

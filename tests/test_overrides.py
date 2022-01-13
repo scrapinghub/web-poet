@@ -1,3 +1,5 @@
+import argparse
+
 import pytest
 from url_matcher import Patterns
 
@@ -14,7 +16,7 @@ from tests.po_lib.nested_package.a_nested_module import (
     PONestedModule,
     PONestedModuleOverridenSecondary,
 )
-from web_poet.overrides import PageObjectRegistry, default_registry
+from web_poet import PageObjectRegistry, default_registry, registry_pool
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
@@ -134,7 +136,32 @@ def test_registry_data_from():
     assert PONestedPkg in data
 
 
-def test_cmd():
+def test_registry_name_conflict():
+    """Registries can only have a unique name."""
+
+    PageObjectRegistry("main")
+
+    assert "main" in registry_pool
+
+    with pytest.raises(ValueError):
+        PageObjectRegistry("main")
+
+
+def test_cli_tool():
+    """Ensure that CLI parameters returns the expected results.
+
+    There's no need to check each specific OverrideRule below as we already have
+    extensive tests for those above. We can simply count how many rules there are
+    for a given registry.
+    """
+
     from web_poet.__main__ import main
 
-    assert main(["tests.po_lib"]) is None
+    results = main(["tests"])
+    assert len(results) == 6
+
+    results = main(["tests", "--registry_name=secondary"])
+    assert len(results) == 2
+
+    results = main(["tests", "--registry_name=not_exist"])
+    assert not results
