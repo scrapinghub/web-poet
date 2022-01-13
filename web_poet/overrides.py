@@ -15,12 +15,25 @@ Strings = Union[str, Iterable[str]]
 @dataclass
 class OverrideRule:
     """A single override rule that specifies when a Page Object should be used
-    instead of another."""
+    instead of another.
+    """
 
     for_patterns: Patterns
     use: Callable
     instead_of: Callable
     meta: Dict[str, Any] = field(default_factory=dict)
+
+    def __hash__(self):
+        # TODO: Remove this when the following has been implemented:
+        #   - https://github.com/zytedata/url-matcher/issues/3
+        pattern_hash = hash(
+            (
+                tuple(self.for_patterns.include),
+                tuple(self.for_patterns.exclude),
+                self.for_patterns.priority,
+            )
+        )
+        return hash((pattern_hash, self.use, self.instead_of))
 
 
 def _as_list(value: Optional[Strings]) -> List[str]:

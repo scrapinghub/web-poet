@@ -17,9 +17,33 @@ from tests.po_lib.nested_package.a_nested_module import (
     PONestedModuleOverridenSecondary,
 )
 from web_poet import PageObjectRegistry, default_registry, registry_pool
+from web_poet.overrides import OverrideRule
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
+
+
+def test_override_rule_uniqueness():
+    """The same instance of an OverrideRule with the same attribute values should
+    have the same hash identity.
+    """
+
+    patterns = Patterns(include=["example.com"], exclude=["example.com/blog"])
+
+    rule1 = OverrideRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        meta={"key_1": 1}
+    )
+    rule2 = OverrideRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        meta={"key_2": 2}
+    )
+
+    assert hash(rule1) == hash(rule2)
 
 
 def test_list_page_objects_all():

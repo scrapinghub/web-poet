@@ -547,6 +547,10 @@ packages** in your project, you can do it like:
     # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
     # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
 
+    # If there are any duplicates when combining the OverrideRules,
+    # you could do the following to ensure uniqueness:
+    combined_rules = set(combined_registry)
+
 .. note::
 
     Note that ``registry.get_overrides() == list(registry.data.values())``. We're
