@@ -40,14 +40,17 @@ Here's where the Overrides concept comes in:
        then the Page Object associated with that rule `overrides (or replaces)`
        the default ``GenericProductPage``.
 
-This enables us to fine tune our parsing logic `(which are abstracted away for
-each Page Object)` depending on the page we're parsing.
+This enables us to conveniently declare which Page Object would be used for a
+given webpage `(based on a page's URL pattern)`.
 
-Let's see this in action by creating Page Objects below.
+Let's see this in action by declaring the Overrides in the Page Objects below.
 
 
 Creating Overrides
 ------------------
+
+Using Default Registry
+~~~~~~~~~~~~~~~~~~~~~~
 
 Let's take a look at how the following code is structured:
 
@@ -56,19 +59,23 @@ Let's take a look at how the following code is structured:
     from web_poet import handle_urls
     from web_poet.pages import ItemWebPage
 
+
     class GenericProductPage(ItemWebPage):
         def to_item(self):
             return {"product title": self.css("title::text").get()}
+
 
     @handle_urls("example.com", overrides=GenericProductPage)
     class ExampleProductPage(ItemWebPage):
         def to_item(self):
             ...  # more specific parsing
 
+
     @handle_urls("anotherexample.com", overrides=GenericProductPage, exclude="/digital-goods/")
     class AnotherExampleProductPage(ItemWebPage):
         def to_item(self):
             ...  # more specific parsing
+
 
     @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
     class DualExampleProductPage(ItemWebPage):
@@ -82,94 +89,101 @@ The code above declares that:
     - The same is true for ``DualExampleProductPage`` where it is used
       instead of ``GenericProductPage`` for two URL patterns which works as:
 
-      - **(match)** https://www.dualexample.com/shop/electronics/?product=123
-      - **(match)** https://www.dualexample.com/shop/books/paperback/?product=849
-      - (NO match) https://www.dualexample.com/on-sale/books/?product=923
-      - **(match)** https://www.dualexample.net/store/kitchen/?pid=776
-      - **(match)** https://www.dualexample.net/store/?pid=892
-      - (NO match) https://www.dualexample.net/new-offers/fitness/?pid=892
+      - :sub:`(match) https://www.dualexample.com/shop/electronics/?product=123`
+      - :sub:`(match) https://www.dualexample.com/shop/books/paperback/?product=849`
+      - :sub:`(NO match) https://www.dualexample.com/on-sale/books/?product=923`
+      - :sub:`(match) https://www.dualexample.net/store/kitchen/?pid=776`
+      - :sub:`(match) https://www.dualexample.net/store/?pid=892`
+      - :sub:`(NO match) https://www.dualexample.net/new-offers/fitness/?pid=892`
 
     - On the other hand, ``AnotherExampleProductPage`` is only used instead of
       ``GenericProductPage`` when we're parsing pages from ``anotherexample.com``
-      which doesn't contain ``/digital-goods/`` in its URL path.
+      that doesn't contain ``/digital-goods/`` in its URL path.
 
-The override mechanism that ``web-poet`` offers could still be further
-customized. You can read some of the specific parameters and alternative ways
-to organize the rules via the :ref:`Overrides API section <api-overrides>`.
+.. tip::
+
+    The URL patterns declared in the :func:`web_poet.handle_urls` can still be
+    further customized. You can read some of the specific parameters and
+    alternative ways in the API section <api-overrides> of
+    :func:`web_poet.handle_urls`.
+
+Using Multiple Registries
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To demonstrate another alternative way to declare the Override rules, see the
 code example below:
 
 .. code-block:: python
 
+    from web_poet import handle_urls, PageObjectRegistry
     from web_poet.pages import ItemWebPage
-    from web_poet import PageObjectRegistry
 
-    primary_registry = PageObjectRegistry(name="primary")
-    secondary_registry = PageObjectRegistry(name="secondary")
+
+    clothes_registry = PageObjectRegistry(name="clothes")
+
 
     class GenericProductPage(ItemWebPage):
         def to_item(self):
             return {"product title": self.css("title::text").get()}
 
-    @primary_registry.handle_urls("example.com", overrides=GenericProductPage)
-    class ExampleProductPage(ItemWebPage):
-        def to_item(self):
-            ...  # more specific parsing
 
-    @secondary_registry.handle_urls("anotherexample.com", overrides=GenericProductPage, exclude="/digital-goods/")
-    class AnotherExampleProductPage(ItemWebPage):
-        def to_item(self):
-            ...  # more specific parsing
-
-    @primary_registry.handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
-    @secondary_registry.handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
+    @clothes_registry.handle_urls("dualexample.com/shop/?category=clothes&product=*", overrides=GenericProductPage)
     class DualExampleProductPage(ItemWebPage):
         def to_item(self):
             ...  # more specific parsing
+
+In the example above, we're splitting the Page Objects into two separate Registries.
+If you may notice, ``DualExampleProductPage`` is being declared into both of them
+but with a different URL pattern.
 
 If you need more control over the Registry, you could instantiate your very
 own :class:`~.PageObjectRegistry` and use its ``@handle_urls`` to annotate and
 register the rules. This might benefit you in certain project use cases where you
 need more organizational control over your rules.
 
+Such an approach could be useful especially when you're publishing your Page
+Objects as an external dependency. Other projects may use it and could import
+a specific Registry containing the URL rules that they may need.
+
 Viewing all available Overrides
 -------------------------------
 
-A convenience function is available discover and retrieve all rules from your
-project. Make sure to check out :ref:`Overrides API section <api-overrides>`
-to see the other functionalities.
+A convenience function is available discover and retrieve all :class:`~.OverrideRule`
+from your project. Make sure to check out the :meth:`~.PageObjectRegistry.get_overrides`
+API section to see other functionalities.
 
 .. code-block:: python
 
     from web_poet import default_registry
 
-    # Retrieves all rules that were registered in the registry
+    # Retrieves all OverrideRules that were registered in the registry
     rules = default_registry.get_overrides()
 
-    # Or, we could also filter out the rules by the module they were defined in
+    # Or, we could also filter out the OverrideRules by the module they were defined in
     rules = default_registry.get_overrides(filters="my_project.page_objects")
 
     print(len(rules))  # 3
-    print(rules[0])  # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
+    print(rules[0])    # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
 
 .. note::
 
     Notice in the code sample above where we could filter out the Override rules
     per module via the ``filters`` param. This could also offer another alternative
-    way to organize your Page Object rules using only the ``default_registry``.
-    There's no need to declare multiple :class:`~.PageObjectRegistry` instances
-    and use multiple annotations.
+    way to organize your Page Object rules by module hierarchies in your project.
+    This could require on solely using the ``default_registry``. There's no need
+    to declare multiple :class:`~.PageObjectRegistry` instances and use multiple
+    annotations.
 
 .. warning::
 
     :meth:`~.PageObjectRegistry.get_overrides` relies on the fact that all essential
-    packages/modules which contains the :meth:`~.PageObjectRegistry.handle_urls`
+    packages/modules which contains the :func:`web_poet.handle_urls`
     annotations are properly loaded.
 
     Thus, for cases like importing Page Objects from another external package, you'd
-    need to properly load all :meth:`~.PageObjectRegistry.handle_urls` annotations
-    from the external module. This ensures that the external Page Objects' have
+    need to properly load all :meth:`web_poet.handle_urls` annotations
+    from the external module. This ensures that the external Page Objects have
     their annotations properly loaded.
 
     This can be done via the function named :func:`~.web_poet.overrides.consume_modules`.
@@ -185,14 +199,9 @@ to see the other functionalities.
         # Fortunately, `get_overrides()` provides a shortcut for the lines above:
         rules = default_registry.get_overrides(consume=["external_package_A.po", "another_ext_package.lib"])
 
-    **NOTE**: :func:`~.web_poet.overrides.consume_modules` or the ``consume`` param
-    of :meth:`~.PageObjectRegistry.get_overrides` for the imports to properly load.
-    Most especially if you intend to use Page Objects from externally imported packages.
-
-
 A handy CLI tool is also available at your disposal to quickly see the available
-Override rules in a given module in your project. For example, invoking something
-like ``web_poet my_project.page_objects`` would produce the following:
+:class:`~.OverrideRule` in a given module in your project. For example, invoking
+something like ``web_poet my_project.page_objects`` would produce the following:
 
 .. code-block::
 
@@ -219,7 +228,7 @@ Organizing Page Object Overrides
 After tackling the two (2) different approaches from the previous chapters on how
 to declare overrides, we can now explore how to organize them in our projects.
 Although it's mostly up to the developer which override declaration method to
-use. Yet, we'll present some approaches depending on the situation.
+use. Yet, we'll present a few different approaches depending on the situation.
 
 To put this thought into action, let's suppose we are tasked to create a Page
 Object Project with overrides for eCommerce websites.
@@ -248,7 +257,7 @@ Using the **package-based** approach, we might organize them into something like
         └── product_listings.py
 
 Assuming that we've declared the Page Objects in each of the modules to use the
-``default_registry`` like:
+``default_registry`` as something like:
 
 .. code-block:: python
 
@@ -262,7 +271,8 @@ Assuming that we've declared the Page Objects in each of the modules to use the
         def to_item(self):
             ... # parsers here
 
-Then we could easily retrieve all Page Objects per subpackage or module like this:
+Then we could easily retrieve all :class:`~.OverrideRule` filtered per subpackage
+or module like this:
 
 .. code-block:: python
 
@@ -284,7 +294,7 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     rules = default_registry.get_overrides()
 
     # Lastly, you'd need to properly load external packages/modules for the
-    # @handle_urls annotation to be correctly read.
+    # @handle_urls annotation to be correctly read. If there are any.
     consume_modules("external_package_A.po", "another_ext_package.lib")
     rules = default_registry.get_overrides()
 
@@ -300,14 +310,14 @@ Then we could easily retrieve all Page Objects per subpackage or module like thi
     from externally imported packages.
 
     This enables the :meth:`~.PageObjectRegistry.handle_urls` that annotates
-    the external Page Objects to be properly loadeded.
+    the external Page Objects to be properly loaded.
 
 Multiple Registry Approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The **package-based** approach heavily relies on how the developer organizes the
-files into intuitive hierarchies depending on the nature of the project. There
-might be cases that for some reason, a developer would want to use a **flat 
+project modules into intuitive hierarchies depending on the nature of the project.
+There might be cases that for some reason, a developer would want to use a **flat 
 hierarchy** like this:
 
 .. code-block::
@@ -321,9 +331,10 @@ hierarchy** like this:
     ├── furniture_shop_products.py
     └── furniture_shop_product_listings.py
 
-As such, calling ``default_registry.get_overrides()`` with a ``from`` parameter
-would not effectively work on projects with a **flat hierarchy**. Thus, we can
-organize them using our own instances of the :class:`~.PageObjectRegistry` instead:
+As such, calling :meth:`~.PageObjectRegistry.get_overrides` with a ``from`` 
+filter parameter would not effectively work on projects with a **flat hierarchy**.
+Thus, we can organize them using our own instances of the :class:`~.PageObjectRegistry`
+instead:
 
 .. code-block:: python
 
@@ -336,22 +347,29 @@ organize them using our own instances of the :class:`~.PageObjectRegistry` inste
     cool_gadget_fr_registry = PageObjectRegistry(name="cool_gadget_fr")
     furniture_shop_registry = PageObjectRegistry(name="furniture_shop")
 
-Note that you can access all of the :class:`~.PageObjectRegistry` that were
-ever instantiated via ``web_poet.registry_pool`` which is simply a mapping
-structured as ``Dict[str, PageObjectRegistry]``:
+.. tip::
 
-.. code-block:: python
+    Later on, you can access all of the :class:`~.PageObjectRegistry` that were
+    ever instantiated. This can be done via ``web_poet.registry_pool`` which
+    simply a holds a mapping structured as ``Dict[str, PageObjectRegistry]``.
 
-    from web_poet import registry_pool
+    So after declaring the :class:`~.PageObjectRegistry` instances above, we can
+    view them via:
 
-    print(registry_pool)
-    # {
-    #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
-    #     'cool_gadget' = <my_page_obj_project.PageObjectRegistry object at 0x7f47d654382a>,
-    #     'cool_gadget_us' = <my_page_obj_project.PageObjectRegistry object at 0xb247d65433c3>,
-    #     'cool_gadget_fr' = <my_page_obj_project.PageObjectRegistry object at 0xd93746549dea>,
-    #     'furniture_shop' = <my_page_obj_project.PageObjectRegistry object at 0x82n78654441b>
-    # }
+    .. code-block:: python
+
+        from web_poet import registry_pool
+
+        print(registry_pool)
+        # {
+        #     'default': <web_poet.overrides.PageObjectRegistry object at 0x7f47d654d8b0>,
+        #     'cool_gadget' = <my_page_obj_project.PageObjectRegistry object at 0x7f47d654382a>,
+        #     'cool_gadget_us' = <my_page_obj_project.PageObjectRegistry object at 0xb247d65433c3>,
+        #     'cool_gadget_fr' = <my_page_obj_project.PageObjectRegistry object at 0xd93746549dea>,
+        #     'furniture_shop' = <my_page_obj_project.PageObjectRegistry object at 0x82n78654441b>
+        # }
+
+    Notice that the ``default`` registry will always be present. 
 
 .. warning::
 
@@ -360,7 +378,11 @@ structured as ``Dict[str, PageObjectRegistry]``:
     packages.
 
     Thus, it's imperative to use :func:`~.web_poet.overrides.consume_modules`
-    beforehand:
+    beforehand. Not only that it helps us find the :meth:`~.PageObjectRegistry.handle_urls`
+    annotated in external packages, but also finds the instances of
+    :class:`~.PageObjectRegistry` as well.
+
+    Here's an example:
 
     .. code-block:: python
 
@@ -378,6 +400,9 @@ structured as ``Dict[str, PageObjectRegistry]``:
         #     'ecommerce': <external_pkg.PageObjectRegistry object at 0xbc45d8328420>
         # }
 
+    Notice that the ``external_pkg.PageObjectRegistry`` named **ecommerce** has
+    now been successfully discovered.
+
 After declaring the :class:`~.PageObjectRegistry` instances, they can be used
 in each of the Page Object packages like so:
 
@@ -387,6 +412,7 @@ in each of the Page Object packages like so:
 
     from . import cool_gadget_registry, cool_gadget_us_registry
     from web_poet.pages import ItemWebPage
+
 
     @cool_gadget_registry.handle_urls("coolgadgetsite.com", overrides=GenericProductPage)
     @cool_gadget_us_registry.handle_urls("coolgadgetsite.com", overrides=GenericProductPage)
@@ -440,8 +466,8 @@ For instance, going back to our **package-based** approach organized as:
         ├── products.py
         └── product_listings.py
 
-Suppose we'd want to get all the rules for all of the listings, then one way to
-retrieve such rules would be:
+Suppose we'd want to get all the rules for all of the listings `(ignoring anything
+else)`, then one way to retrieve such rules would be:
 
 .. code-block:: python
 
@@ -457,7 +483,7 @@ retrieve such rules would be:
 
 On the other hand, we can also create another :class:`~.PageObjectRegistry` instance
 that we'll be using aside from the ``default_registry`` to help us better organize
-our Override Rules.
+our :class:`~.OverrideRule`.
 
 .. code-block:: python
 
@@ -467,9 +493,9 @@ our Override Rules.
 
     product_listings_registry = PageObjectRegistry(name="product_listings")
 
-Using the additional registry instance above, we'll use it to provide another
-annotation for the Page Objects in each of the ``product_listings.py`` module.
-For example:
+Using the new **product_listings_registr** instance above, we'll use it to
+provide another annotation for the Page Objects in each of the
+``product_listings.py`` module. For example:
 
 .. code-block:: python
 
@@ -479,13 +505,14 @@ For example:
     from web_poet import handle_urls  # remember that this uses the default_registry
     from web_poet.pages import ItemWebPage
 
+
     @product_listings_registry.handle_urls("coolgadgetsite.com", overrides=GenericProductPage)
     @handle_urls("coolgadgetsite.com", overrides=GenericProductPage)
     class CoolGadgetSiteProductPage(ItemWebPage):
         def to_item(self):
             ... # parsers here
 
-Retrieving all of the Product Listing Override rules would simply be:
+Retrieving all of the Product Listing :class:`~.OverrideRule` would simply be:
 
 .. code-block:: python
 
@@ -500,30 +527,32 @@ Retrieving all of the Product Listing Override rules would simply be:
 Using Overrides from External Packages
 --------------------------------------
 
-Developers have the option to import existing Page Objects alongside the Override
-Rules attached to them. This section aims to showcase different ways you can
-play with the Registries to manipulate the Override Rules according to your needs.
+Developers have the option to import existing Page Objects alongside the
+:class:`~.OverrideRule` attached to them. This section aims to showcase different
+ways you can play with the Registries to manipulate the :class:`~.OverrideRule`
+according to your needs.
 
 Let's suppose we have the following use case before us:
 
-    - An external Python package named ``ecommerce_page_objects`` is available
+    - An **external** Python package named ``ecommerce_page_objects`` is available
       which contains Page Objects for common websites. It's using the
       ``default_registry`` from **web-poet**.
     - Another similar package named ``gadget_sites_page_objects`` is available
-      for more specific websites. It's using its own registry named
+      for even more specific websites. It's using its own registry named
       ``gadget_registry``.
     - Your project's objectives is to handle as much eCommerce websites as you
       can. Thus, you'd want to use the already available packages above and
       perhaps improve on them or create new Page Objects for new websites.
 
-Assuming that you'd want to **use all existing Override rules from the external
-packages** in your project, you can do it like:
+Assuming that you'd want to **use all existing** :class:`~.OverrideRule` **from
+the external packages** in your project, you can do it like:
 
 .. code-block:: python
 
     import ecommerce_page_objects
     import gadget_sites_page_objects
     from web_poet import PageObjectRegistry, consume_modules, default_registry
+
 
     # We're using `consume_modules()` here instead of the `consume` param of
     # `PageObjectRegistry.get_overrides()` since we need to access the `data`
@@ -536,6 +565,8 @@ packages** in your project, you can do it like:
         # it functions like a global registry which we can access as:
         **default_registry.data,
 
+        # External packages not using the web_poet.default_registry would need
+        # to have their own registry accessed.
         **gadget_sites_page_objects.gadget_registry.data,
     }
 
@@ -549,16 +580,17 @@ packages** in your project, you can do it like:
 
     # If there are any duplicates when combining the OverrideRules,
     # you could do the following to ensure uniqueness:
-    combined_rules = set(combined_registry)
+    combined_rules = set(combined_rules)
 
 .. note::
 
-    Note that ``registry.get_overrides() == list(registry.data.values())``. We're
-    using ``registry.data`` for these cases so that we can easily look up specific
-    Page Objects using the ``dict``'s key. Otherwise, it may become a problem on
-    large cases with lots of Override rules.
+    Note that ``registry.get_overrides() == list(registry.data.values())``.
 
-.. note::
+    We're using ``registry.data`` for these cases so that we can easily look up
+    specific Page Objects using the ``dict``'s key. Otherwise, it may become a
+    problem on large cases with lots of :class:`~.OverrideRule`.
+
+.. tip::
 
     If you don't need the entire data contents of Registries, then you can opt
     to use :meth:`~.PageObjectRegistry.data_from` to easily filter them out
@@ -574,8 +606,10 @@ As you can see in the example above, we can easily combine the data from multipl
 different registries as it simply follows a ``Dict[Callable, OverrideRule]``
 structure. There won't be any duplication or clashes of ``dict`` keys between
 registries of different external packages since the keys are the Page Object
-classes intended to be used. From our example above, the ``dict`` keys from a
-given ``data`` registry attribute would be:
+classes intended to be used. 
+
+From our example above, the ``dict`` keys from a given ``data`` registry
+attribute would be:
 
     1. ``<class 'ecommerce_page_objects.site_1.EcomSite1'>``
     2. ``<class 'ecommerce_page_objects.site_2.EcomSite2'>``
@@ -583,7 +617,7 @@ given ``data`` registry attribute would be:
     4. ``<class 'gadget_sites_page_objects.site_3.GadgetSite3'>``
 
 As you might've observed, combining the two Registries above may result in a
-conflict for the Override rules for **#2** and **#3**:
+conflict for the :class:`~.OverrideRule` for **#2** and **#3**:
 
 .. code-block:: python
 
@@ -602,11 +636,12 @@ However, it's technically **NOT** a conflict, **yet**, since:
       it's only going to be utilized for **site_2.com** if the following is to be
       replaced: ``gadget_sites_page_objects.GadgetGenericPage``.
 
-It would be only become a conflict if the **#2** and **#3** Override Rules for
-**site_2.com** both intend to replace the same Page Object. In fact, none of the
-Override Rules above would ever be used if your project never intends to use the
-following Page Objects *(since there's nothing to override)*. You can import
-these Page Objects into your project and use them so they can be overridden:
+It would be only become a conflict if the **#2** and **#3** :class:`~.OverrideRule`
+for **site_2.com** both `intend to replace the` **same** `Page Object`. In fact,
+none of the :class:`~.OverrideRule` above would ever be used if your project never
+intends to use the following Page Objects *(since there's nothing to override)*.
+You can import these Page Objects into your project and use them so they can be
+overridden:
 
     - ``ecommerce_page_objects.EcomGenericPage``
     - ``gadget_sites_page_objects.GadgetGenericPage``
@@ -636,7 +671,7 @@ Now, **#2** and **#3** have a conflict since they now both intend to replace
 would be the one to resolve such conflicts.
 
 However, it would help prevent future confusion if we could remove the source of
-ambiguity in our Override Rules.
+ambiguity in our :class:`~.OverrideRule`.
 
 Suppose, we prefer ``gadget_sites_page_objects.site_2.GadgetSite2`` more than
 ``ecommerce_page_objects.site_2.EcomSite2``. As such, we could remove the latter:

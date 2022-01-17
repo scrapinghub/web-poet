@@ -16,6 +16,22 @@ Strings = Union[str, Iterable[str]]
 class OverrideRule:
     """A single override rule that specifies when a Page Object should be used
     instead of another.
+
+    This is instantiated when using the :func:`web_poet.handle_urls` decorator.
+    It's also being returned as a ``List[OverrideRule]`` when calling
+    :meth:`~.PageObjectRegistry.get_overrides`.
+
+    You can access any of its attributes:
+
+        * ``for_patterns: Patterns`` - contains the URL patterns associated
+          with this rule. You can read the API documentation of the
+          `url-matcher <https://url-matcher.readthedocs.io/>`_ package for more
+          information.
+        * ``use: Callable`` - the Page Object that will be used.
+        * ``instead_of: Callable`` - the Page Object that will be **replaced**.
+        * ``meta: Dict[str, Any] = field(default_factory=dict)`` - Any other
+          information you many want to store. This doesn't do anything for now
+          but may be useful for future API updates.
     """
 
     for_patterns: Patterns
@@ -67,7 +83,7 @@ class PageObjectRegistry:
         secondary_registry = PageObjectRegistry(name="secondary")
 
         @main_registry.handle_urls("example.com", overrides=ProductPageObject)
-        @secondary_registry.handle_urls("example.com", overrides=ProductPageObject)
+        @secondary_registry.handle_urls("example.com/shop/?id=*", overrides=ProductPageObject)
         class ExampleComProductPage(ItemPage):
             ...
 
@@ -219,7 +235,8 @@ class PageObjectRegistry:
     def get_overrides(
         self, consume: Optional[Strings] = None, filters: Optional[Strings] = None
     ) -> List[OverrideRule]:
-        """Returns all Override Rules that were declared using ``@handle_urls``.
+        """Returns a ``List`` of :class:`~.OverrideRule` that were declared using
+        ``@handle_urls``.
 
         :param consume: packages/modules that need to be imported so that it can
             properly load the :meth:`~.PageObjectRegistry.handle_urls` annotations.
@@ -267,6 +284,9 @@ class PageObjectRegistry:
 
     @property
     def data(self) -> Dict[Callable, OverrideRule]:
+        """Return the ``Dict[Calalble, OverrideRule]`` mapping that were
+        registered via :meth:`web_poet.handle_urls` annotations.
+        """
         return self._data  # pragma: no cover
 
     @data.setter
@@ -274,7 +294,10 @@ class PageObjectRegistry:
         self._data = value  # pragma: no cover
 
     def data_from(self, *pkgs_or_modules: str) -> Dict[Callable, OverrideRule]:
-        """Return ``data`` values that are filtered by package/module."""
+        """Return ``data`` values that are filtered by package/module.
+
+        This can be used in lieu of :meth:`PageObjectRegistry.data`.
+        """
 
         results = {}
         for item in pkgs_or_modules:
@@ -329,14 +352,15 @@ def consume_modules(*modules: str) -> None:
         consume_modules("other_external_pkg.po", "another_pkg.lib")
         rules = default_registry.get_overrides()
 
-    For this case, the Override rules are coming from:
+    For this case, the ``List`` of :class:`~.OverrideRule` are coming from:
 
         - ``my_page_obj_project`` `(since it's the same module as the file above)`
         - ``other_external_pkg.po``
         - ``another_pkg.lib``
 
     So if the ``default_registry`` had other ``@handle_urls`` annotations outside
-    of the packages/modules listed above, then the Override rules won't be returned.
+    of the packages/modules listed above, then the :class:`~.OverrideRule` won't
+    be returned.
 
     .. note::
 
