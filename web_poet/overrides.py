@@ -173,6 +173,9 @@ class PageObjectRegistry:
     def __init__(self, name: str):
         self._data: Dict[Callable, OverrideRule] = {}
 
+        if not name:
+            raise ValueError("A registry should have a name.")
+
         if name in registry_pool:
             raise ValueError(f"A registry named '{name}' already exists.")
         registry_pool[name] = self

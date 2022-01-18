@@ -161,14 +161,20 @@ def test_registry_data_from():
 
 
 def test_registry_name_conflict():
-    """Registries can only have a unique name."""
+    """Registries can only have valid unique names."""
 
     PageObjectRegistry("main")
 
     assert "main" in registry_pool
 
     with pytest.raises(ValueError):
-        PageObjectRegistry("main")
+        PageObjectRegistry("main")  # a duplicate name
+
+    with pytest.raises(TypeError):
+        PageObjectRegistry()
+
+    with pytest.raises(ValueError):
+        PageObjectRegistry("")
 
 
 def test_cli_tool():
