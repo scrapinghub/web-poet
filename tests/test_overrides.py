@@ -1,4 +1,5 @@
 import argparse
+import dataclasses
 
 import pytest
 from url_matcher import Patterns
@@ -152,14 +153,6 @@ def test_list_page_objects_from_imported_registry():
     assert pones.instead_of == PONestedModuleOverridenSecondary
 
 
-def test_registry_data_from():
-    data = default_registry.data_from("tests.po_lib.nested_package")
-
-    assert len(data) == 2
-    assert PONestedModule in data
-    assert PONestedPkg in data
-
-
 def test_registry_name_conflict():
     """Registries can only have valid unique names."""
 
@@ -175,6 +168,84 @@ def test_registry_name_conflict():
 
     with pytest.raises(ValueError):
         PageObjectRegistry("")
+
+
+def test_registry_copy_overrides_from():
+    combined_registry = PageObjectRegistry("combined")
+    combined_registry.copy_overrides_from(default_registry, secondary_registry)
+
+    # Copying overrides from other PageObjectRegistries should have duplicate
+    # OverrideRules removed.
+    combined_rule_count = combined_registry.get_overrides()
+    assert len(combined_rule_count) == 7
+
+    raw_count = len(default_registry.get_overrides()) + len(secondary_registry.get_overrides())
+    assert len(combined_rule_count) < raw_count
+
+    # Copying overrides again does not result in duplicates
+    combined_registry.copy_overrides_from(default_registry, secondary_registry)
+    combined_registry.copy_overrides_from(default_registry, secondary_registry)
+    combined_registry.copy_overrides_from(default_registry, secondary_registry)
+    assert len(combined_rule_count) == 7
+
+
+def test_registry_replace_override():
+    registry = PageObjectRegistry("replace")
+    registry.copy_overrides_from(secondary_registry)
+    rules = registry.get_overrides()
+
+    replacement_rule = registry.replace_override(rules[0], instead_of=POTopLevel1)
+
+    new_rules = registry.get_overrides()
+    assert len(new_rules) == 2
+    assert new_rules[-1].instead_of == POTopLevel1  # newly replace rules at the bottom
+    assert replacement_rule.instead_of == POTopLevel1  # newly replace rules at the bottom
+
+    # Replacing a rule not in the registry would result in ValueError
+    rule_not_in_registry = dataclasses.replace(new_rules[0], instead_of=POTopLevelOverriden2)
+    with pytest.raises(ValueError):
+        registry.replace_override(rule_not_in_registry, instead_of=POTopLevel2)
+
+
+def test_registry_search_overrides():
+    registry = PageObjectRegistry("search")
+    registry.copy_overrides_from(secondary_registry)
+
+    rules = registry.search_overrides(use=POTopLevel2)
+    assert len(rules) == 1
+    assert rules[0].use == POTopLevel2
+
+    rules = registry.search_overrides(instead_of=POTopLevelOverriden2)
+    assert len(rules) == 1
+    assert rules[0].instead_of == POTopLevelOverriden2
+
+    rules = registry.search_overrides(
+        instead_of=PONestedModuleOverridenSecondary, use=PONestedModule
+    )
+    assert len(rules) == 1
+    assert rules[0].instead_of == PONestedModuleOverridenSecondary
+    assert rules[0].use == PONestedModule
+
+    # These rules doesn't exist
+    rules = registry.search_overrides(use=POTopLevel1)
+    assert len(rules) == 0
+
+    rules = registry.search_overrides(instead_of=POTopLevel1)
+    assert len(rules) == 0
+
+
+def test_registry_remove_overrides():
+    registry = PageObjectRegistry("remove")
+    registry.copy_overrides_from(secondary_registry)
+
+    rules = registry.get_overrides()
+
+    registry.remove_overrides(*rules)
+    assert len(registry.get_overrides()) == 0
+
+    # Removing non-existing rules won't error out.
+    registry.remove_overrides(*rules)
+    assert len(registry.get_overrides()) == 0
 
 
 def test_cli_tool():

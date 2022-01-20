@@ -553,22 +553,21 @@ the external packages** in your project, you can do it like:
     import gadget_sites_page_objects
     from web_poet import PageObjectRegistry, consume_modules, default_registry
 
-
     # We're using `consume_modules()` here instead of the `consume` param of
-    # `PageObjectRegistry.get_overrides()` since we need to access the `data`
-    # attribute of the registry even before calling `PageObjectRegistry.get_overrides()`
+    # `PageObjectRegistry.get_overrides()` since we need to properly load all
+    # of the annotated rules from the registry.
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
 
     combined_registry = PageObjectRegistry(name="combined")
-    combined_registry.data = {
+    combined_registry.copy_overrides_from(
         # Since ecommerce_page_objects is using web_poet.default_registry, then
-        # it functions like a global registry which we can access as:
-        **default_registry.data,
+        # it functions like a global registry which we can access simply as:
+        default_registry,
 
         # External packages not using the web_poet.default_registry would need
         # to have their own registry accessed.
-        **gadget_sites_page_objects.gadget_registry.data,
-    }
+        gadget_sites_page_objects.gadget_registry
+    )
 
     combined_rules = combined_registry.get_overrides()
 
@@ -578,45 +577,12 @@ the external packages** in your project, you can do it like:
     # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
     # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
 
-    # If there are any duplicates when combining the OverrideRules,
-    # you could do the following to ensure uniqueness:
-    combined_rules = set(combined_rules)
+As you can see in the example above, we can easily combine the rules from multiple
+different registries. There won't be any duplication of :class:`~.OverrideRule`
+entries since :meth:`PageObjectRegistry.copy_overrides_from` already deduplicates
+the rules.
 
-.. note::
-
-    Note that ``registry.get_overrides() == list(registry.data.values())``.
-
-    We're using ``registry.data`` for these cases so that we can easily look up
-    specific Page Objects using the ``dict``'s key. Otherwise, it may become a
-    problem on large cases with lots of :class:`~.OverrideRule`.
-
-.. tip::
-
-    If you don't need the entire data contents of Registries, then you can opt
-    to use :meth:`~.PageObjectRegistry.data_from` to easily filter them out
-    per package/module.
-
-    Here's an example:
-
-    .. code-block:: python
-
-        default_registry.data_from("ecommerce_page_objects.site_1", "ecommerce_page_objects.site_2")
-
-As you can see in the example above, we can easily combine the data from multiple
-different registries as it simply follows a ``Dict[Callable, OverrideRule]``
-structure. There won't be any duplication or clashes of ``dict`` keys between
-registries of different external packages since the keys are the Page Object
-classes intended to be used. 
-
-From our example above, the ``dict`` keys from a given ``data`` registry
-attribute would be:
-
-    1. ``<class 'ecommerce_page_objects.site_1.EcomSite1'>``
-    2. ``<class 'ecommerce_page_objects.site_2.EcomSite2'>``
-    3. ``<class 'gadget_sites_page_objects.site_2.GadgetSite2'>``
-    4. ``<class 'gadget_sites_page_objects.site_3.GadgetSite3'>``
-
-As you might've observed, combining the two Registries above may result in a
+You might've observed that combining the two Registries above may result in a
 conflict for the :class:`~.OverrideRule` for **#2** and **#3**:
 
 .. code-block:: python
@@ -651,12 +617,15 @@ only intend to use it instead of the ones above. We can easily replace them like
 
 .. code-block:: python
 
+    # Our new generic Page Object that we'd prefer instead of:
+    # - ecommerce_page_objects.EcomGenericPage
+    # - gadget_sites_page_objects.GadgetGenericPage
     class ImprovedEcommerceGenericPage:
         def to_item(self):
             ...  # different type of generic parsers
 
-    for _, rule in combined_registry.data.items():
-        rule.instead_of = ImprovedEcommerceGenericPage
+    for rule in combined_registry.get_overrides():
+        combined_registry.replace_override(rule, instead_of=ImprovedEcommerceGenericPage)
 
     updated_rules = combined_registry.get_overrides()
 
@@ -678,7 +647,8 @@ Suppose, we prefer ``gadget_sites_page_objects.site_2.GadgetSite2`` more than
 
 .. code-block:: python
 
-    del combined_registry.data[ecommerce_page_objects.site_2.EcomSite2]
+    rules = combined_registry.search_overrides(use=ecommerce_page_objects.site_2.EcomSite2)
+    combined_registry.remove_overrides(*rules)
 
     updated_rules = combined_registry.get_overrides()
 
@@ -686,10 +656,6 @@ Suppose, we prefer ``gadget_sites_page_objects.site_2.GadgetSite2`` more than
     # 1. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
     # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
     # 3. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
-
-As discussed before, the Registry's data is structured simply as
-``Dict[Callable, OverrideRule]`` for which we can easily manipulate it via ``dict``
-operations.
 
 Now, suppose we want to improve ``ecommerce_page_objects.site_1.EcomSite1``
 from **#1** above by perhaps adding/fixing fields. We can do that by:
@@ -700,11 +666,13 @@ from **#1** above by perhaps adding/fixing fields. We can do that by:
         def to_item(self):
             ...  # replace and improve some of the parsers here
 
-    combined_registry.data[ecommerce_page_objects.site_1.EcomSite1].use = ImprovedEcomSite1
+    rules = combined_registry.search_overrides(use=ecommerce_page_objects.site_1.EcomSite1)
+    for rule in rules:
+        combined_registry.replace_override(rules, use=ImprovedEcomSite1)
 
     updated_rules = combined_registry.get_overrides()
 
     # The newly updated_rules would be as follows:
-    # 1. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
+    # 1. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
+    # 2. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})
+    # 3. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'my_project.ImprovedEcommerceGenericPage'>, meta={})

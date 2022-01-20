@@ -1,9 +1,12 @@
+from __future__ import annotations  # https://www.python.org/dev/peps/pep-0563/
+
 import importlib
 import importlib.util
 import warnings
 import pkgutil
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from operator import attrgetter
 from types import ModuleType
 from typing import Iterable, Optional, Union, List, Callable, Dict, Any
 
@@ -12,7 +15,7 @@ from url_matcher import Patterns
 Strings = Union[str, Iterable[str]]
 
 
-@dataclass
+@dataclass(frozen=True)
 class OverrideRule:
     """A single override rule that specifies when a Page Object should be used
     instead of another.
@@ -285,27 +288,93 @@ class PageObjectRegistry:
             if cls.__module__.startswith(module + ".") or cls.__module__ == module
         }
 
-    @property
-    def data(self) -> Dict[Callable, OverrideRule]:
-        """Return the ``Dict[Calalble, OverrideRule]`` mapping that were
-        registered via :meth:`web_poet.handle_urls` annotations.
-        """
-        return self._data  # pragma: no cover
+    def copy_overrides_from(self, *page_object_registries: PageObjectRegistry) -> None:
+        """Copies the :class:`OverrideRule` data from one or more
+        :class:`PageObjectRegistry` instances.
 
-    @data.setter
-    def data(self, value: Dict[Callable, OverrideRule]) -> None:
-        self._data = value  # pragma: no cover
-
-    def data_from(self, *pkgs_or_modules: str) -> Dict[Callable, OverrideRule]:
-        """Return ``data`` values that are filtered by package/module.
-
-        This can be used in lieu of :meth:`PageObjectRegistry.data`.
+        Any duplicate :class:`OverrideRule` are also removed.
         """
 
-        results = {}
-        for item in pkgs_or_modules:
-            results.update(self._filter_from_module(item))
+        for registry in page_object_registries:
+            for rule in registry.get_overrides():
+                if rule.use not in self._data:
+                    self._data[rule.use] = rule
+
+    def replace_override(self, rule: OverrideRule, **kwargs) -> OverrideRule:
+        """Given a :class:`OverrideRule`, replace its attributes with the new
+        ones specified.
+
+        If the supplied :class:`OverrideRule` instance does not belong in the
+        registry, a ``ValueError`` is raised.
+
+        .. note::
+
+            Since :class:`OverrideRule` are frozen dataclasses, this method
+            removes the instance of the old rule completely and instead, creates
+            a new instance with the newly replaced attributes.
+
+        The new instance of the :class:`OverrideRule` with the new specified
+        attribites is returned.
+        """
+
+        if rule not in self._data.values():
+            raise ValueError(f"The given rule is not present in {self}: {rule}")
+
+        new_rule = replace(rule, **kwargs)
+        del self._data[rule.use]
+        self._data[new_rule.use] = new_rule
+
+        return new_rule
+
+    def search_overrides(self, **kwargs) -> List[OverrideRule]:
+        """Returns a list of :class:`OverrideRule` if any of the attributes
+        matches the rules inside the registry.
+
+        Sample usage:
+
+        .. code-block:: python
+
+            rules = registry.search_overrides(use=ProductPO, instead_of=GenericPO)
+            print(len(rules))  # 1
+
+        """
+
+        # Short-circuit operation if "use" is the only search param used, since
+        # we know that it's being used as the dict key.
+        if set(["use"]) == kwargs.keys():
+            rule = self._data.get(kwargs["use"])
+            if rule:
+                return [rule]
+            return []
+
+        getter = attrgetter(*kwargs.keys())
+
+        def matcher(rule: OverrideRule):
+            attribs = getter(rule)
+            if not isinstance(attribs, tuple):
+                attribs = tuple([attribs])
+            if list(attribs) == list(kwargs.values()):
+                return True
+            return False
+
+        results = []
+        for rule in self.get_overrides():
+            if matcher(rule):
+                results.append(rule)
         return results
+
+    def remove_overrides(self, *rules: OverrideRule) -> None:
+        """Given a list of :class:`OverrideRule`, remove them from the Registry.
+
+        Non-existing rules won't pose an issue as no errors will be raised.
+        """
+
+        for rule in rules:
+            if rule.use in self._data:
+                del self._data[rule.use]
+
+    def __repr__(self):
+        return f"PageObjectRegistry(name='{self.name}')"
 
 
 # When the `PageObjectRegistry` class is instantiated, it records itself to
