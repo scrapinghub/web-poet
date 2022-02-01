@@ -43,16 +43,7 @@ class OverrideRule:
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def __hash__(self):
-        # TODO: Remove this when the following has been implemented:
-        #   - https://github.com/zytedata/url-matcher/issues/3
-        pattern_hash = hash(
-            (
-                tuple(self.for_patterns.include),
-                tuple(self.for_patterns.exclude),
-                self.for_patterns.priority,
-            )
-        )
-        return hash((pattern_hash, self.use, self.instead_of))
+        return hash((self.for_patterns, self.use, self.instead_of))
 
 
 def _as_list(value: Optional[Strings]) -> List[str]:
