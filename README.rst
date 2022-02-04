@@ -10,8 +10,8 @@ web-poet
    :target: https://pypi.python.org/pypi/web-poet
    :alt: Supported Python Versions
 
-.. image:: https://travis-ci.com/scrapinghub/web-poet.svg?branch=master
-   :target: https://travis-ci.com/scrapinghub/web-poet
+.. image:: https://github.com/scrapinghub/web-poet/actions/workflows/test.yml/badge.svg
+   :target: https://github.com/scrapinghub/web-poet/actions/workflows/test.yml
    :alt: Build Status
 
 .. image:: https://codecov.io/github/scrapinghub/web-poet/coverage.svg?branch=master
