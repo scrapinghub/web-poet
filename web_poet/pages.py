@@ -61,4 +61,4 @@ class ItemWebPage(WebPage, ItemPage):
     """:class:`WebPage` that requires the :meth:`to_item` method to
     be implemented.
     """
-    http_client: Optional[HttpClient] = None
+    http_client: Optional[HttpClient]
