@@ -1,9 +1,10 @@
 import abc
 import attr
-import typing
+from typing import Any, Optional
 
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import ResponseData
+from web_poet.requests import HttpClient
 
 
 class Injectable(abc.ABC):
@@ -26,12 +27,13 @@ class Injectable(abc.ABC):
 Injectable.register(type(None))
 
 
-def is_injectable(cls: typing.Any) -> bool:
+def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
+@attr.define
 class ItemPage(Injectable, abc.ABC):
     """Base Page Object with a required :meth:`to_item` method.
     Make sure you're creating Page Objects with ``to_item`` methods
@@ -43,7 +45,7 @@ class ItemPage(Injectable, abc.ABC):
         """Extract an item from a web page"""
 
 
-@attr.s(auto_attribs=True)
+@attr.define
 class WebPage(Injectable, ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.ResponseData`
     and provides XPath / CSS shortcuts.
@@ -54,9 +56,9 @@ class WebPage(Injectable, ResponseShortcutsMixin):
     response: ResponseData
 
 
-@attr.s(auto_attribs=True)
+@attr.define
 class ItemWebPage(WebPage, ItemPage):
     """:class:`WebPage` that requires the :meth:`to_item` method to
     be implemented.
     """
-    pass
+    http_client: Optional[HttpClient] = None

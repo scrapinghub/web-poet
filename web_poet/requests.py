@@ -45,23 +45,34 @@ implementation of how to download things via:
 
 import logging
 from contextvars import ContextVar
+from typing import Optional
 
-from web_poet.pages import WebPage
+import attr
 
 logger = logging.getLogger(__name__)
 
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
 # set the appropriate implementation for requesting data.
-request_backend_var = ContextVar("request_backend")
+request_backend_var: ContextVar = ContextVar("request_backend")
 
 
 class RequestBackendError(Exception):
     pass
 
 
-async def request(url, page_cls=WebPage):
-    logger.info(f"Requesting page: {url}")
+@attr.define
+class GenericRequest:
+    """Represents a generic HTTP request."""
+
+    url: str
+    method: str = "GET"
+    headers: Optional[str] = None
+    body: Optional[str] = None
+
+
+async def perform_request(request: GenericRequest):
+    logger.info(f"Requesting page: {request}")
 
     try:
         request_backend = request_backend_var.get()
@@ -72,5 +83,14 @@ async def request(url, page_cls=WebPage):
             "'web_poet.request_backend_var'"
         )
 
-    response_data = await request_backend(url)
-    return page_cls(response_data)
+    response_data = await request_backend(request)
+    return response_data
+
+
+class HttpClient:
+
+    def __init__(self, request_downloader):
+        self.request_downloader = request_downloader
+
+    async def request(self, request: GenericRequest):
+        return await self.request_downloader(request)
