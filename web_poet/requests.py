@@ -88,9 +88,8 @@ async def perform_request(request: GenericRequest):
 
 
 class HttpClient:
-
-    def __init__(self, request_downloader):
-        self.request_downloader = request_downloader
+    def __init__(self, request_downloader=None):
+        self.request_downloader = request_downloader or perform_request
 
     async def request(self, request: GenericRequest):
         return await self.request_downloader(request)
