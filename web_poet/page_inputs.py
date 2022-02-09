@@ -1,3 +1,5 @@
+from typing import Optional, Dict, AnyStr, Any
+
 import attr
 
 
@@ -12,6 +14,17 @@ class ResponseData:
     ``html`` should be content of the HTTP body, converted to unicode
     using the detected encoding of the response, preferably according
     to the web browser rules (respecting Content-Type header, etc.)
+
+    The following are optional since it would depend on the source of the
+    ``ResponseData`` if these are available or not. For example, the responses
+    could simply come off from a local HTML file which doesn't contain ``headers``
+    and ``status``.
+
+    ``status`` should represent the int status code of the HTTP response.
+
+    ``headers`` should contain the HTTP response headers.
     """
     url: str
     html: str
+    status: Optional[int] = None
+    headers: Optional[Dict[AnyStr, Any]] = None
