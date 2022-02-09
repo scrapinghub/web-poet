@@ -1,4 +1,4 @@
-from typing import Optional, Dict, AnyStr, Any
+from typing import Optional, Dict, Any, ByteString, Union
 
 import attr
 
@@ -27,4 +27,4 @@ class ResponseData:
     url: str
     html: str
     status: Optional[int] = None
-    headers: Optional[Dict[AnyStr, Any]] = None
+    headers: Optional[Dict[Union[str, ByteString], Any]] = None
