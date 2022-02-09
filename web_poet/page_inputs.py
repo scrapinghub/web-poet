@@ -1,4 +1,5 @@
 from typing import Optional, Dict, Any, ByteString, Union
+from contextlib import suppress
 
 import attr
 
@@ -24,7 +25,38 @@ class ResponseData:
 
     ``headers`` should contain the HTTP response headers.
     """
+
     url: str
     html: str
     status: Optional[int] = None
     headers: Optional[Dict[Union[str, ByteString], Any]] = None
+
+
+class Meta:
+    """Container class that could contain any arbitrary data.
+
+    Using this is more useful to pass things around compared to a ``dict`` due
+    to these following characteristics:
+
+        - You can use Python's "." attribute syntax for it.
+        - Accessing attributes that are not existing won't result in errors.
+          Instead, a ``None`` value will be returned.
+        - The same goes for deleting attributes that don't exist wherein errors
+          will be suppressed.
+
+    This makes the code simpler by avoiding try/catch, checking an attribute's
+    existence, using ``get()``, etc.
+    """
+
+    def __init__(self, **kwargs):
+        object.__setattr__(self, "_data", kwargs)
+
+    def __getattr__(self, key):
+        return self._data.get(key)
+
+    def __delattr__(self, key):
+        with suppress(KeyError):
+            del self._data[key]
+
+    def __setattr__(self, key, value):
+        self._data[key] = value
