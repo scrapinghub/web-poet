@@ -60,3 +60,7 @@ class Meta:
 
     def __setattr__(self, key, value):
         self._data[key] = value
+
+    def __repr__(self):
+        contents = ", ".join([f"{k}={v!r}" for k, v in self._data.items()])
+        return f"Meta({contents})"
