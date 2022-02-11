@@ -43,9 +43,10 @@ implementation of how to download things via:
     web_poet.request_backend_var.set(downloader_implementation)
 """
 
+import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional
+from typing import Optional, List
 
 import attr
 
@@ -91,5 +92,7 @@ class HttpClient:
     def __init__(self, request_downloader=None):
         self.request_downloader = request_downloader or perform_request
 
-    async def request(self, request: GenericRequest):
-        return await self.request_downloader(request)
+    async def request(self, *requests: List[GenericRequest]):
+        coroutines = [self.request_downloader(r) for r in requests]
+        responses = await asyncio.gather(*coroutines)
+        return responses
