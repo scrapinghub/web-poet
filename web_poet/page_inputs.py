@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Any, ByteString, Union
+import inspect
+from typing import Optional, Dict, Any, ByteString, Union, Set
 from contextlib import suppress
 
 import attr
@@ -32,35 +33,65 @@ class ResponseData:
     headers: Optional[Dict[Union[str, ByteString], Any]] = None
 
 
-class Meta:
-    """Container class that could contain any arbitrary data.
+class Meta(dict):
+    """Container class that could contain any arbitrary data to be passed into
+    a Page Object.
 
-    Using this is more useful to pass things around compared to a ``dict`` due
-    to these following characteristics:
+    This is basically a subclass of a ``dict`` but adds some additional
+    functionalities to ensure consistent and compatible Page Objects across
+    different use cases:
 
-        - You can use Python's "." attribute syntax for it.
-        - Accessing attributes that are not existing won't result in errors.
-          Instead, a ``None`` value will be returned.
-        - The same goes for deleting attributes that don't exist wherein errors
-          will be suppressed.
+    * A class variable named ``required_data`` to ensure consistent
+      arguments. If it's instantiated with missing ``keys`` from
+      ``required_data``, then a ``ValueError`` is raised.
 
-    This makes the code simpler by avoiding try/catch, checking an attribute's
-    existence, using ``get()``, etc.
+    * Ensures that some params with data types that are difficult to
+      provide or pass like ``lambdas`` are checked. Otherwise, a ``ValueError``
+      is raised.
     """
 
-    def __init__(self, **kwargs):
-        object.__setattr__(self, "_data", kwargs)
+    # Contains the required "keys" when instantiating and setting attributes.
+    required_data: Set = set()
 
-    def __getattr__(self, key):
-        return self._data.get(key)
+    # Any "value" that returns True for the functions here are not allowed.
+    restrictions: Dict = {
+        inspect.ismodule: "module",
+        inspect.isclass: "class",
+        inspect.ismethod: "method",
+        inspect.isfunction: "function",
+        inspect.isgenerator: "generator",
+        inspect.isgeneratorfunction: "generator",
+        inspect.iscoroutine: "coroutine",
+        inspect.isawaitable: "awaitable",
+        inspect.istraceback: "traceback",
+        inspect.isframe: "frame",
+    }
 
-    def __delattr__(self, key):
-        with suppress(KeyError):
-            del self._data[key]
+    def __init__(self, *args, **kwargs) -> None:
+        missing_required_keys = self.required_data - kwargs.keys()
+        if missing_required_keys:
+            raise ValueError(
+                f"These keys are required for instantiation: {missing_required_keys}"
+            )
+        for val in kwargs.values():
+            self.is_restricted_value(val)
+        super().__init__(*args, **kwargs)
 
-    def __setattr__(self, key, value):
-        self._data[key] = value
+    def __setitem__(self, key: Any, value: Any) -> None:
+        self.is_restricted_value(value)
+        super().__setattr__(key, value)
 
-    def __repr__(self):
-        contents = ", ".join([f"{k}={v!r}" for k, v in self._data.items()])
-        return f"Meta({contents})"
+    def is_restricted_value(self, value: Any) -> None:
+        """Raises an error if a given value isn't allowed inside the meta.
+
+        This behavior can be controlled by tweaking the class variable
+        :meth:`~.web_poet.page_inputs.Meta.restrictions`.
+        """
+        violations = []
+
+        for restrictor, err in self.restrictions.items():
+            if restrictor(value):
+                violations.append(f"{err} is not allowed: {value}")
+
+        if violations:
+            raise ValueError(f"Found these issues: {', '.join(violations)}")
