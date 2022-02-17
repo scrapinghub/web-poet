@@ -1,3 +1,6 @@
+import pytest
+import asyncio
+
 from web_poet.page_inputs import ResponseData, Meta
 
 
@@ -13,21 +16,30 @@ def test_html_response():
     assert response.headers["User-Agent"] == "test agent"
 
 
-def test_meta():
-    meta = Meta(x="hi", y=2.2, z={"k": "v"})
-    assert meta.x == "hi"
-    assert meta.y == 2.2
-    assert meta.z == {"k": "v"}
-    assert meta.not_existing_field is None
+def test_meta_required_data():
+    Meta()  # By default, no fields are required.
 
-    del meta.z
-    assert meta.z is None
+    class RequiredMeta(Meta):
+        required_data = {"some_data"}
 
-    # Deleting non-existing fields should not err out.
-    del meta.no_existing_field
-    assert meta.not_existing_field is None
+    with pytest.raises(ValueError):
+        RequiredMeta()
 
-    meta.new_field = "new"
-    assert meta.new_field == "new"
+    meta = RequiredMeta(some_data=123)
+    assert meta["some_data"] == 123
 
-    str(meta) == "Meta(x='hi', y=2.2, new='new')"
+
+def test_meta_restriction():
+    # Any value that conforms with `Meta.restrictions` raises an error
+    with pytest.raises(ValueError) as err:
+        Meta(func=lambda x: x + 1)
+
+    with pytest.raises(ValueError) as err:
+        Meta(class_=ResponseData)
+
+    # These are allowed though
+    m = Meta(x="hi", y=2.2, z={"k": "v"})
+    m["allowed"] = [1, 2, 3]
+
+    with pytest.raises(ValueError) as err:
+        m["not_allowed"] = asyncio.sleep(1)
