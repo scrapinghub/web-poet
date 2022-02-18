@@ -46,7 +46,7 @@ implementation of how to download things via:
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List
+from typing import Optional, List, Dict, ByteString, Any, Union
 
 import attr
 
@@ -68,7 +68,7 @@ class GenericRequest:
 
     url: str
     method: str = "GET"
-    headers: Optional[str] = None
+    headers: Optional[Dict[Union[str, ByteString], Any]] = None
     body: Optional[str] = None
 
 
