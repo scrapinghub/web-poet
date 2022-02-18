@@ -24,7 +24,19 @@ class ResponseData:
 
     ``headers`` should contain the HTTP response headers.
     """
+
     url: str
-    html: str
+    body: HttpResponseBody
     status: Optional[int] = None
-    headers: Optional[Dict[Union[str, ByteString], Any]] = None
+    headers: Optional[HttpResponseHeaders] = None
+
+
+@attr.define
+class HttpResponseBody:
+    raw_data: bytes
+    html: str
+
+
+@attr.define
+class HttpResponseHeaders:
+    data: List[Dict[ByteString, ByteString]]
