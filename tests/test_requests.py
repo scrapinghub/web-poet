@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 from web_poet.page_inputs import ResponseData
 from web_poet.requests import (
-    GenericRequest,
+    Request,
     perform_request,
     HttpClient,
     RequestBackendError,
@@ -25,13 +25,13 @@ def async_mock():
 
 def test_generic_request():
 
-    req = GenericRequest("url")
+    req = Request("url")
     assert req.url == "url"
     assert req.method == "GET"
     assert req.headers is None
     assert req.body is None
 
-    req = GenericRequest(
+    req = Request(
         "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
     )
     assert req.method == "POST"
@@ -42,7 +42,7 @@ def test_generic_request():
 @pytest.mark.asyncio
 async def test_perform_request(async_mock):
 
-    req = GenericRequest("url")
+    req = Request("url")
 
     with pytest.raises(RequestBackendError):
         await perform_request(req)
@@ -56,16 +56,36 @@ async def test_perform_request(async_mock):
 
 
 @pytest.mark.asyncio
-async def test_http_client(async_mock):
+async def test_http_client_single_requests(async_mock):
     client = HttpClient(async_mock)
     assert client.request_downloader == async_mock
 
-    req_1 = GenericRequest("url-1")
-    req_2 = GenericRequest("url-2")
+    with mock.patch("web_poet.requests.Request") as mock_request:
+        response = await client.request("url")
+        response.url == "url"
 
-    # It should be able to accept arbitrary number of requests
-    client.request(req_1)
-    responses = await client.request(req_1, req_2)
+        response = await client.get("url-get")
+        response.url == "url-get"
 
-    assert responses[0].url == req_1.url
-    assert responses[1].url == req_2.url
+        response = await client.post("url-post")
+        response.url == "url-post"
+
+        assert mock_request.call_args_list == [
+            mock.call("url", "GET", None, None),
+            mock.call("url-get", "GET", None, None),
+            mock.call("url-post", "POST", None, None),
+        ]
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_requests(async_mock):
+    client = HttpClient(async_mock)
+
+    requests = [
+        Request("url-1"),
+        Request("url-get", method="GET"),
+        Request("url-post", method="POST"),
+    ]
+    responses = await client.batch_requests(*requests)
+
+    assert all([isinstance(response, ResponseData) for response in responses])

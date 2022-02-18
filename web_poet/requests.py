@@ -50,8 +50,12 @@ from typing import Optional, List, Dict, ByteString, Any, Union
 
 import attr
 
+from web_poet.page_inputs import ResponseData
+
 logger = logging.getLogger(__name__)
 
+
+mapping = Dict[Union[str, ByteString], Any]
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
 # set the appropriate implementation for requesting data.
@@ -63,16 +67,16 @@ class RequestBackendError(Exception):
 
 
 @attr.define
-class GenericRequest:
+class Request:
     """Represents a generic HTTP request."""
 
     url: str
     method: str = "GET"
-    headers: Optional[Dict[Union[str, ByteString], Any]] = None
+    headers: Optional[mapping] = None
     body: Optional[str] = None
 
 
-async def perform_request(request: GenericRequest):
+async def perform_request(request: Request):
     logger.info(f"Requesting page: {request}")
 
     try:
@@ -92,7 +96,25 @@ class HttpClient:
     def __init__(self, request_downloader=None):
         self.request_downloader = request_downloader or perform_request
 
-    async def request(self, *requests: List[GenericRequest]):
+    async def request(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: Optional[mapping] = None,
+        body: Optional[str] = None,
+    ) -> ResponseData:
+        r = Request(url, method, headers, body)
+        return await self.request_downloader(r)
+
+    async def get(self, url: str, headers: Optional[mapping] = None) -> ResponseData:
+        return await self.request(url=url, method="GET", headers=headers)
+
+    async def post(
+        self, url: str, headers: Optional[mapping] = None, body: Optional[str] = None
+    ) -> ResponseData:
+        return await self.request(url=url, method="POST", headers=headers, body=body)
+
+    async def batch_requests(self, *requests: List[Request]):
         coroutines = [self.request_downloader(r) for r in requests]
         responses = await asyncio.gather(*coroutines)
         return responses
