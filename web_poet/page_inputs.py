@@ -2,6 +2,8 @@ from typing import Optional, Dict, Any, ByteString, Union
 
 import attr
 
+from web_poet import Request
+
 
 @attr.s(auto_attribs=True)
 class ResponseData:
@@ -23,12 +25,15 @@ class ResponseData:
     ``status`` should represent the int status code of the HTTP response.
 
     ``headers`` should contain the HTTP response headers.
+
+    ``request`` links the ``web_poet.Requests`` that was used to produce it.
     """
 
     url: str
     body: HttpResponseBody
     status: Optional[int] = None
     headers: Optional[HttpResponseHeaders] = None
+    request: Optional[Request] = None
 
 
 @attr.define
