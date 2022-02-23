@@ -2,7 +2,7 @@ import abc
 import attr
 import typing
 
-from web_poet.mixins import ResponseShortcutsMixin
+from web_poet.mixins import ResponseShortcutsMixin, JsonResponseShortcutsMixin
 from web_poet.page_inputs import ResponseData
 
 
@@ -51,12 +51,32 @@ class WebPage(Injectable, ResponseShortcutsMixin):
     Use this class as a base class for Page Objects which work on
     HTML downloaded using an HTTP client directly.
     """
+
+    response: ResponseData
+
+
+@attr.s(auto_attribs=True)
+class JsonPage(Injectable, JsonResponseShortcutsMixin):
+    """Base Page Object which requires :class:`~.ResponseData`
+    and provides JSON translation into ``dict`` and a jmespath query shortcut.
+
+    Use this class as a base class for Page Objects for JSON HTTP Responses.
+    """
+
     response: ResponseData
 
 
 @attr.s(auto_attribs=True)
 class ItemWebPage(WebPage, ItemPage):
     """:class:`WebPage` that requires the :meth:`to_item` method to
+    be implemented.
+    """
+    pass
+
+
+@attr.s(auto_attribs=True)
+class ItemJsonPage(JsonPage, ItemPage):
+    """:class:`JsonPage` that requires the :meth:`to_item` method to
     be implemented.
     """
     pass

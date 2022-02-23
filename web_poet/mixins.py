@@ -1,21 +1,46 @@
+import json
 from urllib.parse import urljoin
+from typing import Optional
 
 import parsel
+import jmespath
 from w3lib.html import get_base_url
 
+from web_poet.page_inputs import ResponseData
 
-class ResponseShortcutsMixin:
-    """Common shortcut methods for working with HTML responses.
 
-    It requires "response" attribute to be present.
-    """
-    _cached_selector = None
-    _cached_base_url = None
+class UrlShortcutsMixin:
+
+    response: ResponseData
+    _cached_base_url: Optional[str] = None
 
     @property
     def url(self):
         """Shortcut to HTML Response's URL."""
         return self.response.url
+
+    @property
+    def base_url(self) -> str:
+        """Return the base url of the given response"""
+        if self._cached_base_url is None:
+            text = self.response.html[:4096]
+            self._cached_base_url = get_base_url(text, self.url)
+        return self._cached_base_url
+
+    def urljoin(self, url: str) -> str:
+        """Convert url to absolute, taking in account
+        url and baseurl of the response"""
+        return urljoin(self.base_url, url)
+
+
+class ResponseShortcutsMixin(UrlShortcutsMixin):
+    """Common shortcut methods for working with HTML responses.
+
+    It requires ``response`` attribute to be present.
+    """
+
+    response: ResponseData
+    _cached_selector: Optional[parsel.Selector] = None
 
     @property
     def html(self):
@@ -38,16 +63,25 @@ class ResponseShortcutsMixin:
         """Run a CSS query on a response, using :class:`parsel.Selector`."""
         return self.selector.css(query)
 
+
+class JsonResponseShortcutsMixin(UrlShortcutsMixin):
+    """Common shortcut methods for working with JSON responses which usually
+    comes from APIs.
+
+    It requires ``response`` attribute to be present.
+    """
+
+    response: ResponseData
+    _cached_json: Optional[dict] = None
+
     @property
-    def base_url(self) -> str:
-        """Return the base url of the given response"""
-        if self._cached_base_url is None:
-            text = self.html[:4096]
-            self._cached_base_url = get_base_url(text, self.url)
-        return self._cached_base_url
+    def json(self) -> dict:
+        """Shortcut to the JSON Response represented in a Python ``dict``."""
+        if self._cached_json is None:
+            self._cached_json = json.loads(self.response.html)
 
-    def urljoin(self, url: str) -> str:
-        """Convert url to absolute, taking in account
-        url and baseurl of the response"""
-        return urljoin(self.base_url, url)
+        return self._cached_json
 
+    def jmespath(self, expression: str) -> dict:
+        """Run a jmespath query on the JSON Response."""
+        return jmespath.search(expression, self.json)

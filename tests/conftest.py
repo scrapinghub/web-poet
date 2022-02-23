@@ -19,3 +19,9 @@ def book_list_html():
 @pytest.fixture
 def book_list_html_response(book_list_html):
     return ResponseData('http://books.toscrape.com/index.html', book_list_html)
+
+
+@pytest.fixture
+def api_json_response():
+    data = '{"status": "OK", "query": 123, "results": [{"name": "hello"}, {"name": "world"}]}'
+    return ResponseData('http://example.com/api?query=123', data)

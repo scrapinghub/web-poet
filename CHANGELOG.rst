@@ -7,6 +7,8 @@ TBR
 
 * removed support for Python 3.6
 * added support for Python 3.10
+* added ``web_poet.ItemJsonPage``, ``web_poet.JsonPage``, and
+  ``web_poet.mixins.JsonResponseShortcutsMixin``.
 
 
 0.1.1 (2021-06-02)

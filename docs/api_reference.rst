@@ -32,7 +32,19 @@ Pages
    :inherited-members:
    :no-special-members:
 
+.. autoclass:: JsonPage
+   :show-inheritance:
+   :members:
+   :undoc-members:
+   :inherited-members:
+   :no-special-members:
+
 .. autoclass:: ItemWebPage
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
+.. autoclass:: ItemJsonPage
    :show-inheritance:
    :members:
    :no-special-members:
@@ -43,5 +55,9 @@ Mixins
 .. automodule:: web_poet.mixins
 
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
+   :members:
+   :no-special-members:
+
+.. autoclass:: web_poet.mixins.JsonResponseShortcutsMixin
    :members:
    :no-special-members:

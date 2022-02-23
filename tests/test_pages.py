@@ -1,6 +1,6 @@
 import pytest
 
-from web_poet.pages import ItemPage, ItemWebPage, is_injectable
+from web_poet.pages import ItemPage, ItemWebPage, ItemJsonPage, is_injectable
 
 
 def test_abstract_page_object():
@@ -13,6 +13,13 @@ def test_abstract_web_page_object():
     with pytest.raises(TypeError) as exc:
         ItemWebPage()
     assert "Can't instantiate abstract class" in str(exc.value)
+
+
+def test_abstract_json_page_object():
+    with pytest.raises(TypeError) as exc:
+        ItemJsonPage()
+    assert "Can't instantiate abstract class" in str(exc.value)
+
 
 def test_page_object():
 
@@ -44,6 +51,23 @@ def test_web_page_object(book_list_html_response):
     }
 
 
+def test_web_page_object_json(api_json_response):
+
+    class MyWebPage(ItemJsonPage):
+
+        def to_item(self) -> dict:
+            return {
+                'url': self.url,
+                'names': self.jmespath("results[].name"),
+            }
+
+    page_object = MyWebPage(api_json_response)
+    assert page_object.to_item() == {
+        'url': 'http://example.com/api?query=123',
+        'names': ['hello', 'world'],
+    }
+
+
 def test_is_injectable():
 
     class MyClass:
@@ -63,3 +87,4 @@ def test_is_injectable():
     assert is_injectable(MyItemPage()) is False
     assert is_injectable(ItemPage) is True
     assert is_injectable(ItemWebPage) is True
+    assert is_injectable(ItemJsonPage) is True

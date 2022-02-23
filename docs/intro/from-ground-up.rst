@@ -194,6 +194,11 @@ Differences from a previous example:
        creating parsel.Selector behind the scenes (so that you don't
        need to create a selector in the ``extract_book`` method).
 
+.. note::
+
+    :class:`~.WebPage` is typically used to represent HTML Page. For API
+    Responses in a JSON format, :class:`~.JsonPage` can be used.
+
 There are pros and cons for using classes vs functions for writing
 such extraction code, but the distinction is not that important;
 web-poet uses classes at the moment.
@@ -231,6 +236,11 @@ is implemented. Let's change the code to follow this standard:
     # ... get resp_data somehow
     book_page = BookPage(response=resp_data)
     item = book_page.to_item()
+
+.. note::
+
+    :class:`~.ItemWebPage` is typically used to represent HTML Page. For API
+    Responses in a JSON format, :class:`~.ItemJsonPage` can be used.
 
 As the method name is now standardized, the code which creates a Page Object
 instance can now work for other Page Objects like that. For example, you can
@@ -496,9 +506,9 @@ For example, a very basic Page Object could look like this:
 
 There is no *need* to use other base classes and mixins
 defined by ``web-poet`` (:class:`~.WebPage`, :class:`~.ResponseShortcutsMixin`,
-:class:`~.ItemPage`, :class:`~.ItemWebPage`, etc.), but it can be a good
-idea to familiarize yourself with them, as they are taking some of
-the boilerplate out.
+:class:`~.JsonResponseShortcutsMixin`, :class:`~.ItemPage`,
+:class:`~.ItemWebPage`, etc.), but it can be a good idea to familiarize
+yourself with them, as they are taking some of the boilerplate out.
 
 Page Object Inputs
 ==================
