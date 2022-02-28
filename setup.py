@@ -22,6 +22,7 @@ setup(
     install_requires=(
         'attrs',
         'parsel',
+        'url-matcher',
     ),
     classifiers=(
         'Development Status :: 2 - Pre-Alpha',

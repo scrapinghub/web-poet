@@ -1,3 +1,5 @@
+.. _`api-reference`:
+
 =============
 API Reference
 =============
@@ -45,3 +47,15 @@ Mixins
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
    :no-special-members:
+
+
+.. _`api-overrides`:
+
+Overrides
+=========
+
+.. autofunction:: web_poet.handle_urls
+
+.. automodule:: web_poet.overrides
+   :members:
+   :exclude-members: handle_urls
