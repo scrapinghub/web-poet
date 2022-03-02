@@ -213,6 +213,18 @@ This can be done something like:
     duration. Calling :func:`~.web_poet.overrides.consume_modules` again makes
     no difference unless a new set of modules are provided.
 
+.. tip::
+
+    If you're using External Packages which conform to the **POP**
+    standards as described in the :ref:`intro-pop` section, then retrieving
+    the rules should be as easy as:
+
+    .. code-block:: python
+
+        import ecommerce_page_objects, gadget_sites_page_objects
+
+        rules = ecommerce_page_objects.RULES + gadget_sites_page_objects.RULES
+
 .. _`intro-rule-subset`:
 
 Using only a subset of the available OverrideRules
