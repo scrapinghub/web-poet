@@ -145,7 +145,9 @@ inside ``ecommerce_page_objects/ecommerce_page_objects/__init__.py``.
 
     from web_poet import default_registry, consume_modules
 
-    consume_modules("ecommerce_page_objects")
+    # This allows all of the OverrideRules declared inside the package
+    # using @handle_urls to be properly discovered and loaded.
+    consume_modules(__package__)
     RULES = default_registry.get_overrides()
 
 This allows any developer using a **POP** to easily get the list of
@@ -165,11 +167,21 @@ Conventions and Best Practices
 ------------------------------
 
 1. Page Objects should have its classname end with a **Page** suffix.
-
-  - This allows for easy identification when used by other developers.
+   This allows for easy identification when used by other developers.
 
 2. The list of :class:`~.OverrideRule` must be declared as a top-level
-   variable from the package named ``RULES``.
+   variable from the package named ``RULES``. This enables other developers
+   to easily retrieve the list of :class:`~.OverrideRule` to be used in
+   their own projects.
 
-  - This enables other developers to easily retrieve the list of
-    :class:`~.OverrideRule` to be used in their own projects.
+3. It is recommended to use the ``web_poet.default_registry`` by default
+   instead of creating your own custom registries by instantiating
+   :class:`~.PageObjectRegistry`. This provides a default expectation
+   for developers on which registry to use right from the start.
+
+4. When building a new **POP** based of on existing **POPs**, it is
+   recommended to use an **inclusion** strategy rather than **exclusion**
+   when selecting the list of :class:`~.OverrideRule` to export.
+   This is due to the latter having the risk of being brittle when the
+   underlying source **POPs** change. This could lead to a few
+   :class:`~.OverrideRule` that are unintentionally included.

@@ -204,6 +204,19 @@ This can be done something like:
     # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
     # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
 
+.. note::
+
+    If you're using External Packages which conform to the **POP**
+    standards as described in the :ref:`intro-pop` section, then retrieving
+    the rules should be as easy as:
+
+    .. code-block:: python
+
+        import ecommerce_page_objects, gadget_sites_page_objects
+
+        rules = ecommerce_page_objects.RULES + gadget_sites_page_objects.RULES
+
+
 .. _`intro-rule-subset`:
 
 Using only a subset of the available OverrideRules
