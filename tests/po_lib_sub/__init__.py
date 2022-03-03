@@ -18,7 +18,7 @@ class POLibSubOverriden:
     ...
 
 
-@handle_urls("sub_example.com", POLibSubOverriden)
+@handle_urls("sub_example.com", overrides=POLibSubOverriden)
 class POLibSub(POBase):
     expected_overrides = POLibSubOverriden
     expected_patterns = Patterns(["sub_example.com"])

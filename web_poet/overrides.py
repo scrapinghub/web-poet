@@ -97,8 +97,8 @@ class PageObjectRegistry:
     def handle_urls(
         self,
         include: Strings,
-        overrides: Callable,
         *,
+        overrides: Callable,
         exclude: Optional[Strings] = None,
         priority: int = 500,
         **kwargs,

@@ -21,7 +21,7 @@ class POLibSubOverridenNotImported:
     ...
 
 
-@handle_urls("sub_example_not_imported.com", POLibSubOverridenNotImported)
+@handle_urls("sub_example_not_imported.com", overrides=POLibSubOverridenNotImported)
 class POLibSubNotImported(POBase):
     expected_overrides = POLibSubOverridenNotImported
     expected_patterns = Patterns(["sub_example_not_imported.com"])
