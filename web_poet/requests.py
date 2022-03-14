@@ -11,7 +11,7 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Dict, ByteString, Any, Union, Callable, Iterable
+from typing import Optional, List, Dict, ByteString, Any, Union, Callable
 
 import attr
 
@@ -132,7 +132,7 @@ class HttpClient:
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(self, *requests: Iterable[Request]) -> List[ResponseData]:
+    async def batch_requests(self, *requests: Request) -> List[ResponseData]:
         """Similar to :meth:`~.HttpClient.request` but accepts a collection of
         :class:`~.Request` instances that would be batch executed.
         """
