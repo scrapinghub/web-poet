@@ -37,13 +37,10 @@ class Meta(dict):
     """Container class that could contain any arbitrary data to be passed into
     a Page Object.
 
-    This is basically a subclass of a ``dict`` but adds some additional
-    functionalities to ensure consistent and compatible Page Objects across
-    different use cases:
-
-    * Ensures that some params with data types that are difficult to
-      provide or pass like ``lambdas`` are checked. Otherwise, a ``ValueError``
-      is raised.
+    This is basically a subclass of a ``dict`` that adds the ability to check
+    if any of the assigned values are not allowed. This ensures that some input
+    parameters with data types that are difficult to provide or pass via CLI
+    like ``lambdas`` are checked. Otherwise, a ``ValueError`` is raised.
     """
 
     # Any "value" that returns True for the functions here are not allowed.
@@ -62,18 +59,21 @@ class Meta(dict):
 
     def __init__(self, *args, **kwargs) -> None:
         for val in kwargs.values():
-            self.is_restricted_value(val)
+            self.enforce_value_restriction(val)
         super().__init__(*args, **kwargs)
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        self.is_restricted_value(value)
+        self.enforce_value_restriction(value)
         super().__setattr__(key, value)
 
-    def is_restricted_value(self, value: Any) -> None:
-        """Raises an error if a given value isn't allowed inside the meta.
+    def enforce_value_restriction(self, value: Any) -> None:
+        """Raises a ``ValueError`` if a given value isn't allowed inside the meta.
 
-        This behavior can be controlled by tweaking the class variable
-        :meth:`~.web_poet.page_inputs.Meta.restrictions`.
+        This method is called during :class:`~.Meta` instantiation and setting
+        new values in an existing instance.
+
+        This behavior can be controlled by tweaking the class variable named
+        ``restrictions``.
         """
         violations = []
 
