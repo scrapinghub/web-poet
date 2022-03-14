@@ -45,3 +45,10 @@ Mixins
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
    :no-special-members:
+
+Requests
+========
+
+.. automodule:: web_poet.requests
+    :members:
+    :undoc-members:

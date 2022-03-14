@@ -1,52 +1,17 @@
-"""
-Quick Start
------------
+"""This module has a full support for :mod:`asyncio` that enables developers to
+perform asynchronous additional requests inside of Page Objects.
 
-.. code-block:: python
+Note that the implementation to fully execute any :class:`~.Request` is not
+handled in this module. With that, the framework using **web-poet** must supply
+the implementation.
 
-    from web_poet import requests
-
-Developers could then use this alongside the ``async/await`` syntax in Python
-to issue additional requests.
-
-
-Use Cases
----------
-
-Additional requests in Page Objects are hard to avoid since webpages nowadays
-requires some dynamic interactions. Some examples would be:
-
-    - "clicking" a load more button that loads more data.
-    - "scrolling" to paginate an infinite page.
-    - "hovering" that reveals a tool-tip containing additional page info.
-    - etc
-
-In most cases, these are done via AJAX requests.
-
-.. warning::
-
-    Additional requests should not be confused with "crawling" which aims to
-    visit multiple webpages from a given website. Additional requests are simply
-    a means to interact with the website to access more information from it.
-
-
-Use for other frameworks
-------------------------
-
-Please note that on its own, ``web_poet.request`` doesn't do anything. It doesn't
-know how to implement the request on its own. Thus, for frameworks or projects
-wanting to use additional requests in Page Objects, they need to set the
-implementation of how to download things via:
-
-.. code-block:: python
-
-    web_poet.request_backend_var.set(downloader_implementation)
+You can read more about this in the :ref:`advanced-downloader-impl` documentation.
 """
 
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Dict, ByteString, Any, Union
+from typing import Optional, List, Dict, ByteString, Any, Union, Callable, Iterable
 
 import attr
 
@@ -63,12 +28,21 @@ request_backend_var: ContextVar = ContextVar("request_backend")
 
 
 class RequestBackendError(Exception):
+    """Indicates that the ``web_poet.request_backend_var`` wasn't set
+    by the framework using **web-poet**.
+
+    See the documentation section about :ref:`setting up the contextvars <setup-contextvars>`
+    to learn more about this.
+    """
+
     pass
 
 
 @attr.define
 class Request:
-    """Represents a generic HTTP request."""
+    """Represents a generic HTTP request used by other functionalities in
+    **web-poet** like :class:`~.HttpClient`.
+    """
 
     url: str
     method: str = "GET"
@@ -76,7 +50,18 @@ class Request:
     body: Optional[str] = None
 
 
-async def perform_request(request: Request):
+async def _perform_request(request: Request) -> ResponseData:
+    """Given a :class:`~.Request`, execute it using the **request implementation**
+    that was set in the ``web_poet.request_backend_var`` :mod:`contextvars`
+    instance.
+
+    .. warning::
+        By convention, this function should return a :class:`~.ResponseData`.
+        However, the underlying downloader assigned in
+        ``web_poet.request_backend_var`` might change that, depending on
+        how the framework using **web-poet** implements it.
+    """
+
     logger.info(f"Requesting page: {request}")
 
     try:
@@ -88,13 +73,29 @@ async def perform_request(request: Request):
             "'web_poet.request_backend_var'"
         )
 
-    response_data = await request_backend(request)
+    response_data: ResponseData = await request_backend(request)
     return response_data
 
 
 class HttpClient:
-    def __init__(self, request_downloader=None):
-        self.request_downloader = request_downloader or perform_request
+    """A convenient client to easily execute requests.
+
+    By default, it uses the request implementation assigned in the
+    ``web_poet.request_backend_var`` which is a :mod:`contextvars` instance to
+    download the actual requests. However, it can easily be overridable by
+    providing an optional ``request_downloader`` callable.
+
+    Providing the request implementation by dependency injection would be a good
+    alternative solution when you want to avoid setting up :mod:`contextvars`
+    like ``web_poet.request_backend_var``.
+
+    In any case, this doesn't contain any implementation about how to execute
+    any requests fed into it. When setting that up, make sure that the downloader
+    implementation returns a :class:`~.ResponseData` instance.
+    """
+
+    def __init__(self, request_downloader: Callable = None):
+        self.request_downloader = request_downloader or _perform_request
 
     async def request(
         self,
@@ -103,18 +104,39 @@ class HttpClient:
         headers: Optional[mapping] = None,
         body: Optional[str] = None,
     ) -> ResponseData:
+        """This is a shortcut for creating a :class:`Request` instance and executing
+        that request.
+
+        A :class:`~.ResponseData` instance should then be returned.
+
+        .. warning::
+            By convention, the request implementation supplied optionally to
+            :class:`~.HttpClient` should return a :class:`~.ResponseData` instance.
+            However, the underlying implementation supplied might change that,
+            depending on how the framework using **web-poet** implements it.
+        """
         r = Request(url, method, headers, body)
         return await self.request_downloader(r)
 
     async def get(self, url: str, headers: Optional[mapping] = None) -> ResponseData:
+        """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
+        request.
+        """
         return await self.request(url=url, method="GET", headers=headers)
 
     async def post(
         self, url: str, headers: Optional[mapping] = None, body: Optional[str] = None
     ) -> ResponseData:
+        """Similar to :meth:`~.HttpClient.request` but peforming a ``POST``
+        request.
+        """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(self, *requests: List[Request]):
+    async def batch_requests(self, *requests: Iterable[Request]) -> List[ResponseData]:
+        """Similar to :meth:`~.HttpClient.request` but accepts a collection of
+        :class:`~.Request` instances that would be batch executed.
+        """
+
         coroutines = [self.request_downloader(r) for r in requests]
         responses = await asyncio.gather(*coroutines)
         return responses
