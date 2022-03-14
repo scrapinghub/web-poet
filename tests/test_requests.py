@@ -4,7 +4,6 @@ import pytest
 from web_poet.page_inputs import ResponseData
 from web_poet.requests import (
     Request,
-    perform_request,
     HttpClient,
     RequestBackendError,
     request_backend_var,
@@ -40,18 +39,19 @@ def test_generic_request():
 
 
 @pytest.mark.asyncio
-async def test_perform_request(async_mock):
+async def test_perform_request_from_httpclient(async_mock):
 
-    req = Request("url")
+    url = "http://example.com"
+    client = HttpClient()
 
     with pytest.raises(RequestBackendError):
-        await perform_request(req)
+        await client.get(url)
 
     request_backend_var.set(async_mock)
-    response = await perform_request(req)
+    response = await client.get(url)
 
     # The async downloader implementation should return the ResponseData
-    assert response.url == req.url
+    assert response.url == url
     assert type(response) == ResponseData
 
 
