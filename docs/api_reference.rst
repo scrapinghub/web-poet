@@ -6,8 +6,19 @@ Page Inputs
 ===========
 
 .. automodule:: web_poet.page_inputs
-    :members:
-    :undoc-members:
+
+.. autoclass:: ResponseData
+   :show-inheritance:
+   :members:
+   :undoc-members:
+   :inherited-members:
+   :no-special-members:
+
+.. autoclass:: Meta
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
 
 Pages
 =====
