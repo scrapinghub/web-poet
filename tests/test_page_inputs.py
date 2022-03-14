@@ -16,19 +16,6 @@ def test_html_response():
     assert response.headers["User-Agent"] == "test agent"
 
 
-def test_meta_required_data():
-    Meta()  # By default, no fields are required.
-
-    class RequiredMeta(Meta):
-        required_data = {"some_data"}
-
-    with pytest.raises(ValueError):
-        RequiredMeta()
-
-    meta = RequiredMeta(some_data=123)
-    assert meta["some_data"] == 123
-
-
 def test_meta_restriction():
     # Any value that conforms with `Meta.restrictions` raises an error
     with pytest.raises(ValueError) as err:

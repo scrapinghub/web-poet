@@ -41,17 +41,10 @@ class Meta(dict):
     functionalities to ensure consistent and compatible Page Objects across
     different use cases:
 
-    * A class variable named ``required_data`` to ensure consistent
-      arguments. If it's instantiated with missing ``keys`` from
-      ``required_data``, then a ``ValueError`` is raised.
-
     * Ensures that some params with data types that are difficult to
       provide or pass like ``lambdas`` are checked. Otherwise, a ``ValueError``
       is raised.
     """
-
-    # Contains the required "keys" when instantiating and setting attributes.
-    required_data: Set = set()
 
     # Any "value" that returns True for the functions here are not allowed.
     restrictions: Dict = {
@@ -68,11 +61,6 @@ class Meta(dict):
     }
 
     def __init__(self, *args, **kwargs) -> None:
-        missing_required_keys = self.required_data - kwargs.keys()
-        if missing_required_keys:
-            raise ValueError(
-                f"These keys are required for instantiation: {missing_required_keys}"
-            )
         for val in kwargs.values():
             self.is_restricted_value(val)
         super().__init__(*args, **kwargs)
