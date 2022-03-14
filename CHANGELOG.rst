@@ -5,8 +5,10 @@ Changelog
 TBR
 ------------------
 
-* removed support for Python 3.6
-* added support for Python 3.10
+* Removed support for Python 3.6
+* Added support for Python 3.10
+* Added support for performing additional requests using
+  ``web_poet.HttpClient``.
 
 
 0.1.1 (2021-06-02)
