@@ -9,6 +9,8 @@ TBR
 * Added support for Python 3.10
 * Added support for performing additional requests using
   ``web_poet.HttpClient``.
+* Refactored ``ResponseData`` to use new ``HttpResponseBody``
+  and ``HttpResponseHeaders`` containers
 
 
 0.1.1 (2021-06-02)
