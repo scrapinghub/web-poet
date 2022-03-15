@@ -26,8 +26,7 @@ def test_html(my_page, book_list_html):
 def test_headers():
     data_headers = [{"a": 1}, {"b": 2}, {"c": 3}]
     headers = HttpResponseHeaders(data=data_headers)
-    body = HttpResponseBody(raw="content", html="content")
-    response = ResponseData("https://headers.com", body=body, headers=headers)
+    response = ResponseData("https://headers.com", html="content", headers=headers)
     page = MyPage(response)
 
     page.headers.get("a") == 1
@@ -63,9 +62,10 @@ def test_custom_baseurl():
     <body><body>
     </html>
     """
-    body = HttpResponseBody(raw=html, html=html)
+    body = HttpResponseBody(bytes(html, "utf-8"))
     response = ResponseData(
         url="http://www.example.com/path",
+        html=html,
         body=body,
     )
     page = MyPage(response=response)

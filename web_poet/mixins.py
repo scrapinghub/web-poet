@@ -22,7 +22,7 @@ class ResponseShortcutsMixin:
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
-        return self.response.body.html
+        return self.response.html
 
     @property
     def headers(self):

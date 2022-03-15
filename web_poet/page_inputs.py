@@ -5,20 +5,9 @@ import attr
 mapping = Dict[AnyStr, AnyStr]
 
 
-@attr.define
-class HttpResponseBody:
-    """A container for holding the HTTP response body which is split into two
-    parts.
-
-    ``raw`` contains the preserved HTTP response body content in bytes.
-
-    ``html`` should be content of the HTTP body, converted to unicode
-    using the detected encoding of the response, preferably according
-    to the web browser rules (respecting Content-Type header, etc.).
-    """
-
-    raw: bytes
-    html: str
+class HttpResponseBody(bytes):
+    """A container for holding the raw HTTP response body in bytes format."""
+    pass
 
 
 @attr.define
@@ -39,7 +28,11 @@ class ResponseData:
     ``url`` should be an URL of the response (after all redirects),
     not an URL of the request, if possible.
 
-    ``body`` contains the HTTP response body.
+    ``html`` should be content of the HTTP body, converted to unicode
+    using the detected encoding of the response, preferably according
+    to the web browser rules (respecting Content-Type header, etc.)
+
+    ``body`` contains the raw HTTP response body.
 
     The following are optional since it would depend on the source of the
     ``ResponseData`` if these are available or not. For example, the responses
@@ -52,6 +45,7 @@ class ResponseData:
     """
 
     url: str
-    body: HttpResponseBody
+    html: str
+    body: Optional[HttpResponseBody] = None
     status: Optional[int] = None
     headers: Optional[HttpResponseHeaders] = None
