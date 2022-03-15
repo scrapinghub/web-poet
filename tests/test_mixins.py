@@ -1,7 +1,7 @@
 import pytest
 
 from web_poet.mixins import ResponseShortcutsMixin
-from web_poet.page_inputs import ResponseData, HttpResponseBody, HttpResponseHeaders
+from web_poet.page_inputs import ResponseData, HttpResponseBody
 
 
 class MyPage(ResponseShortcutsMixin):
@@ -21,18 +21,6 @@ def test_url(my_page):
 
 def test_html(my_page, book_list_html):
     assert my_page.html == book_list_html
-
-
-def test_headers():
-    data_headers = [{"a": 1}, {"b": 2}, {"c": 3}]
-    headers = HttpResponseHeaders(data=data_headers)
-    response = ResponseData("https://headers.com", html="content", headers=headers)
-    page = MyPage(response)
-
-    page.headers.get("a") == 1
-    page.headers.get("b") == 2
-    page.headers.get("c") == 3
-    page.headers.get("d") == None
 
 
 def test_xpath(my_page):

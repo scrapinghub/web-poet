@@ -1,23 +1,57 @@
-from typing import Optional, Dict, List, Any, AnyStr, Union
+from typing import Optional, Dict, List, Iterable, Tuple
 
 import attr
-
-mapping = Dict[AnyStr, AnyStr]
+from multidict import CIMultiDict
 
 
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
+
     pass
 
 
-@attr.define
-class HttpResponseHeaders:
-    """A container for holdling the HTTP response headers.
+class HttpResponseHeaders(CIMultiDict):
+    """A container for holding the HTTP response headers.
 
-    ``data`` contains the list of key-value pairs of headers. It could be either
-    in string or raw bytes format.
+    It's able to accept instantiation via an Iterable of Tuples:
+
+    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
+    >>> HttpResponseHeaders(pairs)
+    <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    It's also accepts a mapping of key-value pairs as well:
+
+    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
+    >>> headers = HttpResponseHeaders(pairs)
+    >>> headers
+    <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    Note that this also supports case insensitive header-key lookups:
+
+    >>> headers.get("content-encoding")
+    'gzip'
+    >>> headers.get("Content-Length")
+    '648'
+
+    These are just a few of the functionalities it inherits from
+    :class:`multidict.CIMultiDict`. For more info on its other features, read
+    the API spec of :class:`multidict.CIMultiDict`.
     """
-    data: List[mapping]
+
+    @classmethod
+    def from_name_value_pairs(cls, arg: List[Dict]):
+        """An alternative constructor for instantiation using a ``List[Dict]``
+        where the 'key' is the header name while the 'value' is the header value.
+
+        >>> pairs = [
+        ...     {"name": "Content-Encoding", "value": "gzip"},
+        ...     {"name": "content-length", "value": "648"}
+        ... ]
+        >>> headers = HttpResponseHeaders.from_name_value_pairs(pairs)
+        >>> headers
+        <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+        """
+        return cls([(pair["name"], pair["value"]) for pair in arg])
 
 
 @attr.define

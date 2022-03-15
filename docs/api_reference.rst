@@ -8,6 +8,7 @@ Page Inputs
 .. automodule:: web_poet.page_inputs
     :members:
     :undoc-members:
+    :show-inheritance:
 
 Pages
 =====

@@ -9,10 +9,8 @@ class ResponseShortcutsMixin:
 
     It requires "response" attribute to be present.
     """
-
     _cached_selector = None
     _cached_base_url = None
-    _cached_headers = None
 
     @property
     def url(self):
@@ -23,17 +21,6 @@ class ResponseShortcutsMixin:
     def html(self):
         """Shortcut to HTML Response's content."""
         return self.response.html
-
-    @property
-    def headers(self):
-        """Shortcut to Response's header data."""
-        if not self._cached_headers:
-            headers = {
-                k: v for data in self.response.headers.data for k, v in data.items()
-            }
-            self._cached_headers = headers
-
-        return self._cached_headers
 
     @property
     def selector(self) -> parsel.Selector:
