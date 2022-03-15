@@ -1,13 +1,17 @@
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import ResponseData, HttpResponseBody, HttpResponseHeaders
 
 
 def test_html_response():
-    response = ResponseData("url", "content")
+    body = HttpResponseBody(raw="content", html="content")
+    headers = HttpResponseHeaders([{"User-Agent": "test agent"}])
+
+    response = ResponseData("url", body)
     assert response.url == "url"
-    assert response.html == "content"
+    assert response.body.html == "content"
     assert response.status is None
     assert response.headers is None
 
-    response = ResponseData("url", "content", 200, {"User-Agent": "test agent"})
+    response = ResponseData("url", body, 200, headers)
     assert response.status == 200
-    assert response.headers["User-Agent"] == "test agent"
+    assert len(response.headers.data) == 1
+    assert response.headers.data[0] == {"User-Agent": "test agent"}

@@ -1,11 +1,10 @@
 import pytest
 
 from web_poet.mixins import ResponseShortcutsMixin
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import ResponseData, HttpResponseBody, HttpResponseHeaders
 
 
 class MyPage(ResponseShortcutsMixin):
-
     def __init__(self, response: ResponseData):
         self.response = response
 
@@ -22,6 +21,19 @@ def test_url(my_page):
 
 def test_html(my_page, book_list_html):
     assert my_page.html == book_list_html
+
+
+def test_headers():
+    data_headers = [{"a": 1}, {"b": 2}, {"c": 3}]
+    headers = HttpResponseHeaders(data=data_headers)
+    body = HttpResponseBody(raw="content", html="content")
+    response = ResponseData("https://headers.com", body=body, headers=headers)
+    page = MyPage(response)
+
+    page.headers.get("a") == 1
+    page.headers.get("b") == 2
+    page.headers.get("c") == 3
+    page.headers.get("d") == None
 
 
 def test_xpath(my_page):
@@ -51,9 +63,10 @@ def test_custom_baseurl():
     <body><body>
     </html>
     """
+    body = HttpResponseBody(raw=html, html=html)
     response = ResponseData(
         url="http://www.example.com/path",
-        html=html,
+        body=body,
     )
     page = MyPage(response=response)
 

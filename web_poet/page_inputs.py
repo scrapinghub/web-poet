@@ -1,21 +1,45 @@
-from typing import Optional, Dict, Any, ByteString, Union
+from typing import Optional, Dict, List, Any, AnyStr, Union
 
 import attr
 
-from web_poet import Request
+mapping = Dict[AnyStr, AnyStr]
 
 
-@attr.s(auto_attribs=True)
+@attr.define
+class HttpResponseBody:
+    """A container for holding the HTTP response body which is split into two
+    parts.
+
+    ``raw`` contains the preserved HTTP response body content in bytes.
+
+    ``html`` should be content of the HTTP body, converted to unicode
+    using the detected encoding of the response, preferably according
+    to the web browser rules (respecting Content-Type header, etc.).
+    """
+
+    raw: bytes
+    html: str
+
+
+@attr.define
+class HttpResponseHeaders:
+    """A container for holdling the HTTP response headers.
+
+    ``data`` contains the list of key-value pairs of headers. It could be either
+    in string or raw bytes format.
+    """
+    data: List[mapping]
+
+
+@attr.define
 class ResponseData:
-    """A container for URL and HTML content of a response, downloaded
-    directly using an HTTP client.
+    """A container for the contents of a response, downloaded directly using an
+    HTTP client.
 
     ``url`` should be an URL of the response (after all redirects),
     not an URL of the request, if possible.
 
-    ``html`` should be content of the HTTP body, converted to unicode
-    using the detected encoding of the response, preferably according
-    to the web browser rules (respecting Content-Type header, etc.)
+    ``body`` contains the HTTP response body.
 
     The following are optional since it would depend on the source of the
     ``ResponseData`` if these are available or not. For example, the responses
@@ -25,23 +49,9 @@ class ResponseData:
     ``status`` should represent the int status code of the HTTP response.
 
     ``headers`` should contain the HTTP response headers.
-
-    ``request`` links the ``web_poet.Requests`` that was used to produce it.
     """
 
     url: str
     body: HttpResponseBody
     status: Optional[int] = None
     headers: Optional[HttpResponseHeaders] = None
-    request: Optional[Request] = None
-
-
-@attr.define
-class HttpResponseBody:
-    raw_data: bytes
-    html: str
-
-
-@attr.define
-class HttpResponseHeaders:
-    data: List[Dict[ByteString, ByteString]]

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import ResponseData, HttpResponseBody
 
 
 def read_fixture(path):
@@ -18,4 +18,5 @@ def book_list_html():
 
 @pytest.fixture
 def book_list_html_response(book_list_html):
-    return ResponseData('http://books.toscrape.com/index.html', book_list_html)
+    body = HttpResponseBody(raw=book_list_html, html=book_list_html)
+    return ResponseData('http://books.toscrape.com/index.html', body)
