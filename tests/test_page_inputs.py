@@ -1,19 +1,24 @@
 import pytest
 import asyncio
 
-from web_poet.page_inputs import ResponseData, Meta
+from web_poet.page_inputs import ResponseData, Meta, HttpResponseBody, HttpResponseHeaders
 
 
 def test_html_response():
-    response = ResponseData("url", "content")
+    html = "content"
+    http_body = HttpResponseBody(b"content")
+
+    response = ResponseData("url", html, body=http_body)
     assert response.url == "url"
-    assert response.html == "content"
+    assert response.body == b"content"
     assert response.status is None
     assert response.headers is None
 
-    response = ResponseData("url", "content", 200, {"User-Agent": "test agent"})
+    headers = HttpResponseHeaders.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
+    response = ResponseData("url", html, status=200, headers=headers)
     assert response.status == 200
-    assert response.headers["User-Agent"] == "test agent"
+    assert len(response.headers) == 1
+    assert response.headers.get("user-agent") == "test agent"
 
 
 def test_meta_restriction():

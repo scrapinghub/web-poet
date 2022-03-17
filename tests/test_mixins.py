@@ -1,11 +1,10 @@
 import pytest
 
 from web_poet.mixins import ResponseShortcutsMixin
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import ResponseData, HttpResponseBody
 
 
 class MyPage(ResponseShortcutsMixin):
-
     def __init__(self, response: ResponseData):
         self.response = response
 
@@ -51,9 +50,11 @@ def test_custom_baseurl():
     <body><body>
     </html>
     """
+    body = HttpResponseBody(bytes(html, "utf-8"))
     response = ResponseData(
         url="http://www.example.com/path",
         html=html,
+        body=body,
     )
     page = MyPage(response=response)
 

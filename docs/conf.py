@@ -193,4 +193,5 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None, ),
     'scrapy': ('https://docs.scrapy.org/en/latest', None, ),
     'url-matcher': ('https://url-matcher.readthedocs.io/en/stable/', None, ),
+    'multidict': ('https://multidict.readthedocs.io/en/latest', None, ),
 }

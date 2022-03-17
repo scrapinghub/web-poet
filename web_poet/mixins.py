@@ -50,4 +50,3 @@ class ResponseShortcutsMixin:
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
         return urljoin(self.base_url, url)
-

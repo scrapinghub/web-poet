@@ -21,7 +21,6 @@ Page Inputs
    :members:
    :no-special-members:
 
-
 Pages
 =====
 

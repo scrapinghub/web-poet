@@ -1,5 +1,5 @@
 from .pages import WebPage, ItemPage, ItemWebPage, Injectable
-from .page_inputs import ResponseData, Meta
+from .page_inputs import ResponseData, Meta, HttpResponseBody, HttpResponseHeaders
 from .requests import request_backend_var, Request, HttpClient
 from .overrides import (
     PageObjectRegistry,

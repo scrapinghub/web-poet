@@ -1,14 +1,64 @@
 import inspect
-from typing import Optional, Dict, Any, ByteString, Union, Set
-from contextlib import suppress
+from typing import Optional, Dict, Any, List
 
 import attr
+from multidict import CIMultiDict
 
 
-@attr.s(auto_attribs=True)
+class HttpResponseBody(bytes):
+    """A container for holding the raw HTTP response body in bytes format."""
+
+    pass
+
+
+class HttpResponseHeaders(CIMultiDict):
+    """A container for holding the HTTP response headers.
+
+    It's able to accept instantiation via an Iterable of Tuples:
+
+    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
+    >>> HttpResponseHeaders(pairs)
+    <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    It's also accepts a mapping of key-value pairs as well:
+
+    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
+    >>> headers = HttpResponseHeaders(pairs)
+    >>> headers
+    <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    Note that this also supports case insensitive header-key lookups:
+
+    >>> headers.get("content-encoding")
+    'gzip'
+    >>> headers.get("Content-Length")
+    '648'
+
+    These are just a few of the functionalities it inherits from
+    :class:`multidict.CIMultiDict`. For more info on its other features, read
+    the API spec of :class:`multidict.CIMultiDict`.
+    """
+
+    @classmethod
+    def from_name_value_pairs(cls, arg: List[Dict]):
+        """An alternative constructor for instantiation using a ``List[Dict]``
+        where the 'key' is the header name while the 'value' is the header value.
+
+        >>> pairs = [
+        ...     {"name": "Content-Encoding", "value": "gzip"},
+        ...     {"name": "content-length", "value": "648"}
+        ... ]
+        >>> headers = HttpResponseHeaders.from_name_value_pairs(pairs)
+        >>> headers
+        <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+        """
+        return cls([(pair["name"], pair["value"]) for pair in arg])
+
+
+@attr.define
 class ResponseData:
-    """A container for URL and HTML content of a response, downloaded
-    directly using an HTTP client.
+    """A container for the contents of a response, downloaded directly using an
+    HTTP client.
 
     ``url`` should be an URL of the response (after all redirects),
     not an URL of the request, if possible.
@@ -16,6 +66,8 @@ class ResponseData:
     ``html`` should be content of the HTTP body, converted to unicode
     using the detected encoding of the response, preferably according
     to the web browser rules (respecting Content-Type header, etc.)
+
+    ``body`` contains the raw HTTP response body.
 
     The following are optional since it would depend on the source of the
     ``ResponseData`` if these are available or not. For example, the responses
@@ -29,8 +81,9 @@ class ResponseData:
 
     url: str
     html: str
+    body: Optional[HttpResponseBody] = None
     status: Optional[int] = None
-    headers: Optional[Dict[Union[str, ByteString], Any]] = None
+    headers: Optional[HttpResponseHeaders] = None
 
 
 class Meta(dict):

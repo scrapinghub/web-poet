@@ -13,6 +13,8 @@ TBR
   ``web_poet.HttpClient``.
 * Introduced ``web_poet.Meta`` to pass arbitrary information
   inside a Page Object.
+* Refactored ``ResponseData`` to use new ``HttpResponseBody``
+  and ``HttpResponseHeaders`` containers
 
 0.1.1 (2021-06-02)
 ------------------

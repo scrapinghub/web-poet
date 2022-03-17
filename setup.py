@@ -23,6 +23,7 @@ setup(
         'attrs',
         'parsel',
         'url-matcher',
+        'multidict',
     ),
     classifiers=(
         'Development Status :: 2 - Pre-Alpha',
