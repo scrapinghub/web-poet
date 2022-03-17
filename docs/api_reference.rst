@@ -8,8 +8,19 @@ Page Inputs
 ===========
 
 .. automodule:: web_poet.page_inputs
-    :members:
-    :undoc-members:
+
+.. autoclass:: ResponseData
+   :show-inheritance:
+   :members:
+   :undoc-members:
+   :inherited-members:
+   :no-special-members:
+
+.. autoclass:: Meta
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
 
 Pages
 =====
@@ -48,7 +59,6 @@ Mixins
    :members:
    :no-special-members:
 
-
 .. _`api-overrides`:
 
 Overrides
@@ -59,3 +69,10 @@ Overrides
 .. automodule:: web_poet.overrides
    :members:
    :exclude-members: handle_urls
+
+Requests
+========
+
+.. automodule:: web_poet.requests
+    :members:
+    :undoc-members:
