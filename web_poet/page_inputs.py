@@ -17,13 +17,11 @@ from .utils import memoizemethod_noargs
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
-    @memoizemethod_noargs
     def declared_encoding(self) -> Optional[str]:
         """ Return the encoding specified in meta tags in the html body,
         or ``None`` if no suitable encoding was found """
         return html_body_declared_encoding(self)
 
-    @memoizemethod_noargs
     def json(self):
         """
         Deserialize a JSON document to a Python object.
@@ -153,6 +151,7 @@ class HttpResponse:
     def css(self, query):
         return self.selector.css(query)
 
+    @memoizemethod_noargs
     def json(self):
         return self.body.json()
 
