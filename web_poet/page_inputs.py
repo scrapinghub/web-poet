@@ -79,7 +79,7 @@ class HttpResponseHeaders(CIMultiDict):
         return http_content_type_encoding(content_type)
 
 
-@attrs.define(auto_attribs=False)
+@attrs.define(auto_attribs=False, slots=False)
 class HttpResponse:
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
@@ -103,10 +103,10 @@ class HttpResponse:
     """
 
     url: str = attrs.field()
-    # FIXME: raise an error or handle the case when str is passed as body
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None)
-    headers: Optional[HttpResponseHeaders] = attrs.field(default=None)
+    headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
+                                               converter=HttpResponseHeaders)
     _encoding: Optional[str] = attrs.field(default=None)
 
     _DEFAULT_ENCODING = 'ascii'
@@ -157,8 +157,7 @@ class HttpResponse:
 
     @memoizemethod_noargs
     def _headers_declared_encoding(self):
-        if self.headers:
-            return self.headers.declared_encoding()
+        return self.headers.declared_encoding()
 
     @memoizemethod_noargs
     def _body_declared_encoding(self):
@@ -166,7 +165,7 @@ class HttpResponse:
 
     @memoizemethod_noargs
     def _body_inferred_encoding(self):
-        content_type = (self.headers or {}).get('Content-Type', '')
+        content_type = self.headers.get('Content-Type', '')
         body_encoding, text = html_to_unicode(
             content_type,
             self.body,

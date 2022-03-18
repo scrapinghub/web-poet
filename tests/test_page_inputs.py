@@ -1,6 +1,7 @@
 import json
 
 import pytest
+import requests
 
 from web_poet.page_inputs import HttpResponse, HttpResponseBody, HttpResponseHeaders
 
@@ -83,3 +84,36 @@ def test_http_response_body_validation_other():
     with pytest.raises(TypeError):
         response = HttpResponse("http://example.com", body=123)
 
+
+def test_http_respose_headers():
+    headers = HttpResponseHeaders({"user-agent": "mozilla"})
+    assert headers['user-agent'] == "mozilla"
+    assert headers['User-Agent'] == "mozilla"
+
+    with pytest.raises(KeyError):
+        headers["user agent"]
+
+
+def test_http_response_headers_init_requests():
+    requests_response = requests.Response()
+    requests_response.headers['User-Agent'] = "mozilla"
+
+    response = HttpResponse("http://example.com", body=b"",
+                            headers=requests_response.headers)
+    assert isinstance(response.headers, HttpResponseHeaders)
+    assert response.headers['user-agent'] == "mozilla"
+    assert response.headers['User-Agent'] == "mozilla"
+
+
+def test_http_response_headers_init_dict():
+    response = HttpResponse("http://example.com", body=b"",
+                            headers={"user-agent": "mozilla"})
+    assert isinstance(response.headers, HttpResponseHeaders)
+    assert response.headers['user-agent'] == "mozilla"
+    assert response.headers['User-Agent'] == "mozilla"
+
+
+def test_http_response_headers_init_invalid():
+    with pytest.raises(TypeError):
+        response = HttpResponse("http://example.com", body=b"",
+                                headers=123)
