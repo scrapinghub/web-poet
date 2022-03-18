@@ -53,12 +53,10 @@ A simple ``GET`` request
             }
 
             # Simulates clicking on a button that says "View All Images"
-            response: web_poet.ResponseData = await self.http_client.get(
+            response: web_poet.HttpResponse = await self.http_client.get(
                 f"https://api.example.com/v2/images?id={item['product_id']}"
             )
-            page = web_poet.WebPage(response)
-
-            item["images"] = page.css(".product-images img::attr(src)").getall()
+            item["images"] = response.css(".product-images img::attr(src)").getall()
             return item
 
 There are a few things to take note in this example:
@@ -66,11 +64,7 @@ There are a few things to take note in this example:
     * A ``GET`` request can be done via :class:`~.HttpClient`'s
       :meth:`~.HttpClient.get` method.
     * We're now using the ``async/await`` syntax.
-    * The response is of type :class:`~.ResponseData`.
-
-        * Though in order to use :meth:`~.ResponseShortcutsMixin.css`
-          `(and other shortcut methods)` we'll need to feed it into
-          :class:`~.WebPage`.
+    * The response is of type :class:`~.HttpResponse`.
 
 As the example suggests, we're performing an additional request that allows us
 to extract more images in a product page that might not otherwise be possible.
@@ -108,7 +102,7 @@ Thus, additional requests inside the Page Object is typically needed for it:
             }
 
             # Simulates "scrolling" through a carousel that loads related product items
-            response: web_poet.responseData = await self.http_client.post(
+            response = await self.http_client.post(
                 url="https://www.api.example.com/related-products/",
                 headers={
                     'Host': 'www.example.com',
@@ -121,15 +115,13 @@ Thus, additional requests inside the Page Object is typically needed for it:
                     }
                 ),
             )
-            second_page = web_poet.WebPage(response)
-
-            related_product_ids = self.parse_related_product_ids(second_page)
+            related_product_ids = self.parse_related_product_ids(response)
             item["related_product_ids"] = related_product_ids
             return item
 
         @staticmethod
-        def parse_related_product_ids(page: web_poet.WebPage) -> List[str]:
-            return page.css("#main .related-products ::attr(product-id)").getall()
+        def parse_related_product_ids(response: web_poet.HttpResponse) -> List[str]:
+            return response.css("#main .related-products ::attr(product-id)").getall()
 
 Here's the key takeaway in this example:
 
@@ -169,12 +161,11 @@ Let's modify the example in the previous section to see how it can be done:
                 self.create_request(page_num=page_num)
                 for page_num in range(2, default_pagination_limit)
             ]
-            responses: List[web_poet.ResponseData] = await self.http_client.batch_requests(*requests)
-            pages = map(web_poet.WebPage, responses)
+            responses: List[web_poet.HttpResponse] = await self.http_client.batch_requests(*requests)
             related_product_ids = [
                 product_id
-                for page in pages
-                for product_id in self.parse_related_product_ids(page)
+                for resp in responses
+                for product_id in self.parse_related_product_ids(resp)
             ]
 
             item["related_product_ids"].extend(related_product_ids)
@@ -198,7 +189,7 @@ Let's modify the example in the previous section to see how it can be done:
             )
 
         @staticmethod
-        def parse_related_product_ids(page: web_poet.WebPage) -> List[str]:
+        def parse_related_product_ids(response: web_poet.HttpResponse) -> List[str]:
             return page.css("#main .related-products ::attr(product-id)").getall()
 
 The key takeaways for this example are:
@@ -244,7 +235,7 @@ This can be set using:
 
 .. code-block:: python
 
-    def request_implementation(r: web_poet.Request) -> web_poet.ResponseData:
+    def request_implementation(r: web_poet.Request) -> web_poet.HttpResponse:
         ...
 
     from web_poet import request_backend_var
@@ -271,7 +262,7 @@ an :class:`~.HttpClient` instance:
 
 .. code-block:: python
 
-    def request_implementation(r: web_poet.Request) -> web_poet.ResponseData:
+    def request_implementation(r: web_poet.Request) -> web_poet.HttpResponse:
         ...
 
     from web_poet import HttpClient
