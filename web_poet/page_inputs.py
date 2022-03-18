@@ -2,6 +2,7 @@ import json
 from typing import Optional, Dict, List, TypeVar, Type
 
 import attrs
+import requests
 from multidict import CIMultiDict
 import parsel
 from w3lib.encoding import (
@@ -13,6 +14,7 @@ from w3lib.encoding import (
 
 from .utils import memoizemethod_noargs
 
+T_response = TypeVar("T_response", bound="HttpResponse")
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
 
@@ -185,3 +187,26 @@ class HttpResponse:
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+
+    @classmethod
+    def from_requests_response(
+            cls: Type[T_response],
+            response: requests.Response
+        ) -> T_response:
+        """ Create web_poet.HttpResponse from the requests.Response object """
+        return cls(
+            url=response.url,
+            body=response.content,
+            status=response.status_code,
+            headers=response.headers,
+        )
+
+    @classmethod
+    def from_scrapy_response(cls: Type[T_response], response) -> T_response:
+        """ Create web_poet.HttpResponse from the scrapy.Response object """
+        return cls(
+            url=response.url,
+            body=response.body,
+            status=response.status,
+            headers=response.headers,
+        )
