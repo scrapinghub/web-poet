@@ -24,7 +24,9 @@ class ResponseShortcutsMixin:
     @property
     def selector(self) -> parsel.Selector:
         """``parsel.Selector`` instance for the HTML Response."""
-        return self.response.selector
+        # TODO: when dropping Python 3.7 support,
+        #  implement it using typing.Protocol
+        return self.response.selector  # type: ignore
 
     def xpath(self, query, **kwargs):
         """Run an XPath query on a response, using :class:`parsel.Selector`."""

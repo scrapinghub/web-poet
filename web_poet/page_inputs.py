@@ -139,7 +139,8 @@ class HttpResponse:
             or self._body_inferred_encoding()
         )
 
-    @property
+    # XXX: see https://github.com/python/mypy/issues/1362
+    @property   # type: ignore
     @memoizemethod_noargs
     def selector(self) -> parsel.Selector:
         # XXX: should we pass base_url=self.url, as Scrapy does?
