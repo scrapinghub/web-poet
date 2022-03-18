@@ -79,7 +79,7 @@ class HttpResponseHeaders(CIMultiDict):
         return http_content_type_encoding(content_type)
 
 
-@attrs.define(auto_attribs=False, slots=False)
+@attrs.define(auto_attribs=False, slots=False, eq=False)
 class HttpResponse:
     """A container for the contents of a response, downloaded directly using an
     HTTP client.

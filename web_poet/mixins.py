@@ -9,7 +9,6 @@ class ResponseShortcutsMixin:
 
     It requires "response" attribute to be present.
     """
-    _cached_selector = None
     _cached_base_url = None
 
     @property
