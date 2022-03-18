@@ -50,13 +50,13 @@ class Request:
     body: Optional[str] = None
 
 
-async def _perform_request(request: Request) -> ResponseData:
+async def _perform_request(request: Request) -> HttpResponse:
     """Given a :class:`~.Request`, execute it using the **request implementation**
     that was set in the ``web_poet.request_backend_var`` :mod:`contextvars`
     instance.
 
     .. warning::
-        By convention, this function should return a :class:`~.ResponseData`.
+        By convention, this function should return a :class:`~.HttpResponse`.
         However, the underlying downloader assigned in
         ``web_poet.request_backend_var`` might change that, depending on
         how the framework using **web-poet** implements it.
@@ -73,7 +73,7 @@ async def _perform_request(request: Request) -> ResponseData:
             "'web_poet.request_backend_var'"
         )
 
-    response_data: ResponseData = await request_backend(request)
+    response_data: HttpResponse = await request_backend(request)
     return response_data
 
 
@@ -91,7 +91,7 @@ class HttpClient:
 
     In any case, this doesn't contain any implementation about how to execute
     any requests fed into it. When setting that up, make sure that the downloader
-    implementation returns a :class:`~.ResponseData` instance.
+    implementation returns a :class:`~.HttpResponse` instance.
     """
 
     def __init__(self, request_downloader: Callable = None):
@@ -103,22 +103,22 @@ class HttpClient:
         method: str = "GET",
         headers: Optional[mapping] = None,
         body: Optional[str] = None,
-    ) -> ResponseData:
+    ) -> HttpResponse:
         """This is a shortcut for creating a :class:`Request` instance and executing
         that request.
 
-        A :class:`~.ResponseData` instance should then be returned.
+        A :class:`~.HttpResponse` instance should then be returned.
 
         .. warning::
             By convention, the request implementation supplied optionally to
-            :class:`~.HttpClient` should return a :class:`~.ResponseData` instance.
+            :class:`~.HttpClient` should return a :class:`~.HttpResponse` instance.
             However, the underlying implementation supplied might change that,
             depending on how the framework using **web-poet** implements it.
         """
         r = Request(url, method, headers, body)
         return await self.request_downloader(r)
 
-    async def get(self, url: str, headers: Optional[mapping] = None) -> ResponseData:
+    async def get(self, url: str, headers: Optional[mapping] = None) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
@@ -126,13 +126,13 @@ class HttpClient:
 
     async def post(
         self, url: str, headers: Optional[mapping] = None, body: Optional[str] = None
-    ) -> ResponseData:
+    ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``POST``
         request.
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(self, *requests: Request) -> List[ResponseData]:
+    async def batch_requests(self, *requests: Request) -> List[HttpResponse]:
         """Similar to :meth:`~.HttpClient.request` but accepts a collection of
         :class:`~.Request` instances that would be batch executed.
         """

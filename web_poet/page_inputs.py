@@ -92,7 +92,7 @@ class HttpResponse:
     ``body`` contains the raw HTTP response body.
 
     The following are optional since it would depend on the source of the
-    ``ResponseData`` if these are available or not. For example, the responses
+    ``HttpResponse`` if these are available or not. For example, the responses
     could simply come off from a local HTML file which doesn't contain ``headers``
     and ``status``.
 
