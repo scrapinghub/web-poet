@@ -20,15 +20,12 @@ class ResponseShortcutsMixin:
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
-        return self.response.html
+        return self.response.text
 
     @property
     def selector(self) -> parsel.Selector:
         """``parsel.Selector`` instance for the HTML Response."""
-        if self._cached_selector is None:
-            self._cached_selector = parsel.Selector(self.html)
-
-        return self._cached_selector
+        return self.response.selector
 
     def xpath(self, query, **kwargs):
         """Run an XPath query on a response, using :class:`parsel.Selector`."""
@@ -41,6 +38,7 @@ class ResponseShortcutsMixin:
     @property
     def base_url(self) -> str:
         """Return the base url of the given response"""
+        # FIXME: move it to HttpResponse
         if self._cached_base_url is None:
             text = self.html[:4096]
             self._cached_base_url = get_base_url(text, self.url)
@@ -49,4 +47,5 @@ class ResponseShortcutsMixin:
     def urljoin(self, url: str) -> str:
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
+        # FIXME: move it to HttpResponse
         return urljoin(self.base_url, url)

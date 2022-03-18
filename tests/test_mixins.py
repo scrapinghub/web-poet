@@ -1,11 +1,11 @@
 import pytest
 
 from web_poet.mixins import ResponseShortcutsMixin
-from web_poet.page_inputs import ResponseData, HttpResponseBody
+from web_poet.page_inputs import HttpResponse, HttpResponseBody
 
 
 class MyPage(ResponseShortcutsMixin):
-    def __init__(self, response: ResponseData):
+    def __init__(self, response: HttpResponse):
         self.response = response
 
 
@@ -42,7 +42,7 @@ def test_urljoin(my_page):
 
 
 def test_custom_baseurl():
-    html = """
+    html = b"""
     <html>
     <head>
         <base href="http://example.com/foo/">
@@ -50,11 +50,9 @@ def test_custom_baseurl():
     <body><body>
     </html>
     """
-    body = HttpResponseBody(bytes(html, "utf-8"))
-    response = ResponseData(
+    response = HttpResponse(
         url="http://www.example.com/path",
-        html=html,
-        body=body,
+        body=html,
     )
     page = MyPage(response=response)
 

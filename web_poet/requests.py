@@ -15,7 +15,7 @@ from typing import Optional, List, Dict, ByteString, Any, Union, Callable
 
 import attr
 
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import HttpResponse
 
 logger = logging.getLogger(__name__)
 
