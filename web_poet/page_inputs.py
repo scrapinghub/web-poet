@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, TypeVar, Type
 
 import attrs
 from multidict import CIMultiDict
@@ -12,6 +12,8 @@ from w3lib.encoding import (
 )
 
 from .utils import memoizemethod_noargs
+
+T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
 
 class HttpResponseBody(bytes):
@@ -58,7 +60,7 @@ class HttpResponseHeaders(CIMultiDict):
     """
 
     @classmethod
-    def from_name_value_pairs(cls, arg: List[Dict]):
+    def from_name_value_pairs(cls: Type[T_headers], arg: List[Dict]) -> T_headers:
         """An alternative constructor for instantiation using a ``List[Dict]``
         where the 'key' is the header name while the 'value' is the header value.
 
