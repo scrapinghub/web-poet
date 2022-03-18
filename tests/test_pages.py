@@ -14,6 +14,7 @@ def test_abstract_web_page_object():
         ItemWebPage()
     assert "Can't instantiate abstract class" in str(exc.value)
 
+
 def test_page_object():
 
     class MyItemPage(ItemPage):
