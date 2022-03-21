@@ -71,7 +71,7 @@ Our simple Python script might look like this:
 
 .. code-block:: python
 
-    import urllib.request
+    import requests
 
     from web_poet.pages import ItemWebPage
     from web_poet.page_inputs import HttpResponse
@@ -89,7 +89,7 @@ Our simple Python script might look like this:
             }
 
 
-    response = urllib.request.urlopen('http://books.toscrape.com')
+    response = requests.get('http://books.toscrape.com')
     response_data = HttpResponse(response.url,
                                  body=response.content,
                                  headers=response.headers)

@@ -139,7 +139,7 @@ The same, but using web-poet
 .. code-block:: python
 
     import requests
-    from web_poet import WebPage, ResponseData
+    from web_poet import WebPage, HttpResponse
 
 
     # === Extraction code
@@ -160,12 +160,12 @@ The same, but using web-poet
     # === Framework-specific I/O code
     def download_sync(url):
         resp = requests.get(url)
-        return ResponseData(url=resp.url, html=resp.text)
+        return HttpResponse(url=resp.url, body=resp.content)
 
     async def download_async(session, url):
         async with session.get(url) as resp:
-            text = await resp.text()
-        return ResponseData(url=resp.url, html=text)
+            body = await resp.body
+        return HttpResponse(url=resp.url, body=body)
 
     # === Usage example
 
@@ -178,9 +178,9 @@ The same, but using web-poet
 
 Differences from a previous example:
 
-* instead of dicts with "url" and "text" fields, :class:`~.ResponseData`
-  instances are used. :class:`~.ResponseData` is a simple structure with
-  two fields ("url" and "html"), defined by web-poet;
+* instead of dicts with "url" and "text" fields, :class:`~.HttpResponse`
+  instances are used. :class:`~.HttpResponse` is a simple structure with
+  two fields ("url" and "body"), defined by web-poet;
   it is just a data container which standardizes the field names and
   the meaning of these fields.
 * instead of ``extract_book`` function we got ``BookPage`` class,
@@ -189,7 +189,7 @@ Differences from a previous example:
 * ``BookPage`` inherits from :class:`~.WebPage` base class. This base class
   is not doing much: it
 
-     * defines ``__init__`` method which receives :class:`~.ResponseData`, and
+     * defines ``__init__`` method which receives :class:`~.HttpResponse`, and
      * provides shortcut methods like :meth:`~.WebPage.css`, which work by
        creating parsel.Selector behind the scenes (so that you don't
        need to create a selector in the ``extract_book`` method).
@@ -211,7 +211,7 @@ is implemented. Let's change the code to follow this standard:
 .. code-block:: python
 
     import requests
-    from web_poet import ItemWebPage, ResponseData
+    from web_poet import ItemWebPage, HttpResponse
 
 
     # === Extraction code
@@ -238,7 +238,7 @@ have ``ToscrapeBookPage`` and ``BamazonBookPage`` classes, and
 
 .. code-block:: python
 
-    def get_item(page_cls: ItemWebPage, resp_data: ResponseData) -> dict:
+    def get_item(page_cls: ItemWebPage, resp_data: HttpResponse) -> dict:
         page = page_cls(response=resp_data)
         return page.to_item()
 
@@ -249,8 +249,8 @@ it for free:
 
 .. code-block:: python
 
-    def get_item(extract_func, resp_data: ResponseData) -> dict:
-        return extract_func(url=resp_data.url, html=resp_data.html)
+    def get_item(extract_func, resp_data: HttpResponse) -> dict:
+        return extract_func(url=resp_data.url, text=resp_data.text)
 
 No need to agree on ``to_item`` name and have a base class to check that the
 method is implemented. Why bother with classes then?
@@ -362,7 +362,7 @@ And this is what we ended up with:
 .. code-block:: python
 
     import requests
-    from web_poet import ItemWebPage, ResponseData
+    from web_poet import ItemWebPage, HttpResponse
 
 
     # === Extraction code
@@ -381,15 +381,15 @@ And this is what we ended up with:
     # === Framework-specific I/O code
     def download_sync(url):
         resp = requests.get(url)
-        return ResponseData(url=resp.url, html=resp.text)
+        return HttpResponse(url=resp.url, body=resp.content)
 
     async def download_async(session, url):
         async with session.get(url) as resp:
-            text = await resp.text()
-        return ResponseData(url=resp.url, html=text)
+            body = await resp.body
+        return HttpResponse(url=resp.url, body=body)
 
     # === Usage example
-    def get_item(page_cls: ItemWebPage, resp_data: ResponseData) -> dict:
+    def get_item(page_cls: ItemWebPage, resp_data: HttpResponse) -> dict:
         page = page_cls(response=resp_data)
         return page.to_item()
 
@@ -480,15 +480,15 @@ For example, a very basic Page Object could look like this:
 
         from parsel import Selector
         from web_poet.pages import Injectable
-        from web_poet.page_inputs import ResponseData
+        from web_poet.page_inputs import HttpResponse
 
 
         class BookPage(Injectable):
-            def __init__(self, response: ResponseData):
+            def __init__(self, response: HttpResponse):
                 self.response = response
 
             def to_item(self) -> dict:
-                sel = Selector(response.html)
+                sel = Selector(response.text)
                 return {
                     'url': self.response.url,
                     'title': sel.css("h1::text").get()
@@ -504,14 +504,14 @@ Page Object Inputs
 ==================
 
 Here we got to the last, and probably the most complicated and important part
-of ``web-poet``. So far we've been passing :class:`~.ResponseData` to
+of ``web-poet``. So far we've been passing :class:`~.HttpResponse` to
 the page objects. But is it enough?
 
 If that'd be enough, there wouldn't be ``web-poet``. We would say "please
 write ``def extract(url, html): ...`` functions", and call it a day.
 
 In practice you may need to use other information to extract data from
-a web page, not only :class:`~.ResponseData` (which is URL of this page and
+a web page, not only :class:`~.HttpResponse` (which is URL of this page and
 its HTTP response body, decoded to unicode). For example, you may want
 to
 
@@ -543,7 +543,7 @@ You may define page objects for this task:
             # ...
 
     class ToScrapeBookPage(Injectable):
-        def __init__(self, response: ResponseData, crawl_state: dict):
+        def __init__(self, response: HttpResponse, crawl_state: dict):
             self.response = response
             self.crawl_state = crawl_state
 
@@ -578,14 +578,14 @@ examples like the following were not just a nice-thing-to-have:
 .. code-block:: python
 
     class BookPage(Injectable):
-        def __init__(self, response: ResponseData):
+        def __init__(self, response: HttpResponse):
             self.response = response
 
 By annotating ``__init__`` arguments we were actually
 telling ``web-poet`` (or, more precisely, a framework
 which uses ``web-poet``):
 
-    To create a ``BookPage`` instance, please obtain :class:`~.ResponseData`
+    To create a ``BookPage`` instance, please obtain :class:`~.HttpResponse`
     instance somehow, and pass it as a ``response`` keyword argument.
     That's all you need to create a ``BookPage`` instance.
 
@@ -593,7 +593,7 @@ which uses ``web-poet``):
 
     If it sounds like Dependency Injection, you're right.
 
-If something other than :class:`~.ResponseData` needs to be passed,
+If something other than :class:`~.HttpResponse` needs to be passed,
 a different type annotation should be used:
 
 .. code-block:: python
@@ -603,12 +603,12 @@ a different type annotation should be used:
             self.response = response
 
     class ToScrapeBookPage(Injectable):
-        def __init__(self, response: ResponseData, crawl_state: CrawlState):
+        def __init__(self, response: HttpResponse, crawl_state: CrawlState):
             self.response = response
             self.crawl_state = crawl_state
 
 For each possible input a separate class needs to be defined, even if the
-data has the same format. For example, both ``ResponseData`` and
+data has the same format. For example, both ``HttpResponse`` and
 ``SplashResponseData`` may have the same ``url`` and ``html`` fields,
 but they can't be the same class, because they need to work as
 "markers" - tell frameworks if the html should be taken from HTTP
@@ -625,7 +625,7 @@ Pro tip: defining classes like
 .. code-block:: python
 
     class ToScrapeBookPage(Injectable):
-        def __init__(self, response: ResponseData, crawl_state: CrawlState):
+        def __init__(self, response: HttpResponse, crawl_state: CrawlState):
             self.response = response
             self.crawl_state = crawl_state
 
@@ -638,7 +638,7 @@ can get tedious; Python's :mod:`dataclasses`
 
     @dataclass
     class ToScrapeBookPage(Injectable):
-        response: ResponseData
+        response: HttpResponse
         crawl_state: CrawlState
 
 .. _attr.s: https://github.com/python-attrs/attrs
@@ -663,13 +663,13 @@ extraction code easier:
 1. Standardize a list of possible inputs for the page objects. This helps with
    reusability of extraction code across different environments. For example,
    if you want to support extraction from raw HTTP response bodies, you
-   need to figure out how to populate :class:`~.ResponseData` in the
+   need to figure out how to populate :class:`~.HttpResponse` in the
    given environment, and that's all.
 
    Users are free to define their own inputs (input types), but they
    may be less portable across environments - which can be fine.
 
-   Currently only :class:`~.ResponseData` is defined in web-poet.
+   Currently only :class:`~.HttpResponse` is defined in web-poet.
 
 2. Define an interface for the Page Object itself. This allows to
    have a code which can instantiate and use a Page Object without knowing
@@ -682,7 +682,7 @@ Then, framework's role is to:
 
 1. Figure out which inputs a Page Object needs, likely using andi_ library.
 2. Create all the necessary inputs. For example, creating
-   :class:`~.ResponseData` instance may involve making an HTTP request;
+   :class:`~.HttpResponse` instance may involve making an HTTP request;
    creating ``CrawlState`` (from the previous examples) may involve getting
    some data from the shared storage, or from an in-memory data structure.
 3. Create a Page Object instance, passing it the inputs it needs.
@@ -692,8 +692,8 @@ Then, framework's role is to:
 
 For example, web-poet + Scrapy integration package (scrapy-poet_)
 may inspect a WebPage subclass you defined, figure out it needs
-:class:`~.ResponseData` and nothing else, fetch scrapy's TextResponse,
-create ``ResponseData`` instance from it, create your
+:class:`~.HttpResponse` and nothing else, fetch scrapy's TextResponse,
+create ``HttpResponse`` instance from it, create your
 Page Object instance, and pass it to a spider callback.
 
 Finally, the Developer's role is to:
