@@ -77,6 +77,8 @@ to extract more images in a product page that might not otherwise be possible.
 This is because in order to do so, an additional button needs to be clicked
 which fetches the complete set of product images via AJAX.
 
+.. _`request-post-example`:
+
 A ``POST`` request with `header` and `body`
 -------------------------------------------
 

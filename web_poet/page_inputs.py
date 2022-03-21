@@ -24,7 +24,16 @@ class ResponseData:
 
     ``headers`` should contain the HTTP response headers.
     """
+
     url: str
     html: str
     status: Optional[int] = None
     headers: Optional[Dict[Union[str, ByteString], Any]] = None
+
+
+class Meta(dict):
+    """Container class that could contain any arbitrary data to be passed into
+    a Page Object.
+    """
+
+    pass

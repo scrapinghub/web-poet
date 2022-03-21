@@ -9,6 +9,8 @@ TBR
 * Added support for Python 3.10
 * Added support for performing additional requests using
   ``web_poet.HttpClient``.
+* Introduced ``web_poet.Meta`` to pass arbitrary information
+  inside a Page Object.
 
 
 0.1.1 (2021-06-02)
