@@ -1,5 +1,4 @@
 from typing import Optional, Dict, Any, ByteString, Union
-from contextlib import suppress
 
 import attr
 
