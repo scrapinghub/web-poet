@@ -32,7 +32,7 @@ def test_http_response_body_declared_encoding():
 
 
 def test_http_response_body_json():
-    http_body = HttpResponseBody(b"contet")
+    http_body = HttpResponseBody(b"content")
     with pytest.raises(json.JSONDecodeError):
         data = http_body.json()
 
@@ -127,10 +127,17 @@ def test_http_response_selectors(book_list_html_response):
 
 
 def test_http_response_json():
-    http_body = HttpResponseBody(b'{"key": "value"}')
-    response = HttpResponse("http://example.com", body=http_body)
+    url = "http://example.com"
 
+    with pytest.raises(json.JSONDecodeError):
+        response = HttpResponse(url, body=b'non json')
+        response.json()
+
+    response = HttpResponse(url, body=b'{"key": "value"}')
     assert response.json() == {"key": "value"}
+
+    response = HttpResponse(url, '{"ключ": "значение"}'.encode("utf8"))
+    assert response.json() == {"ключ": "значение"}
 
 
 def test_http_response_encoding():
