@@ -117,3 +117,30 @@ def test_http_response_headers_init_invalid():
     with pytest.raises(TypeError):
         response = HttpResponse("http://example.com", body=b"",
                                 headers=123)
+
+
+def test_http_response_selectors(book_list_html_response):
+    title = "All products | Books to Scrape - Sandbox"
+
+    assert title == book_list_html_response.css("title ::text").get("").strip()
+    assert title == book_list_html_response.xpath("//title/text()").get("").strip()
+
+
+def test_http_response_json():
+    http_body = HttpResponseBody(b'{"key": "value"}')
+    response = HttpResponse("http://example.com", body=http_body)
+
+    assert response.json() == {"key": "value"}
+
+
+def test_http_response_encoding():
+    """This tests a character which raises a UnicodeDecodeError when decoded in
+    'ascii'.
+
+    The backup series of encodings for decoding should be able to handle it.
+    """
+    text = "œ is a Weird Character"
+    body = HttpResponseBody(b"\x9c is a Weird Character")
+    response = HttpResponse("http://example.com", body)
+
+    assert response.text == text
