@@ -183,10 +183,17 @@ The same, but using web-poet
 Differences from a previous example:
 
 * instead of dicts with "url" and "text" fields, :class:`~.HttpResponse`
-  instances are used. :class:`~.HttpResponse` is a simple structure with
-  defined by web-poet acting as a generic data container for HttpResponses.
+  instances are used. :class:`~.HttpResponse` is a structure 
+  defined by web-poet acting as a generic data container for HTTP Responses.
   *(check out the API reference of* :class:`~.HttpResponse` *for more info
   about the fields it holds)*
+
+    * Note that headers are provided here so that the body in the form of
+      raw ``bytes`` can be properly decoded by inferring from the ``Content-Encoding``
+      header. If the headers are not provided, the encoding can be derived
+      from the HTML meta tags like ``<meta http-equiv="content-type" 
+      content="text/html;charset=utf-8" />`` as a backup.
+
 * instead of ``extract_book`` function we got ``BookPage`` class,
   which receives response data in its ``__init__`` method - see how it
   is created: ``BookPage(response=resp_data)``.
