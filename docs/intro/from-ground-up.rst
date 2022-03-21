@@ -90,7 +90,7 @@ No problem, let's refactor it further. You may end up with something like that:
 
 .. code-block:: python
 
-
+    import aiohttp
     import requests
     import parsel
 
@@ -113,10 +113,11 @@ No problem, let's refactor it further. You may end up with something like that:
         resp = requests.get(url)
         return {'url': resp.url, 'text': resp.text}
 
-    async def download_async(session, url):
-        async with session.get(url) as resp:
-            text = await resp.text()
-        return {'url': resp.url, 'text': text}
+    async def download_async(url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                text = await response.text()
+        return {'url': url, 'text': text}
 
     # === Usage example
     # the way to get resp_data depends on an HTTP client
@@ -138,6 +139,7 @@ The same, but using web-poet
 
 .. code-block:: python
 
+    import aiohttp
     import requests
     from web_poet import WebPage, HttpResponse
 
@@ -156,16 +158,18 @@ The same, but using web-poet
                 # ...
             }
 
-
     # === Framework-specific I/O code
     def download_sync(url):
         resp = requests.get(url)
-        return HttpResponse(url=resp.url, body=resp.content)
+        return HttpResponse(url=resp.url, body=resp.content, headers=resp.headers)
 
-    async def download_async(session, url):
-        async with session.get(url) as resp:
-            body = await resp.body
-        return HttpResponse(url=resp.url, body=body)
+    async def download_async(url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                body = await response.content.read()
+                headers = response.headers
+
+        return HttpResponse(url=resp.url, body=body, headers=headers)
 
     # === Usage example
 
@@ -180,9 +184,9 @@ Differences from a previous example:
 
 * instead of dicts with "url" and "text" fields, :class:`~.HttpResponse`
   instances are used. :class:`~.HttpResponse` is a simple structure with
-  two fields ("url" and "body"), defined by web-poet;
-  it is just a data container which standardizes the field names and
-  the meaning of these fields.
+  defined by web-poet acting as a generic data container for HttpResponses.
+  *(check out the API reference of* :class:`~.HttpResponse` *for more info
+  about the fields it holds)*
 * instead of ``extract_book`` function we got ``BookPage`` class,
   which receives response data in its ``__init__`` method - see how it
   is created: ``BookPage(response=resp_data)``.
@@ -381,12 +385,15 @@ And this is what we ended up with:
     # === Framework-specific I/O code
     def download_sync(url):
         resp = requests.get(url)
-        return HttpResponse(url=resp.url, body=resp.content)
+        return HttpResponse(url=resp.url, body=resp.content, headers=resp.headers)
 
-    async def download_async(session, url):
-        async with session.get(url) as resp:
-            body = await resp.body
-        return HttpResponse(url=resp.url, body=body)
+    async def download_async(url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                body = await response.content.read()
+                headers = response.headers
+
+        return HttpResponse(url=resp.url, body=body, headers=headers)
 
     # === Usage example
     def get_item(page_cls: ItemWebPage, resp_data: HttpResponse) -> dict:
@@ -511,8 +518,7 @@ If that'd be enough, there wouldn't be ``web-poet``. We would say "please
 write ``def extract(url, html): ...`` functions", and call it a day.
 
 In practice you may need to use other information to extract data from
-a web page, not only :class:`~.HttpResponse` (which is URL of this page and
-its HTTP response body, decoded to unicode). For example, you may want
+a web page, not only :class:`~.HttpResponse`. For example, you may want
 to
 
 * render a web page in a headless browser like Splash_,
@@ -608,8 +614,8 @@ a different type annotation should be used:
             self.crawl_state = crawl_state
 
 For each possible input a separate class needs to be defined, even if the
-data has the same format. For example, both ``HttpResponse`` and
-``SplashResponseData`` may have the same ``url`` and ``html`` fields,
+data has the same format. For example, both :class:`~.HttpResponse` and
+``SplashResponseData`` may have the same ``url`` fields,
 but they can't be the same class, because they need to work as
 "markers" - tell frameworks if the html should be taken from HTTP
 response body or from Splash DOM snapshot.
@@ -669,8 +675,6 @@ extraction code easier:
    Users are free to define their own inputs (input types), but they
    may be less portable across environments - which can be fine.
 
-   Currently only :class:`~.HttpResponse` is defined in web-poet.
-
 2. Define an interface for the Page Object itself. This allows to
    have a code which can instantiate and use a Page Object without knowing
    about its implementation upfront. ``web-poet`` requires you to
@@ -693,7 +697,7 @@ Then, framework's role is to:
 For example, web-poet + Scrapy integration package (scrapy-poet_)
 may inspect a WebPage subclass you defined, figure out it needs
 :class:`~.HttpResponse` and nothing else, fetch scrapy's TextResponse,
-create ``HttpResponse`` instance from it, create your
+create :class:`~.HttpResponse` instance from it, create your
 Page Object instance, and pass it to a spider callback.
 
 Finally, the Developer's role is to:

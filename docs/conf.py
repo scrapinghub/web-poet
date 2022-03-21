@@ -192,4 +192,5 @@ autodoc_member_order = "bysource"
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None, ),
     'scrapy': ('https://docs.scrapy.org/en/latest', None, ),
+    'parsel': ('https://parsel.readthedocs.io/en/latest/', None, ),
 }
