@@ -129,26 +129,3 @@ From the example above, we can see how :class:`~.Meta` is able to arbitrarily
 limit the pagination behavior by passing an optional **max_pages** info. Take
 note that a ``default_max_pages`` value is also present in the Page Object in
 case the :class:`~.Meta` instance did not provide it.
-
-Value Restrictions
-------------------
-
-From the examples above, you may notice that we can access :class:`~.Meta` with
-a ``dict`` interface since it's simply a subclass of it. However, :class:`~.Meta`
-posses some extendable features on top of being a ``dict``.
-
-Specifically, :class:`~.Meta` is able to restrict any value passed based on its
-type. For example, if any of these values are passed, then a ``ValueError`` is
-raised:
-
-    * module
-    * class
-    * method or function
-    * generator
-    * coroutine or awaitable
-    * traceback
-    * frame
-
-This is to ensure that frameworks using **web-poet** are able safely use values
-passed into :class:`~.Meta` as they could be passed via CLI, web forms, HTTP API
-calls, etc.
