@@ -3,9 +3,8 @@
 Page Object Projects (POP)
 ==========================
 
-**POPs** are way to package up a group of Page Objects together so they
-can be used in other projects as well. This improves code reusability since
-the extraction logic in some web pages are easily shareable. More importantly,
+**POPs** are a way to standardize how a group of Page Objects are packaged
+together so they can be uniformly used in other projects. More importantly,
 **POPs** could be built using other **POPs**. This allows for continuous
 improvements by building **POPs** on top of one another.
 
@@ -13,7 +12,7 @@ Organizing POP
 --------------
 
 Developers have complete freedom on how to organize their Page Objects
-in their project. Here are some options that developers could use.
+in their projects. Here are some of the options that developers could use.
 
 Flat Hierarchy
 ~~~~~~~~~~~~~~
@@ -61,10 +60,11 @@ domains. This could easily be grouped as something like:
     |   |   |   ├── products.py
     |   |   |   └── product_listings.py
     |   |   └── __init__.py
-    |   └── furniture_shop
-    |       ├── __init__.py
-    |       ├── products.py
-    |       └── product_listings.py
+    |   ├── furniture_shop
+    |   |   ├── __init__.py
+    |   |   ├── products.py
+    |   |   └── product_listings.py
+    |   └── __init__.py
     └── setup.py
 
 Requirements for POP
@@ -85,7 +85,7 @@ This covers the basic use case:
     - Importing the Page Objects directly from the installed package in a project.
 
 
-This translates into **POPs** needing to have:
+This means that **POPs** need to have:
 
     - The ``setup.py`` script which is the standard way of distributing Python packages.
 
@@ -114,32 +114,32 @@ by simply importing them:
 
     from ecommerce_page_objects.furniture_shop.products import FurnitureProductPage
 
-    response_data = download_response("https://www.furnitureshop.com/product/xyz")
-    page = FurnitureProductPage()
+    response = download_response("https://www.furnitureshop.com/product/xyz")
+    page = FurnitureProductPage(response)
     item = page.to_item()
 
 Recommended Requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-This covers these use use cases:
+This covers these use cases:
 
-    - The minimum requirements and use cases stated above
+    - The minimum requirements and its use cases 
     - The ability to retrieve the declared :class:`~.OverrideRule`
       inside the **POP**
 
-This means that a list of :class:`~.OverrideRule` must be explicitly
+This means that a collection of :class:`~.OverrideRule` must be explicitly
 declared in the **POP**. This enables projects using the **POP** to know:
 
     - which URL Patterns a given Page Object is expected to work
     - what it's trying to override `(or replace)`
 
-This could be done by declaring a ``RULES`` variable that can be
+This could be done by declaring a ``REGISTRY`` variable that can be
 imported as a top-level variable from the package.
 
 For example, suppose our project is named **ecommerce_page_objects**
-and is using either of the project structure options discussed in the
-previous sections, then we can define the ``RULES`` as the following
-inside ``ecommerce_page_objects/ecommerce_page_objects/__init__.py``.
+and is using any of the project structure options discussed in the
+previous sections, we can then define the ``REGISTRY`` variable as the following
+inside of ``ecommerce-page-objects/ecommerce_page_objects/__init__.py``:
 
 .. code-block:: python
 
@@ -148,19 +148,32 @@ inside ``ecommerce_page_objects/ecommerce_page_objects/__init__.py``.
     # This allows all of the OverrideRules declared inside the package
     # using @handle_urls to be properly discovered and loaded.
     consume_modules(__package__)
-    RULES = default_registry.get_overrides()
 
-This allows any developer using a **POP** to easily get the list of
+    REGISTRY = default_registry
+
+This allows any developer using a **POP** to easily access all of the
 :class:`~.OverrideRule` using the convention of accessing it via the
-``RULES`` variable as a top-level variable:
+``REGISTRY`` variable. For example:
 
 .. code-block:: python
 
-    from ecommerce_page_objects import RULES
+    from ecommerce_page_objects import REGISTRY
 
-There may be some circumstances that needs other ways of declaring this.
-For such cases, developers/maintainers of **POPs** must reflect that
-clearly in the documentation.
+.. tip::
+
+    The ``default_registry`` is an instance of :class:`~.PageObjectRegistry`,
+    which in turn is simply a subclass of a ``dict``. This means that you don't
+    necessarily have to use an instance of :class:`~.PageObjectRegistry` as long
+    as it has a ``dict``-like interface.
+
+    The :class:`~.PageObjectRegistry` is simply a mapping where the **key** is
+    the Page Object to use and the **value** is the :class:`~.OverrideRule` it
+    operates on. This means you can simply use a plain ``dict`` for the
+    ``REGISTRY`` variable.
+
+    However, it is **recommended** to use the instances of
+    :class:`~.PageObjectRegistry` to leverage the validation logic for its
+    contents.
 
 
 Conventions and Best Practices
@@ -170,7 +183,7 @@ Conventions and Best Practices
    This allows for easy identification when used by other developers.
 
 2. The list of :class:`~.OverrideRule` must be declared as a top-level
-   variable from the package named ``RULES``. This enables other developers
+   variable from the package named ``REGISTRY``. This enables other developers
    to easily retrieve the list of :class:`~.OverrideRule` to be used in
    their own projects.
 
@@ -178,6 +191,10 @@ Conventions and Best Practices
    instead of creating your own custom registries by instantiating
    :class:`~.PageObjectRegistry`. This provides a default expectation
    for developers on which registry to use right from the start.
+
+    * However, there will be some cases where creating a new instance of
+      :class:`~.PageObjectRegistry` is inevitably needed. Here's an
+      :ref:`example <overrides-custom-registry>` in the tutorial section.
 
 4. When building a new **POP** based of on existing **POPs**, it is
    recommended to use an **inclusion** strategy rather than **exclusion**

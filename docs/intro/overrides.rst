@@ -217,13 +217,17 @@ This can be done something like:
 
     If you're using External Packages which conform to the **POP**
     standards as described in the :ref:`intro-pop` section, then retrieving
-    the rules should be as easy as:
+    the rules could also be done as:
 
     .. code-block:: python
 
         import ecommerce_page_objects, gadget_sites_page_objects
 
-        rules = ecommerce_page_objects.RULES + gadget_sites_page_objects.RULES
+        # If on Python 3.9+
+        rules = ecommerce_page_objects.REGISTRY | gadget_sites_page_objects.REGISTRY
+
+        # If on lower Python versions
+        rules = {**ecommerce_page_objects.REGISTRY, **gadget_sites_page_objects.REGISTRY}
 
 .. _`intro-rule-subset`:
 
