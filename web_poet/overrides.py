@@ -7,11 +7,13 @@ import pkgutil
 from collections import deque
 from dataclasses import dataclass, field
 from operator import attrgetter
-from typing import Iterable, Optional, Union, List, Callable, Dict, Any
+from typing import Iterable, Optional, Union, List, Callable, Dict, Any, TypeVar, Type
 
 from url_matcher import Patterns
 
 Strings = Union[str, Iterable[str]]
+
+PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry")
 
 
 @dataclass(frozen=True)
@@ -66,7 +68,7 @@ def _as_list(value: Optional[Strings]) -> List[str]:
     return list(value)
 
 
-class PageObjectRegistry:
+class PageObjectRegistry(dict):
     """This contains the mapping rules that associates the Page Objects available
     for a given URL matching rule.
 
@@ -93,12 +95,25 @@ class PageObjectRegistry:
         It is encouraged to simply use and import the already existing registry
         via ``from web_poet import default_registry`` instead of creating your
         own :class:`~.PageObjectRegistry` instance. Using multiple registries
-        would be unwieldy in most cases. However, it might be applicable in
-        certain scenarios.
+        would be unwieldy in most cases.
+
+        However, it might be applicable in certain scenarios like storing custom
+        rules to separate it from the ``default_registry``. This :ref:`example
+        <overrides-custom-registry>` from the tutorial section may provide some
+        context.
     """
 
-    def __init__(self):
-        self._data: Dict[Callable, OverrideRule] = {}
+    @classmethod
+    def from_override_rules(
+        cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]
+    ) -> PageObjectRegistryTV:
+        """An alternative constructor for creating a :class:`~.PageObjectRegistry`
+        instance byaccepting a list of :class:`~.OverrideRule`.
+
+        This is useful in cases wherein you need to store some selected rules
+        from multiple external packages.
+        """
+        return cls({rule.use: rule for rule in rules})
 
     def handle_urls(
         self,
@@ -144,8 +159,8 @@ class PageObjectRegistry:
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
-            if cls not in self._data:
-                self._data[cls] = rule
+            if cls not in self:
+                self[cls] = rule
             else:
                 warnings.warn(
                     f"Multiple @handle_urls annotations with the same 'overrides' "
@@ -175,7 +190,7 @@ class PageObjectRegistry:
         if consume:
             consume_modules(*_as_list(consume))
 
-        return list(self._data.values())
+        return list(self.values())
 
     def search_overrides(self, **kwargs) -> List[OverrideRule]:
         """Returns any :class:`OverrideRule` that has any of its attributes
@@ -193,7 +208,7 @@ class PageObjectRegistry:
         # Short-circuit operation if "use" is the only search param used, since
         # we know that it's being used as the dict key.
         if set(["use"]) == kwargs.keys():
-            rule = self._data.get(kwargs["use"])
+            rule = self.get(kwargs["use"])
             if rule:
                 return [rule]
             return []

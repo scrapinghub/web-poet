@@ -10,8 +10,12 @@ from tests.po_lib import (
 from tests.po_lib.a_module import POModule, POModuleOverriden
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import PONestedModule
-from web_poet import default_registry, consume_modules
-from web_poet.overrides import OverrideRule
+from web_poet import (
+    default_registry,
+    consume_modules,
+    OverrideRule,
+    PageObjectRegistry,
+)
 
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
@@ -87,6 +91,21 @@ def test_registry_search_overrides():
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
-    # These rules doesn't exist
+    # Such rules doesn't exist
     rules = default_registry.search_overrides(use=POModuleOverriden)
     assert len(rules) == 0
+
+
+def test_from_override_rules():
+    rules = [
+        OverrideRule(
+            for_patterns=Patterns(include=["sample.com"]),
+            use=POTopLevel1,
+            instead_of=POTopLevelOverriden2,
+        )
+    ]
+
+    registry = PageObjectRegistry.from_override_rules(rules)
+
+    assert registry.get_overrides() == rules
+    assert default_registry.get_overrides() != rules

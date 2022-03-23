@@ -253,6 +253,20 @@ conveniently select for :class:`~.OverrideRule` which conform to a specific crit
 allows you to conveniently drill down to which :class:`~.OverrideRule` you're interested in
 using.
 
+.. _`overrides-custom-registry`:
+
+After gathering all the pre-selected rules, we can then store it in a new instance
+of :class:`~.PageObjectRegistry` in order to separate it from the ``default_registry``
+which contains all of the rules. We can use the :meth:`~.PageObjectRegistry.from_override_rules`
+for this:
+
+.. code-block:: python
+
+    from web_poet import PageObjectRegistry
+
+    my_new_registry = PageObjectRegistry.from_override_rules(rules)
+
+
 Handling conflicts from using Multiple External Packages
 --------------------------------------------------------
 
