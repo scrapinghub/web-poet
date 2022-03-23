@@ -54,6 +54,9 @@ Mixins
 Overrides
 =========
 
+See the tutorial section on :ref:`intro-overrides` for more context about its
+use cases and some examples.
+
 .. autofunction:: web_poet.handle_urls
 
 .. automodule:: web_poet.overrides

@@ -6,7 +6,7 @@ TBR
 ------------------
 
 * added a ``PageObjectRegistry`` class which has the  ``handle_urls`` decorator
-  to write override rules.
+  to conveniently declare and collect ``OverrideRule``.
 * removed support for Python 3.6
 * added support for Python 3.10
 

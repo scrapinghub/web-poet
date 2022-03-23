@@ -17,23 +17,28 @@ Strings = Union[str, Iterable[str]]
 @dataclass(frozen=True)
 class OverrideRule:
     """A single override rule that specifies when a Page Object should be used
-    instead of another.
+    in lieu of another.
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
-    It's also being returned as a ``List[OverrideRule]`` when calling
-    :meth:`~.PageObjectRegistry.get_overrides`.
+    It's also being returned as a ``List[OverrideRule]`` when calling the
+    ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_overrides`
+    method.
 
     You can access any of its attributes:
 
-        * ``for_patterns: Patterns`` - contains the URL patterns associated
-          with this rule. You can read the API documentation of the
-          `url-matcher <https://url-matcher.readthedocs.io/>`_ package for more
-          information.
-        * ``use: Callable`` - the Page Object that will be used.
-        * ``instead_of: Callable`` - the Page Object that will be **replaced**.
-        * ``meta: Dict[str, Any] = field(default_factory=dict)`` - Any other
-          information you many want to store. This doesn't do anything for now
-          but may be useful for future API updates.
+        * ``for_patterns`` - contains the list of URL patterns associated with
+          this rule. You can read the API documentation of the `url-matcher
+          <https://url-matcher.readthedocs.io/>`_ package for more information
+          about the patterns.
+        * ``use`` - The Page Object that will be **used**.
+        * ``instead_of`` - The Page Object that will be **replaced**.
+        * ``meta`` - Any other information you may want to store. This doesn't
+          do anything for now but may be useful for future API updates.
+
+    .. tip::
+
+        The :class:`~.OverrideRule` is also hashable. This makes it easy to store
+        unique rules and identify any duplicates.
     """
 
     for_patterns: Patterns
@@ -65,29 +70,30 @@ class PageObjectRegistry:
     """This contains the mapping rules that associates the Page Objects available
     for a given URL matching rule.
 
-    ``web-poet`` already provides a default Registry name ``default_registry``
+    ``web-poet`` already provides a default Registry named ``default_registry``
     for convenience. It can be directly accessed via:
 
     .. code-block:: python
 
-        from web_poet import handle_urls, default_registry
+        from web_poet import handle_urls, default_registry, ItemWebPage
 
         @handle_urls("example.com", overrides=ProductPageObject)
-        class ExampleComProductPage(ItemPage):
+        class ExampleComProductPage(ItemWebPage):
             ...
 
         override_rules = default_registry.get_overrides()
 
-    Notice that the ``handle_urls`` that we've imported is a part of
+    Notice that the ``@handle_urls`` that we're using is a part of the
     ``default_registry``. This provides a shorter and quicker way to interact
-    with the built-in default Registry.
+    with the built-in default :class:`~.PageObjectRegistry` instead of writing
+    the longer ``@default_registry.handle_urls``.
 
     .. note::
 
         It is encouraged to simply use and import the already existing registry
         via ``from web_poet import default_registry`` instead of creating your
         own :class:`~.PageObjectRegistry` instance. Using multiple registries
-        would be unwieldy in general cases. However, it could be applicable in
+        would be unwieldy in most cases. However, it might be applicable in
         certain scenarios.
     """
 
@@ -107,20 +113,23 @@ class PageObjectRegistry:
         Class decorator that indicates that the decorated Page Object should be
         used instead of the overridden one for a particular set the URLs.
 
-        Which Page Object is overridden is determined by the ``overrides``
+        The Page Object that is **overridden** is declared using the ``overrides``
         parameter.
 
-        Over which URLs the override happens is determined by the ``include``,
-        ``exclude`` and ``priority`` parameters. See the documentation of the
+        The **override** mechanism only works on certain URLs that match the
+        ``include`` and ``exclude`` parameters. See the documentation of the
         `url-matcher <https://url-matcher.readthedocs.io/>`_ package for more
         information about them.
 
         Any extra parameters are stored as meta information that can be later used.
 
-        :param include: Defines the URLs that should be handled by the overridden Page Object.
-        :param overrides: The Page Object that should be replaced by the annotated one.
-        :param exclude: Defines URLs over which the override should not happen.
-        :param priority: The resolution priority in case of conflicting annotations.
+        :param include: The URLs that should be handled by the decorated Page Object.
+        :param overrides: The Page Object that should be `replaced`.
+        :param exclude: The URLs over which the override should **not** happen.
+        :param priority: The resolution priority in case of `conflicting` rules.
+            A conflict happens when the ``include``, ``override``, and ``exclude``
+            parameters are the same. If so, the `highest priority` will be
+            chosen.
         """
 
         def wrapper(cls):
@@ -149,17 +158,16 @@ class PageObjectRegistry:
         return wrapper
 
     def get_overrides(self, consume: Optional[Strings] = None) -> List[OverrideRule]:
-        """Returns a ``List`` of :class:`~.OverrideRule` that were declared using
-        ``@handle_urls``.
+        """Returns all of the :class:`~.OverrideRule` that were declared using
+        the ``@handle_urls`` annotation.
 
         :param consume: packages/modules that need to be imported so that it can
-            properly load the :meth:`~.PageObjectRegistry.handle_urls` annotations.
+            properly load the :func:`web_poet.handle_urls` annotations.
 
         .. warning::
 
             Remember to consider using the ``consume`` parameter to properly load
-            the :meth:`~.PageObjectRegistry.handle_urls` from external Page
-            Objects
+            the ``@handle_urls`` annotations from external Page Objects.
 
             The ``consume`` parameter provides a convenient shortcut for calling
             :func:`~.web_poet.overrides.consume_modules`.
@@ -170,8 +178,8 @@ class PageObjectRegistry:
         return list(self._data.values())
 
     def search_overrides(self, **kwargs) -> List[OverrideRule]:
-        """Returns a list of :class:`OverrideRule` if any of the attributes
-        matches the rules inside the registry.
+        """Returns any :class:`OverrideRule` that has any of its attributes
+        match the rules inside the registry.
 
         Sample usage:
 
@@ -207,7 +215,7 @@ class PageObjectRegistry:
         return results
 
 
-def walk_module(module: str) -> Iterable:
+def _walk_module(module: str) -> Iterable:
     """Return all modules from a module recursively.
 
     Note that this will import all the modules and submodules. It returns the
@@ -231,33 +239,29 @@ def walk_module(module: str) -> Iterable:
 
 
 def consume_modules(*modules: str) -> None:
-    """A quick wrapper for :func:`~.walk_module` to efficiently consume the
-    generator and recursively load all packages/modules.
-
-    This function is essential to be run before attempting to retrieve all
-    :meth:`~.PageObjectRegistry.handle_urls` annotations from :class:`~.PageObjectRegistry`
-    to ensure that they are properly acknowledged by importing them in runtime.
+    """This recursively imports all packages/modules so that the ``@handle_urls``
+    annotation are properly discovered and loaded.
 
     Let's take a look at an example:
 
     .. code-block:: python
 
-        # my_page_obj_project/load_rules.py
+        # FILE: my_page_obj_project/load_rules.py
 
         from web_poet import default_registry, consume_modules
 
         consume_modules("other_external_pkg.po", "another_pkg.lib")
         rules = default_registry.get_overrides()
 
-    For this case, the ``List`` of :class:`~.OverrideRule` are coming from:
+    For this case, the :class:`~.OverrideRule` are coming from:
 
         - ``my_page_obj_project`` `(since it's the same module as the file above)`
         - ``other_external_pkg.po``
         - ``another_pkg.lib``
 
-    So if the ``default_registry`` had other ``@handle_urls`` annotations outside
-    of the packages/modules listed above, then the :class:`~.OverrideRule` won't
-    be returned.
+    If the ``default_registry`` had other ``@handle_urls`` annotations outside
+    of the packages/modules listed above, then the corresponding
+    :class:`~.OverrideRule` won't be returned.
 
     .. note::
 
@@ -273,7 +277,7 @@ def consume_modules(*modules: str) -> None:
     """
 
     for module in modules:
-        gen = walk_module(module)
+        gen = _walk_module(module)
 
         # Inspired by itertools recipe: https://docs.python.org/3/library/itertools.html
         # Using a deque() results in a tiny bit performance improvement that list().
