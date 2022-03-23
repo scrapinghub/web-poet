@@ -72,6 +72,12 @@ class PageObjectRegistry(dict):
     """This contains the mapping rules that associates the Page Objects available
     for a given URL matching rule.
 
+    Note that it's simply a ``dict`` subclass with added functionalities on
+    storing, retrieving, and searching for the :class:`~.OverrideRule` instances.
+    The **value** represents the :class:`~.OverrideRule` instance from which the
+    Page Object in the **key** is allowed to be used. Since it's essentially a
+    ``dict``, you can use any ``dict`` operations with it.
+
     ``web-poet`` already provides a default Registry named ``default_registry``
     for convenience. It can be directly accessed via:
 
