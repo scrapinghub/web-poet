@@ -108,7 +108,7 @@ class PageObjectRegistry(dict):
         cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]
     ) -> PageObjectRegistryTV:
         """An alternative constructor for creating a :class:`~.PageObjectRegistry`
-        instance byaccepting a list of :class:`~.OverrideRule`.
+        instance by accepting a list of :class:`~.OverrideRule`.
 
         This is useful in cases wherein you need to store some selected rules
         from multiple external packages.
