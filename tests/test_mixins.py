@@ -42,7 +42,7 @@ def test_urljoin(my_page):
 
 
 def test_custom_baseurl():
-    html = b"""
+    body = b"""
     <html>
     <head>
         <base href="http://example.com/foo/">
@@ -52,7 +52,7 @@ def test_custom_baseurl():
     """
     response = HttpResponse(
         url="http://www.example.com/path",
-        body=html,
+        body=body,
     )
     page = MyPage(response=response)
 
