@@ -202,8 +202,8 @@ Differences from a previous example:
 
      * defines ``__init__`` method which receives :class:`~.HttpResponse`, and
      * provides shortcut methods like :meth:`~.WebPage.css`, which work by
-       creating parsel.Selector behind the scenes (so that you don't
-       need to create a selector in the ``extract_book`` method).
+       creating :external:py:class:`parsel.selector.Selector` behind the scenes
+       (so that you don't need to create a selector in the ``extract_book`` method).
 
 There are pros and cons for using classes vs functions for writing
 such extraction code, but the distinction is not that important;
@@ -455,7 +455,7 @@ to process, and that's it:
 
 The role of ``web-poet`` is to define a standard on how to write the
 extraction logic, and allow it to be reused in different frameworks.
-``web-poet`` Page Objects should be flexible enough to be used with
+``web-poet`` Page Objects should be flexible enough to be used with:
 
 * synchronous or async frameworks, callback-based and
   ``async def / await`` based,
@@ -478,7 +478,7 @@ what are they?
 
 Essentially, the idea is to create an object which represents a web page
 (or a part of web page - recall the ``Pagination`` example), and allows
-to extract data from there. Page Object must
+to extract data from there. Page Object must:
 
 1. Define all the inputs needed in its ``__init__`` method.
    Usually these inputs are then stored as attributes.
@@ -584,7 +584,7 @@ some_framework must
 "To create BamazonBookPage, I need to pass output of Splash as
 a ``response`` keyword argument", i.e. once `(1)` is done.
 
-``web-poets`` uses  **type annotations** of ``__init__`` arguments
+``web-poet`` uses  **type annotations** of ``__init__`` arguments
 to declare Page Object dependencies. So, type annotations in the
 examples like the following were not just a nice-thing-to-have:
 
@@ -665,8 +665,8 @@ framework? ``web-poet`` itself doesn't provide any helpers for doing this.
 
 Use andi_ library. For example, scrapy-poet_ uses andi_.
 In addition to signature inspection, it also handles
-typing.Optional and typing.Union, and allows to create a build plan
-for dependency trees, indirect dependencies: that's allowed to annotate
+:class:`typing.Optional` and :class:`typing.Union`, and allows to create a build
+plan for dependency trees, indirect dependencies: that's allowed to annotate
 an argument as another :class:`~.Injectable` subclass.
 
 ``web-poet`` is not using andi_ on its own; ``web-poet``'s role
@@ -701,9 +701,9 @@ Then, framework's role is to:
    instance to the user, or call some predefined method
    (a common case is ``to_item``).
 
-For example, web-poet + Scrapy integration package (scrapy-poet_)
+For example, ``web-poet`` + Scrapy integration package (scrapy-poet_)
 may inspect a WebPage subclass you defined, figure out it needs
-:class:`~.HttpResponse` and nothing else, fetch scrapy's TextResponse,
+:class:`~.HttpResponse` and nothing else, fetch scrapy's ``TextResponse``,
 create :class:`~.HttpResponse` instance from it, create your
 Page Object instance, and pass it to a spider callback.
 
