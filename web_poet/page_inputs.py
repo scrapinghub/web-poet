@@ -145,7 +145,7 @@ class HttpResponse:
     @property   # type: ignore
     @memoizemethod_noargs
     def selector(self) -> parsel.Selector:
-        """Returns a cached instance to :external:class:`parsel.selector.Selector`."""
+        """Cached instance of :external:class:`parsel.selector.Selector`."""
         # XXX: should we pass base_url=self.url, as Scrapy does?
         return parsel.Selector(text=self.text)
 
@@ -159,7 +159,7 @@ class HttpResponse:
 
     @memoizemethod_noargs
     def json(self):
-        """Returns the Python ``dict`` representation of the Http Response body."""
+        """ Deserialize a JSON document to a Python object. """
         return self.body.json()
 
     @memoizemethod_noargs
