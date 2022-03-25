@@ -173,12 +173,13 @@ The same, but using web-poet
 
     # === Usage example
 
-    # the way to get resp_data depends on an HTTP client
-    resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    # the way to get response depends on an HTTP client
+    response = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
 
-    # but after we got resp_data, usage is the same
-    book_page = BookPage(response=resp_data)
+    # but after we got the response, the usage is the same
+    book_page = BookPage(response=response)
     item = book_page.extract_book()
+
 
 Differences from a previous example:
 
@@ -188,15 +189,14 @@ Differences from a previous example:
   *(check out the API reference of* :class:`~.HttpResponse` *for more info
   about the fields it holds)*
 
-    * Note that headers are provided here so that the body in the form of
-      raw ``bytes`` can be properly decoded by inferring from the ``Content-Encoding``
-      header. If the headers are not provided, the encoding can be derived
-      from the HTML meta tags like ``<meta http-equiv="content-type" 
-      content="text/html;charset=utf-8" />`` as a backup.
+  Note how headers are passed when creating :class:`~.HttpResponse` instance.
+  This is needed to decode body (which is ``bytes``) to unicode properly,
+  using the web browser rules. It involves checking ``Content-Encoding``
+  header, meta tags in HTML, BOM markers in the body, etc.
 
 * instead of ``extract_book`` function we got ``BookPage`` class,
   which receives response data in its ``__init__`` method - see how it
-  is created: ``BookPage(response=resp_data)``.
+  is created: ``BookPage(response=response)``.
 * ``BookPage`` inherits from :class:`~.WebPage` base class. This base class
   is not doing much: it
 
@@ -240,7 +240,7 @@ is implemented. Let's change the code to follow this standard:
             }
 
     # ... get resp_data somehow
-    book_page = BookPage(response=resp_data)
+    book_page = BookPage(response=response)
     item = book_page.to_item()
 
 As the method name is now standardized, the code which creates a Page Object
@@ -249,8 +249,8 @@ have ``ToscrapeBookPage`` and ``BamazonBookPage`` classes, and
 
 .. code-block:: python
 
-    def get_item(page_cls: ItemWebPage, resp_data: HttpResponse) -> dict:
-        page = page_cls(response=resp_data)
+    def get_item(page_cls: ItemWebPage, response: HttpResponse) -> dict:
+        page = page_cls(response=response)
         return page.to_item()
 
 would work for both.
@@ -260,8 +260,8 @@ it for free:
 
 .. code-block:: python
 
-    def get_item(extract_func, resp_data: HttpResponse) -> dict:
-        return extract_func(url=resp_data.url, text=resp_data.text)
+    def get_item(extract_func, response: HttpResponse) -> dict:
+        return extract_func(url=response.url, text=response.text)
 
 No need to agree on ``to_item`` name and have a base class to check that the
 method is implemented. Why bother with classes then?
@@ -408,8 +408,8 @@ And this is what we ended up with:
         return page.to_item()
 
     # the way to get resp_data depends on an HTTP client
-    resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
-    item = get_item(BookPage, resp_data=resp_data)
+    response = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    item = get_item(BookPage, resp_data=response)
 
 We created a monster!!! The examples in this tutorial are becoming
 longer and longer, harder and harder to understand. What's going on?
@@ -502,10 +502,9 @@ For example, a very basic Page Object could look like this:
                 self.response = response
 
             def to_item(self) -> dict:
-                sel = Selector(response.text)
                 return {
                     'url': self.response.url,
-                    'title': sel.css("h1::text").get()
+                    'title': self.response.css("h1::text").get()
                 }
 
 There is no *need* to use other base classes and mixins
@@ -538,7 +537,7 @@ to
   Headless Chrome rendering + crawling state.
 
 .. _Splash: https://github.com/scrapinghub/splash
-.. _AutoExtract: https://scrapinghub.com/automatic-data-extraction-api
+.. _AutoExtract: https://www.zyte.com/automatic-extraction/
 
 The information you need can depend on a web site.
 For example, Splash can be required for extracting book information from
@@ -622,7 +621,7 @@ a different type annotation should be used:
 
 For each possible input a separate class needs to be defined, even if the
 data has the same format. For example, both :class:`~.HttpResponse` and
-``SplashResponseData`` may have the same ``url`` fields,
+``SplashResponseData`` may have the same ``url`` and ``text`` properties,
 but they can't be the same class, because they need to work as
 "markers" - tell frameworks if the html should be taken from HTTP
 response body or from Splash DOM snapshot.
@@ -643,7 +642,7 @@ Pro tip: defining classes like
             self.crawl_state = crawl_state
 
 can get tedious; Python's :mod:`dataclasses`
-(or `attr.s`_, if that's your preference) make it nicer:
+(or `attrs`_, if that's your preference) make it nicer:
 
 .. code-block:: python
 
@@ -654,7 +653,7 @@ can get tedious; Python's :mod:`dataclasses`
         response: HttpResponse
         crawl_state: CrawlState
 
-.. _attr.s: https://github.com/python-attrs/attrs
+.. _attrs: https://github.com/python-attrs/attrs
 
 web-poet role
 =============

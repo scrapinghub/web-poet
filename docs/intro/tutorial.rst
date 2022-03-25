@@ -36,9 +36,10 @@ list page on `books.toscrape.com <http://books.toscrape.com/>`_.
 Downloading Response
 ====================
 
-The ``BookLinksPage`` Page Object requires a :class:`~.HttpResponse` with the
-book list page content in order to extract the information we need. Let's create
-a simple code using ``requests`` library to download the data.
+The ``BookLinksPage`` Page Object requires a
+:class:`~.HttpResponse` with the
+book list page content in order to extract the information we need. First,
+let's download the page using ``requests`` library.
 
 .. code-block:: python
 
