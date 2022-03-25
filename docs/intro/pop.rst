@@ -118,6 +118,8 @@ by simply importing them:
     page = FurnitureProductPage(response)
     item = page.to_item()
 
+.. _`pop-recommended-requirements`:
+
 Recommended Requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -141,45 +143,83 @@ all :class:`~.OverrideRule` by writing the following code inside of
 
 .. code-block:: python
 
-    from web_poet import consume_modules
+    from web_poet import default_registry
 
-    # This allows all of the OverrideRules declared inside the package
-    # using @handle_urls to be properly discovered and loaded.
-    consume_modules(__package__)
+    REGISTRY = default_registry.export(__package__)
 
-.. note::
+This does two things:
 
-    Remember, code in Python like annotations are only read and executed
+    1. The :meth:`~.PageObjectRegistry.export` method returns a new instance of
+    :class:`~.PageObjectRegistry` which contains only the :class:`~.OverrideRule`
+    from the given package. This means that if there are other **POPs** using the
+    recommended ``default_registry``, any :class:`~.OverrideRule` that are not part
+    of the package are not included.
+
+    2. Remember that code in Python like annotations are only read and executed
     when the module it belongs to is imported. Thus, in order for all the
     ``@handle_urls`` annotation to properly reflect its data, they need to
-    be imported recursively via :func:`~.consume_modules`.
+    be imported recursively via :func:`~.consume_modules`. Fortunately,
+    :meth:`~.PageObjectRegistry.export` already consumes the ``__package__``
+    for us.
 
 This allows developers to properly access all of the :class:`~.OverrideRule`
-declared using the ``@handle_urls`` annotation inside the **POP**. In turn,
-this also allows **POPs** which use ``web_poet.default_registry`` to have all
-their rules discovered if they are adhering to using Convention **#3**
-(see :ref:`best-practices`).
+declared using the ``@handle_urls`` annotation inside the **POP**:
 
-In other words, importing the ``ecommerce_page_objects`` **POP** to a
-project immediately loads all of the rules in **web-poet's**
-``default_registry``:
+.. code-block:: python
+
+    import ecommerce_page_objects
+
+    ecommerce_rules = ecommerce_page_objects.get_overrides()
+
+At the same time, this also allows **POPs** which use ``web_poet.default_registry``
+to have all their rules discovered if they are adhering to using Convention **#3**
+(see :ref:`conventions-and-best-practices`). In other words, importing the
+``ecommerce_page_objects`` **POP** to a project immediately loads all of the rules
+in **web-poet's** ``default_registry``:
 
 .. code-block:: python
 
     from web_poet import default_registry
 
+    ecommerce_rules = ecommerce_page_objects.get_overrides()
+
     import ecommerce_page_objects
 
-    # All the rules are now available.
-    rules = default_registry.get_overrides()
+    # All the rules are also available once ecommerce_page_objects is imported.
+    all_rules = default_registry.get_overrides()
 
 If this recommended requirement is followed properly, there's no need to
 call ``consume_modules("ecommerce_page_objects")`` before performing the
 :meth:`~.PageObjectRegistry.get_overrides`, since all the :class:`~.OverrideRule`
-were already discovered upon **POP** importation.
+were already discovered upon **POP** importation. 
 
-.. _`best-practices`:
+Lastly, when trying to repackage multiple **POPs** into a single unifying **POP**
+which contains all of the :class:`~.OverrideRule`, it can easily be packaged
+as:
 
+.. code-block:: python
+
+    from web_poet import PageObjectRegistry
+
+    import base_A_package
+    import base_B_package
+
+    # If on Python 3.9+
+    combined_reg = base_A_package.REGISTRY | base_B_package.REGISTRY
+
+    # If on lower Python versions
+    combined_reg = {**base_A_package.REGISTRY, **base_B_package.REGISTRY}
+
+    REGISTRY = PageObjectRegistry(combined_reg)
+
+Note that you can also opt to use only a subset of the :class:`~.OverrideRule`
+by selecting the specific ones in ``combined_reg`` before creating a new
+:class:`~.PageObjectRegistry` instance. An **inclusion** rule is preferred than
+an **exclusion** rule (see **Tip #4** in the :ref:`conventions-and-best-practices`).
+You can use :meth:`~.PageObjectRegistry.search_overrides` when selecting the
+rules.
+
+.. _`conventions-and-best-practices`:
 
 Conventions and Best Practices
 ------------------------------
