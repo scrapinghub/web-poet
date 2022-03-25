@@ -140,7 +140,7 @@ def test_http_response_json():
     assert response.json() == {"ключ": "значение"}
 
 
-def test_http_response_encoding():
+def test_http_response_text():
     """This tests a character which raises a UnicodeDecodeError when decoded in
     'ascii'.
 
@@ -151,3 +151,150 @@ def test_http_response_encoding():
     response = HttpResponse("http://example.com", body)
 
     assert response.text == text
+
+
+@pytest.mark.parametrize(["headers", "encoding"], [
+    ({"Content-type": "text/html; charset=utf-8"}, "utf-8"),
+    ({"Content-type": "text/html; charset=UTF8"}, "utf-8"),
+    ({}, None),
+    ({"Content-type": "text/html; charset=iso-8859-1"}, "cp1252"),
+    ({"Content-type": "text/html; charset=None"}, None),
+    ({"Content-type": "text/html; charset=gb2312"}, "gb18030"),
+    ({"Content-type": "text/html; charset=gbk"}, "gb18030"),
+    ({"Content-type": "text/html; charset=UNKNOWN"}, None),
+])
+def test_http_headers_declared_encoding(headers, encoding):
+    headers = HttpResponseHeaders(headers)
+    assert headers.declared_encoding() == encoding
+
+    response = HttpResponse("http://example.com", b'', headers=headers)
+    assert response.encoding == encoding or HttpResponse._DEFAULT_ENCODING
+
+
+def test_http_response_utf16():
+    """Test utf-16 because UnicodeDammit is known to have problems with"""
+    r = HttpResponse("http://www.example.com",
+                     body=b'\xff\xfeh\x00i\x00',
+                     encoding='utf-16')
+    assert r.text == "hi"
+    assert r.encoding == "utf-16"
+
+
+def test_explicit_encoding():
+    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
+                            encoding='utf-8')
+    assert response.encoding == "utf-8"
+    assert response.text == "£"
+
+
+def test_explicit_encoding_invalid():
+    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
+                            encoding='latin1')
+    assert response.encoding == "latin1"
+    assert response.text == "£".encode('utf-8').decode("latin1")
+
+
+def test_utf8_body_detection():
+    response = HttpResponse("http://www.example.com", body=b"\xc2\xa3",
+                            headers={"Content-type": "text/html; charset=None"})
+    assert response.encoding == "utf-8"
+
+    response = HttpResponse("http://www.example.com", body=b"\xc2",
+                            headers={"Content-type": "text/html; charset=None"})
+    assert response.encoding != "utf-8"
+
+
+def test_gb2312():
+    response = HttpResponse("http://www.example.com", body=b"\xa8D",
+                            headers={"Content-type": "text/html; charset=gb2312"})
+    assert response.text == "\u2015"
+
+
+def test_invalid_utf8_encoded_body_with_valid_utf8_BOM():
+    response = HttpResponse("http://www.example.com",
+                            headers={"Content-type": "text/html; charset=utf-8"},
+                            body=b"\xef\xbb\xbfWORD\xe3\xab")
+    assert response.encoding == "utf-8"
+    assert response.text in {
+        'WORD\ufffd\ufffd',  # w3lib < 1.19.0
+        'WORD\ufffd',        # w3lib >= 1.19.0
+    }
+
+
+def test_bom_is_removed_from_body():
+    # Inferring encoding from body also cache decoded body as sideeffect,
+    # this test tries to ensure that calling response.encoding and
+    # response.text in indistint order doesn't affect final
+    # values for encoding and decoded body.
+    url = 'http://example.com'
+    body = b"\xef\xbb\xbfWORD"
+    headers = {"Content-type": "text/html; charset=utf-8"}
+
+    # Test response without content-type and BOM encoding
+    response = HttpResponse(url, body=body)
+    assert response.encoding == "utf-8"
+    assert response.text == "WORD"
+    response = HttpResponse(url, body=body)
+    assert response.text == "WORD"
+    assert response.encoding == "utf-8"
+
+    # Body caching sideeffect isn't triggered when encoding is declared in
+    # content-type header but BOM still need to be removed from decoded
+    # body
+    response = HttpResponse(url, headers=headers, body=body)
+    assert response.encoding == "utf-8"
+    assert response.text == "WORD"
+    response = HttpResponse(url, headers=headers, body=body)
+    assert response.text == "WORD"
+    assert response.encoding == "utf-8"
+
+
+def test_replace_wrong_encoding():
+    """Test invalid chars are replaced properly"""
+    r = HttpResponse("http://www.example.com", encoding='utf-8',
+                     body=b'PREFIX\xe3\xabSUFFIX')
+    # XXX: Policy for replacing invalid chars may suffer minor variations
+    # but it should always contain the unicode replacement char ('\ufffd')
+    assert '\ufffd' in r.text, repr(r.text)
+    assert 'PREFIX' in r.text, repr(r.text)
+    assert 'SUFFIX' in r.text, repr(r.text)
+
+    # Do not destroy html tags due to encoding bugs
+    r = HttpResponse("http://example.com", encoding='utf-8',
+                     body=b'\xf0<span>value</span>')
+    assert '<span>value</span>' in r.text, repr(r.text)
+
+
+def test_html_encoding():
+    body = b"""<html><head><title>Some page</title><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    </head><body>Price: \xa3100</body></html>'
+    """
+    r1 = HttpResponse("http://www.example.com", body=body)
+    assert r1.encoding == 'cp1252'
+    assert r1.text == body.decode('cp1252')
+
+    body = b"""<?xml version="1.0" encoding="iso-8859-1"?>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+    Price: \xa3100
+    """
+    r2 = HttpResponse("http://www.example.com", body=body)
+    assert r2.encoding == 'cp1252'
+    assert r2.text == body.decode('cp1252')
+
+
+def test_html_headers_encoding_precedence():
+    # for conflicting declarations headers must take precedence
+    body = b"""<html><head><title>Some page</title><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head><body>Price: \xa3100</body></html>'
+    """
+    response = HttpResponse("http://www.example.com", body=body,
+                            headers={"Content-type": "text/html; charset=iso-8859-1"})
+    assert response.encoding == 'cp1252'
+    assert response.text == body.decode('cp1252')
+
+
+def test_html5_meta_charset():
+    body = b"""<html><head><meta charset="gb2312" /><title>Some page</title><body>bla bla</body>"""
+    response = HttpResponse("http://www.example.com", body=body)
+    assert response.encoding == 'gb18030'
+    assert response.text == body.decode('gb18030')
