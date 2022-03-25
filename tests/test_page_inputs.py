@@ -1,5 +1,6 @@
 import json
 
+import aiohttp.web_response
 import pytest
 import requests
 
@@ -100,6 +101,17 @@ def test_http_response_headers_init_requests():
 
     response = HttpResponse("http://example.com", body=b"",
                             headers=requests_response.headers)
+    assert isinstance(response.headers, HttpResponseHeaders)
+    assert response.headers['user-agent'] == "mozilla"
+    assert response.headers['User-Agent'] == "mozilla"
+
+
+def test_http_response_headers_init_aiohttp():
+    aiohttp_response = aiohttp.web_response.Response()
+    aiohttp_response.headers['User-Agent'] = "mozilla"
+
+    response = HttpResponse("http://example.com", body=b"",
+                            headers=aiohttp_response.headers)
     assert isinstance(response.headers, HttpResponseHeaders)
     assert response.headers['user-agent'] == "mozilla"
     assert response.headers['User-Agent'] == "mozilla"
