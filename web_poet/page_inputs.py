@@ -182,10 +182,11 @@ class HttpResponse:
         self._cached_text = text
         return body_encoding
 
-    def _auto_detect_fun(self, text):
+    def _auto_detect_fun(self, body: bytes) -> Optional[str]:
         for enc in (self._DEFAULT_ENCODING, 'utf-8', 'cp1252'):
             try:
-                text.decode(enc)
+                body.decode(enc)
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+        return None
