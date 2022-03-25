@@ -19,12 +19,13 @@ setup(
             'tests',
         )
     ),
-    install_requires=(
+    install_requires=[
         'attrs',
         'parsel',
         'multidict',
-    ),
-    classifiers=(
+        'w3lib >= 1.22.0',
+    ],
+    classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -35,5 +36,5 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
-    ),
+    ],
 )

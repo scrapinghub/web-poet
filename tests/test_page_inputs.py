@@ -215,10 +215,7 @@ def test_invalid_utf8_encoded_body_with_valid_utf8_BOM():
                             headers={"Content-type": "text/html; charset=utf-8"},
                             body=b"\xef\xbb\xbfWORD\xe3\xab")
     assert response.encoding == "utf-8"
-    assert response.text in {
-        'WORD\ufffd\ufffd',  # w3lib < 1.19.0
-        'WORD\ufffd',        # w3lib >= 1.19.0
-    }
+    assert response.text == 'WORD\ufffd'
 
 
 def test_bom_is_removed_from_body():
