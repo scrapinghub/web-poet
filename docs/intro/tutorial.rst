@@ -36,28 +36,31 @@ list page on `books.toscrape.com <http://books.toscrape.com/>`_.
 Downloading Response
 ====================
 
-The ``BookLinksPage`` Page Object requires a :class:`~.ResponseData` with the
-book list page content in order to extract the information we need. Let's create
-a simple code using :mod:`urllib.request` to download the data.
+The ``BookLinksPage`` Page Object requires a
+:class:`~.HttpResponse` with the
+book list page content in order to extract the information we need. First,
+let's download the page using ``requests`` library.
 
 .. code-block:: python
 
-    import urllib.request
+    import requests
 
 
-    response = urllib.request.urlopen('http://books.toscrape.com')
+    response = requests.get('http://books.toscrape.com')
 
 Creating Page Input
 ===================
 
-Now we need to create and populate a :class:`~.ResponseData` instance.
+Now we need to create and populate a :class:`~.HttpResponse` instance.
 
 .. code-block:: python
 
-    from web_poet.page_inputs import ResponseData
+    from web_poet.page_inputs import HttpResponse
 
 
-    response_data = ResponseData(response.url, response.read().decode('utf-8'))
+    response_data = HttpResponse(response.url,
+                                 body=response.content,
+                                 headers=response.headers)
     page = BookLinksPage(response_data)
 
     print(page.to_item())
@@ -69,10 +72,10 @@ Our simple Python script might look like this:
 
 .. code-block:: python
 
-    import urllib.request
+    import requests
 
     from web_poet.pages import ItemWebPage
-    from web_poet.page_inputs import ResponseData
+    from web_poet.page_inputs import HttpResponse
 
 
     class BookLinksPage(ItemWebPage):
@@ -87,8 +90,11 @@ Our simple Python script might look like this:
             }
 
 
-    response = urllib.request.urlopen('http://books.toscrape.com')
-    response_data = ResponseData(response.url, response.read().decode('utf-8'))
+    response = requests.get('http://books.toscrape.com')
+    response_data = HttpResponse(response.url,
+                                 body=response.content,
+                                 headers=response.headers)
+
     page = BookLinksPage(response_data)
 
     print(page.to_item())
@@ -126,7 +132,7 @@ Next Steps
 ==========
 
 As you can see, it's possible to use web-poet with built-in libraries such as
-:mod:`urllib.request`, but it's also possible to use
+``requests``, but it's also possible to use
 :ref:`Scrapy <scrapy:topics-index>` with the help of
 `scrapy-poet <https://scrapy-poet.readthedocs.io>`_.
 
