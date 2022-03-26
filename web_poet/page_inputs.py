@@ -189,4 +189,3 @@ class HttpResponse:
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
-        return None
