@@ -1,5 +1,5 @@
 from .pages import WebPage, ItemPage, ItemWebPage, Injectable
-from .page_inputs import ResponseData
+from .page_inputs import HttpResponse, HttpResponseBody, HttpResponseHeaders
 from .overrides import PageObjectRegistry, consume_modules, OverrideRule
 
 default_registry = PageObjectRegistry()

@@ -9,6 +9,11 @@ TBR
   to conveniently declare and collect ``OverrideRule``.
 * removed support for Python 3.6
 * added support for Python 3.10
+* Backward Incompatible Change:
+
+    * ``ResponseData`` is now ``HttpResponse`` which has a new
+      specific attribute types like ``HttpResponseBody`` and
+      ``HttpResponseHeaders``.
 
 0.1.1 (2021-06-02)
 ------------------
