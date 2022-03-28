@@ -95,6 +95,24 @@ def test_http_respose_headers():
         headers["user agent"]
 
 
+def test_http_response_headers_from_bytes():
+    raw_headers = {
+        b"Content-Length": [b"316"],
+        b"Content-Encoding": [b"gzip", b"br"],
+        b"server": b"sffe",
+        "X-string": "string",
+        "X-missing": None
+    }
+    headers = HttpResponseHeaders.from_bytes(raw_headers)
+
+    assert headers.get("content-length") == "316"
+    assert headers.get("content-encoding") == "gzip"
+    assert headers.getall("Content-Encoding") == ["gzip", "br"]
+    assert headers.get("server") == "sffe"
+    assert headers.get("x-string") == "string"
+    assert headers.get("X-missing") is None
+
+
 def test_http_response_headers_init_requests():
     requests_response = requests.Response()
     requests_response.headers['User-Agent'] = "mozilla"

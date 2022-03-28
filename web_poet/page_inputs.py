@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Dict, List, TypeVar, Type
+from typing import Optional, Dict, List, TypeVar, Type, Union
 
 import attrs
 from multidict import CIMultiDict
@@ -14,6 +14,7 @@ from w3lib.encoding import (
 from .utils import memoizemethod_noargs
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
+BytesDict = Dict[bytes, Union[bytes, List[bytes]]]
 
 
 class HttpResponseBody(bytes):
@@ -73,6 +74,45 @@ class HttpResponseHeaders(CIMultiDict):
         <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
         """
         return cls([(pair["name"], pair["value"]) for pair in arg])
+
+    @classmethod
+    def from_bytes(
+        cls: Type[T_headers], arg: BytesDict, encoding: str = "utf-8"
+    ) -> T_headers:
+        """An alternative constructor for instantiation where the header-value
+        pairs are in raw bytes form.
+
+        This supports multiple header values in the form of ``List[bytes]``
+        alongside a plain ``bytes`` value.
+
+        By default, it converts the ``bytes`` value using "utf-8". However, this
+        can easily be overridden using the ``encoding`` parameter.
+
+        >>> raw_values = {
+        ...     b"Content-Encoding": [b"gzip", b"br"],
+        ...     b"Content-Type": [b"text/html"],
+        ...     b"content-length": b"648",
+        ... }
+        >>> headers = HttpResponseHeaders.from_bytes(raw_values)
+        >>> headers
+        <HttpResponseHeaders('Content-Encoding': 'gzip', 'Content-Encoding': 'br', 'Content-Type': 'text/html', 'content-length': '648')>
+        """
+
+        def _norm(data):
+            if isinstance(data, str):
+                return data
+            elif isinstance(data, bytes):
+                return data.decode(encoding)
+
+        converted = []
+
+        for header, value in arg.items():
+            if isinstance(value, list):
+                converted.extend([(_norm(header), _norm(v)) for v in value])
+            else:
+                converted.append((_norm(header), _norm(value)))
+
+        return cls(converted)
 
     def declared_encoding(self) -> Optional[str]:
         """ Return encoding detected from the Content-Type header, or None
