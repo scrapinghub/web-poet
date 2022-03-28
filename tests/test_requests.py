@@ -1,7 +1,7 @@
 from unittest import mock
 
 import pytest
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import HttpResponse
 from web_poet.requests import (
     Request,
     HttpClient,
@@ -12,10 +12,10 @@ from web_poet.requests import (
 
 @pytest.fixture
 def async_mock():
-    """workaround since python 3.7 doesn't ship with asyncmock."""
+    """Workaround since python 3.7 doesn't ship with asyncmock."""
 
     async def async_test(req):
-        return ResponseData(req.url, req.body)
+        return HttpResponse(req.url, b"")
 
     mock.MagicMock.__await__ = lambda x: async_test().__await__()
 
@@ -50,9 +50,9 @@ async def test_perform_request_from_httpclient(async_mock):
     request_backend_var.set(async_mock)
     response = await client.get(url)
 
-    # The async downloader implementation should return the ResponseData
+    # The async downloader implementation should return the HttpResponse
     assert response.url == url
-    assert type(response) == ResponseData
+    assert type(response) == HttpResponse
 
 
 @pytest.mark.asyncio
@@ -88,4 +88,4 @@ async def test_http_client_batch_requests(async_mock):
     ]
     responses = await client.batch_requests(*requests)
 
-    assert all([isinstance(response, ResponseData) for response in responses])
+    assert all([isinstance(response, HttpResponse) for response in responses])

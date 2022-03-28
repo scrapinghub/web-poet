@@ -10,11 +10,11 @@ data entirely depending on the needs of the developer.
 
 If you can recall from the previous basic tutorials, one essential requirement of
 Page Objects that inherit from :class:`~.WebPage` or :class:`~.ItemWebPage` would
-be :class:`~.ResponseData`. This holds the HTTP response information that the
+be :class:`~.HttpResponse`. This holds the HTTP response information that the
 Page Object is trying to represent.
 
 In order to standardize how to pass arbitrary information inside Page Objects,
-we'll need to use :class:`~.Meta` similar on how we use :class:`~.ResponseData`
+we'll need to use :class:`~.Meta` similar on how we use :class:`~.HttpResponse`
 as a requirement to instantiate Page Objects:
 
 .. code-block:: python
@@ -24,15 +24,15 @@ as a requirement to instantiate Page Objects:
 
     @attr.define
     class SomePage(web_poet.ItemWebPage):
-        # ResponseData is inherited from ItemWebPage
+        # The HttpResponse attribute is inherited from ItemWebPage
         meta: web_poet.Meta
 
-    response = web_poet.ResponseData(...)
+    response = web_poet.HttpResponse(...)
     meta = web_poet.Meta("arbitrary_value": 1234, "cool": True)
 
     page = SomePage(response=response, meta=meta)
 
-However, similar with :class:`~.ResponseData`, developers using :class:`~.Meta`
+However, similar with :class:`~.HttpResponse`, developers using :class:`~.Meta`
 shouldn't care about how they are being passed into Page Objects. This will
 depend on the framework that would use **web-poet**.
 
@@ -109,11 +109,10 @@ Let's try an example wherein :class:`~.Meta` is able to control how
                 for page_num in range(2, max_pages + 1)
             ]
             responses = await http_client.batch_requests(*requests)
-            pages = [self] + list(map(web_poet.WebPage, responses))
             return [
                 product_url
-                for page in pages
-                for product_url in self.parse_product_urls(page)
+                for response in responses
+                for product_url in self.parse_product_urls(response)
             ]
 
         @staticmethod
@@ -122,8 +121,8 @@ Let's try an example wherein :class:`~.Meta` is able to control how
             return web_poet.Request(url=next_page_url)
 
         @staticmethod
-        def parse_product_urls(page):
-            return page.css("#main .products a.link ::attr(href)").getall()
+        def parse_product_urls(response: web_poet.HttpResponse):
+            return response.css("#main .products a.link ::attr(href)").getall()
 
 From the example above, we can see how :class:`~.Meta` is able to arbitrarily
 limit the pagination behavior by passing an optional **max_pages** info. Take

@@ -8,7 +8,7 @@ with open('README.rst') as f:
 setup(
     name='web-poet',
     version='0.1.1',
-    description="Scrapinghub's Page Object pattern for web scraping",
+    description="Zyte's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type='text/x-rst',
     author='Scrapinghub',
@@ -19,11 +19,13 @@ setup(
             'tests',
         )
     ),
-    install_requires=(
-        'attrs',
+    install_requires=[
+        'attrs >= 21.3.0',
         'parsel',
-    ),
-    classifiers=(
+        'multidict',
+        'w3lib >= 1.22.0',
+    ],
+    classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -34,5 +36,5 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
-    ),
+    ],
 )

@@ -3,7 +3,7 @@ import attr
 import typing
 
 from web_poet.mixins import ResponseShortcutsMixin
-from web_poet.page_inputs import ResponseData
+from web_poet.page_inputs import HttpResponse
 
 
 class Injectable(abc.ABC):
@@ -45,13 +45,13 @@ class ItemPage(Injectable, abc.ABC):
 
 @attr.s(auto_attribs=True)
 class WebPage(Injectable, ResponseShortcutsMixin):
-    """Base Page Object which requires :class:`~.ResponseData`
+    """Base Page Object which requires :class:`~.HttpResponse`
     and provides XPath / CSS shortcuts.
 
     Use this class as a base class for Page Objects which work on
     HTML downloaded using an HTTP client directly.
     """
-    response: ResponseData
+    response: HttpResponse
 
 
 @attr.s(auto_attribs=True)
