@@ -5,6 +5,12 @@ Changelog
 TBR
 ------------------
 
+* Removed support for Python 3.6
+* Added support for Python 3.10
+* Added support for performing additional requests using
+  ``web_poet.HttpClient``.
+* Introduced ``web_poet.Meta`` to pass arbitrary information
+  inside a Page Object.
 * removed support for Python 3.6
 * added support for Python 3.10
 * Backward Incompatible Change:

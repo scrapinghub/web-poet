@@ -1,9 +1,9 @@
-import json
-from typing import Optional, Dict, List, TypeVar, Type, Union
-
 import attrs
-from multidict import CIMultiDict
+import json
 import parsel
+from typing import Optional, Dict, Any, List, TypeVar, Type, Union
+from multidict import CIMultiDict
+
 from w3lib.encoding import (
     html_to_unicode,
     html_body_declared_encoding,
@@ -229,3 +229,13 @@ class HttpResponse:
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+
+
+class Meta(dict):
+    """Container class that could contain any arbitrary data to be passed into
+    a Page Object.
+
+    Note that this is simply a subclass of Python's ``dict``.
+    """
+
+    pass

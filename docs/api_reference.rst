@@ -6,8 +6,8 @@ Page Inputs
 ===========
 
 .. automodule:: web_poet.page_inputs
-    :members:
-    :undoc-members:
+   :members:
+   :undoc-members:
 
 Pages
 =====
@@ -45,3 +45,10 @@ Mixins
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
    :no-special-members:
+
+Requests
+========
+
+.. automodule:: web_poet.requests
+    :members:
+    :undoc-members:
