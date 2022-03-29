@@ -60,3 +60,22 @@ See Documentation_ for more.
 .. _Scrapy: https://scrapy.org/
 .. _aiohttp: https://github.com/aio-libs/aiohttp
 .. _IPython notebook: https://jupyter.org/
+
+
+Developing
+==========
+
+Setup your local Python environment via:
+
+1. `pip install -r requirements-dev.txt`
+2. `pre-commit install`
+
+Now everytime you perform a `git commit`, these tools will run against the
+staged files:
+
+* `black`
+* `isort`
+* `flake8`
+
+You can also directly invoke `pre-commit run --all-files` or `tox -e linters`
+to run them without performing a commit.
