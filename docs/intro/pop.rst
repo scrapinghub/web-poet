@@ -123,57 +123,62 @@ Recommended Requirements
 
 This covers these use cases:
 
-    - The minimum requirements and its use cases 
+    - The `minimum requirements` and its use cases 
     - The ability to retrieve the declared :class:`~.OverrideRule`
-      inside the **POP**
+      available inside the **POP**
 
-This means that a collection of :class:`~.OverrideRule` must be explicitly
-declared in the **POP**. This enables projects using the **POP** to know:
+This means that a collection of :class:`~.OverrideRule` must be properly
+discovered within the **POP**. This enables projects using the **POP** to know:
 
     - which URL Patterns a given Page Object is expected to work
     - what it's trying to override `(or replace)`
 
-This could be done by declaring a ``REGISTRY`` variable that can be
-imported as a top-level variable from the package.
-
-For example, suppose our project is named **ecommerce_page_objects**
+To give an example, suppose our **POP** is named **ecommerce_page_objects**
 and is using any of the project structure options discussed in the
-previous sections, we can then define the ``REGISTRY`` variable as the following
-inside of ``ecommerce-page-objects/ecommerce_page_objects/__init__.py``:
+previous sections. We can then define the entry point of discovering
+all :class:`~.OverrideRule` by writing the following code inside of
+``ecommerce-page-objects/ecommerce_page_objects/__init__.py``:
 
 .. code-block:: python
 
-    from web_poet import default_registry, consume_modules
+    from web_poet import consume_modules
 
     # This allows all of the OverrideRules declared inside the package
     # using @handle_urls to be properly discovered and loaded.
     consume_modules(__package__)
 
-    REGISTRY = default_registry
+.. note::
 
-This allows any developer using a **POP** to easily access all of the
-:class:`~.OverrideRule` using the convention of accessing it via the
-``REGISTRY`` variable. For example:
+    Remember, code in Python like annotations are only read and executed
+    when the module it belongs to is imported. Thus, in order for all the
+    ``@handle_urls`` annotation to properly reflect its data, they need to
+    be imported recursively via :func:`~.consume_modules`.
+
+This allows developers to properly access all of the :class:`~.OverrideRule`
+declared using the ``@handle_urls`` annotation inside the **POP**. In turn,
+this also allows **POPs** which use ``web_poet.default_registry`` to have all
+their rules discovered if they are adhering to using Convention **#3**
+(see :ref:`best-practices`).
+
+In other words, importing the ``ecommerce_page_objects`` **POP** to a
+project immediately loads all of the rules in **web-poet's**
+``default_registry``:
 
 .. code-block:: python
 
-    from ecommerce_page_objects import REGISTRY
+    from web_poet import default_registry
 
-.. tip::
+    import ecommerce_page_objects
 
-    The ``default_registry`` is an instance of :class:`~.PageObjectRegistry`,
-    which in turn is simply a subclass of a ``dict``. This means that you don't
-    necessarily have to use an instance of :class:`~.PageObjectRegistry` as long
-    as it has a ``dict``-like interface.
+    # All the rules are now available.
+    rules = default_registry.get_overrides()
 
-    The :class:`~.PageObjectRegistry` is simply a mapping where the **key** is
-    the Page Object to use and the **value** is the :class:`~.OverrideRule` it
-    operates on. This means you can simply use a plain ``dict`` for the
-    ``REGISTRY`` variable.
+If this recommended requirement is followed properly, there's no need to
+call ``consume_modules("ecommerce_page_objects")`` before performing the
+:meth:`~.PageObjectRegistry.get_overrides`, since all the :class:`~.OverrideRule`
+were already discovered upon **POP** importation.
 
-    However, it is **recommended** to use the instances of
-    :class:`~.PageObjectRegistry` to leverage the validation logic for its
-    contents.
+.. _`best-practices`:
 
 
 Conventions and Best Practices
