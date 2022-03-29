@@ -4,6 +4,7 @@ import importlib
 import importlib.util
 import warnings
 import pkgutil
+from copy import deepcopy
 from collections import deque
 from dataclasses import dataclass, field
 from operator import attrgetter
@@ -120,6 +121,27 @@ class PageObjectRegistry(dict):
         from multiple external packages.
         """
         return cls({rule.use: rule for rule in rules})
+
+    def export(self, package: str) -> PageObjectRegistry:
+        """Returns a new :class:`~.PageObjectRegistry` instance containing
+        :class:`~.OverrideRule` which are only found in the provided **package**.
+
+        This is used in cases wherein all of the :class:`~.OverrideRule` in a
+        given **Page Object Project (POP)** should be placed inside a dedicated
+        registry for packaging. See :ref:`POP Recommended Requirements
+        <pop-recommended-requirements>` for more info about this.
+
+        Note that the :func:`~.consume_modules` will be called on the said
+        **package** which adds any undiscovered :class:`~.OverrideRule` to the
+        original :class:`~.PageObjectRegistry` instance. There's no need to worry
+        about unrelated rules from being added since it wouldn't happen if the
+        given registry's ``@handle_urls`` annotation wasn't the one used.
+        """
+        backup_state = deepcopy(self)
+        self.clear()
+        rules = self.get_overrides(consume=package)
+        self = backup_state
+        return self.from_override_rules(rules)
 
     def handle_urls(
         self,
