@@ -179,11 +179,11 @@ in **web-poet's** ``default_registry``:
 
 .. code-block:: python
 
-    from web_poet import default_registry
+    import ecommerce_page_objects
 
     ecommerce_rules = ecommerce_page_objects.get_overrides()
 
-    import ecommerce_page_objects
+    from web_poet import default_registry
 
     # All the rules are also available once ecommerce_page_objects is imported.
     all_rules = default_registry.get_overrides()
