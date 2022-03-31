@@ -191,7 +191,7 @@ class PageObjectRegistry(dict):
 
         # Short-circuit operation if "use" is the only search param used, since
         # we know that it's being used as the dict key.
-        if set(["use"]) == kwargs.keys():
+        if {"use"} == kwargs.keys():
             rule = self.get(kwargs["use"])
             if rule:
                 return [rule]
