@@ -1,5 +1,6 @@
 import weakref
 from functools import wraps
+from typing import Any, Optional, List
 
 
 def memoizemethod_noargs(method):
@@ -15,3 +16,22 @@ def memoizemethod_noargs(method):
         return cache[self]
 
     return new_method
+
+
+def as_list(value: Optional[Any]) -> List[Any]:
+    """Normalizes the value input as a list.
+
+    >>> as_list(None)
+    []
+    >>> as_list("foo")
+    ['foo']
+    >>> as_list(123)
+    [123]
+    >>> as_list(["foo", "bar", 123])
+    ['foo', 'bar', 123]
+    """
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return [value]
+    return list(value)

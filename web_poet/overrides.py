@@ -11,6 +11,8 @@ from typing import Iterable, Optional, Union, List, Callable, Dict, Any, TypeVar
 
 from url_matcher import Patterns
 
+from web_poet.utils import as_list
+
 Strings = Union[str, Iterable[str]]
 
 PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry")
@@ -50,22 +52,6 @@ class OverrideRule:
 
     def __hash__(self):
         return hash((self.for_patterns, self.use, self.instead_of))
-
-
-def _as_list(value: Optional[Strings]) -> List[str]:
-    """
-    >>> _as_list(None)
-    []
-    >>> _as_list("foo")
-    ['foo']
-    >>> _as_list(["foo", "bar"])
-    ['foo', 'bar']
-    """
-    if value is None:
-        return []
-    if isinstance(value, str):
-        return [value]
-    return list(value)
 
 
 class PageObjectRegistry(dict):
@@ -156,8 +142,8 @@ class PageObjectRegistry(dict):
         def wrapper(cls):
             rule = OverrideRule(
                 for_patterns=Patterns(
-                    include=_as_list(include),
-                    exclude=_as_list(exclude),
+                    include=as_list(include),
+                    exclude=as_list(exclude),
                     priority=priority,
                 ),
                 use=cls,
