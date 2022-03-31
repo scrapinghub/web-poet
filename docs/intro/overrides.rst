@@ -109,7 +109,7 @@ Retrieving all available Overrides
 ----------------------------------
 
 The :meth:`~.PageObjectRegistry.get_overrides` method from the ``web_poet.default_registry``
-allows discovery and retrieval of  all :class:`~.OverrideRule` from your project.
+allows retrieval of  all :class:`~.OverrideRule` in the given registry.
 Following from our example above, using it would be:
 
 .. code-block:: python
@@ -130,12 +130,12 @@ in the :class:`~.OverrideRule` to be written into ``web_poet.default_registry``.
 
     :meth:`~.PageObjectRegistry.get_overrides` relies on the fact that all essential
     packages/modules which contains the :func:`web_poet.handle_urls`
-    annotations are properly loaded.
+    annotations are properly loaded `(i.e imported)`.
 
-    Thus, for cases like importing Page Objects from another external package,
-    you'd need to properly load all ``@handle_urls`` annotations from the external
-    source. This ensures that the external Page Objects have their annotations
-    properly loaded.
+    Thus, for cases like importing and using Page Objects from other external packages,
+    the ``@handle_urls`` annotations from these external sources must be read and
+    processed properly. This ensures that the external Page Objects have all of their
+    :class:`~.OverrideRule` present.
 
     This can be done via the function named :func:`~.web_poet.overrides.consume_modules`.
     Here's an example:
@@ -146,9 +146,6 @@ in the :class:`~.OverrideRule` to be written into ``web_poet.default_registry``.
 
         consume_modules("external_package_A.po", "another_ext_package.lib")
         rules = default_registry.get_overrides()
-
-        # Fortunately, `get_overrides()` provides a shortcut for the lines above:
-        rules = default_registry.get_overrides(consume=["external_package_A.po", "another_ext_package.lib"])
 
     The next section explores this caveat further.
 
@@ -187,17 +184,14 @@ This can be done something like:
     from web_poet import default_registry, consume_modules
 
     # ❌ Remember that this wouldn't retrieve any rules at all since the
-    # annotations are NOT properly loaded.
+    # annotations are NOT properly imported.
     rules = default_registry.get_overrides()
     print(rules)  # []
 
     # ✅ Instead, you need to run the following so that all of the Page
-    # Objects in the external packages are recursively loaded.
+    # Objects in the external packages are recursively imported.
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
     rules = default_registry.get_overrides()
-
-    # Alternatively, this could be shortened using:
-    rules = default_registry.get_overrides(consume=["ecommerce_page_objects", "gadget_sites_page_objects"])
 
     # The collected rules would then be as follows:
     print(rules)
@@ -209,9 +203,9 @@ This can be done something like:
 .. note::
 
     Once :func:`~.web_poet.overrides.consume_modules` is called, then all
-    external Page Objects are loaded and available for the entire runtime
-    duration. Calling :func:`~.web_poet.overrides.consume_modules` again makes
-    no difference unless a new set of modules are provided.
+    external Page Objects are recursively imported and available for the entire
+    runtime duration. Calling :func:`~.web_poet.overrides.consume_modules` again
+    makes no difference unless a new set of modules are provided.
 
 .. _`intro-rule-subset`:
 
@@ -221,7 +215,7 @@ Using only a subset of the available OverrideRules
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.OverrideRule` would be used. This could be achieved by
 using the :meth:`~.PageObjectRegistry.search_overrides` method which allows for
-convenient selection of a subset of rules from the ``default_registry``.
+convenient selection of a subset of rules from a given registry.
 
 Here's an example of how you could manually select the rules using the
 :meth:`~.PageObjectRegistry.search_overrides` method instead:
@@ -274,7 +268,7 @@ You might've observed from the previous section that retrieving the list of all
 :class:`~.OverrideRule` from two different external packages may result in a
 conflict. 
 
-We can take a look at the rules for **#2** and **#3** when we were loading all
+We can take a look at the rules for **#2** and **#3** when we were importing all
 available rules:
 
 .. code-block:: python

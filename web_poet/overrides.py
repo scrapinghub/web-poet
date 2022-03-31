@@ -178,24 +178,16 @@ class PageObjectRegistry(dict):
 
         return wrapper
 
-    def get_overrides(self, consume: Optional[Strings] = None) -> List[OverrideRule]:
+    def get_overrides(self) -> List[OverrideRule]:
         """Returns all of the :class:`~.OverrideRule` that were declared using
         the ``@handle_urls`` annotation.
 
-        :param consume: packages/modules that need to be imported so that it can
-            properly load the :func:`web_poet.handle_urls` annotations.
-
         .. warning::
 
-            Remember to consider using the ``consume`` parameter to properly load
-            the ``@handle_urls`` annotations from external Page Objects.
-
-            The ``consume`` parameter provides a convenient shortcut for calling
-            :func:`~.web_poet.overrides.consume_modules`.
+            Remember to consider calling :func:`~.web_poet.overrides.consume_modules`
+            beforehand to recursively import all submodules which contains the
+            ``@handle_urls`` annotations from external Page Objects.
         """
-        if consume:
-            consume_modules(*_as_list(consume))
-
         return list(self.values())
 
     def search_overrides(self, **kwargs) -> List[OverrideRule]:
@@ -261,7 +253,7 @@ def _walk_module(module: str) -> Iterable:
 
 def consume_modules(*modules: str) -> None:
     """This recursively imports all packages/modules so that the ``@handle_urls``
-    annotation are properly discovered and loaded.
+    annotation are properly discovered and imported.
 
     Let's take a look at an example:
 
@@ -279,22 +271,13 @@ def consume_modules(*modules: str) -> None:
         - ``my_page_obj_project`` `(since it's the same module as the file above)`
         - ``other_external_pkg.po``
         - ``another_pkg.lib``
+        - any other modules that was imported in the same process inside the
+          packages/modules above.
 
     If the ``default_registry`` had other ``@handle_urls`` annotations outside
     of the packages/modules listed above, then the corresponding
-    :class:`~.OverrideRule` won't be returned.
-
-    .. note::
-
-        :meth:`~.PageObjectRegistry.get_overrides` provides a shortcut for this
-        using its ``consume`` parameter. Thus, the code example above could be
-        shortened even further by:
-
-        .. code-block:: python
-
-            from web_poet import default_registry
-
-            rules = default_registry.get_overrides(consume=["other_external_pkg.po", "another_pkg.lib"])
+    :class:`~.OverrideRule` won't be returned. Unless, they were recursively
+    imported in some way similar to :func:`~.web_poet.overrides.consume_modules`.
     """
 
     for module in modules:

@@ -77,7 +77,8 @@ def test_list_page_objects_all_consume():
     """A test similar to the one above but calls ``consume_modules()`` to properly
     load the @handle_urls annotations from other modules/packages.
     """
-    rules = default_registry.get_overrides(consume="tests_extra")
+    consume_modules("tests_extra")
+    rules = default_registry.get_overrides()
     page_objects = {po.use for po in rules}
     assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
