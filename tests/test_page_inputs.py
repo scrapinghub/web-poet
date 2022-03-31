@@ -95,7 +95,7 @@ def test_http_respose_headers():
         headers["user agent"]
 
 
-def test_http_response_headers_from_bytes():
+def test_http_response_headers_from_bytes_dict():
     raw_headers = {
         b"Content-Length": [b"316"],
         b"Content-Encoding": [b"gzip", b"br"],
@@ -103,7 +103,7 @@ def test_http_response_headers_from_bytes():
         "X-string": "string",
         "X-missing": None
     }
-    headers = HttpResponseHeaders.from_bytes(raw_headers)
+    headers = HttpResponseHeaders.from_bytes_dict(raw_headers)
 
     assert headers.get("content-length") == "316"
     assert headers.get("content-encoding") == "gzip"

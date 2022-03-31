@@ -76,7 +76,7 @@ class HttpResponseHeaders(CIMultiDict):
         return cls([(pair["name"], pair["value"]) for pair in arg])
 
     @classmethod
-    def from_bytes(
+    def from_bytes_dict(
         cls: Type[T_headers], arg: BytesDict, encoding: str = "utf-8"
     ) -> T_headers:
         """An alternative constructor for instantiation where the header-value
@@ -93,7 +93,7 @@ class HttpResponseHeaders(CIMultiDict):
         ...     b"Content-Type": [b"text/html"],
         ...     b"content-length": b"648",
         ... }
-        >>> headers = HttpResponseHeaders.from_bytes(raw_values)
+        >>> headers = HttpResponseHeaders.from_bytes_dict(raw_values)
         >>> headers
         <HttpResponseHeaders('Content-Encoding': 'gzip', 'Content-Encoding': 'br', 'Content-Type': 'text/html', 'content-length': '648')>
         """
