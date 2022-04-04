@@ -158,7 +158,7 @@ Let's modify the example in the previous section to see how it can be done:
                 "related_product_ids": self.parse_related_product_ids(self),
             }
 
-            requests: List[web_poet.Request] = [
+            requests: List[web_poet.HttpRequest] = [
                 self.create_request(page_num=page_num)
                 for page_num in range(2, default_pagination_limit)
             ]
@@ -174,12 +174,12 @@ Let's modify the example in the previous section to see how it can be done:
 
         def create_request(self, page_num=2):
             # Simulates "scrolling" through a carousel that loads related product items
-            return web_poet.Request(
+            return web_poet.HttpRequest(
                 url="https://www.api.example.com/product-pagination/",
                 method="POST",
                 headers={
-                    'Host': 'www.example.com',
-                    'Content-Type': 'application/json; charset=UTF-8',
+                    "Host": "www.example.com",
+                    "Content-Type": "application/json; charset=UTF-8",
                 },
                 body=json.dumps(
                     {
@@ -236,7 +236,7 @@ This can be set using:
 
 .. code-block:: python
 
-    def request_implementation(r: web_poet.Request) -> web_poet.HttpResponse:
+    def request_implementation(r: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
     from web_poet import request_backend_var
@@ -263,7 +263,7 @@ an :class:`~.HttpClient` instance:
 
 .. code-block:: python
 
-    def request_implementation(r: web_poet.Request) -> web_poet.HttpResponse:
+    def request_implementation(r: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
     from web_poet import HttpClient

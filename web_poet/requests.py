@@ -11,16 +11,17 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Dict, ByteString, Any, Union, Callable
+from typing import Optional, List, Dict, Union, Callable, AnyStr, TypeVar, Type
 
-import attr
+import attrs
+from multidict import CIMultiDict
 
 from web_poet.page_inputs import HttpResponse
 
 logger = logging.getLogger(__name__)
 
+T_body = TypeVar("T_body", bound="HttpRequestBody")
 
-mapping = Dict[Union[str, ByteString], Any]
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
 # set the appropriate implementation for requesting data.
@@ -38,19 +39,75 @@ class RequestBackendError(Exception):
     pass
 
 
-@attr.define
-class Request:
+class HttpRequestBody(bytes):
+    """A container for holding the raw HTTP request body in bytes format."""
+
+    @classmethod
+    def from_anystr(
+        cls: Type[T_body], value: AnyStr, encoding: str = "utf-8"
+    ) -> T_body:
+        """An alternative constructor to handle both ``str`` and ``bytes`` types
+        of input argument.
+        """
+
+        if isinstance(value, str):
+            return cls(value, encoding=encoding)
+        return cls(value)
+
+
+class HttpRequestHeaders(CIMultiDict):
+    """A container for holding the HTTP request headers.
+
+    It's able to accept instantiation via an Iterable of Tuples:
+
+    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
+    >>> HttpRequestHeaders(pairs)
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    It's also accepts a mapping of key-value pairs as well:
+
+    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
+    >>> headers = HttpRequestHeaders(pairs)
+    >>> headers
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    Note that this also supports case insensitive header-key lookups:
+
+    >>> headers.get("content-encoding")
+    'gzip'
+    >>> headers.get("Content-Length")
+    '648'
+
+    These are just a few of the functionalities it inherits from
+    :class:`multidict.CIMultiDict`. For more info on its other features, read
+    the API spec of :class:`multidict.CIMultiDict`.
+    """
+
+    pass
+
+
+Mapping = Dict[str, str]
+Headers = Union[Mapping, HttpRequestHeaders]
+Body = Union[bytes, HttpRequestBody]
+
+
+@attrs.define(auto_attribs=False, slots=False, eq=False)
+class HttpRequest:
     """Represents a generic HTTP request used by other functionalities in
     **web-poet** like :class:`~.HttpClient`.
     """
 
-    url: str
-    method: str = "GET"
-    headers: Optional[mapping] = None
-    body: Optional[str] = None
+    url: str = attrs.field()
+    method: str = attrs.field(default="GET")
+    headers: HttpRequestHeaders = attrs.field(
+        factory=HttpRequestHeaders, converter=HttpRequestHeaders
+    )
+    body: HttpRequestBody = attrs.field(
+        factory=HttpRequestBody, converter=HttpRequestBody.from_anystr  # type: ignore
+    )
 
 
-async def _perform_request(request: Request) -> HttpResponse:
+async def _perform_request(request: HttpRequest) -> HttpResponse:
     """Given a :class:`~.Request`, execute it using the **request implementation**
     that was set in the ``web_poet.request_backend_var`` :mod:`contextvars`
     instance.
@@ -69,7 +126,7 @@ async def _perform_request(request: Request) -> HttpResponse:
     except LookupError:
         raise RequestBackendError(
             "Additional requests are used inside the Page Object but the "
-            "current framework has not set any Request Backend via "
+            "current framework has not set any HttpRequest Backend via "
             "'web_poet.request_backend_var'"
         )
 
@@ -100,11 +157,12 @@ class HttpClient:
     async def request(
         self,
         url: str,
+        *,
         method: str = "GET",
-        headers: Optional[mapping] = None,
-        body: Optional[str] = None,
+        headers: Optional[Headers] = None,
+        body: Optional[Body] = None,
     ) -> HttpResponse:
-        """This is a shortcut for creating a :class:`Request` instance and executing
+        """This is a shortcut for creating a :class:`HttpRequest` instance and executing
         that request.
 
         A :class:`~.HttpResponse` instance should then be returned.
@@ -115,26 +173,30 @@ class HttpClient:
             However, the underlying implementation supplied might change that,
             depending on how the framework using **web-poet** implements it.
         """
-        r = Request(url, method, headers, body)
-        return await self.request_downloader(r)
+        req = HttpRequest(url, method, headers or {}, body or b"")
+        return await self.request_downloader(req)
 
-    async def get(self, url: str, headers: Optional[mapping] = None) -> HttpResponse:
+    async def get(self, url: str, *, headers: Optional[Headers] = None) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
         return await self.request(url=url, method="GET", headers=headers)
 
     async def post(
-        self, url: str, headers: Optional[mapping] = None, body: Optional[str] = None
+        self,
+        url: str,
+        *,
+        headers: Optional[Headers] = None,
+        body: Optional[Body] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``POST``
         request.
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(self, *requests: Request) -> List[HttpResponse]:
+    async def batch_requests(self, *requests: HttpRequest) -> List[HttpResponse]:
         """Similar to :meth:`~.HttpClient.request` but accepts a collection of
-        :class:`~.Request` instances that would be batch executed.
+        :class:`~.HttpRequest` instances that would be batch executed.
         """
 
         coroutines = [self.request_downloader(r) for r in requests]
