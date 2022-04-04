@@ -38,7 +38,7 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    :caption: Advanced
    :maxdepth: 1
 
-   advanced/additional_requests
+   advanced/additional-requests
    advanced/meta
 
 .. toctree::
