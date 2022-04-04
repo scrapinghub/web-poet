@@ -428,5 +428,57 @@ has updated its rules and the exlusion strategy misses out on a few rules that
 were recently added. This could lead to a `silent-error` of receiving a different
 set of rules than expected.
 
-For this approach, you can use the :meth:`~.PageObjectRegistry.search_overrides`
+This **inclusion**-list approach can be done by importing the Page Objects directly
+and creating instances of :class:`~.OverrideRule` from it. You could also import
+all of the available :class:`~.OverrideRule` using :meth:`~.PageObjectRegistry.get_overrides`
+to sift through the list of available rules and manually selecting the rules you need.
+
+Most of the time, the needed rules are the ones which uses the Page Objects we're
+interested in. Since :class:`~.PageObjectRegistry` is a ``dict`` subclass, you can
+easily find the Page Object's rule using its `key`. Here's an example:
+
+.. code-block:: python
+
+    from web_poet import default_registry, consume_modules
+    import package_A, package_B, package_C
+
+    consume_modules("package_A", "package_B", "package_C")
+
+    rules = [
+        default_registry[package_A.PageObject1],  # OverrideRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, meta={})
+        default_registry[package_B.PageObject2],  # OverrideRule(for_patterns=Patterns(include=['site_B.com'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, meta={})
+        default_registry[package_C.PageObject3],  # OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, meta={})
+    ]
+
+Another approach would be using the :meth:`~.PageObjectRegistry.search_overrides`
 functionality as described from this tutorial section: :ref:`intro-rule-subset`.
+The :meth:`~.PageObjectRegistry.search_overrides` is quite useful in cases wherein
+the **POP** contains a lot of rules as it presents a utility for programmatically
+searching for them.
+
+Here's an example:
+
+.. code-block:: python
+
+    from url_matcher import Patterns
+    from web_poet import default_registry, consume_modules
+    import package_A, package_B, package_C
+
+    consume_modules("package_A", "package_B", "package_C")
+
+    rule_from_A = default_registry.search_overrides(use=package_A.PageObject1)
+    print(rule_from_A)
+    # [OverrideRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, meta={})]
+
+    rule_from_B = default_registry.search_overrides(instead_of=GenericProductPage)
+    print(rule_from_B)
+    # []
+
+    rule_from_C = default_registry.search_overrides(for_patterns=Patterns(include=["site_C.com"]))
+    print(rule_from_C)
+    # [
+    #     OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, meta={}),
+    #     OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=1000), use=<class 'package_C.PageObject3_improved'>, instead_of=<class 'GenericPage'>, meta={})
+    # ]
+
+    rules = rule_from_A + rule_from_B + rule_from_C
