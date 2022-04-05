@@ -42,7 +42,17 @@ class RequestBackendError(Exception):
 class HttpRequestBody(bytes):
     """A container for holding the raw HTTP request body in bytes format."""
 
-    pass
+    @classmethod
+    def from_anystr(
+        cls: Type[T_body], value: AnyStr, encoding: str = "utf-8"
+    ) -> T_body:
+        """An alternative constructor to handle both ``str`` and ``bytes`` types
+        of input argument.
+        """
+
+        if isinstance(value, str):
+            return cls(value, encoding=encoding)
+        return cls(value)
 
 
 class HttpRequestHeaders(CIMultiDict):
@@ -93,7 +103,7 @@ class HttpRequest:
         factory=HttpRequestHeaders, converter=HttpRequestHeaders
     )
     body: HttpRequestBody = attrs.field(
-        factory=HttpRequestBody, converter=HttpRequestBody
+        factory=HttpRequestBody, converter=HttpRequestBody.from_anystr  # type: ignore
     )
 
 
