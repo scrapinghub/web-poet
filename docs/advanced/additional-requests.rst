@@ -10,7 +10,8 @@ information. In most cases, these are done via AJAX requests. Some examples of t
     * Clicking a button on a page to reveal other similar products.
     * Clicking the `"Load More"` button to retrieve more images of a given item.
     * Scrolling to the bottom of the page to load more items `(i.e. infinite scrolling)`.
-    * Hovering that reveals a tool-tip containing additional page info.
+    * Hovering on a certain webpage element that reveals a tool-tip containing
+      additional page info.
 
 As such, performing additional requests inside Page Objects are inevitable to
 properly extract data for some websites.
@@ -106,7 +107,7 @@ The key take aways are:
       anything.
     * The same is true for ``body`` holding an empty :class:`~.HttpRequestBody`.
 
-Now that we know how :class:`HttpRequest` are structured, defining them doesn't
+Now that we know how :class:`~.HttpRequest` are structured, defining them doesn't
 execute the actual requests at all. In order to do so, we'll need to feed it into
 the :class:`~.HttpClient` which is defined in the next section.
 
@@ -115,21 +116,31 @@ HttpClient
 ==========
 
 The main interface for executing additional requests would be :class:`~.HttpClient`.
-It also has full support for :mod:`asyncio` enabling developers to perform
-the additional requests asynchronously.
+It also has full support for :mod:`asyncio` enabling developers to perform 
+additional requests asynchronously using ``asyncio.gather()``, ``asyncio.wait()``,
+etc. This means that ``asyncio`` could be used anywhere inside the Page Object,
+including the ``to_item()`` method.
 
-Let's see a few quick examples to see how it's being used in action.
+In the previous section, we've explored how :class:`~.HttpRequest` are defined.
+Fortunately, the :meth:`~.HttpClient.request`, :meth:`~.HttpClient.get`, and
+:meth:`~.HttpClient.post` methods of :class:`~.HttpClient` already defines the
+:class:`~.HttpRequest` and executes it as well. The only time you'll need to create
+:class:`~.HttpRequest` manually is via the :meth:`~.HttpClient.batch_requests`
+method which is described in this section: :ref:`batch-request-example`.
+
+Let's see a few quick examples to see how to execute additional requests using
+the :class:`~.HttpClient`.
 
 A simple ``GET`` request
 ------------------------
 
 .. code-block:: python
 
-    import attr
+    import attrs
     import web_poet
 
 
-    @attr.define
+    @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         http_client: web_poet.HttpClient
 
@@ -151,8 +162,8 @@ There are a few things to take note in this example:
 
     * A ``GET`` request can be done via :class:`~.HttpClient`'s
       :meth:`~.HttpClient.get` method.
-    * We're now using the ``async/await`` syntax.
-    * The response is of type :class:`~.HttpResponse`.
+    * We're now using the ``async/await`` syntax inside the ``to_item()`` method.
+    * The response from the additional request is of type :class:`~.HttpResponse`.
 
 As the example suggests, we're performing an additional request that allows us
 to extract more images in a product page that might not otherwise be possible.
@@ -171,15 +182,15 @@ In this example, we'll paginate related items in a carousel. These are
 usually lazily loaded by the website to reduce the amount of information
 rendered in the DOM that might not otherwise be viewed by all users anyway.
 
-Thus, additional requests inside the Page Object is typically needed for it:
+Thus, additional requests inside the Page Object are typically needed for it:
 
 .. code-block:: python
 
-    import attr
+    import attrs
     import web_poet
 
 
-    @attr.define
+    @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         http_client: web_poet.HttpClient
 
@@ -205,12 +216,12 @@ Thus, additional requests inside the Page Object is typically needed for it:
                     }
                 ),
             )
-            item["related_product_ids"] = self.parse_related_product_ids(response)
+            item["related_product_ids"].extend(self.parse_related_product_ids(response))
             return item
 
         @staticmethod
-        def parse_related_product_ids(response: web_poet.HttpResponse) -> List[str]:
-            return response.css("#main .related-products ::attr(product-id)").getall()
+        def parse_related_product_ids(response_page) -> List[str]:
+            return response_page.css("#main .related-products ::attr(product-id)").getall()
 
 Here's the key takeaway in this example:
 
@@ -218,21 +229,32 @@ Here's the key takeaway in this example:
       a :meth:`~.HttpClient.post` method is also available that's
       typically used to submit forms.
 
+.. _`batch-request-example`:
+
 Batch requests
 --------------
 
-We can also choose to process requests by **batch** instead of sequentially.
-Let's modify the example in the previous section to see how it can be done:
+We can also choose to process requests by **batch** instead of sequentially or 
+one by one. The :meth:`~.HttpClient.batch_requests` method can be used for this
+which accepts an arbitrary number of :class:`~.HttpRequest` instances.
+
+Let's modify the example in the previous section to see how it can be done.
+
+The difference for this code example from the previous section is that we're
+increasing the pagination from only the **2nd page** into the **10th page**.
+Instead of calling a single :meth:`~.HttpClient.post` method, we're creating a
+list of :class:`~.HttpRequest` to be executed in batch using the
+:meth:`~.HttpClient.batch_requests` method.
 
 .. code-block:: python
 
     from typing import List
 
-    import attr
+    import attrs
     import web_poet
 
 
-    @attr.define
+    @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         http_client: web_poet.HttpClient
 
@@ -278,22 +300,31 @@ Let's modify the example in the previous section to see how it can be done:
             )
 
         @staticmethod
-        def parse_related_product_ids(response: web_poet.HttpResponse) -> List[str]:
-            return response.css("#main .related-products ::attr(product-id)").getall()
+        def parse_related_product_ids(response_page) -> List[str]:
+            return response_page.css("#main .related-products ::attr(product-id)").getall()
 
 The key takeaways for this example are:
 
-    * A :class:`~.Request` can be instantiated to represent a Generic HTTP Request.
+    * An :class:`~.HttpRequest` can be instantiated to represent a Generic HTTP Request.
       It only contains the HTTP Request information for now and isn't executed yet.
-      This is useful for creating factory methods to help create them without any
+      This is useful for creating factory methods to help create requests without any
       download execution at all.
     * :class:`~.HttpClient` has a :meth:`~.HttpClient.batch_requests` method that
-      can process a list of :class:`~.Request` instances asynchronously together.
+      can process a list of :class:`~.HttpRequest` instances asynchronously together.
 
-        * Note that it can accept different types of :class:`~.Request` that might
-          not be related *(e.g. a mixture of* ``GET`` *and* ``POST`` *requests)*.
-          This is useful to process them in batch to take advantage of async
-          execution.
+.. tip::
+
+    The :meth:`~.HttpClient.batch_requests` method can accept different varieties
+    of :class:`~.HttpRequest` that might not be related with one another. For
+    example, it could be a mixture of ``GET`` and ``POST`` requests or even
+    representing requests for various parts of the page altogether.
+
+    Processing the additional requests in batch is useful since it takes advantage
+    of async execution which could be faster in certain cases `(assuming you're
+    allowed to perform HTTP requests in parallel)`.
+
+    Nonetheless, you can still use the :meth:`~.HttpClient.batch_requests` method
+    to execute a single :class:`~.HttpRequest` instance.
 
 .. _advanced-downloader-impl:
 

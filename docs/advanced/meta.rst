@@ -27,8 +27,11 @@ as a requirement to instantiate Page Objects:
         # The HttpResponse attribute is inherited from ItemWebPage
         meta: web_poet.Meta
 
+    # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
-    meta = web_poet.Meta("arbitrary_value": 1234, "cool": True)
+
+    # It uses Python's dict interface.
+    meta = web_poet.Meta({"arbitrary_value": 1234, "cool": True})
 
     page = SomePage(response=response, meta=meta)
 
