@@ -47,7 +47,7 @@ a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
                 "Page": page_num,
                 "ProductID": product_id,
             }
-        ),
+        ).encode("utf-8"),
     )
 
     print(request.url)     # https://www.api.example.com/product-pagination/
@@ -73,12 +73,9 @@ There are a few things to take note here:
 
     * ``body`` is represented by the :class:`~.HttpRequestBody` class which is
       simply a subclass of the ``bytes`` class. Using the ``body`` param of
-      :class:`~.HttpRequest` supports converting it from ``str`` to ``bytes``
-      using **utf-8** as the default encoding.
-
-        * Note that the :meth:`~.HttpRequestBody.from_anystr` alternative constructor
-          for :class:`~.HttpRequestBody` can also be used to support instantiation of
-          ``str`` to ``bytes`` using any type of encoding (`default is` **utf-8**).
+      :class:`~.HttpRequest` needs to have an input argument in ``bytes``. In our
+      code example, we've converted it from ``str`` to ``bytes`` using the ``encode()``
+      string method.
 
 Most of the time though, what you'll be defining would be ``GET`` requests. Thus,
 it's perfectly fine to define them as:
@@ -214,7 +211,7 @@ Thus, additional requests inside the Page Object are typically needed for it:
                         "Page": 2,
                         "ProductID": item["product_id"],
                     }
-                ),
+                ).encode("utf-8"),
             )
             item["related_product_ids"].extend(self.parse_related_product_ids(response))
             return item
@@ -296,7 +293,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
                         "Page": page_num,
                         "ProductID": item["product_id"],
                     }
-                ),
+                ).encode("utf-8"),
             )
 
         @staticmethod

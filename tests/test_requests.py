@@ -37,9 +37,9 @@ def test_http_request_body_bytes_api():
     assert b"ent" in http_body
 
 
-def test_http_request_body_from_anystr():
-    http_body = HttpRequestBody.from_anystr("originally string")
-    assert http_body == b"originally string"
+def test_http_request_body_str_api():
+    with pytest.raises(TypeError):
+        HttpRequestBody("string content")
 
 
 def test_http_request_bytes_body():
@@ -49,8 +49,8 @@ def test_http_request_bytes_body():
 
 
 def test_http_request_body_conversion_str():
-    request = HttpRequest("http://example.com", body="content")
-    assert request.body == b"content"
+    with pytest.raises(TypeError):
+        HttpRequest("http://example.com", body="content")
 
 
 def test_http_request_body_validation_None():
