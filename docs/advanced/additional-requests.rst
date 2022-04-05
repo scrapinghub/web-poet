@@ -23,6 +23,94 @@ properly extract data for some websites.
     its contents.
 
 
+HttpRequest
+===========
+
+Additional requests are defined using a simple data container that represents
+a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
+
+.. code-block:: python
+
+    import json
+    import web_poet
+
+    request = web_poet.HttpRequest(
+        url="https://www.api.example.com/product-pagination/",
+        method="POST",
+        headers={
+            "Host": "www.example.com",
+            "Content-Type": "application/json; charset=UTF-8",
+        },
+        body=json.dumps(
+            {
+                "Page": page_num,
+                "ProductID": product_id,
+            }
+        ),
+    )
+
+    print(request.url)     # https://www.api.example.com/product-pagination/
+    print(request.method)  # POST
+
+    print(type(request.headers)  # <class 'web_poet.requests.HttpRequestHeaders'>
+    print(request.headers)       # <HttpRequestHeaders('Host': 'www.example.com', 'Content-Type': 'application/json; charset=UTF-8')>
+    print(request.headers.get("content-type"))    # application/json; charset=UTF-8
+    print(request.headers.get("does-not-exist"))  # None
+
+    print(type(request.body))  # <class 'web_poet.requests.HttpRequestBody'>
+    print(request.body)        # b'{"Page": 1, "ProductID": 123}'
+
+There are a few things to take note here:
+
+    * ``url`` and ``method`` are simply **strings**.
+    * ``headers`` is represented by the :class:`~.HttpRequestHeaders` class which
+      resembles a ``dict``-like interface. It supports case-insensitive header-key
+      lookups as well as multi-key storage.
+
+        * See :external:py:class:`multidict.CIMultiDict` for the set of features
+          since :class:`~.HttpRequestHeaders` simply subclasses from it.
+
+    * ``body`` is represented by the :class:`~.HttpRequestBody` class which is
+      simply a subclass of the ``bytes`` class. Using the ``body`` param of
+      :class:`~.HttpRequest` supports converting it from ``str`` to ``bytes``
+      using **utf-8** as the default encoding.
+
+        * Note that the :meth:`~.HttpRequestBody.from_anystr` alternative constructor
+          for :class:`~.HttpRequestBody` can also be used to support instantiation of
+          ``str`` to ``bytes`` using any type of encoding (`default is` **utf-8**).
+
+Most of the time though, what you'll be defining would be ``GET`` requests. Thus,
+it's perfectly fine to define them as:
+
+.. code-block:: python
+
+    import web_poet
+
+    request = web_poet.HttpRequest("https://api.example.com/product-info?id=123")
+
+    print(request.url)     # https://api.example.com/product-info?id=123
+    print(request.method)  # GET
+
+    print(type(request.headers)  # <class 'web_poet.requests.HttpRequestHeaders'>
+    print(request.headers)       # <HttpRequestHeaders()>
+    print(request.headers.get("content-type"))    # None
+    print(request.headers.get("does-not-exist"))  # None
+
+    print(type(request.body))  # <class 'web_poet.requests.HttpRequestBody'>
+    print(request.body)        # b''
+
+The key take aways are:
+
+    * The default value of ``method`` is ``GET``.
+    * ``headers`` still holds :class:`~.HttpRequestHeaders` which doesn't contain
+      anything.
+    * The same is true for ``body`` holding an empty :class:`~.HttpRequestBody`.
+
+Now that we know how :class:`HttpRequest` are structured, defining them doesn't
+execute the actual requests at all. In order to do so, we'll need to feed it into
+the :class:`~.HttpClient` which is defined in the next section.
+
+
 HttpClient
 ==========
 
