@@ -355,11 +355,34 @@ This can be set using:
 
 .. code-block:: python
 
-    def request_implementation(r: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    import attrs
+    import web_poet
+
+    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
-    from web_poet import request_backend_var
-    request_backend_var.set(request_implementation)
+
+    def create_http_client():
+        return web_poet.HttpClient()
+
+
+    @attrs.define
+    class SomePage(web_poet.ItemWebPage):
+        http_client: web_poet.HttpClient
+
+        async def to_item(self):
+            ...
+
+    # Once this is set, the ``request_implementation`` will become available to
+    # all instances of HttpClient unless a ``request_downloader`` is injected
+    # to it (see #2 Dependency Injection example below).
+    web_poet.request_backend_var.set(request_implementation)
+
+    # Assume that it's constructed with the necessary arguments taken somewhere.
+    response = web_poet.HttpResponse(...)
+
+    page = SomePage(response=response, http_client=create_http_client())
+    item = page.to_item()
 
 Setting this up would allow access to the request implementation in a
 :class:`~.HttpClient` instance which uses it by default.
@@ -379,11 +402,31 @@ have a full support to :mod:`contextvars` `(e.g. Twisted)`. With that, an
 alternative approach would be to supply the request implementation when creating
 an :class:`~.HttpClient` instance:
 
-
 .. code-block:: python
 
-    def request_implementation(r: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    import attrs
+    import web_poet
+
+    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
-    from web_poet import HttpClient
-    http_client = HttpClient(request_downloader=request_implementation)
+    def create_http_client():
+        return web_poet.HttpClient(request_downloader=request_implementation)
+
+
+    @attrs.define
+    class SomePage(web_poet.ItemWebPage):
+        http_client: web_poet.HttpClient
+
+        async def to_item(self):
+            ...
+
+    # Assume that it's constructed with the necessary arguments taken somewhere.
+    response = web_poet.HttpResponse(...)
+
+    page = SomePage(response=response, http_client=create_http_client())
+    item = page.to_item()
+
+From the code sample above, we can see that every time an :class:`~.HttpClient`
+is created for Page Objects needing an ``http_client``, the specific **request
+implementation** from a given framework is injected to it.

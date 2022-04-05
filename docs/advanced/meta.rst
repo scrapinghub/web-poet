@@ -19,10 +19,10 @@ as a requirement to instantiate Page Objects:
 
 .. code-block:: python
 
-    import attr
+    import attrs
     import web_poet
 
-    @attr.define
+    @attrs.define
     class SomePage(web_poet.ItemWebPage):
         # The HttpResponse attribute is inherited from ItemWebPage
         meta: web_poet.Meta
@@ -46,11 +46,11 @@ Controlling item values
 
 .. code-block:: python
 
-    import attr
+    import attrs
     import web_poet
 
 
-    @attr.define
+    @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         meta: web_poet.Meta
 
@@ -89,11 +89,11 @@ Let's try an example wherein :class:`~.Meta` is able to control how
 
     from typing import List
 
-    import attr
+    import attrs
     import web_poet
 
 
-    @attr.define
+    @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         http_client: web_poet.HttpClient
         meta: web_poet.Meta
