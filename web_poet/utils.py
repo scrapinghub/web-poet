@@ -1,4 +1,5 @@
 import weakref
+from collections.abc import Iterable
 from functools import wraps
 from typing import Any, Optional, List
 
@@ -29,9 +30,20 @@ def as_list(value: Optional[Any]) -> List[Any]:
     [123]
     >>> as_list(["foo", "bar", 123])
     ['foo', 'bar', 123]
+    >>> as_list(("foo", "bar", 123))
+    ['foo', 'bar', 123]
+    >>> as_list(range(5))
+    [0, 1, 2, 3, 4]
+    >>> def gen():
+    ...     yield 1
+    ...     yield 2
+    >>> as_list(gen())
+    [1, 2]
     """
     if value is None:
         return []
-    if not isinstance(value, list):
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, Iterable):
         return [value]
     return list(value)
