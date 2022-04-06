@@ -17,6 +17,7 @@ import attrs
 from multidict import CIMultiDict
 
 from web_poet.page_inputs import HttpResponse
+from web_poet.exceptions import RequestBackendError
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +27,6 @@ T_body = TypeVar("T_body", bound="HttpRequestBody")
 # Frameworks that wants to support additional requests in ``web-poet`` should
 # set the appropriate implementation for requesting data.
 request_backend_var: ContextVar = ContextVar("request_backend")
-
-
-class RequestBackendError(Exception):
-    """Indicates that the ``web_poet.request_backend_var`` wasn't set
-    by the framework using **web-poet**.
-
-    See the documentation section about :ref:`setting up the contextvars <setup-contextvars>`
-    to learn more about this.
-    """
-
-    pass
 
 
 class HttpRequestBody(bytes):

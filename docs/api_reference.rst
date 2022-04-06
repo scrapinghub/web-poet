@@ -52,3 +52,12 @@ Requests
 .. automodule:: web_poet.requests
     :members:
     :undoc-members:
+
+Exceptions
+==========
+
+.. automodule:: web_poet.exceptions.core
+    :members:
+
+.. automodule:: web_poet.exceptions.http
+    :members:

@@ -2,12 +2,12 @@ from unittest import mock
 
 import pytest
 from web_poet.page_inputs import HttpResponse
+from web_poet.exceptions import RequestBackendError
 from web_poet.requests import (
     HttpRequestHeaders,
     HttpRequestBody,
     HttpRequest,
     HttpClient,
-    RequestBackendError,
     request_backend_var,
 )
 

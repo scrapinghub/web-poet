@@ -427,3 +427,77 @@ an :class:`~.HttpClient` instance:
 From the code sample above, we can see that every time an :class:`~.HttpClient`
 is created for Page Objects needing an ``http_client``, the specific **request
 implementation** from a given framework is injected to it.
+
+
+Exception Handling
+==================
+
+All exceptions that the HTTP Downloader Implementation explicitly raises when
+implementing it for **web-poet** should be :class:`web_poet.exceptions.http.HttpRequestError`
+or a subclass from it.
+
+For frameworks that implement and use **web-poet**, exceptions that ocurred when
+handling the additional requests like `connection errors`, `time outs`, `TLS
+errors`, etc should be replaced by :class:`web_poet.exceptions.http.HttpRequestError`
+by raising it explicitly.
+
+This is to ensure that Page Objects having additional requests using the
+:class:`~.HttpClient` is able to work in any type of HTTP downloader implementation.
+
+For example, in Python, the common HTTP libraries have different types of base
+exceptions when something has ocurred:
+
+    * `aiohttp.ClientError <https://docs.aiohttp.org/en/v3.8.1/client_reference.html?highlight=exceptions#aiohttp.ClientError>`_
+    * `requests.RequestException <https://2.python-requests.org/en/master/api/#requests.RequestException>`_
+    * `urllib.error.HTTPError <https://docs.python.org/3/library/urllib.error.html#urllib.error.HTTPError>`_
+
+Imagine if Page Objects are **expected** to work in `different` backend implementations
+like the ones above, then it would cause the code to look like:
+
+.. code-block:: python
+
+    import attrs
+    import web_poet
+
+    import aiohttp
+    import requests
+    import urllib
+
+
+    @attrs.define
+    class SomePage(web_poet.ItemWebPage):
+        http_client: web_poet.HttpClient
+
+        async def to_item(self):
+            try:
+                response = await self.http_client.get("...")
+            except (aiohttp.ClientError, requests.RequestException, urllib.error.HTTPError):
+                # handle the error here
+
+Such code could turn messy in no time especially when the number of HTTP backends
+that Page Objects **should support** are steadily increasing. This means that Page
+Objects aren't truly portable in different types of frameworks or environments.
+Rather, they're only limited to work in the specific framework they're supported.
+
+In order for Page Objects to easily work in different Downloader Implementations,
+the framework that implements the HTTP Downloader backend should be able to raise
+exceptions from the :mod:`web_poet.exceptions.http` module in lieu of the backend
+specific ones `(e.g. aiohttp, requests, urllib, etc.)`.
+
+This makes the code much simpler:
+
+.. code-block:: python
+
+    import attrs
+    import web_poet
+
+
+    @attrs.define
+    class SomePage(web_poet.ItemWebPage):
+        http_client: web_poet.HttpClient
+
+        async def to_item(self):
+            try:
+                response = await self.http_client.get("...")
+            except web_poet.exceptions.http.HttpRequestError:
+                # handle the error here
