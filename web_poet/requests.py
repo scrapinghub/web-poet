@@ -11,12 +11,11 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Dict, Union, Callable, AnyStr
+from typing import Optional, List, Callable
 
 import attrs
 
-from web_poet._base import _HttpHeaders, _HttpBody
-from web_poet.page_inputs import HttpResponse
+from web_poet.page_inputs import HttpResponse, HttpRequest, Headers, Body
 from web_poet.exceptions import RequestBackendError
 
 logger = logging.getLogger(__name__)
@@ -25,64 +24,6 @@ logger = logging.getLogger(__name__)
 # Frameworks that wants to support additional requests in ``web-poet`` should
 # set the appropriate implementation for requesting data.
 request_backend_var: ContextVar = ContextVar("request_backend")
-
-
-class HttpRequestBody(_HttpBody):
-    """A container for holding the raw HTTP request body in bytes format."""
-
-    pass
-
-
-class HttpRequestHeaders(_HttpHeaders):
-    """A container for holding the HTTP request headers.
-
-    It's able to accept instantiation via an Iterable of Tuples:
-
-    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
-    >>> HttpRequestHeaders(pairs)
-    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
-
-    It's also accepts a mapping of key-value pairs as well:
-
-    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
-    >>> headers = HttpRequestHeaders(pairs)
-    >>> headers
-    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
-
-    Note that this also supports case insensitive header-key lookups:
-
-    >>> headers.get("content-encoding")
-    'gzip'
-    >>> headers.get("Content-Length")
-    '648'
-
-    These are just a few of the functionalities it inherits from
-    :class:`multidict.CIMultiDict`. For more info on its other features, read
-    the API spec of :class:`multidict.CIMultiDict`.
-    """
-
-    pass
-
-
-Mapping = Dict[str, str]
-Headers = Union[Mapping, HttpRequestHeaders]
-Body = Union[bytes, HttpRequestBody]
-
-
-@attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpRequest:
-    """Represents a generic HTTP request used by other functionalities in
-    **web-poet** like :class:`~.HttpClient`.
-    """
-
-    url: str = attrs.field()
-    method: str = attrs.field(default="GET")
-    headers: HttpRequestHeaders = attrs.field(
-        factory=HttpRequestHeaders, converter=HttpRequestHeaders
-    )
-    body: HttpRequestBody = attrs.field(
-        factory=HttpRequestBody, converter=HttpRequestBody
-    )
 
 
 async def _perform_request(request: HttpRequest) -> HttpResponse:

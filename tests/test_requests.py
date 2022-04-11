@@ -1,12 +1,14 @@
 from unittest import mock
 
 import pytest
-from web_poet.page_inputs import HttpResponse
 from web_poet.exceptions import RequestBackendError
-from web_poet.requests import (
-    HttpRequestHeaders,
-    HttpRequestBody,
+from web_poet.page_inputs import (
     HttpRequest,
+    HttpResponse,
+    HttpRequestBody,
+    HttpRequestHeaders
+)
+from web_poet.requests import (
     HttpClient,
     request_backend_var,
 )
@@ -22,96 +24,6 @@ def async_mock():
     mock.MagicMock.__await__ = lambda x: async_test().__await__()
 
     return async_test
-
-
-def test_http_request_body_hashable():
-    http_body = HttpRequestBody(b"content")
-    assert http_body in {http_body}
-    assert http_body in {b"content"}
-    assert http_body not in {b"foo"}
-
-
-def test_http_request_body_bytes_api():
-    http_body = HttpRequestBody(b"content")
-    assert http_body == b"content"
-    assert b"ent" in http_body
-
-
-def test_http_request_body_str_api():
-    with pytest.raises(TypeError):
-        HttpRequestBody("string content")
-
-
-def test_http_request_bytes_body():
-    request = HttpRequest("http://example.com", body=b"content")
-    assert isinstance(request.body, HttpRequestBody)
-    assert request.body == HttpRequestBody(b"content")
-
-
-def test_http_request_body_conversion_str():
-    with pytest.raises(TypeError):
-        HttpRequest("http://example.com", body="content")
-
-
-def test_http_request_body_validation_None():
-    with pytest.raises(TypeError):
-        HttpRequest("http://example.com", body=None)
-
-
-def test_http_request_headers():
-    headers = HttpRequestHeaders({"user-agent": "chrome"})
-    assert headers['user-agent'] == "chrome"
-    assert headers['User-Agent'] == "chrome"
-
-    with pytest.raises(KeyError):
-        headers["user agent"]
-
-
-def test_http_request_headers_init_dict():
-    request = HttpRequest(
-        "http://example.com", body=b"", headers={"user-agent": "chrome"}
-    )
-    assert isinstance(request.headers, HttpRequestHeaders)
-    assert request.headers['user-agent'] == "chrome"
-    assert request.headers['User-Agent'] == "chrome"
-
-
-def test_http_request_headers_init_invalid():
-    with pytest.raises(TypeError):
-        HttpRequest("http://example.com", body=b"", headers=123)
-
-
-def test_http_request_generic():
-    req = HttpRequest("url")
-    assert req.url == "url"
-    assert req.method == "GET"
-    assert isinstance(req.method, str)
-    assert not req.headers
-    assert isinstance(req.headers, HttpRequestHeaders)
-    assert not req.body
-    assert isinstance(req.body, HttpRequestBody)
-
-
-def test_http_request_init():
-    req_1 = HttpRequest(
-        "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
-    )
-    assert req_1.method == "POST"
-    assert isinstance(req_1.method, str)
-    assert req_1.headers == {"User-Agent": "test agent"}
-    assert req_1.headers.get("user-agent") == "test agent"
-    assert isinstance(req_1.headers, HttpRequestHeaders)
-    assert req_1.body == b"body"
-    assert isinstance(req_1.body, HttpRequestBody)
-
-    http_headers = HttpRequestHeaders({"User-Agent": "test agent"})
-    http_body = HttpRequestBody(b"body")
-    req_2 = HttpRequest("url", method="POST", headers=http_headers, body=http_body)
-
-    assert req_1.url == req_2.url
-    assert req_1.method == req_2.method
-    assert req_1.headers == req_2.headers
-    assert req_1.body == req_2.body
 
 
 @pytest.mark.asyncio

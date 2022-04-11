@@ -4,20 +4,35 @@ import aiohttp.web_response
 import pytest
 import requests
 
-from web_poet.page_inputs import HttpResponse, HttpResponseBody, HttpResponseHeaders
+from web_poet.page_inputs import (
+    HttpRequest,
+    HttpResponse,
+    HttpRequestBody,
+    HttpResponseBody,
+    HttpRequestHeaders,
+    HttpResponseHeaders,
+)
 
 
-def test_http_response_body_hashable():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_hashable(body_cls):
+    http_body = body_cls(b"content")
     assert http_body in {http_body}
     assert http_body in {b"content"}
     assert http_body not in {b"foo"}
 
 
-def test_http_response_body_bytes_api():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_bytes_api(body_cls):
+    http_body = body_cls(b"content")
     assert http_body == b"content"
     assert b"ent" in http_body
+
+
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_str_api(body_cls):
+    with pytest.raises(TypeError):
+        body_cls("string content")
 
 
 def test_http_response_body_declared_encoding():
@@ -44,55 +59,138 @@ def test_http_response_body_json():
     assert http_body.json() == {"ключ": "значение"}
 
 
-def test_http_response_defaults():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize(
+    ["cls", "body_cls"],
+    [
+        (HttpRequest, HttpRequestBody),
+        (HttpResponse, HttpResponseBody),
+    ]
+)
+def test_http_defaults(cls, body_cls):
+    http_body = body_cls(b"content")
 
-    response = HttpResponse("url", body=http_body)
-    assert response.url == "url"
-    assert response.body == b"content"
-    assert response.status is None
-    assert not response.headers
-    assert response.headers.get("user-agent") is None
+    obj = cls("url", body=http_body)
+    assert obj.url == "url"
+    assert obj.body == b"content"
+    assert not obj.headers
+    assert obj.headers.get("user-agent") is None
 
-
-def test_http_response_with_headers():
-    http_body = HttpResponseBody(b"content")
-    headers = HttpResponseHeaders.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
-    response = HttpResponse("url", body=http_body, status=200, headers=headers)
-    assert response.status == 200
-    assert len(response.headers) == 1
-    assert response.headers.get("user-agent") == "test agent"
-
-
-def test_http_response_bytes_body():
-    response = HttpResponse("http://example.com", body=b"content")
-    assert isinstance(response.body, HttpResponseBody)
-    assert response.body == HttpResponseBody(b"content")
+    if cls == HttpResponse:
+        assert obj.status is None
+    else:
+        with pytest.raises(AttributeError):
+            obj.status
 
 
-def test_http_response_body_validation_str():
+@pytest.mark.parametrize(
+    ["cls", "headers_cls"],
+    [
+        (HttpRequest, HttpRequestHeaders),
+        (HttpResponse, HttpResponseHeaders),
+    ]
+)
+def test_http_with_headers_alt_constructor(cls, headers_cls):
+    headers = headers_cls.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
+    obj = cls("url", body=b"", headers=headers)
+    assert len(obj.headers) == 1
+    assert obj.headers.get("user-agent") == "test agent"
+
+
+@pytest.mark.parametrize(
+    ["cls", "body_cls"],
+    [
+        (HttpRequest, HttpRequestBody),
+        (HttpResponse, HttpResponseBody),
+    ]
+)
+def test_http_response_bytes_body(cls, body_cls):
+    obj = cls("http://example.com", body=b"content")
+    assert isinstance(obj.body, body_cls)
+    assert obj.body == body_cls(b"content")
+
+
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_str(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body="content")
+        cls("http://example.com", body="content")
 
 
-def test_http_response_body_validation_None():
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_None(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=None)
+        cls("http://example.com", body=None)
 
 
 @pytest.mark.xfail(reason="not implemented")
-def test_http_response_body_validation_other():
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_other(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=123)
+        cls("http://example.com", body=123)
 
 
-def test_http_respose_headers():
-    headers = HttpResponseHeaders({"user-agent": "mozilla"})
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_request_headers_init_invalid(cls):
+    with pytest.raises(TypeError):
+        cls("http://example.com", body=b"", headers=123)
+
+
+@pytest.mark.parametrize("headers_cls", [HttpRequestHeaders, HttpResponseHeaders])
+def test_http_response_headers(headers_cls):
+    headers = headers_cls({"user-agent": "mozilla"})
     assert headers['user-agent'] == "mozilla"
     assert headers['User-Agent'] == "mozilla"
 
     with pytest.raises(KeyError):
         headers["user agent"]
+
+
+@pytest.mark.parametrize(
+    ["cls", "headers_cls"],
+    [
+        (HttpRequest, HttpRequestHeaders),
+        (HttpResponse, HttpResponseHeaders),
+    ]
+)
+def test_http_headers_init_dict(cls, headers_cls):
+    obj = cls(
+        "http://example.com", body=b"", headers={"user-agent": "chrome"}
+    )
+    assert isinstance(obj.headers, headers_cls)
+    assert obj.headers['user-agent'] == "chrome"
+    assert obj.headers['User-Agent'] == "chrome"
+
+
+def test_http_request_init_minimal():
+    req = HttpRequest("url")
+    assert req.url == "url"
+    assert req.method == "GET"
+    assert isinstance(req.method, str)
+    assert not req.headers
+    assert isinstance(req.headers, HttpRequestHeaders)
+    assert not req.body
+    assert isinstance(req.body, HttpRequestBody)
+
+
+def test_http_request_init_full():
+    req_1 = HttpRequest(
+        "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
+    )
+    assert req_1.method == "POST"
+    assert isinstance(req_1.method, str)
+    assert req_1.headers == {"User-Agent": "test agent"}
+    assert req_1.headers.get("user-agent") == "test agent"
+    assert isinstance(req_1.headers, HttpRequestHeaders)
+    assert req_1.body == b"body"
+    assert isinstance(req_1.body, HttpRequestBody)
+
+    http_headers = HttpRequestHeaders({"User-Agent": "test agent"})
+    http_body = HttpRequestBody(b"body")
+    req_2 = HttpRequest("url", method="POST", headers=http_headers, body=http_body)
+
+    assert req_1.url == req_2.url
+    assert req_1.method == req_2.method
+    assert req_1.headers == req_2.headers
+    assert req_1.body == req_2.body
 
 
 def test_http_response_headers_init_requests():
@@ -115,20 +213,6 @@ def test_http_response_headers_init_aiohttp():
     assert isinstance(response.headers, HttpResponseHeaders)
     assert response.headers['user-agent'] == "mozilla"
     assert response.headers['User-Agent'] == "mozilla"
-
-
-def test_http_response_headers_init_dict():
-    response = HttpResponse("http://example.com", body=b"",
-                            headers={"user-agent": "mozilla"})
-    assert isinstance(response.headers, HttpResponseHeaders)
-    assert response.headers['user-agent'] == "mozilla"
-    assert response.headers['User-Agent'] == "mozilla"
-
-
-def test_http_response_headers_init_invalid():
-    with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=b"",
-                                headers=123)
 
 
 def test_http_response_selectors(book_list_html_response):

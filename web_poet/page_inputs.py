@@ -1,7 +1,7 @@
 import attrs
 import json
 import parsel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 from w3lib.encoding import (
     html_to_unicode,
@@ -12,6 +12,12 @@ from w3lib.encoding import (
 
 from web_poet._base import _HttpHeaders, _HttpBody
 from web_poet.utils import memoizemethod_noargs
+
+
+class HttpRequestBody(_HttpBody):
+    """A container for holding the raw HTTP request body in bytes format."""
+
+    pass
 
 
 class HttpResponseBody(_HttpBody):
@@ -27,6 +33,37 @@ class HttpResponseBody(_HttpBody):
         Deserialize a JSON document to a Python object.
         """
         return json.loads(self)
+
+
+class HttpRequestHeaders(_HttpHeaders):
+    """A container for holding the HTTP request headers.
+
+    It's able to accept instantiation via an Iterable of Tuples:
+
+    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
+    >>> HttpRequestHeaders(pairs)
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    It's also accepts a mapping of key-value pairs as well:
+
+    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
+    >>> headers = HttpRequestHeaders(pairs)
+    >>> headers
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    Note that this also supports case insensitive header-key lookups:
+
+    >>> headers.get("content-encoding")
+    'gzip'
+    >>> headers.get("Content-Length")
+    '648'
+
+    These are just a few of the functionalities it inherits from
+    :class:`multidict.CIMultiDict`. For more info on its other features, read
+    the API spec of :class:`multidict.CIMultiDict`.
+    """
+
+    pass
 
 
 class HttpResponseHeaders(_HttpHeaders):
@@ -62,6 +99,27 @@ class HttpResponseHeaders(_HttpHeaders):
         if encoding is not found """
         content_type = self.get('Content-Type', '')
         return http_content_type_encoding(content_type)
+
+
+Mapping = Dict[str, str]
+Headers = Union[Mapping, HttpRequestHeaders]
+Body = Union[bytes, HttpRequestBody]
+
+
+@attrs.define(auto_attribs=False, slots=False, eq=False)
+class HttpRequest:
+    """Represents a generic HTTP request used by other functionalities in
+    **web-poet** like :class:`~.HttpClient`.
+    """
+
+    url: str = attrs.field()
+    method: str = attrs.field(default="GET")
+    headers: HttpRequestHeaders = attrs.field(
+        factory=HttpRequestHeaders, converter=HttpRequestHeaders
+    )
+    body: HttpRequestBody = attrs.field(
+        factory=HttpRequestBody, converter=HttpRequestBody
+    )
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)

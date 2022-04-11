@@ -53,12 +53,12 @@ a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
     print(request.url)     # https://www.api.example.com/product-pagination/
     print(request.method)  # POST
 
-    print(type(request.headers)  # <class 'web_poet.requests.HttpRequestHeaders'>
+    print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
     print(request.headers)       # <HttpRequestHeaders('Host': 'www.example.com', 'Content-Type': 'application/json; charset=UTF-8')>
     print(request.headers.get("content-type"))    # application/json; charset=UTF-8
     print(request.headers.get("does-not-exist"))  # None
 
-    print(type(request.body))  # <class 'web_poet.requests.HttpRequestBody'>
+    print(type(request.body))  # <class 'web_poet.page_inputs.HttpRequestBody'>
     print(request.body)        # b'{"Page": 1, "ProductID": 123}'
 
 There are a few things to take note here:
@@ -89,12 +89,12 @@ it's perfectly fine to define them as:
     print(request.url)     # https://api.example.com/product-info?id=123
     print(request.method)  # GET
 
-    print(type(request.headers)  # <class 'web_poet.requests.HttpRequestHeaders'>
+    print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
     print(request.headers)       # <HttpRequestHeaders()>
     print(request.headers.get("content-type"))    # None
     print(request.headers.get("does-not-exist"))  # None
 
-    print(type(request.body))  # <class 'web_poet.requests.HttpRequestBody'>
+    print(type(request.body))  # <class 'web_poet.page_inputs.HttpRequestBody'>
     print(request.body)        # b''
 
 The key take aways are:
