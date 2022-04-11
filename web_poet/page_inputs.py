@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Dict, List, TypeVar, Type, Union
+from typing import Optional, Dict, List, TypeVar, Type, Union, Tuple, AnyStr
 
 import attrs
 from multidict import CIMultiDict
@@ -14,7 +14,7 @@ from w3lib.encoding import (
 from .utils import memoizemethod_noargs
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
-BytesDict = Dict[bytes, Union[bytes, List[bytes]]]
+AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
 class HttpResponseBody(bytes):
@@ -77,13 +77,14 @@ class HttpResponseHeaders(CIMultiDict):
 
     @classmethod
     def from_bytes_dict(
-        cls: Type[T_headers], arg: BytesDict, encoding: str = "utf-8"
+        cls: Type[T_headers], arg: AnyStrDict, encoding: str = "utf-8"
     ) -> T_headers:
         """An alternative constructor for instantiation where the header-value
-        pairs are in raw bytes form.
+        pairs could be in raw bytes form.
 
-        This supports multiple header values in the form of ``List[bytes]``
-        alongside a plain ``bytes`` value.
+        This supports multiple header values in the form of ``List[bytes]`` and
+        ``Tuple[bytes]]`` alongside a plain ``bytes`` value. A value in ``str``
+        also works and wouldn't break the decoding process at all.
 
         By default, it converts the ``bytes`` value using "utf-8". However, this
         can easily be overridden using the ``encoding`` parameter.
@@ -99,15 +100,16 @@ class HttpResponseHeaders(CIMultiDict):
         """
 
         def _norm(data):
-            if isinstance(data, str):
+            if isinstance(data, str) or data is None:
                 return data
             elif isinstance(data, bytes):
                 return data.decode(encoding)
+            raise ValueError(f"Expecting str or bytes. Received {type(data)}")
 
         converted = []
 
         for header, value in arg.items():
-            if isinstance(value, list):
+            if isinstance(value, list) or isinstance(value, tuple):
                 converted.extend([(_norm(header), _norm(v)) for v in value])
             else:
                 converted.append((_norm(header), _norm(value)))
