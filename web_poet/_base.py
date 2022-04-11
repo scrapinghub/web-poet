@@ -11,12 +11,6 @@ from multidict import CIMultiDict
 T_headers = TypeVar("T_headers", bound="_HttpHeaders")
 
 
-class _HttpBody(bytes):
-    """A container for holding the raw HTTP body in bytes format."""
-
-    pass
-
-
 class _HttpHeaders(CIMultiDict):
     """A base container for holding the HTTP headers.
 

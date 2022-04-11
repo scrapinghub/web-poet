@@ -10,17 +10,17 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
-from web_poet._base import _HttpHeaders, _HttpBody
+from web_poet._base import _HttpHeaders
 from web_poet.utils import memoizemethod_noargs
 
 
-class HttpRequestBody(_HttpBody):
+class HttpRequestBody(bytes):
     """A container for holding the raw HTTP request body in bytes format."""
 
     pass
 
 
-class HttpResponseBody(_HttpBody):
+class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
     def declared_encoding(self) -> Optional[str]:
