@@ -1,8 +1,7 @@
 import attrs
 import json
 import parsel
-from typing import Optional, Dict, Any, List, TypeVar, Type
-from multidict import CIMultiDict
+from typing import Optional, Dict, Any
 
 from w3lib.encoding import (
     html_to_unicode,
@@ -11,12 +10,11 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
-from .utils import memoizemethod_noargs
+from web_poet._base import _HttpHeaders, _HttpBody
+from web_poet.utils import memoizemethod_noargs
 
-T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
-
-class HttpResponseBody(bytes):
+class HttpResponseBody(_HttpBody):
     """A container for holding the raw HTTP response body in bytes format."""
 
     def declared_encoding(self) -> Optional[str]:
@@ -24,14 +22,14 @@ class HttpResponseBody(bytes):
         or ``None`` if no suitable encoding was found """
         return html_body_declared_encoding(self)
 
-    def json(self):
+    def json(self) -> Dict[Any, Any]:
         """
         Deserialize a JSON document to a Python object.
         """
         return json.loads(self)
 
 
-class HttpResponseHeaders(CIMultiDict):
+class HttpResponseHeaders(_HttpHeaders):
     """A container for holding the HTTP response headers.
 
     It's able to accept instantiation via an Iterable of Tuples:
@@ -58,21 +56,6 @@ class HttpResponseHeaders(CIMultiDict):
     :class:`multidict.CIMultiDict`. For more info on its other features, read
     the API spec of :class:`multidict.CIMultiDict`.
     """
-
-    @classmethod
-    def from_name_value_pairs(cls: Type[T_headers], arg: List[Dict]) -> T_headers:
-        """An alternative constructor for instantiation using a ``List[Dict]``
-        where the 'key' is the header name while the 'value' is the header value.
-
-        >>> pairs = [
-        ...     {"name": "Content-Encoding", "value": "gzip"},
-        ...     {"name": "content-length", "value": "648"}
-        ... ]
-        >>> headers = HttpResponseHeaders.from_name_value_pairs(pairs)
-        >>> headers
-        <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
-        """
-        return cls([(pair["name"], pair["value"]) for pair in arg])
 
     def declared_encoding(self) -> Optional[str]:
         """ Return encoding detected from the Content-Type header, or None

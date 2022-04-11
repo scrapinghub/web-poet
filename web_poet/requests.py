@@ -11,17 +11,15 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Dict, Union, Callable, AnyStr, TypeVar, Type
+from typing import Optional, List, Dict, Union, Callable, AnyStr
 
 import attrs
-from multidict import CIMultiDict
 
+from web_poet._base import _HttpHeaders, _HttpBody
 from web_poet.page_inputs import HttpResponse
 from web_poet.exceptions import RequestBackendError
 
 logger = logging.getLogger(__name__)
-
-T_body = TypeVar("T_body", bound="HttpRequestBody")
 
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
@@ -29,13 +27,13 @@ T_body = TypeVar("T_body", bound="HttpRequestBody")
 request_backend_var: ContextVar = ContextVar("request_backend")
 
 
-class HttpRequestBody(bytes):
+class HttpRequestBody(_HttpBody):
     """A container for holding the raw HTTP request body in bytes format."""
 
     pass
 
 
-class HttpRequestHeaders(CIMultiDict):
+class HttpRequestHeaders(_HttpHeaders):
     """A container for holding the HTTP request headers.
 
     It's able to accept instantiation via an Iterable of Tuples:
@@ -169,7 +167,7 @@ class HttpClient:
         headers: Optional[Headers] = None,
         body: Optional[Body] = None,
     ) -> HttpResponse:
-        """Similar to :meth:`~.HttpClient.request` but peforming a ``POST``
+        """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
