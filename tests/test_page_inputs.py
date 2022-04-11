@@ -193,6 +193,36 @@ def test_http_request_init_full():
     assert req_1.body == req_2.body
 
 
+def test_http_response_headers_from_bytes_dict():
+    raw_headers = {
+        b"Content-Length": [b"316"],
+        b"Content-Encoding": [b"gzip", b"br"],
+        b"server": b"sffe",
+        "X-string": "string",
+        "X-missing": None,
+        "X-tuple": (b"x", "y"),
+    }
+    headers = HttpResponseHeaders.from_bytes_dict(raw_headers)
+
+    assert headers.get("content-length") == "316"
+    assert headers.get("content-encoding") == "gzip"
+    assert headers.getall("Content-Encoding") == ["gzip", "br"]
+    assert headers.get("server") == "sffe"
+    assert headers.get("x-string") == "string"
+    assert headers.get("x-missing") is None
+    assert headers.get("x-tuple") == "x"
+    assert headers.getall("x-tuple") == ["x", "y"]
+
+
+def test_http_response_headers_from_bytes_dict_err():
+
+    with pytest.raises(ValueError):
+        HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
+
+    with pytest.raises(ValueError):
+        HttpResponseHeaders.from_bytes_dict({b"Content-Length": 316})
+
+
 def test_http_response_headers_init_requests():
     requests_response = requests.Response()
     requests_response.headers['User-Agent'] = "mozilla"

@@ -1,7 +1,7 @@
 import attrs
 import json
 import parsel
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, List, Type, TypeVar, Union, Tuple, AnyStr
 
 from w3lib.encoding import (
     html_to_unicode,
@@ -12,6 +12,9 @@ from w3lib.encoding import (
 
 from web_poet._base import _HttpHeaders
 from web_poet.utils import memoizemethod_noargs
+
+T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
+AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
 class HttpRequestBody(bytes):
@@ -93,6 +96,47 @@ class HttpResponseHeaders(_HttpHeaders):
     :class:`multidict.CIMultiDict`. For more info on its other features, read
     the API spec of :class:`multidict.CIMultiDict`.
     """
+
+    @classmethod
+    def from_bytes_dict(
+        cls: Type[T_headers], arg: AnyStrDict, encoding: str = "utf-8"
+    ) -> T_headers:
+        """An alternative constructor for instantiation where the header-value
+        pairs could be in raw bytes form.
+
+        This supports multiple header values in the form of ``List[bytes]`` and
+        ``Tuple[bytes]]`` alongside a plain ``bytes`` value. A value in ``str``
+        also works and wouldn't break the decoding process at all.
+
+        By default, it converts the ``bytes`` value using "utf-8". However, this
+        can easily be overridden using the ``encoding`` parameter.
+
+        >>> raw_values = {
+        ...     b"Content-Encoding": [b"gzip", b"br"],
+        ...     b"Content-Type": [b"text/html"],
+        ...     b"content-length": b"648",
+        ... }
+        >>> headers = HttpResponseHeaders.from_bytes_dict(raw_values)
+        >>> headers
+        <HttpResponseHeaders('Content-Encoding': 'gzip', 'Content-Encoding': 'br', 'Content-Type': 'text/html', 'content-length': '648')>
+        """
+
+        def _norm(data):
+            if isinstance(data, str) or data is None:
+                return data
+            elif isinstance(data, bytes):
+                return data.decode(encoding)
+            raise ValueError(f"Expecting str or bytes. Received {type(data)}")
+
+        converted = []
+
+        for header, value in arg.items():
+            if isinstance(value, list) or isinstance(value, tuple):
+                converted.extend([(_norm(header), _norm(v)) for v in value])
+            else:
+                converted.append((_norm(header), _norm(value)))
+
+        return cls(converted)
 
     def declared_encoding(self) -> Optional[str]:
         """ Return encoding detected from the Content-Type header, or None

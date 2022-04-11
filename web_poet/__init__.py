@@ -12,3 +12,8 @@ from .page_inputs import (
     HttpRequestBody,
     HttpResponseBody,
 )
+from .overrides import PageObjectRegistry, consume_modules, OverrideRule
+
+
+default_registry = PageObjectRegistry()
+handle_urls = default_registry.handle_urls

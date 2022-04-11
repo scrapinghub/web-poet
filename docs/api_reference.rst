@@ -1,3 +1,5 @@
+.. _`api-reference`:
+
 =============
 API Reference
 =============
@@ -61,3 +63,17 @@ Exceptions
 
 .. automodule:: web_poet.exceptions.http
     :members:
+
+.. _`api-overrides`:
+
+Overrides
+=========
+
+See the tutorial section on :ref:`intro-overrides` for more context about its
+use cases and some examples.
+
+.. autofunction:: web_poet.handle_urls
+
+.. automodule:: web_poet.overrides
+   :members:
+   :exclude-members: handle_urls
