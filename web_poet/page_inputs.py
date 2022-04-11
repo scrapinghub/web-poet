@@ -190,7 +190,7 @@ class HttpResponse:
     """
 
     url: str = attrs.field()
-    body: HttpResponseBody = attrs.field(converter=HttpResponseBody, kw_only=True)
+    body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
                                                converter=HttpResponseHeaders,
