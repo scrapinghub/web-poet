@@ -28,7 +28,7 @@ class HttpResponseBody(_HttpBody):
         or ``None`` if no suitable encoding was found """
         return html_body_declared_encoding(self)
 
-    def json(self) -> Dict[Any, Any]:
+    def json(self):
         """
         Deserialize a JSON document to a Python object.
         """
