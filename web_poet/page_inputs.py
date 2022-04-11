@@ -157,12 +157,12 @@ class HttpRequest:
     """
 
     url: str = attrs.field()
-    method: str = attrs.field(default="GET")
+    method: str = attrs.field(default="GET", kw_only=True)
     headers: HttpRequestHeaders = attrs.field(
-        factory=HttpRequestHeaders, converter=HttpRequestHeaders
+        factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
     )
     body: HttpRequestBody = attrs.field(
-        factory=HttpRequestBody, converter=HttpRequestBody
+        factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
     )
 
 
@@ -190,11 +190,12 @@ class HttpResponse:
     """
 
     url: str = attrs.field()
-    body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
-    status: Optional[int] = attrs.field(default=None)
+    body: HttpResponseBody = attrs.field(converter=HttpResponseBody, kw_only=True)
+    status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
-                                               converter=HttpResponseHeaders)
-    _encoding: Optional[str] = attrs.field(default=None)
+                                               converter=HttpResponseHeaders,
+                                               kw_only=True)
+    _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
 
     _DEFAULT_ENCODING = 'ascii'
     _cached_text: Optional[str] = None

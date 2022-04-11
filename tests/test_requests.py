@@ -19,7 +19,7 @@ def async_mock():
     """Workaround since python 3.7 doesn't ship with asyncmock."""
 
     async def async_test(req):
-        return HttpResponse(req.url, b"")
+        return HttpResponse(req.url, body=b"")
 
     mock.MagicMock.__await__ = lambda x: async_test().__await__()
 

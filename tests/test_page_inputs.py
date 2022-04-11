@@ -262,7 +262,7 @@ def test_http_response_json():
     response = HttpResponse(url, body=b'{"key": "value"}')
     assert response.json() == {"key": "value"}
 
-    response = HttpResponse(url, '{"ключ": "значение"}'.encode("utf8"))
+    response = HttpResponse(url, body='{"ключ": "значение"}'.encode("utf8"))
     assert response.json() == {"ключ": "значение"}
 
 
@@ -274,7 +274,7 @@ def test_http_response_text():
     """
     text = "œ is a Weird Character"
     body = HttpResponseBody(b"\x9c is a Weird Character")
-    response = HttpResponse("http://example.com", body)
+    response = HttpResponse("http://example.com", body=body)
 
     assert response.text == text
 
@@ -293,7 +293,7 @@ def test_http_headers_declared_encoding(headers, encoding):
     headers = HttpResponseHeaders(headers)
     assert headers.declared_encoding() == encoding
 
-    response = HttpResponse("http://example.com", b'', headers=headers)
+    response = HttpResponse("http://example.com", body=b'', headers=headers)
     assert response.encoding == encoding or HttpResponse._DEFAULT_ENCODING
 
 
@@ -307,14 +307,14 @@ def test_http_response_utf16():
 
 
 def test_explicit_encoding():
-    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
+    response = HttpResponse("http://www.example.com", body="£".encode('utf-8'),
                             encoding='utf-8')
     assert response.encoding == "utf-8"
     assert response.text == "£"
 
 
 def test_explicit_encoding_invalid():
-    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
+    response = HttpResponse("http://www.example.com", body="£".encode('utf-8'),
                             encoding='latin1')
     assert response.encoding == "latin1"
     assert response.text == "£".encode('utf-8').decode("latin1")
