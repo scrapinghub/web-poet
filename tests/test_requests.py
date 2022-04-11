@@ -60,18 +60,23 @@ async def test_http_client_single_requests(async_mock):
         response.url == "url-post"
 
         assert mock_request.call_args_list == [
-            mock.call("url", "GET", HttpRequestHeaders(), HttpRequestBody()),
             mock.call(
-                "url-get",
-                "GET",
-                HttpRequestHeaders({"X-Headers": "123"}),
-                HttpRequestBody(),
+                url="url",
+                method="GET",
+                headers=HttpRequestHeaders(),
+                body=HttpRequestBody()
             ),
             mock.call(
-                "url-post",
-                "POST",
-                HttpRequestHeaders({"X-Headers": "123"}),
-                HttpRequestBody(b"body value"),
+                url="url-get",
+                method="GET",
+                headers=HttpRequestHeaders({"X-Headers": "123"}),
+                body=HttpRequestBody(),
+            ),
+            mock.call(
+                url="url-post",
+                method="POST",
+                headers=HttpRequestHeaders({"X-Headers": "123"}),
+                body=HttpRequestBody(b"body value"),
             ),
         ]
 

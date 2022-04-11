@@ -92,7 +92,9 @@ class HttpClient:
             However, the underlying implementation supplied might change that,
             depending on how the framework using **web-poet** implements it.
         """
-        req = HttpRequest(url, method, headers or {}, body or b"")
+        headers = headers or {}
+        body = body or b""
+        req = HttpRequest(url=url, method=method, headers=headers, body=body)
         return await self.request_downloader(req)
 
     async def get(self, url: str, *, headers: Optional[Headers] = None) -> HttpResponse:
