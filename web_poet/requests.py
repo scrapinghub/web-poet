@@ -11,7 +11,7 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Union
 
 import attrs
 
@@ -115,11 +115,18 @@ class HttpClient:
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(self, *requests: HttpRequest) -> List[HttpResponse]:
+    async def batch_requests(
+        self, *requests: HttpRequest
+    ) -> List[Union[HttpResponse, Exception]]:
         """Similar to :meth:`~.HttpClient.request` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
+
+        If any of the :class:`~.HttpRequest` raises an exception upon execution,
+        they will be suppressed. Instead, the actual exception is returned
+        alongside any successful :class:`~.HttpResponse`. This enables salvaging
+        any usable responses despite any possible failures.
         """
 
         coroutines = [self.request_downloader(r) for r in requests]
-        responses = await asyncio.gather(*coroutines)
+        responses = await asyncio.gather(*coroutines, return_exceptions=True)
         return responses

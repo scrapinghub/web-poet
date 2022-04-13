@@ -21,7 +21,7 @@ def async_mock():
     async def async_test(req):
         return HttpResponse(req.url, body=b"")
 
-    mock.MagicMock.__await__ = lambda x: async_test().__await__()
+    mock.MagicMock.__await__ = lambda x: async_test(x).__await__()
 
     return async_test
 
@@ -109,3 +109,28 @@ async def test_http_client_batch_requests(async_mock):
     responses = await client.batch_requests(*requests)
 
     assert all([isinstance(response, HttpResponse) for response in responses])
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_requests_with_exception(async_mock):
+
+    client = HttpClient(async_mock)
+
+    # Simulate errors inside the request coroutines
+    async def stub_request_downloader(*args, **kwargs):
+        async def err():
+            raise ValueError("test exception")
+        return await err()
+    client.request_downloader = stub_request_downloader
+
+    requests = [
+        HttpRequest("url-1"),
+        HttpRequest("url-get", method="GET"),
+        HttpRequest("url-post", method="POST"),
+    ]
+    responses = await client.batch_requests(*requests)
+
+    assert len(responses) == 3
+    assert isinstance(responses[0], Exception)
+    assert isinstance(responses[1], Exception)
+    assert isinstance(responses[2], Exception)
