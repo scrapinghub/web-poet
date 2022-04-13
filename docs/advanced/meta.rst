@@ -113,9 +113,10 @@ Let's try an example wherein :class:`~.Meta` is able to control how
             ]
             responses = await http_client.batch_requests(*requests)
             return [
-                product_url
+                url
                 for response in responses
-                for product_url in self.parse_product_urls(response)
+                for product_urls in self.parse_product_urls(response)
+                for url in product_urls:
             ]
 
         @staticmethod
