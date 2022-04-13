@@ -307,7 +307,7 @@ def test_http_response_utf16():
 
 
 def test_explicit_encoding():
-    response = HttpResponse("http://www.example.com", body="£".encode('utf-8'),
+    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
                             encoding='utf-8')
     assert response.encoding == "utf-8"
     assert response.text == "£"
@@ -321,7 +321,7 @@ def test_explicit_encoding_invalid():
 
 
 def test_utf8_body_detection():
-    response = HttpResponse("http://www.example.com", body=b"\xc2\xa3",
+    response = HttpResponse("http://www.example.com", b"\xc2\xa3",
                             headers={"Content-type": "text/html; charset=None"})
     assert response.encoding == "utf-8"
 
