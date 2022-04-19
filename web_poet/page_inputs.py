@@ -145,11 +145,6 @@ class HttpResponseHeaders(_HttpHeaders):
         return http_content_type_encoding(content_type)
 
 
-Mapping = Dict[str, str]
-Headers = Union[Mapping, HttpRequestHeaders]
-Body = Union[bytes, HttpRequestBody]
-
-
 @attrs.define(auto_attribs=False, slots=False, eq=False)
 class HttpRequest:
     """Represents a generic HTTP request used by other functionalities in

@@ -11,14 +11,23 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Optional, List, Callable, Union
+from typing import Optional, List, Callable, Union, Dict
 
 import attrs
 
-from web_poet.page_inputs import HttpResponse, HttpRequest, Headers, Body
+from web_poet.page_inputs import (
+    HttpResponse,
+    HttpRequest,
+    HttpRequestHeaders,
+    HttpRequestBody,
+)
 from web_poet.exceptions import RequestBackendError
 
 logger = logging.getLogger(__name__)
+
+_StrMapping = Dict[str, str]
+_Headers = Union[_StrMapping, HttpRequestHeaders]
+_Body = Union[bytes, HttpRequestBody]
 
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
@@ -78,8 +87,8 @@ class HttpClient:
         url: str,
         *,
         method: str = "GET",
-        headers: Optional[Headers] = None,
-        body: Optional[Body] = None,
+        headers: Optional[_Headers] = None,
+        body: Optional[_Body] = None,
     ) -> HttpResponse:
         """This is a shortcut for creating a :class:`HttpRequest` instance and executing
         that request.
@@ -97,7 +106,7 @@ class HttpClient:
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
         return await self.request_downloader(req)
 
-    async def get(self, url: str, *, headers: Optional[Headers] = None) -> HttpResponse:
+    async def get(self, url: str, *, headers: Optional[_Headers] = None) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
@@ -107,8 +116,8 @@ class HttpClient:
         self,
         url: str,
         *,
-        headers: Optional[Headers] = None,
-        body: Optional[Body] = None,
+        headers: Optional[_Headers] = None,
+        body: Optional[_Body] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
