@@ -615,6 +615,11 @@ the return type of :meth:`~.HttpClient.batch_requests` could be a mixture of
 This behavior is important to take note of since it allows any successful responses
 to be saved and utilized to prevent wasted requests.
 
+.. note::
+
+    This behavior can be altered by passing ``return_exceptions=False`` to
+    :meth:`~.HttpClient.batch_requests` which causes it to raise an exception
+    as soon as it encounters it.
 
 Behind the curtains
 -------------------

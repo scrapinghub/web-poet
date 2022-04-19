@@ -111,9 +111,8 @@ async def test_http_client_batch_requests(async_mock):
     assert all([isinstance(response, HttpResponse) for response in responses])
 
 
-@pytest.mark.asyncio
-async def test_http_client_batch_requests_with_exception(async_mock):
-
+@pytest.fixture
+def client_that_errs(async_mock):
     client = HttpClient(async_mock)
 
     # Simulate errors inside the request coroutines
@@ -123,14 +122,29 @@ async def test_http_client_batch_requests_with_exception(async_mock):
         return await err()
     client.request_downloader = stub_request_downloader
 
+    return client
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_requests_with_exception(client_that_errs):
+
     requests = [
         HttpRequest("url-1"),
         HttpRequest("url-get", method="GET"),
         HttpRequest("url-post", method="POST"),
     ]
-    responses = await client.batch_requests(*requests)
+    responses = await client_that_errs.batch_requests(*requests)
 
     assert len(responses) == 3
     assert isinstance(responses[0], Exception)
     assert isinstance(responses[1], Exception)
     assert isinstance(responses[2], Exception)
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_requests_with_exception_raised(client_that_errs):
+    requests = [
+        HttpRequest("url-1"),
+    ]
+    with pytest.raises(ValueError):
+        await client_that_errs.batch_requests(*requests, return_exceptions=False)

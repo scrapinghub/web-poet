@@ -116,7 +116,7 @@ class HttpClient:
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
     async def batch_requests(
-        self, *requests: HttpRequest
+        self, *requests: HttpRequest, return_exceptions: bool = True
     ) -> List[Union[HttpResponse, Exception]]:
         """Similar to :meth:`~.HttpClient.request` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
@@ -125,8 +125,13 @@ class HttpClient:
         they will be suppressed. Instead, the actual exception is returned
         alongside any successful :class:`~.HttpResponse`. This enables salvaging
         any usable responses despite any possible failures.
+
+        On the other hand, if you want it to simply error out on the first issue
+        it encounters, you can pass ``False`` to the ``return_exceptions`` parameter.
         """
 
         coroutines = [self.request_downloader(r) for r in requests]
-        responses = await asyncio.gather(*coroutines, return_exceptions=True)
+        responses = await asyncio.gather(
+            *coroutines, return_exceptions=return_exceptions
+        )
         return responses
