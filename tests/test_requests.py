@@ -133,7 +133,7 @@ async def test_http_client_batch_requests_with_exception(client_that_errs):
         HttpRequest("url-get", method="GET"),
         HttpRequest("url-post", method="POST"),
     ]
-    responses = await client_that_errs.batch_requests(*requests)
+    responses = await client_that_errs.batch_requests(*requests, return_exceptions=True)
 
     assert len(responses) == 3
     assert isinstance(responses[0], Exception)
@@ -147,4 +147,4 @@ async def test_http_client_batch_requests_with_exception_raised(client_that_errs
         HttpRequest("url-1"),
     ]
     with pytest.raises(ValueError):
-        await client_that_errs.batch_requests(*requests, return_exceptions=False)
+        await client_that_errs.batch_requests(*requests)

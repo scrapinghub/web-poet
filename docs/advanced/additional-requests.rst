@@ -412,7 +412,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
             }
 
             requests: List[web_poet.HttpRequest] = [
-                self.create_request(page_num=page_num)
+                self.create_request(item["product_id"], page_num=page_num)
                 for page_num in range(2, self.default_pagination_limit)
             ]
             responses: List[web_poet.HttpResponse] = await self.http_client.batch_requests(*requests)
@@ -420,13 +420,13 @@ list of :class:`~.HttpRequest` to be executed in batch using the
                 id_
                 for response in responses
                 for product_ids in self.parse_related_product_ids(response)
-                for id_ in product_ids:
+                for id_ in product_ids
             ]
 
             item["related_product_ids"].extend(related_product_ids)
             return item
 
-        def create_request(self, page_num=2):
+        def create_request(self, product_id, page_num=2):
             # Simulates "scrolling" through a carousel that loads related product items
             return web_poet.HttpRequest(
                 url="https://www.api.example.com/product-pagination/",
@@ -437,7 +437,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
                 body=json.dumps(
                     {
                         "Page": page_num,
-                        "ProductID": item["product_id"],
+                        "ProductID": product_id,
                     }
                 ).encode("utf-8"),
             )
@@ -561,32 +561,31 @@ For this example, let's improve the code snippet from the previous subsection na
             }
 
             requests: List[web_poet.HttpRequest] = [
-                self.create_request(page_num=page_num)
+                self.create_request(item["product_id"], page_num=page_num)
                 for page_num in range(2, self.default_pagination_limit)
             ]
 
-            responses: List[Union[web_poet.HttpResponse, Exception]] = await self.http_client.batch_requests(*requests)
-
-            related_product_ids = []
-            for i, response in enumerate(responses):
-                if isinstance(response, web_poet.exceptions.HttpRequestError):
-                    logger.warning(
-                        f"Unable to request related products for product ID '{item['product_id']}' "
-                        f"using this request: {requests[i]}."
-                    )
-                    continue
-                related_product_ids.extend(
-                    [
-                        id_
-                        for product_ids in self.parse_related_product_ids(response)
-                        for id_ in product_ids
-                    ]
+            try:
+                responses: List[web_poet.HttpResponse] = await self.http_client.batch_requests(*requests)
+            except web_poet.exceptions.HttpRequestError:
+                logger.warning(
+                    f"Unable to request for more related products for product ID: {item['product_id']}"
                 )
+            else:
+                related_product_ids = []
+                for response in responses:
+                    related_product_ids.extend(
+                        [
+                            id_
+                            for product_ids in self.parse_related_product_ids(response)
+                            for id_ in product_ids
+                        ]
+                    )
+                item["related_product_ids"].extend(related_product_ids)
 
-            item["related_product_ids"].extend(related_product_ids)
             return item
 
-        def create_request(self, page_num=2):
+        def create_request(self, product_id, page_num=2):
             # Simulates "scrolling" through a carousel that loads related product items
             return web_poet.HttpRequest(
                 url="https://www.api.example.com/product-pagination/",
@@ -597,7 +596,7 @@ For this example, let's improve the code snippet from the previous subsection na
                 body=json.dumps(
                     {
                         "Page": page_num,
-                        "ProductID": item["product_id"],
+                        "ProductID": product_id,
                     }
                 ).encode("utf-8"),
             )
@@ -606,20 +605,52 @@ For this example, let's improve the code snippet from the previous subsection na
         def parse_related_product_ids(response_page) -> List[str]:
             return response_page.css("#main .related-products ::attr(product-id)").getall()
 
-The main difference when handling the exceptions using the :meth:`~.HttpClient.batch_requests`
-method is that the exceptions that occur when requests are executed are never raised.
-Instead, they are returned alongside any of the successful responses. This means that
-the return type of :meth:`~.HttpClient.batch_requests` could be a mixture of
-:class:`~.HttpResponse` and :class:`web_poet.exceptions.http.HttpRequestError`.
+Handling exceptions using :meth:`~.HttpClient.batch_requests` remains largely the same.
+However, the main difference is that you might be wasting perfectly good responses just
+because a single request from the batch ruined it.
 
-This behavior is important to take note of since it allows any successful responses
-to be saved and utilized to prevent wasted requests.
+An alternative approach would be salvaging good responses altogether. For example, you've
+sent out 10 :class:`~.HttpRequest` and only 1 of them had an exception during processing.
+You can still get the data from 9 of the :class:`~.HttpResponse` by passing the parameter
+``return_exceptions=True`` to :meth:`~.HttpClient.batch_requests`.
 
-.. note::
+This means that any exceptions raised during request execution are returned alongside any
+of the successful responses. The return type of :meth:`~.HttpClient.batch_requests` could
+be a mixture of :class:`~.HttpResponse` and :class:`web_poet.exceptions.http.HttpRequestError`.
 
-    This behavior can be altered by passing ``return_exceptions=False`` to
-    :meth:`~.HttpClient.batch_requests` which causes it to raise an exception
-    as soon as it encounters it.
+Here's an example:
+
+.. code-block:: python
+
+    # Revised code snippet from the to_item() method
+
+    responses: List[Union[web_poet.HttpResponse, web_poet.exceptions.HttpRequestError]] = (
+        await self.http_client.batch_requests(*requests, return_exceptions=True)
+    )
+
+    related_product_ids = []
+    for i, response in enumerate(responses):
+        if isinstance(response, web_poet.exceptions.HttpRequestError):
+            logger.warning(
+                f"Unable to request related products for product ID '{item['product_id']}' "
+                f"using this request: {requests[i]}. Reason: {response}."
+            )
+            continue
+        related_product_ids.extend(
+            [
+                id_
+                for product_ids in self.parse_related_product_ids(response)
+                for id_ in product_ids
+            ]
+        )
+
+    item["related_product_ids"].extend(related_product_ids)
+    return item
+
+From the example above, we're now checking the list of responses to see if any
+exceptions are included in it. If so, we're simply logging it down and ignoring
+it. In this way, perfectly good responses can still be processed through.
+
 
 Behind the curtains
 -------------------
