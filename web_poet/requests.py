@@ -90,7 +90,7 @@ class HttpClient:
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
     ) -> HttpResponse:
-        """This is a shortcut for creating a :class:`HttpRequest` instance and executing
+        """This is a shortcut for creating a :class:`~.HttpRequest` instance and executing
         that request.
 
         A :class:`~.HttpResponse` instance should then be returned.
@@ -138,6 +138,9 @@ class HttpClient:
     ) -> List[Union[HttpResponse, Exception]]:
         """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
+
+        The order of the :class:`~.HttpResponses` would correspond to the order
+        of :class:`~.HttpRequest` passed.
 
         If any of the :class:`~.HttpRequest` raises an exception upon execution,
         the exception is raised.

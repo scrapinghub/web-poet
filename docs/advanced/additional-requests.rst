@@ -106,7 +106,8 @@ The key take aways are:
 
 Now that we know how :class:`~.HttpRequest` are structured, defining them doesn't
 execute the actual requests at all. In order to do so, we'll need to feed it into
-the :class:`~.HttpClient` which is defined in the next section.
+the :class:`~.HttpClient` which is defined in the next section (see
+:ref:`httpclient` tutorial section).
 
 HttpResponse
 ============
@@ -116,6 +117,12 @@ executed. It's typically returned by the methods from :class:`~.HttpClient` (see
 :ref:`httpclient` tutorial section) which holds the information regarding the response.
 It's also the required input for Page Objects inheriting from the :class:`~.ItemWebPage`
 class as explained from the :ref:`from-ground-up` tutorial.
+
+.. note::
+
+    The additional requests are expected to perform redirections except when the
+    method is ``HEAD``. This means that the :class:`~.HttpResponse` that you'll
+    be receiving is already the end of the redirection trail.
 
 Let's check out an example to see its internals:
 
@@ -155,10 +162,11 @@ Let's check out an example to see its internals:
     print(response.text)                        # {"data": "value 👍"}
     print(response.json())                      # {'data': 'value 👍'}
 
-Despite what the example showcases, you won't be typically defining :class:`~.HttpResponse`
-yourself as it's the implementing framework that's responsible for it (see
-:ref:`advanced-downloader-impl`). Nonetheless, it's important to understand its
-underlying structure in order to better access its methods.
+Despite what the example above showcases, you won't be typically defining
+:class:`~.HttpResponse` yourself as it's the implementing framework that's
+responsible for it (see :ref:`advanced-downloader-impl`). Nonetheless, it's
+important to understand its underlying structure in order to better access its
+methods.
 
 Here are the key take aways from the example above:
 
@@ -194,7 +202,7 @@ Here are the key take aways from the example above:
             * body encodings
 
         * Instead of accessing the raw bytes values `(which doesn't represent the
-          underlying content properly like the 👍 emoji)`, the :meth:`~.HttpResponse.text`
+          underlying content properly like the` 👍 `emoji)`, the :meth:`~.HttpResponse.text`
           property method can be used which takes into account the derived **encoding**
           when decoding the bytes value.
         * The :meth:`~.HttpResponse.json` method is available as a shortcut to
@@ -246,7 +254,7 @@ The key take aways for this example are:
       parsed from it.
     * The :meth:`~.HttpResponse.selector` property method returns an instance of
       :external:py:class:`parsel.selector.Selector` which allows parsing via
-      ``css()`` and ``xpath()`` calls.
+      :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` calls.
 
         * At the same time, there's no need to call :meth:`~.HttpResponse.selector`
           each time as the :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath`
@@ -260,9 +268,9 @@ HttpClient
 
 The main interface for executing additional requests would be :class:`~.HttpClient`.
 It also has full support for :mod:`asyncio` enabling developers to perform 
-additional requests asynchronously using ``asyncio.gather()``, ``asyncio.wait()``,
-etc. This means that ``asyncio`` could be used anywhere inside the Page Object,
-including the ``to_item()`` method.
+additional requests asynchronously using :py:func:`asyncio.gather`,
+:py:func:`asyncio.wait`, etc. This means that :mod:`asyncio` could be used anywhere
+inside the Page Object, including the :meth:`~.ItemPage.to_item` method.
 
 In the previous section, we've explored how :class:`~.HttpRequest` is defined.
 Let's see a few quick examples to see how to execute additional requests using
@@ -296,21 +304,23 @@ Executing a HttpRequest instance
             return item
 
 As the example suggests, we're performing an additional request that allows us
-to extract more images in a product page that might not otherwise be possible.
+to extract more images in a product page that might not be otherwise be possible.
 This is because in order to do so, an additional button needs to be clicked
 which fetches the complete set of product images via AJAX.
 
 There are a few things to take note of this example:
 
     * Recall from the :ref:`httprequest-example` tutorial section that the
-      default method is ``GET``.
-    * We're now using the ``async/await`` syntax inside the ``to_item()`` method.
+      default method is ``GET``. Thus, the ``method`` parameter can be omitted
+      for simple ``GET`` requests.
+    * We're now using the ``async/await`` syntax inside the :meth:`~.ItemPage.to_item`
+      method.
     * The response from the additional request is of type :class:`~.HttpResponse`.
 
 .. tip::
 
-    See the :ref:`http-batch-request-example` tutorial section to see how to
-    execute a group of :class:`~.HttpRequest` in batch.
+    Check out the :ref:`http-batch-request-example` tutorial section to see how
+    to execute a group of :class:`~.HttpRequest` in batch.
 
 Fortunately, there are already some quick shortcuts on how to perform single
 additional requests using the :meth:`~.HttpClient.request`, :meth:`~.HttpClient.get`,
@@ -414,6 +424,31 @@ Here's the key takeaway in this example:
       a :meth:`~.HttpClient.post` method is also available that's
       typically used to submit forms.
 
+Other Single Requests
+---------------------
+
+The :meth:`~.HttpClient.get` and :meth:`~.HttpClient.post` methods are merely
+quick shortcuts for :meth:`~.HttpClient.request`:
+
+.. code-block:: python
+
+    client = HttpClient()
+
+    url = "https://api.example.com/v1/data"
+    headers = {"Content-Type": "application/json;charset=UTF-8"}
+    body = b'{"data": "value"}'
+
+    # These are the same:
+    client.get(url)
+    client.request(url, method="GET")
+
+    # The same goes for these:
+    client.post(url, headers=headers, body=body)
+    client.request(url, method="POST", headers=headers, body=body)
+
+Thus, apart from the common ``GET`` and ``POST`` HTTP methods, you can use 
+:meth:`~.HttpClient.request` for them (`e.g.` ``HEAD``, ``PUT``, ``DELETE``, etc).
+
 .. _`http-batch-request-example`:
 
 Batch requests
@@ -512,6 +547,16 @@ The key takeaways for this example are:
     Nonetheless, you can still use the :meth:`~.HttpClient.batch_execute` method
     to execute a single :class:`~.HttpRequest` instance.
 
+.. note::
+
+    The :meth:`~.HttpClient.batch_execute` method is a simple wrapper over
+    :py:func:`asyncio.gather`. Developers are free to use other functionalities
+    available inside :mod:`asyncio` to handle multiple requests.
+
+    For example, :py:func:`asyncio.as_completed` can be used to process the
+    first response from a group of requests as early as possible. However, the
+    order could be shuffled.
+
 
 Exception Handling
 ==================
@@ -519,9 +564,9 @@ Exception Handling
 Overview
 --------
 
-Let's a look at how we could handle exceptions when performing additional requests
-in Page Objects. For this example, let's improve the code snippet from the previous
-subsection named: :ref:`httpclient-get-example`.
+Let's have a look at how we could handle exceptions when performing additional
+requests inside a Page Objects. For this example, let's improve the code snippet
+from the previous subsection named: :ref:`httpclient-get-example`.
 
 .. code-block:: python
 
@@ -573,7 +618,7 @@ due to anything like `SSL errors`, `connection errors`, etc.
     This should enable developers writing Page Objects to properly identify what
     went wrong and act specifically based on the problem.
 
-Let's take another example when performing batch requests as opposed to using
+Let's take another example when executing requests in batch as opposed to using
 single requests via these methods of the :class:`~.HttpClient`: 
 :meth:`~.HttpClient.request`, :meth:`~.HttpClient.get`, and :meth:`~.HttpClient.post`.
 
@@ -778,7 +823,7 @@ Downloader Implementation
 Please note that on its own, :class:`~.HttpClient` doesn't do anything. It doesn't
 know how to execute the request on its own. Thus, for frameworks or projects
 wanting to use additional requests in Page Objects, they need to set the
-implementation of how to download :class:`~.Request`.
+implementation on how to execute an :class:`~.HttpRequest`.
 
 For more info on this, kindly read the API Specifications for :class:`~.HttpClient`.
 
