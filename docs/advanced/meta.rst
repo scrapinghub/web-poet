@@ -111,12 +111,12 @@ Let's try an example wherein :class:`~.Meta` is able to control how
                 self.create_next_page_request(page_num)
                 for page_num in range(2, max_pages + 1)
             ]
-            responses = await http_client.batch_requests(*requests)
+            responses = await http_client.batch_execute(*requests)
             return [
                 url
                 for response in responses
                 for product_urls in self.parse_product_urls(response)
-                for url in product_urls:
+                for url in product_urls
             ]
 
         @staticmethod

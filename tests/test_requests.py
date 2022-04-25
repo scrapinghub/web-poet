@@ -98,7 +98,18 @@ async def test_http_client_keyword_enforcing(async_mock):
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_requests(async_mock):
+async def test_http_client_execute(async_mock):
+    client = HttpClient(async_mock)
+
+    request = HttpRequest("url-1")
+    response = await client.execute(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.url == "url-1"
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_execute(async_mock):
     client = HttpClient(async_mock)
 
     requests = [
@@ -106,7 +117,7 @@ async def test_http_client_batch_requests(async_mock):
         HttpRequest("url-get", method="GET"),
         HttpRequest("url-post", method="POST"),
     ]
-    responses = await client.batch_requests(*requests)
+    responses = await client.batch_execute(*requests)
 
     assert all([isinstance(response, HttpResponse) for response in responses])
 
@@ -120,20 +131,20 @@ def client_that_errs(async_mock):
         async def err():
             raise ValueError("test exception")
         return await err()
-    client.request_downloader = stub_request_downloader
+    client._request_downloader = stub_request_downloader
 
     return client
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_requests_with_exception(client_that_errs):
+async def test_http_client_batch_execute_with_exception(client_that_errs):
 
     requests = [
         HttpRequest("url-1"),
         HttpRequest("url-get", method="GET"),
         HttpRequest("url-post", method="POST"),
     ]
-    responses = await client_that_errs.batch_requests(*requests, return_exceptions=True)
+    responses = await client_that_errs.batch_execute(*requests, return_exceptions=True)
 
     assert len(responses) == 3
     assert isinstance(responses[0], Exception)
@@ -142,9 +153,9 @@ async def test_http_client_batch_requests_with_exception(client_that_errs):
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_requests_with_exception_raised(client_that_errs):
+async def test_http_client_batch_execute_with_exception_raised(client_that_errs):
     requests = [
         HttpRequest("url-1"),
     ]
     with pytest.raises(ValueError):
-        await client_that_errs.batch_requests(*requests)
+        await client_that_errs.batch_execute(*requests)

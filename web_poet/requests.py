@@ -80,7 +80,7 @@ class HttpClient:
     """
 
     def __init__(self, request_downloader: Callable = None):
-        self.request_downloader = request_downloader or _perform_request
+        self._request_downloader = request_downloader or _perform_request
 
     async def request(
         self,
@@ -104,7 +104,7 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-        return await self.request_downloader(req)
+        return await self.execute(req)
 
     async def get(self, url: str, *, headers: Optional[_Headers] = None) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
@@ -124,10 +124,19 @@ class HttpClient:
         """
         return await self.request(url=url, method="POST", headers=headers, body=body)
 
-    async def batch_requests(
+    async def execute(self, request: HttpRequest) -> HttpResponse:
+        """Accepts a single instance of :class:`~.HttpRequest` and executes it
+        using the request implementation configured in the :class:`~.HttpClient`
+        instance.
+
+        This returns a single :class:`~.HttpResponse`.
+        """
+        return await self._request_downloader(request)
+
+    async def batch_execute(
         self, *requests: HttpRequest, return_exceptions: bool = False
     ) -> List[Union[HttpResponse, Exception]]:
-        """Similar to :meth:`~.HttpClient.request` but accepts a collection of
+        """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
 
         If any of the :class:`~.HttpRequest` raises an exception upon execution,
@@ -139,7 +148,7 @@ class HttpClient:
         ``True`` to the ``return_exceptions`` parameter.
         """
 
-        coroutines = [self.request_downloader(r) for r in requests]
+        coroutines = [self._request_downloader(r) for r in requests]
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )

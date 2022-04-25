@@ -23,6 +23,7 @@ properly extract data for some websites.
     with today's websites which relies on a lot of page interactions to display
     its contents.
 
+.. _`httprequest-example`:
 
 HttpRequest
 ===========
@@ -263,20 +264,66 @@ additional requests asynchronously using ``asyncio.gather()``, ``asyncio.wait()`
 etc. This means that ``asyncio`` could be used anywhere inside the Page Object,
 including the ``to_item()`` method.
 
-In the previous section, we've explored how :class:`~.HttpRequest` are defined.
-Fortunately, the :meth:`~.HttpClient.request`, :meth:`~.HttpClient.get`, and
-:meth:`~.HttpClient.post` methods of :class:`~.HttpClient` already defines the
-:class:`~.HttpRequest` and executes it as well. The only time you'll need to create
-:class:`~.HttpRequest` manually is via the :meth:`~.HttpClient.batch_requests`
-method which is described in this section: :ref:`http-batch-request-example`.
-
+In the previous section, we've explored how :class:`~.HttpRequest` is defined.
 Let's see a few quick examples to see how to execute additional requests using
 the :class:`~.HttpClient`.
+
+Executing a HttpRequest instance
+--------------------------------
+
+.. code-block:: python
+
+    import attrs
+    import web_poet
+
+
+    @attrs.define
+    class ProductPage(web_poet.ItemWebPage):
+        http_client: web_poet.HttpClient
+
+        async def to_item(self):
+            item = {
+                "url": self.url,
+                "name": self.css("#main h3.name ::text").get(),
+                "product_id": self.css("#product ::attr(product-id)").get(),
+            }
+
+            # Simulates clicking on a button that says "View All Images"
+            request = web_poet.HttpRequest(f"https://api.example.com/v2/images?id={item['product_id']}")
+            response: web_poet.HttpResponse = await self.http_client.execute(request)
+
+            item["images"] = response.css(".product-images img::attr(src)").getall()
+            return item
+
+As the example suggests, we're performing an additional request that allows us
+to extract more images in a product page that might not otherwise be possible.
+This is because in order to do so, an additional button needs to be clicked
+which fetches the complete set of product images via AJAX.
+
+There are a few things to take note of this example:
+
+    * Recall from the :ref:`httprequest-example` tutorial section that the
+      default method is ``GET``.
+    * We're now using the ``async/await`` syntax inside the ``to_item()`` method.
+    * The response from the additional request is of type :class:`~.HttpResponse`.
+
+.. tip::
+
+    See the :ref:`http-batch-request-example` tutorial section to see how to
+    execute a group of :class:`~.HttpRequest` in batch.
+
+Fortunately, there are already some quick shortcuts on how to perform single
+additional requests using the :meth:`~.HttpClient.request`, :meth:`~.HttpClient.get`,
+and :meth:`~.HttpClient.post` methods of :class:`~.HttpClient`. These already
+define the :class:`~.HttpRequest` and executes it as well.
 
 .. _`httpclient-get-example`:
 
 A simple ``GET`` request
 ------------------------
+
+Let's use the example from the previous section and use the :meth:`~.HttpClient.get`
+method on it.
 
 .. code-block:: python
 
@@ -306,13 +353,8 @@ There are a few things to take note in this example:
 
     * A ``GET`` request can be done via :class:`~.HttpClient`'s
       :meth:`~.HttpClient.get` method.
-    * We're now using the ``async/await`` syntax inside the ``to_item()`` method.
-    * The response from the additional request is of type :class:`~.HttpResponse`.
-
-As the example suggests, we're performing an additional request that allows us
-to extract more images in a product page that might not otherwise be possible.
-This is because in order to do so, an additional button needs to be clicked
-which fetches the complete set of product images via AJAX.
+    * There was no need to instantiate a :class:`~.HttpRequest` since :meth:`~.HttpClient.get`
+      already handles it before executing the request.
 
 .. _`request-post-example`:
 
@@ -378,8 +420,9 @@ Batch requests
 --------------
 
 We can also choose to process requests by **batch** instead of sequentially or 
-one by one. The :meth:`~.HttpClient.batch_requests` method can be used for this
-which accepts an arbitrary number of :class:`~.HttpRequest` instances.
+one by one (e.g. using :meth:`~.HttpClient.execute`). The :meth:`~.HttpClient.batch_execute`
+method can be used for this which accepts an arbitrary number of :class:`~.HttpRequest`
+instances.
 
 Let's modify the example in the previous section to see how it can be done.
 
@@ -387,7 +430,7 @@ The difference for this code example from the previous section is that we're
 increasing the pagination from only the **2nd page** into the **10th page**.
 Instead of calling a single :meth:`~.HttpClient.post` method, we're creating a
 list of :class:`~.HttpRequest` to be executed in batch using the
-:meth:`~.HttpClient.batch_requests` method.
+:meth:`~.HttpClient.batch_execute` method.
 
 .. code-block:: python
 
@@ -415,7 +458,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
                 self.create_request(item["product_id"], page_num=page_num)
                 for page_num in range(2, self.default_pagination_limit)
             ]
-            responses: List[web_poet.HttpResponse] = await self.http_client.batch_requests(*requests)
+            responses: List[web_poet.HttpResponse] = await self.http_client.batch_execute(*requests)
             related_product_ids = [
                 id_
                 for response in responses
@@ -452,12 +495,12 @@ The key takeaways for this example are:
       It only contains the HTTP Request information for now and isn't executed yet.
       This is useful for creating factory methods to help create requests without any
       download execution at all.
-    * :class:`~.HttpClient` has a :meth:`~.HttpClient.batch_requests` method that
+    * :class:`~.HttpClient` has a :meth:`~.HttpClient.batch_execute` method that
       can process a list of :class:`~.HttpRequest` instances asynchronously together.
 
 .. tip::
 
-    The :meth:`~.HttpClient.batch_requests` method can accept different varieties
+    The :meth:`~.HttpClient.batch_execute` method can accept different varieties
     of :class:`~.HttpRequest` that might not be related with one another. For
     example, it could be a mixture of ``GET`` and ``POST`` requests or even
     representing requests for various parts of the page altogether.
@@ -466,7 +509,7 @@ The key takeaways for this example are:
     of async execution which could be faster in certain cases `(assuming you're
     allowed to perform HTTP requests in parallel)`.
 
-    Nonetheless, you can still use the :meth:`~.HttpClient.batch_requests` method
+    Nonetheless, you can still use the :meth:`~.HttpClient.batch_execute` method
     to execute a single :class:`~.HttpRequest` instance.
 
 
@@ -566,7 +609,7 @@ For this example, let's improve the code snippet from the previous subsection na
             ]
 
             try:
-                responses: List[web_poet.HttpResponse] = await self.http_client.batch_requests(*requests)
+                responses: List[web_poet.HttpResponse] = await self.http_client.batch_execute(*requests)
             except web_poet.exceptions.HttpRequestError:
                 logger.warning(
                     f"Unable to request for more related products for product ID: {item['product_id']}"
@@ -605,17 +648,17 @@ For this example, let's improve the code snippet from the previous subsection na
         def parse_related_product_ids(response_page) -> List[str]:
             return response_page.css("#main .related-products ::attr(product-id)").getall()
 
-Handling exceptions using :meth:`~.HttpClient.batch_requests` remains largely the same.
+Handling exceptions using :meth:`~.HttpClient.batch_execute` remains largely the same.
 However, the main difference is that you might be wasting perfectly good responses just
 because a single request from the batch ruined it.
 
 An alternative approach would be salvaging good responses altogether. For example, you've
 sent out 10 :class:`~.HttpRequest` and only 1 of them had an exception during processing.
 You can still get the data from 9 of the :class:`~.HttpResponse` by passing the parameter
-``return_exceptions=True`` to :meth:`~.HttpClient.batch_requests`.
+``return_exceptions=True`` to :meth:`~.HttpClient.batch_execute`.
 
 This means that any exceptions raised during request execution are returned alongside any
-of the successful responses. The return type of :meth:`~.HttpClient.batch_requests` could
+of the successful responses. The return type of :meth:`~.HttpClient.batch_execute` could
 be a mixture of :class:`~.HttpResponse` and :class:`web_poet.exceptions.http.HttpRequestError`.
 
 Here's an example:
@@ -625,7 +668,7 @@ Here's an example:
     # Revised code snippet from the to_item() method
 
     responses: List[Union[web_poet.HttpResponse, web_poet.exceptions.HttpRequestError]] = (
-        await self.http_client.batch_requests(*requests, return_exceptions=True)
+        await self.http_client.batch_execute(*requests, return_exceptions=True)
     )
 
     related_product_ids = []
