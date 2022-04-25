@@ -3,15 +3,13 @@ from unittest import mock
 import pytest
 from web_poet.exceptions import RequestBackendError
 from web_poet.page_inputs import (
+    HttpClient,
     HttpRequest,
     HttpResponse,
     HttpRequestBody,
     HttpRequestHeaders
 )
-from web_poet.requests import (
-    HttpClient,
-    request_backend_var,
-)
+from web_poet.requests import request_backend_var
 
 
 @pytest.fixture
@@ -47,7 +45,7 @@ async def test_perform_request_from_httpclient(async_mock):
 async def test_http_client_single_requests(async_mock):
     client = HttpClient(async_mock)
 
-    with mock.patch("web_poet.requests.HttpRequest") as mock_request:
+    with mock.patch("web_poet.page_inputs.client.HttpRequest") as mock_request:
         response = await client.request("url")
         response.url == "url"
 

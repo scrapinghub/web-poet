@@ -1,10 +1,8 @@
 from .pages import WebPage, ItemPage, ItemWebPage, Injectable
-from .requests import (
-    request_backend_var,
-    HttpClient,
-)
+from .requests import request_backend_var
 from .page_inputs import (
     Meta,
+    HttpClient,
     HttpRequest,
     HttpResponse,
     HttpRequestHeaders,
