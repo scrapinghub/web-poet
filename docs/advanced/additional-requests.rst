@@ -750,9 +750,12 @@ doc section) explicitly raises when implementing it for **web-poet** should be
 For frameworks that implement and use **web-poet**, exceptions that ocurred when
 handling the additional requests like `connection errors`, `time outs`, `TLS
 errors`, etc should be replaced by :class:`web_poet.exceptions.http.HttpRequestError`
-by raising it explicitly. For responses that are successful but don't have a ``200``
-**status code**, this exception shouldn't be raised at all. Instead, the
-:class:`~.HttpResponse` should simply reflect the response contents as is.
+by raising it explicitly.
+
+For responses that are not really errors like in the 100-3xx status code range,
+this exception shouldn't be raised at all. However, for responses with status
+codes in the 400-5xx range, the implementing framework should properly raise
+the exception.
 
 This is to ensure that Page Objects having additional requests using the
 :class:`~.HttpClient` is able to work in any type of HTTP downloader implementation.

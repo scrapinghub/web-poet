@@ -1,7 +1,7 @@
 from unittest import mock
 
 import pytest
-from web_poet.exceptions import RequestBackendError
+from web_poet.exceptions import RequestBackendError, HttpRequestError
 from web_poet.page_inputs import (
     HttpRequest,
     HttpResponse,
@@ -79,6 +79,25 @@ async def test_http_client_single_requests(async_mock):
                 body=HttpRequestBody(b"body value"),
             ),
         ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method_name", ["request", "get", "post"])
+async def test_http_client_request_status_err(method_name):
+    client = HttpClient(async_mock)
+
+    # Simulate 500 Internal Server Error responses
+    async def stub_request_downloader(*args, **kwargs):
+        async def stub(req):
+            return HttpResponse(req.url, body=b"", status=500)
+        return await stub(*args, **kwargs)
+    client._request_downloader = stub_request_downloader
+
+    method = getattr(client, method_name)
+
+    await method("url", allow_status=[500])
+    with pytest.raises(HttpRequestError):
+        await method("url")
 
 
 @pytest.mark.asyncio

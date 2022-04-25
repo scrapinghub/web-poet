@@ -21,7 +21,8 @@ from web_poet.page_inputs import (
     HttpRequestHeaders,
     HttpRequestBody,
 )
-from web_poet.exceptions import RequestBackendError
+from web_poet.exceptions import RequestBackendError, HttpRequestError
+from web_poet.utils import as_list
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,23 @@ class HttpClient:
     def __init__(self, request_downloader: Callable = None):
         self._request_downloader = request_downloader or _perform_request
 
+    @staticmethod
+    def _handle_status(response: HttpResponse, allow_status: List[int]) -> None:
+        if (
+            response.status is None
+            or response.status < 400
+            or response.status in allow_status
+        ):
+            return
+
+        if 400 <= response.status < 500:
+            kind = "Client"
+        elif 500 <= response.status < 600:
+            kind = "Server"
+
+        msg = f"{response.status} {kind} Error for {response.url}"
+        raise HttpRequestError(msg)
+
     async def request(
         self,
         url: str,
@@ -89,11 +107,16 @@ class HttpClient:
         method: str = "GET",
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
+        allow_status: List[int] = None,
     ) -> HttpResponse:
         """This is a shortcut for creating a :class:`~.HttpRequest` instance and executing
         that request.
 
-        A :class:`~.HttpResponse` instance should then be returned.
+        A :class:`~.HttpResponse` instance should then be returned for successful
+        responses in the 100-3xx status code range. Otherwise, an exception of
+        type :class:`web_poet.exceptions.http.HttpRequestError` will be raised.
+        This behavior can be changed by suppressing the exceptions on select
+        status codes using the ``allow_status`` param.
 
         .. warning::
             By convention, the request implementation supplied optionally to
@@ -104,13 +127,25 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-        return await self.execute(req)
 
-    async def get(self, url: str, *, headers: Optional[_Headers] = None) -> HttpResponse:
+        response = await self.execute(req)
+        self._handle_status(response, allow_status=as_list(allow_status))
+
+        return response
+
+    async def get(
+        self,
+        url: str,
+        *,
+        headers: Optional[_Headers] = None,
+        allow_status: List[int] = None,
+    ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
-        return await self.request(url=url, method="GET", headers=headers)
+        return await self.request(
+            url=url, method="GET", headers=headers, allow_status=allow_status
+        )
 
     async def post(
         self,
@@ -118,11 +153,18 @@ class HttpClient:
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
+        allow_status: List[int] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
         """
-        return await self.request(url=url, method="POST", headers=headers, body=body)
+        return await self.request(
+            url=url,
+            method="POST",
+            headers=headers,
+            body=body,
+            allow_status=allow_status,
+        )
 
     async def execute(self, request: HttpRequest) -> HttpResponse:
         """Accepts a single instance of :class:`~.HttpRequest` and executes it
