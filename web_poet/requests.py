@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
+_Status = Union[str, int]
 
 
 # Frameworks that wants to support additional requests in ``web-poet`` should
@@ -84,11 +85,21 @@ class HttpClient:
         self._request_downloader = request_downloader or _perform_request
 
     @staticmethod
-    def _handle_status(response: HttpResponse, allow_status: List[int]) -> None:
+    def _handle_status(
+        response: HttpResponse,
+        *,
+        allow_status: List[_Status] = None,
+    ) -> None:
+        allow_status_normalized = list(map(str, as_list(allow_status)))
+        allow_all_status = any(
+            [True for s in allow_status_normalized if "*" == s.strip()]
+        )
+
         if (
-            response.status is None
+            allow_all_status
+            or response.status is None  # allows serialized responses from tests
             or response.status < 400
-            or response.status in allow_status
+            or str(response.status) in allow_status_normalized
         ):
             return
 
@@ -107,16 +118,21 @@ class HttpClient:
         method: str = "GET",
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
-        allow_status: List[int] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
-        """This is a shortcut for creating a :class:`~.HttpRequest` instance and executing
-        that request.
+        """This is a shortcut for creating a :class:`~.HttpRequest` instance and
+        executing that request.
 
         A :class:`~.HttpResponse` instance should then be returned for successful
         responses in the 100-3xx status code range. Otherwise, an exception of
         type :class:`web_poet.exceptions.http.HttpRequestError` will be raised.
+
         This behavior can be changed by suppressing the exceptions on select
-        status codes using the ``allow_status`` param.
+        status codes using the ``allow_status`` param:
+
+            * Passing status code values would not raise the exception when it
+              occurs. This would return the response as-is.
+            * Passing a "*" value would basically allow any status codes.
 
         .. warning::
             By convention, the request implementation supplied optionally to
@@ -129,7 +145,7 @@ class HttpClient:
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
 
         response = await self.execute(req)
-        self._handle_status(response, allow_status=as_list(allow_status))
+        self._handle_status(response, allow_status=allow_status)
 
         return response
 
@@ -138,13 +154,16 @@ class HttpClient:
         url: str,
         *,
         headers: Optional[_Headers] = None,
-        allow_status: List[int] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
         return await self.request(
-            url=url, method="GET", headers=headers, allow_status=allow_status
+            url=url,
+            method="GET",
+            headers=headers,
+            allow_status=allow_status,
         )
 
     async def post(
@@ -153,7 +172,7 @@ class HttpClient:
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
-        allow_status: List[int] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.

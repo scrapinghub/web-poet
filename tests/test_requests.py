@@ -81,23 +81,52 @@ async def test_http_client_single_requests(async_mock):
         ]
 
 
+@pytest.fixture
+def client_with_status():
+    def _param_wrapper(status_code: int):
+        async def stub_request_downloader(*args, **kwargs):
+            async def stub(req):
+                return HttpResponse(req.url, body=b"", status=status_code)
+            return await stub(*args, **kwargs)
+        return stub_request_downloader
+    return _param_wrapper
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method_name", ["request", "get", "post"])
-async def test_http_client_request_status_err(method_name):
+async def test_http_client_allow_status(client_with_status, method_name):
     client = HttpClient(async_mock)
 
     # Simulate 500 Internal Server Error responses
-    async def stub_request_downloader(*args, **kwargs):
-        async def stub(req):
-            return HttpResponse(req.url, body=b"", status=500)
-        return await stub(*args, **kwargs)
-    client._request_downloader = stub_request_downloader
+    client._request_downloader = client_with_status(500)
 
     method = getattr(client, method_name)
 
-    await method("url", allow_status=[500])
+    # Should handle single and multiple values
+    await method("url", allow_status=500)
+    await method("url", allow_status=[500, 503])
+
+    # As well as strings
+    await method("url", allow_status="500")
+    await method("url", allow_status=["500", "503"])
+
     with pytest.raises(HttpRequestError):
         await method("url")
+
+    with pytest.raises(HttpRequestError):
+        await method("url", allow_status=408)
+
+    # Simulate 408 Request Timeout responses
+    client._request_downloader = client_with_status(408)
+
+    # As long as "*" is present, then no errors would be raised
+    await method("url", allow_status="*")
+    await method("url", allow_status=[400, "*"])
+    await method("url", allow_status=[400, 408, "*"])
+
+    # Globbing isn't supported
+    with pytest.raises(HttpRequestError):
+        await method("url", allow_status="4*")
 
 
 @pytest.mark.asyncio
