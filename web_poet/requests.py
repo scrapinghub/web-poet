@@ -143,10 +143,7 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-
-        response = await self.execute(req)
-        self._handle_status(response, allow_status=allow_status)
-
+        response = await self.execute(req, allow_status=allow_status)
         return response
 
     async def get(
@@ -185,14 +182,27 @@ class HttpClient:
             allow_status=allow_status,
         )
 
-    async def execute(self, request: HttpRequest) -> HttpResponse:
+    async def execute(
+        self, request: HttpRequest, *, allow_status: List[_Status] = None
+    ) -> HttpResponse:
         """Accepts a single instance of :class:`~.HttpRequest` and executes it
         using the request implementation configured in the :class:`~.HttpClient`
         instance.
 
-        This returns a single :class:`~.HttpResponse`.
+        A :class:`~.HttpResponse` instance should then be returned for successful
+        responses in the 100-3xx status code range. Otherwise, an exception of
+        type :class:`web_poet.exceptions.http.HttpRequestError` will be raised.
+
+        This behavior can be changed by suppressing the exceptions on select
+        status codes using the ``allow_status`` param:
+
+            * Passing status code values would not raise the exception when it
+              occurs. This would return the response as-is.
+            * Passing a "*" value would basically allow any status codes.
         """
-        return await self._request_downloader(request)
+        response = await self._request_downloader(request)
+        self._handle_status(response, allow_status=allow_status)
+        return response
 
     async def batch_execute(
         self, *requests: HttpRequest, return_exceptions: bool = False

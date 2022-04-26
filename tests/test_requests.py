@@ -93,8 +93,8 @@ def client_with_status():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method_name", ["request", "get", "post"])
-async def test_http_client_allow_status(client_with_status, method_name):
+@pytest.mark.parametrize("method_name", ["request", "get", "post", "execute"])
+async def test_http_client_allow_status(async_mock, client_with_status, method_name):
     client = HttpClient(async_mock)
 
     # Simulate 500 Internal Server Error responses
@@ -102,31 +102,35 @@ async def test_http_client_allow_status(client_with_status, method_name):
 
     method = getattr(client, method_name)
 
+    url_or_request = "url"
+    if method_name == "execute":
+        url_or_request = HttpRequest(url_or_request)
+
     # Should handle single and multiple values
-    await method("url", allow_status=500)
-    await method("url", allow_status=[500, 503])
+    await method(url_or_request, allow_status=500)
+    await method(url_or_request, allow_status=[500, 503])
 
     # As well as strings
-    await method("url", allow_status="500")
-    await method("url", allow_status=["500", "503"])
+    await method(url_or_request, allow_status="500")
+    await method(url_or_request, allow_status=["500", "503"])
 
     with pytest.raises(HttpRequestError):
-        await method("url")
+        await method(url_or_request)
 
     with pytest.raises(HttpRequestError):
-        await method("url", allow_status=408)
+        await method(url_or_request, allow_status=408)
 
     # Simulate 408 Request Timeout responses
     client._request_downloader = client_with_status(408)
 
     # As long as "*" is present, then no errors would be raised
-    await method("url", allow_status="*")
-    await method("url", allow_status=[400, "*"])
-    await method("url", allow_status=[400, 408, "*"])
+    await method(url_or_request, allow_status="*")
+    await method(url_or_request, allow_status=[400, "*"])
+    await method(url_or_request, allow_status=[400, 408, "*"])
 
     # Globbing isn't supported
     with pytest.raises(HttpRequestError):
-        await method("url", allow_status="4*")
+        await method(url_or_request, allow_status="4*")
 
 
 @pytest.mark.asyncio
