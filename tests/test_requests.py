@@ -108,7 +108,9 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
 
     # Should handle single and multiple values
     await method(url_or_request, allow_status=500)
-    await method(url_or_request, allow_status=[500, 503])
+    response = await method(url_or_request, allow_status=[500, 503])
+    assert isinstance(response, HttpResponse)
+    assert response.status == 500
 
     # As well as strings
     await method(url_or_request, allow_status="500")
@@ -120,17 +122,13 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
     with pytest.raises(HttpRequestError):
         await method(url_or_request, allow_status=408)
 
-    # Simulate 408 Request Timeout responses
-    client._request_downloader = client_with_status(408)
-
     # As long as "*" is present, then no errors would be raised
     await method(url_or_request, allow_status="*")
-    await method(url_or_request, allow_status=[400, "*"])
-    await method(url_or_request, allow_status=[400, 408, "*"])
+    await method(url_or_request, allow_status=[500, "*"])
 
     # Globbing isn't supported
     with pytest.raises(HttpRequestError):
-        await method(url_or_request, allow_status="4*")
+        await method(url_or_request, allow_status="5*")
 
 
 @pytest.mark.asyncio
@@ -211,3 +209,38 @@ async def test_http_client_batch_execute_with_exception_raised(client_that_errs)
     ]
     with pytest.raises(ValueError):
         await client_that_errs.batch_execute(*requests)
+
+
+@pytest.mark.asyncio
+async def test_http_client_batch_execute_allow_status(async_mock, client_with_status):
+    client = HttpClient(async_mock)
+
+    # Simulate 500 Internal Server Error responses
+    client._request_downloader = client_with_status(400)
+
+    requests = [HttpRequest("url-1"), HttpRequest("url-2"), HttpRequest("url-3")]
+
+    await client.batch_execute(*requests, allow_status=400)
+    await client.batch_execute(*requests, allow_status=[400, 403])
+    await client.batch_execute(*requests, allow_status="400")
+    responses = await client.batch_execute(*requests, allow_status=["400", "403"])
+
+    assert all([isinstance(r, HttpResponse) for r in responses])
+    assert all([r.status == 400 for r in responses])
+
+    with pytest.raises(HttpRequestError):
+        await client.batch_execute(*requests)
+
+    with pytest.raises(HttpRequestError):
+        await client.batch_execute(*requests, allow_status=408)
+
+    await client.batch_execute(*requests, return_exceptions=True, allow_status=400)
+    await client.batch_execute(*requests, return_exceptions=True, allow_status=[400, 403])
+    await client.batch_execute(*requests, return_exceptions=True, allow_status="400")
+    await client.batch_execute(*requests, return_exceptions=True, allow_status=["400", "403"])
+
+    responses = await client.batch_execute(*requests, return_exceptions=True)
+    assert all([isinstance(r, HttpRequestError) for r in responses])
+
+    responses = await client.batch_execute(*requests, return_exceptions=True, allow_status=408)
+    assert all([isinstance(r, HttpRequestError) for r in responses])

@@ -205,7 +205,10 @@ class HttpClient:
         return response
 
     async def batch_execute(
-        self, *requests: HttpRequest, return_exceptions: bool = False
+        self,
+        *requests: HttpRequest,
+        return_exceptions: bool = False,
+        allow_status: List[_Status] = None,
     ) -> List[Union[HttpResponse, Exception]]:
         """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
@@ -220,9 +223,18 @@ class HttpClient:
         successful :class:`~.HttpResponse`. This enables salvaging any usable
         responses despite any possible failures. This can be done by setting
         ``True`` to the ``return_exceptions`` parameter.
+
+        Like :meth:`~.HttpClient.execute`, :class:`web_poet.exceptions.http.HttpRequestError`
+        will be raised for responses with status codes in the 400-5xx range.
+        The ``allow_status`` parameter could be used the same way here to prevent
+        these exceptions from being raised.
+
+        You can omit ``allow_status="*"`` if you're passing ``return_exceptions=True``.
+        However, it would be returning :class:`web_poet.exceptions.http.HttpRequestError`
+        instead of :class:`~.HttpResponse`.
         """
 
-        coroutines = [self._request_downloader(r) for r in requests]
+        coroutines = [self.execute(r, allow_status=allow_status) for r in requests]
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )
