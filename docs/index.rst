@@ -36,6 +36,13 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    intro/overrides
 
 .. toctree::
+   :caption: Advanced
+   :maxdepth: 1
+
+   advanced/additional-requests
+   advanced/meta
+
+.. toctree::
    :caption: Reference
    :maxdepth: 1
 

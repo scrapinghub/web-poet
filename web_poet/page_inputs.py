@@ -1,9 +1,8 @@
-import json
-from typing import Optional, Dict, List, TypeVar, Type, Union, Tuple, AnyStr
-
 import attrs
-from multidict import CIMultiDict
+import json
 import parsel
+from typing import Optional, Dict, List, Type, TypeVar, Union, Tuple, AnyStr
+
 from w3lib.encoding import (
     html_to_unicode,
     html_body_declared_encoding,
@@ -11,10 +10,17 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
-from .utils import memoizemethod_noargs
+from web_poet._base import _HttpHeaders
+from web_poet.utils import memoizemethod_noargs
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
+
+
+class HttpRequestBody(bytes):
+    """A container for holding the raw HTTP request body in bytes format."""
+
+    pass
 
 
 class HttpResponseBody(bytes):
@@ -32,7 +38,38 @@ class HttpResponseBody(bytes):
         return json.loads(self)
 
 
-class HttpResponseHeaders(CIMultiDict):
+class HttpRequestHeaders(_HttpHeaders):
+    """A container for holding the HTTP request headers.
+
+    It's able to accept instantiation via an Iterable of Tuples:
+
+    >>> pairs = [("Content-Encoding", "gzip"), ("content-length", "648")]
+    >>> HttpRequestHeaders(pairs)
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    It's also accepts a mapping of key-value pairs as well:
+
+    >>> pairs = {"Content-Encoding": "gzip", "content-length": "648"}
+    >>> headers = HttpRequestHeaders(pairs)
+    >>> headers
+    <HttpRequestHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
+
+    Note that this also supports case insensitive header-key lookups:
+
+    >>> headers.get("content-encoding")
+    'gzip'
+    >>> headers.get("Content-Length")
+    '648'
+
+    These are just a few of the functionalities it inherits from
+    :class:`multidict.CIMultiDict`. For more info on its other features, read
+    the API spec of :class:`multidict.CIMultiDict`.
+    """
+
+    pass
+
+
+class HttpResponseHeaders(_HttpHeaders):
     """A container for holding the HTTP response headers.
 
     It's able to accept instantiation via an Iterable of Tuples:
@@ -59,21 +96,6 @@ class HttpResponseHeaders(CIMultiDict):
     :class:`multidict.CIMultiDict`. For more info on its other features, read
     the API spec of :class:`multidict.CIMultiDict`.
     """
-
-    @classmethod
-    def from_name_value_pairs(cls: Type[T_headers], arg: List[Dict]) -> T_headers:
-        """An alternative constructor for instantiation using a ``List[Dict]``
-        where the 'key' is the header name while the 'value' is the header value.
-
-        >>> pairs = [
-        ...     {"name": "Content-Encoding", "value": "gzip"},
-        ...     {"name": "content-length", "value": "648"}
-        ... ]
-        >>> headers = HttpResponseHeaders.from_name_value_pairs(pairs)
-        >>> headers
-        <HttpResponseHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
-        """
-        return cls([(pair["name"], pair["value"]) for pair in arg])
 
     @classmethod
     def from_bytes_dict(
@@ -124,6 +146,22 @@ class HttpResponseHeaders(CIMultiDict):
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
+class HttpRequest:
+    """Represents a generic HTTP request used by other functionalities in
+    **web-poet** like :class:`~.HttpClient`.
+    """
+
+    url: str = attrs.field()
+    method: str = attrs.field(default="GET", kw_only=True)
+    headers: HttpRequestHeaders = attrs.field(
+        factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
+    )
+    body: HttpRequestBody = attrs.field(
+        factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
+    )
+
+
+@attrs.define(auto_attribs=False, slots=False, eq=False)
 class HttpResponse:
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
@@ -148,10 +186,11 @@ class HttpResponse:
 
     url: str = attrs.field()
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
-    status: Optional[int] = attrs.field(default=None)
+    status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
-                                               converter=HttpResponseHeaders)
-    _encoding: Optional[str] = attrs.field(default=None)
+                                               converter=HttpResponseHeaders,
+                                               kw_only=True)
+    _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
 
     _DEFAULT_ENCODING = 'ascii'
     _cached_text: Optional[str] = None
@@ -231,3 +270,13 @@ class HttpResponse:
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+
+
+class Meta(dict):
+    """Container class that could contain any arbitrary data to be passed into
+    a Page Object.
+
+    Note that this is simply a subclass of Python's ``dict``.
+    """
+
+    pass

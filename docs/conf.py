@@ -194,4 +194,5 @@ intersphinx_mapping = {
     'scrapy': ('https://docs.scrapy.org/en/latest', None, ),
     'url-matcher': ('https://url-matcher.readthedocs.io/en/stable/', None, ),
     'parsel': ('https://parsel.readthedocs.io/en/latest/', None, ),
+    'multidict': ('https://multidict.readthedocs.io/en/latest/', None, ),
 }

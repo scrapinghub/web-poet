@@ -8,8 +8,8 @@ Page Inputs
 ===========
 
 .. automodule:: web_poet.page_inputs
-    :members:
-    :undoc-members:
+   :members:
+   :undoc-members:
 
 Pages
 =====
@@ -48,6 +48,21 @@ Mixins
    :members:
    :no-special-members:
 
+Requests
+========
+
+.. automodule:: web_poet.requests
+    :members:
+    :undoc-members:
+
+Exceptions
+==========
+
+.. automodule:: web_poet.exceptions.core
+    :members:
+
+.. automodule:: web_poet.exceptions.http
+    :members:
 
 .. _`api-overrides`:
 
