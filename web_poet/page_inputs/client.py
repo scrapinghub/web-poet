@@ -9,11 +9,9 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 """
 
 import asyncio
-import logging
 from typing import Optional, Dict, List, Union, Callable
 
-from web_poet.requests import request_backend_var
-from web_poet.exceptions import RequestBackendError
+from web_poet.requests import request_backend_var, _perform_request
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestHeaders,
@@ -21,38 +19,10 @@ from web_poet.page_inputs.http import (
     HttpResponse,
 )
 
-logger = logging.getLogger(__name__)
 
 _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
-
-
-async def _perform_request(request: HttpRequest) -> HttpResponse:
-    """Given a :class:`~.Request`, execute it using the **request implementation**
-    that was set in the ``web_poet.request_backend_var`` :mod:`contextvars`
-    instance.
-
-    .. warning::
-        By convention, this function should return a :class:`~.HttpResponse`.
-        However, the underlying downloader assigned in
-        ``web_poet.request_backend_var`` might change that, depending on
-        how the framework using **web-poet** implements it.
-    """
-
-    logger.info(f"Requesting page: {request}")
-
-    try:
-        request_backend = request_backend_var.get()
-    except LookupError:
-        raise RequestBackendError(
-            "Additional requests are used inside the Page Object but the "
-            "current framework has not set any HttpRequest Backend via "
-            "'web_poet.request_backend_var'"
-        )
-
-    response_data: HttpResponse = await request_backend(request)
-    return response_data
 
 
 class HttpClient:
