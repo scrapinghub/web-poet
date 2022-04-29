@@ -890,6 +890,24 @@ From the code sample above, we can see that every time an :class:`~.HttpClient`
 is created for Page Objects needing an ``http_client``, the specific **request
 implementation** from a given framework is injected to it.
 
+Downloader Behavior
+-------------------
+
+The Downloader should be able to accept an instance of :class:`~.HttpRequest`
+as the input and return an instance of :class:`~.HttpResponse`. This is important
+in order to handle and represent generic HTTP operations. The only time that
+it won't be returning :class:`~.HttpResponse` would be when it's raising exceptions
+(see :ref:`framework-exception-handling`).
+
+The Downloader should be able to properly resolve **redirections** except when
+the method is ``HEAD``. This means that the :class:`~.HttpResponse` that it'll
+be rendering is already the end of the redirection trail.
+
+Laslty, the Downloader should also be able to fully support :mod:`asyncio` to
+enable developers to perform additional requests asynchronously.
+
+.. _framework-exception-handling:
+
 Exception Handling
 ------------------
 
@@ -972,9 +990,9 @@ doc section) explicitly raises when implementing it for **web-poet** should be
 :class:`web_poet.exceptions.http.HttpError` *(or a subclass from it)*. 
 
 For frameworks that implement and use **web-poet**, exceptions that ocurred when
-handling the additional requests like `connection errors`, `timeouts`, `TLS
-errors`, etc should be replaced by :class:`web_poet.exceptions.http.HttpRequestError`
-by raising it explicitly.
+handling the additional requests like `connection errors`, `TLS errors`, etc should
+be replaced by :class:`web_poet.exceptions.http.HttpRequestError` by raising it
+explicitly.
 
 For responses that are not really errors like in the ``100-3xx`` status code range,
 no exception should be raised at all. For responses with status codes in 
