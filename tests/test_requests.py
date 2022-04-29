@@ -1,7 +1,7 @@
 from unittest import mock
 
 import pytest
-from web_poet.exceptions import RequestBackendError, HttpRequestError
+from web_poet.exceptions import RequestBackendError, HttpResponseError
 from web_poet.page_inputs import (
     HttpRequest,
     HttpResponse,
@@ -116,19 +116,25 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
     await method(url_or_request, allow_status="500")
     await method(url_or_request, allow_status=["500", "503"])
 
-    with pytest.raises(HttpRequestError):
+    with pytest.raises(HttpResponseError) as excinfo:
         await method(url_or_request)
+    assert isinstance(excinfo.value.request, HttpRequest)
+    assert isinstance(excinfo.value.response, HttpResponse)
 
-    with pytest.raises(HttpRequestError):
+    with pytest.raises(HttpResponseError) as err:
         await method(url_or_request, allow_status=408)
+    assert isinstance(excinfo.value.request, HttpRequest)
+    assert isinstance(excinfo.value.response, HttpResponse)
 
     # As long as "*" is present, then no errors would be raised
     await method(url_or_request, allow_status="*")
     await method(url_or_request, allow_status=[500, "*"])
 
     # Globbing isn't supported
-    with pytest.raises(HttpRequestError):
+    with pytest.raises(HttpResponseError) as err:
         await method(url_or_request, allow_status="5*")
+    assert isinstance(excinfo.value.request, HttpRequest)
+    assert isinstance(excinfo.value.response, HttpResponse)
 
 
 @pytest.mark.asyncio
@@ -228,11 +234,15 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     assert all([isinstance(r, HttpResponse) for r in responses])
     assert all([r.status == 400 for r in responses])
 
-    with pytest.raises(HttpRequestError):
+    with pytest.raises(HttpResponseError) as excinfo:
         await client.batch_execute(*requests)
+    assert isinstance(excinfo.value.request, HttpRequest)
+    assert isinstance(excinfo.value.response, HttpResponse)
 
-    with pytest.raises(HttpRequestError):
+    with pytest.raises(HttpResponseError) as excinfo:
         await client.batch_execute(*requests, allow_status=408)
+    assert isinstance(excinfo.value.request, HttpRequest)
+    assert isinstance(excinfo.value.response, HttpResponse)
 
     await client.batch_execute(*requests, return_exceptions=True, allow_status=400)
     await client.batch_execute(*requests, return_exceptions=True, allow_status=[400, 403])
@@ -240,7 +250,11 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     await client.batch_execute(*requests, return_exceptions=True, allow_status=["400", "403"])
 
     responses = await client.batch_execute(*requests, return_exceptions=True)
-    assert all([isinstance(r, HttpRequestError) for r in responses])
+    assert all([isinstance(r, HttpResponseError) for r in responses])
+    assert all([isinstance(r.request, HttpRequest) for r in responses])
+    assert all([isinstance(r.response, HttpResponse) for r in responses])
 
     responses = await client.batch_execute(*requests, return_exceptions=True, allow_status=408)
-    assert all([isinstance(r, HttpRequestError) for r in responses])
+    assert all([isinstance(r, HttpResponseError) for r in responses])
+    assert all([isinstance(r.request, HttpRequest) for r in responses])
+    assert all([isinstance(r.response, HttpResponse) for r in responses])

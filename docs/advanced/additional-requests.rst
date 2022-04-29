@@ -592,9 +592,15 @@ from the previous subsection named: :ref:`httpclient-get-example`.
                 response: web_poet.HttpResponse = await self.http_client.get(
                     f"https://api.example.com/v2/images?id={item['product_id']}"
                 )
-            except web_poet.exceptions.HttpRequestError:
+            except web_poet.exceptions.HttpRequestError as err:
                 logger.warning(
-                    f"Unable to request images for product ID: {item['product_id']}"
+                    f"Unable to request images for product ID '{item['product_id']}' "
+                    f"using this request: {err.request}"
+                )
+            except web_poet.exceptions.HttpResponseError as err:
+                logger.warning(
+                    f"Received a {err.response.status} response status for product ID "
+                    f"'{item['product_id']}' from this URL: {err.request.url}"
                 )
             else:
                 item["images"] = response.css(".product-images img::attr(src)").getall()
@@ -603,16 +609,32 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
 In this code example, the code became more resilient on cases where it wasn't
 possible to retrieve more images using the website's public API. It could be
-due to anything like `SSL errors`, `connection errors`, etc.
+due to anything like `SSL errors`, `connection errors`, `page not found`, etc.
+
+Using :class:`~.HttpClient` to execute requests raises exceptions with the base
+class of type :class:`web_poet.exceptions.http.HttpError` irregardless of how
+the HTTP Downloader is implemented. From our example above, we could've simply
+used the :class:`web_poet.exceptions.http.HttpError` base error. However, it's
+ambiguous in the sense that the error could originate during the HTTP Request
+execution or when receiving the HTTP Response.
+
+A more specific :class:`web_poet.exceptions.http.HttpRequestError` exception is
+raised when the :class:`~.HttpRequest` was being handled while the
+:class:`web_poet.exceptions.http.HttpResponseError` is raised when receiving
+a response with an HTTP error. Notice from the example that the exceptions have
+the attributes like ``request`` and ``response`` which are respective instance of
+:class:`~.HttpRequest` and :class:`~.HttpResponse`. Accessing them would be useful
+to debug and log the problems.
+
+Note that :class:`web_poet.exceptions.http.HttpResponseError` only occurs when
+receiving responses with status codes in the ``400-5xx`` range. However, this
+behavior could be altered by using the ``allow_status`` param in the methods of
+:class:`~.HttpClient`.
 
 .. note::
 
-    For now, using :class:`~.HttpClient` to execute requests only raises exceptions
-    of type :class:`web_poet.exceptions.http.HttpRequestError` irregardless of how
-    the HTTP Downloader is implemented.
-
     In the future, more specific exceptions which inherits from the base
-    :class:`web_poet.exceptions.http.HttpRequestError` exception would be available.
+    :class:`web_poet.exceptions.http.HttpError` exception would be available.
     This should enable developers writing Page Objects to properly identify what
     went wrong and act specifically based on the problem.
 
@@ -653,7 +675,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
             try:
                 responses: List[web_poet.HttpResponse] = await self.http_client.batch_execute(*requests)
-            except web_poet.exceptions.HttpRequestError:
+            except web_poet.exceptions.HttpError:
                 logger.warning(
                     f"Unable to request for more related products for product ID: {item['product_id']}"
                 )
@@ -693,16 +715,20 @@ For this example, let's improve the code snippet from the previous subsection na
 
 Handling exceptions using :meth:`~.HttpClient.batch_execute` remains largely the same.
 However, the main difference is that you might be wasting perfectly good responses just
-because a single request from the batch ruined it.
+because a single request from the batch ruined it. Notice that we're using the base
+exception class of :class:`web_poet.exceptions.http.HttpError` to account for any
+type of errors, both during the HTTP Request execution and when receiving the
+response.
 
 An alternative approach would be salvaging good responses altogether. For example, you've
 sent out 10 :class:`~.HttpRequest` and only 1 of them had an exception during processing.
 You can still get the data from 9 of the :class:`~.HttpResponse` by passing the parameter
 ``return_exceptions=True`` to :meth:`~.HttpClient.batch_execute`.
 
-This means that any exceptions raised during request execution are returned alongside any
+This means that any exceptions raised during the HTTP execution are returned alongside any
 of the successful responses. The return type of :meth:`~.HttpClient.batch_execute` could
-be a mixture of :class:`~.HttpResponse` and :class:`web_poet.exceptions.http.HttpRequestError`.
+be a mixture of :class:`~.HttpResponse` and :class:`web_poet.exceptions.http.HttpError`
+(*and its exception subclasses*).
 
 Here's an example:
 
@@ -710,13 +736,18 @@ Here's an example:
 
     # Revised code snippet from the to_item() method
 
-    responses: List[Union[web_poet.HttpResponse, web_poet.exceptions.HttpRequestError]] = (
+    requests: List[web_poet.HttpRequest] = [
+        self.create_request(item["product_id"], page_num=page_num)
+        for page_num in range(2, self.default_pagination_limit)
+    ]
+
+    responses: List[Union[web_poet.HttpResponse, web_poet.exceptions.HttpError]] = (
         await self.http_client.batch_execute(*requests, return_exceptions=True)
     )
 
     related_product_ids = []
     for i, response in enumerate(responses):
-        if isinstance(response, web_poet.exceptions.HttpRequestError):
+        if isinstance(response, web_poet.exceptions.HttpError):
             logger.warning(
                 f"Unable to request related products for product ID '{item['product_id']}' "
                 f"using this request: {requests[i]}. Reason: {response}."
@@ -756,8 +787,8 @@ render a better understanding of **web-poet** as a whole.
 
 .. _advanced-downloader-impl:
 
-Downloader Implementation
--------------------------
+Providing the Downloader 
+------------------------
 
 Please note that on its own, :class:`~.HttpClient` doesn't do anything. It doesn't
 know how to execute the request on its own. Thus, for frameworks or projects
@@ -867,24 +898,12 @@ developers could use the exception classes built inside **web-poet** to handle
 various ways additional requests may fail. In this section, we'll see the
 rationale and ways the framework should be able to do that.
 
-All exceptions that the HTTP Downloader Implementation (see :ref:`advanced-downloader-impl`
-doc section) explicitly raises when implementing it for **web-poet** should be
-:class:`web_poet.exceptions.http.HttpRequestError` *(or a subclass from it)*. 
+Rationale
+*********
 
-For frameworks that implement and use **web-poet**, exceptions that ocurred when
-handling the additional requests like `connection errors`, `time outs`, `TLS
-errors`, etc should be replaced by :class:`web_poet.exceptions.http.HttpRequestError`
-by raising it explicitly.
-
-For responses that are not really errors like in the 100-3xx status code range,
-this exception shouldn't be raised at all. For responses with status codes in 
-the 400-5xx range, the **web-poet** raises the exception. However, the implementing
-framework could override which status codes to allow using **web-poet**'s
-``allow_status`` parameter in the :class:`~.HttpClient` methods. (see
-:ref:`framework-expectations`).
-
-This is to ensure that Page Objects having additional requests using the
-:class:`~.HttpClient` is able to work in any type of HTTP downloader implementation.
+Frameworks that handle **web-poet** should be able to ensure that Page Objects
+having additional requests using the :class:`~.HttpClient` is able to work in any
+type of HTTP downloader implementation.
 
 For example, in Python, the common HTTP libraries have different types of base
 exceptions when something has ocurred:
@@ -917,7 +936,8 @@ like the ones above, then it would cause the code to look like:
                 # handle the error here
 
 Such code could turn messy in no time especially when the number of HTTP backends
-that Page Objects **should support** are steadily increasing. This means that Page
+that Page Objects **should support** are steadily increasing. Not to mention the 
+plethora of exception types that HTTP libraries have. This means that Page
 Objects aren't truly portable in different types of frameworks or environments.
 Rather, they're only limited to work in the specific framework they're supported.
 
@@ -941,5 +961,28 @@ This makes the code much simpler:
         async def to_item(self):
             try:
                 response = await self.http_client.get("...")
-            except web_poet.exceptions.HttpRequestError:
+            except web_poet.exceptions.HttpError:
                 # handle the error here
+
+Expected behavior for Exceptions
+********************************
+
+All exceptions that the HTTP Downloader Implementation (see :ref:`advanced-downloader-impl`
+doc section) explicitly raises when implementing it for **web-poet** should be
+:class:`web_poet.exceptions.http.HttpError` *(or a subclass from it)*. 
+
+For frameworks that implement and use **web-poet**, exceptions that ocurred when
+handling the additional requests like `connection errors`, `timeouts`, `TLS
+errors`, etc should be replaced by :class:`web_poet.exceptions.http.HttpRequestError`
+by raising it explicitly.
+
+For responses that are not really errors like in the ``100-3xx`` status code range,
+no exception should be raised at all. For responses with status codes in 
+the ``400-5xx`` range, **web-poet** raises the :class:`web_poet.exceptions.http.HttpResponseError`
+exception.
+
+From this distinction, the framework shouldn't raise :class:`web_poet.exceptions.http.HttpResponseError`
+on its own at all, since the :class:`~.HttpClient` already handles that. However,
+the implementing framework could modify which status codes to allow (*meaning no
+exceptions raised*) using the ``allow_status`` parameter in the
+:class:`~.HttpClient` methods.

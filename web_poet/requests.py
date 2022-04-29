@@ -21,7 +21,7 @@ from web_poet.page_inputs import (
     HttpRequestHeaders,
     HttpRequestBody,
 )
-from web_poet.exceptions import RequestBackendError, HttpRequestError
+from web_poet.exceptions import RequestBackendError, HttpResponseError
 from web_poet.utils import as_list
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ class HttpClient:
     @staticmethod
     def _handle_status(
         response: HttpResponse,
+        request: HttpRequest,
         *,
         allow_status: List[_Status] = None,
     ) -> None:
@@ -109,7 +110,7 @@ class HttpClient:
             kind = "Server"
 
         msg = f"{response.status} {kind} Error for {response.url}"
-        raise HttpRequestError(msg)
+        raise HttpResponseError(msg, request=request, response=response)
 
     async def request(
         self,
@@ -125,7 +126,7 @@ class HttpClient:
 
         A :class:`~.HttpResponse` instance should then be returned for successful
         responses in the 100-3xx status code range. Otherwise, an exception of
-        type :class:`web_poet.exceptions.http.HttpRequestError` will be raised.
+        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
 
         This behavior can be changed by suppressing the exceptions on select
         status codes using the ``allow_status`` param:
@@ -191,7 +192,7 @@ class HttpClient:
 
         A :class:`~.HttpResponse` instance should then be returned for successful
         responses in the 100-3xx status code range. Otherwise, an exception of
-        type :class:`web_poet.exceptions.http.HttpRequestError` will be raised.
+        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
 
         This behavior can be changed by suppressing the exceptions on select
         status codes using the ``allow_status`` param:
@@ -201,7 +202,7 @@ class HttpClient:
             * Passing a "*" value would basically allow any status codes.
         """
         response = await self._request_downloader(request)
-        self._handle_status(response, allow_status=allow_status)
+        self._handle_status(response, request, allow_status=allow_status)
         return response
 
     async def batch_execute(
@@ -224,13 +225,13 @@ class HttpClient:
         responses despite any possible failures. This can be done by setting
         ``True`` to the ``return_exceptions`` parameter.
 
-        Like :meth:`~.HttpClient.execute`, :class:`web_poet.exceptions.http.HttpRequestError`
-        will be raised for responses with status codes in the 400-5xx range.
+        Like :meth:`~.HttpClient.execute`, :class:`web_poet.exceptions.http.HttpResponseError`
+        will be raised for responses with status codes in the ``400-5xx`` range.
         The ``allow_status`` parameter could be used the same way here to prevent
         these exceptions from being raised.
 
         You can omit ``allow_status="*"`` if you're passing ``return_exceptions=True``.
-        However, it would be returning :class:`web_poet.exceptions.http.HttpRequestError`
+        However, it would be returning :class:`web_poet.exceptions.http.HttpResponseError`
         instead of :class:`~.HttpResponse`.
         """
 

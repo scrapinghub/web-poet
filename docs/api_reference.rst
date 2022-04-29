@@ -62,6 +62,7 @@ Exceptions
     :members:
 
 .. automodule:: web_poet.exceptions.http
+    :show-inheritance:
     :members:
 
 .. _`api-overrides`:
