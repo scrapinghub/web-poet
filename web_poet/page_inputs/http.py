@@ -14,7 +14,8 @@ from web_poet._base import _HttpHeaders
 from web_poet.utils import memoizemethod_noargs
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
-AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
+
+_AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
 class HttpRequestBody(bytes):
@@ -99,7 +100,7 @@ class HttpResponseHeaders(_HttpHeaders):
 
     @classmethod
     def from_bytes_dict(
-        cls: Type[T_headers], arg: AnyStrDict, encoding: str = "utf-8"
+        cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
     ) -> T_headers:
         """An alternative constructor for instantiation where the header-value
         pairs could be in raw bytes form.
@@ -270,13 +271,3 @@ class HttpResponse:
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
-
-
-class Meta(dict):
-    """Container class that could contain any arbitrary data to be passed into
-    a Page Object.
-
-    Note that this is simply a subclass of Python's ``dict``.
-    """
-
-    pass
