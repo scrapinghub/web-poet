@@ -903,8 +903,8 @@ The Downloader should be able to properly resolve **redirections** except when
 the method is ``HEAD``. This means that the :class:`~.HttpResponse` that it'll
 be rendering is already the end of the redirection trail.
 
-Laslty, the Downloader should also be able to fully support :mod:`asyncio` to
-enable developers to perform additional requests asynchronously.
+Lastly, the Downloader should also be able to fully support the ``async/await``
+syntax in order to enable developers to perform additional requests asynchronously.
 
 .. _framework-exception-handling:
 
