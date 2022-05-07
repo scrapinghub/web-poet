@@ -30,6 +30,9 @@ class HttpError(IOError):
 class HttpRequestError(HttpError):
     """Indicates that an exception has occurred when the **HTTP Request** was
     being handled.
+
+    :param request: The :class:`~.HttpRequest` instance that was used.
+    :type request: HttpRequest
     """
 
     pass
@@ -49,6 +52,8 @@ class HttpResponseError(HttpError):
         but rather, rely on the ``allow_status`` parameter found in the methods
         of :class:`~.HttpClient`.
 
+    :param request: The :class:`~.HttpRequest` instance that was used.
+    :type request: HttpRequest
     :param response: The :class:`~.HttpResponse` instance that was received, if
         any. Note that this wouldn't exist if the problem ocurred when executing
         the :class:`~.HttpRequest`.
