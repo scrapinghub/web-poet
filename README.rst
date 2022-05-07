@@ -18,8 +18,8 @@ web-poet
    :target: https://codecov.io/gh/scrapinghub/web-poet
    :alt: Coverage report
 
-.. image:: https://readthedocs.org/projects/web-poet/badge/?version=latest
-   :target: https://web-poet.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/web-poet/badge/?version=stable
+   :target: https://web-poet.readthedocs.io/en/stable/?badge=stable
    :alt: Documentation Status
 
 ``web-poet`` implements Page Object pattern for web scraping.
