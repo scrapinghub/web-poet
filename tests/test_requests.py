@@ -118,11 +118,13 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
         await method(url_or_request)
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
+    assert str(excinfo.value).startswith("500 INTERNAL_SERVER_ERROR response for")
 
     with pytest.raises(HttpResponseError) as err:
-        await method(url_or_request, allow_status=408)
+        await method(url_or_request, allow_status=406)
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
+    assert str(excinfo.value).startswith("500 INTERNAL_SERVER_ERROR response for")
 
     # As long as "*" is present, then no errors would be raised
     await method(url_or_request, allow_status="*")
@@ -133,6 +135,7 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
         await method(url_or_request, allow_status="5*")
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
+    assert str(excinfo.value).startswith("500 INTERNAL_SERVER_ERROR response for")
 
 
 @pytest.mark.asyncio
@@ -236,11 +239,13 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
         await client.batch_execute(*requests)
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
+    assert str(excinfo.value).startswith("400 BAD_REQUEST response for")
 
     with pytest.raises(HttpResponseError) as excinfo:
-        await client.batch_execute(*requests, allow_status=408)
+        await client.batch_execute(*requests, allow_status=406)
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
+    assert str(excinfo.value).startswith("400 BAD_REQUEST response for")
 
     await client.batch_execute(*requests, return_exceptions=True, allow_status=400)
     await client.batch_execute(*requests, return_exceptions=True, allow_status=[400, 403])
@@ -251,8 +256,11 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     assert all([isinstance(r, HttpResponseError) for r in responses])
     assert all([isinstance(r.request, HttpRequest) for r in responses])
     assert all([isinstance(r.response, HttpResponse) for r in responses])
+    assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
 
     responses = await client.batch_execute(*requests, return_exceptions=True, allow_status=408)
     assert all([isinstance(r, HttpResponseError) for r in responses])
     assert all([isinstance(r.request, HttpRequest) for r in responses])
     assert all([isinstance(r.response, HttpResponse) for r in responses])
+    assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
+

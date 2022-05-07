@@ -11,6 +11,7 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 import asyncio
 import logging
 from typing import Optional, Dict, List, Union, Callable
+from http import HTTPStatus
 
 from web_poet.requests import request_backend_var, _perform_request
 from web_poet.page_inputs.http import (
@@ -70,12 +71,8 @@ class HttpClient:
         ):
             return
 
-        if 400 <= response.status < 500:
-            kind = "Client"
-        elif 500 <= response.status < 600:
-            kind = "Server"
-
-        msg = f"{response.status} {kind} Error for {response.url}"
+        status = HTTPStatus(response.status)
+        msg = f"{response.status} {status.name} response for {response.url}"
         raise HttpResponseError(msg, request=request, response=response)
 
     async def request(
