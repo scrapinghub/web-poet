@@ -1000,7 +1000,4 @@ the ``400-5xx`` range, **web-poet** raises the :class:`web_poet.exceptions.http.
 exception.
 
 From this distinction, the framework shouldn't raise :class:`web_poet.exceptions.http.HttpResponseError`
-on its own at all, since the :class:`~.HttpClient` already handles that. However,
-the implementing framework could modify which status codes to allow (*meaning no
-exceptions raised*) using the ``allow_status`` parameter in the
-:class:`~.HttpClient` methods.
+on its own at all, since the :class:`~.HttpClient` already handles that. 
