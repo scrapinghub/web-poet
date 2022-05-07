@@ -20,20 +20,9 @@ class HttpError(IOError):
 
     :param request: The :class:`~.HttpRequest` instance that was used.
     :type request: HttpRequest
-    :param response: The :class:`~.HttpResponse` instance that was received, if
-        any. Note that this wouldn't exist if the problem ocurred when executing
-        the :class:`~.HttpRequest`.
-    :type response: HttpResponse
     """
 
-    def __init__(
-        self,
-        *args,
-        request: HttpRequest = None,
-        response: HttpResponse = None,
-        **kwargs
-    ):
-        self.response = response
+    def __init__(self, *args, request: HttpRequest = None, **kwargs):
         self.request = request
         super().__init__(*args, **kwargs)
 
@@ -59,6 +48,13 @@ class HttpResponseError(HttpError):
         Frameworks implementing **web-poet** should **NOT** raise this themselves
         but rather, rely on the ``allow_status`` parameter found in the methods
         of :class:`~.HttpClient`.
+
+    :param response: The :class:`~.HttpResponse` instance that was received, if
+        any. Note that this wouldn't exist if the problem ocurred when executing
+        the :class:`~.HttpRequest`.
+    :type response: HttpResponse
     """
 
-    pass
+    def __init__(self, *args, response: HttpResponse = None, **kwargs):
+        self.response = response
+        super().__init__(*args, **kwargs)
