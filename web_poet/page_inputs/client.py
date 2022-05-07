@@ -87,12 +87,16 @@ class HttpClient:
         """This is a shortcut for creating a :class:`~.HttpRequest` instance and
         executing that request.
 
+        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
+        cases like *connection errors*, *connection and read timeouts*, etc.
+
         A :class:`~.HttpResponse` instance should then be returned for successful
         responses in the 100-3xx status code range. Otherwise, an exception of
         type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
 
         This behavior can be changed by suppressing the exceptions on select
         status codes using the ``allow_status`` param:
+
             * Passing status code values would not raise the exception when it
               occurs. This would return the response as-is.
             * Passing a "*" value would basically allow any status codes.
@@ -152,6 +156,9 @@ class HttpClient:
         using the request implementation configured in the :class:`~.HttpClient`
         instance.
 
+        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
+        cases like *connection errors*, *connection and read timeouts*, etc.
+
         A :class:`~.HttpResponse` instance should then be returned for successful
         responses in the 100-3xx status code range. Otherwise, an exception of
         type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
@@ -195,6 +202,9 @@ class HttpClient:
         You can omit ``allow_status="*"`` if you're passing ``return_exceptions=True``.
         However, it would be returning :class:`web_poet.exceptions.http.HttpResponseError`
         instead of :class:`~.HttpResponse`.
+
+        Lastly, a :class:`web_poet.exceptions.http.HttpRequestError` may be raised
+        on cases like *connection errors*, *connection and read timeouts*, etc.
         """
 
         coroutines = [self.execute(r, allow_status=allow_status) for r in requests]
