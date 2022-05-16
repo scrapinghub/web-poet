@@ -908,7 +908,7 @@ method is not ``HEAD``. In other words, for non-``HEAD`` requests the
 returned :class:`~.HttpResponse` must be the final response, after all redirects. 
 For ``HEAD`` requests redirects MUST NOT be resolved. 
 
-Lastly, the Downloader MUST also be able to fully support the ``async/await``
+Lastly, the Downloader MUST support the ``async/await``
 syntax in order to enable developers to perform additional requests asynchronously.
 
 .. _framework-exception-handling:
