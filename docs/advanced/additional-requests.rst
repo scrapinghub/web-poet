@@ -308,7 +308,7 @@ Executing a HttpRequest instance
             return item
 
 As the example suggests, we're performing an additional request that allows us
-to extract more images in a product page that MAY NOT be otherwise be possible.
+to extract more images in a product page that might not be otherwise be possible.
 This is because in order to do so, an additional button needs to be clicked
 which fetches the complete set of product images via AJAX.
 
@@ -718,7 +718,7 @@ For this example, let's improve the code snippet from the previous subsection na
             return response_page.css("#main .related-products ::attr(product-id)").getall()
 
 Handling exceptions using :meth:`~.HttpClient.batch_execute` remains largely the same.
-However, the main difference is that you MAY be wasting perfectly good responses just
+However, the main difference is that you may be wasting perfectly good responses just
 because a single request from the batch ruined it. Notice that we're using the base
 exception class of :class:`web_poet.exceptions.http.HttpError` to account for any
 type of errors, both during the HTTP Request execution and when receiving the
