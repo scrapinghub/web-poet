@@ -903,9 +903,10 @@ in order to handle and represent generic HTTP operations. The only time that
 it won't be returning :class:`~.HttpResponse` would be when it's raising exceptions
 (see :ref:`framework-exception-handling`).
 
-The Downloader MUST be able to properly resolve **redirections** except when
-the method is ``HEAD``. This means that the :class:`~.HttpResponse` that it'll
-be rendering is already the end of the redirection trail.
+The Downloader MUST resolve Location-based **redirections** when the HTTP 
+method is not ``HEAD``. In other words, for non-``HEAD`` requests the 
+returned :class:`~.HttpResponse` must be the final response, after all redirects. 
+For ``HEAD`` requests redirects MUST NOT be resolved. 
 
 Lastly, the Downloader MUST also be able to fully support the ``async/await``
 syntax in order to enable developers to perform additional requests asynchronously.
