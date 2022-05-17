@@ -222,7 +222,7 @@ async def test_http_client_batch_execute_with_exception_raised(client_that_errs)
 async def test_http_client_batch_execute_allow_status(async_mock, client_with_status):
     client = HttpClient(async_mock)
 
-    # Simulate 500 Internal Server Error responses
+    # Simulate 400 Bad Request
     client._request_downloader = client_with_status(400)
 
     requests = [HttpRequest("url-1"), HttpRequest("url-2"), HttpRequest("url-3")]
@@ -263,4 +263,3 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     assert all([isinstance(r.request, HttpRequest) for r in responses])
     assert all([isinstance(r.response, HttpResponse) for r in responses])
     assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
-

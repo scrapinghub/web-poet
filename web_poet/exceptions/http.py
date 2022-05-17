@@ -49,8 +49,8 @@ class HttpResponseError(HttpError):
     .. note::
 
         Frameworks implementing **web-poet** should **NOT** raise this  exception.
-        
-        This exception is raised by web-poet itself, based on ``allow_status`` 
+
+        This exception is raised by web-poet itself, based on ``allow_status``
         parameter found in the methods of :class:`~.HttpClient`.
 
     :param request: The :class:`~.HttpRequest` instance that was used.
