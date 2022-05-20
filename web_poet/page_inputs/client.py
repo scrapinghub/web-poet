@@ -9,7 +9,9 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 """
 
 import asyncio
+import logging
 from typing import Optional, Dict, List, Union, Callable
+from http import HTTPStatus
 
 from web_poet.requests import request_backend_var, _perform_request
 from web_poet.page_inputs.http import (
@@ -18,11 +20,15 @@ from web_poet.page_inputs.http import (
     HttpRequestBody,
     HttpResponse,
 )
+from web_poet.exceptions import RequestBackendError, HttpResponseError
+from web_poet.utils import as_list
 
+logger = logging.getLogger(__name__)
 
 _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
+_Status = Union[str, int]
 
 
 class HttpClient:
@@ -45,6 +51,30 @@ class HttpClient:
     def __init__(self, request_downloader: Callable = None):
         self._request_downloader = request_downloader or _perform_request
 
+    @staticmethod
+    def _handle_status(
+        response: HttpResponse,
+        request: HttpRequest,
+        *,
+        allow_status: List[_Status] = None,
+    ) -> None:
+        allow_status_normalized = list(map(str, as_list(allow_status)))
+        allow_all_status = any(
+            [True for s in allow_status_normalized if "*" == s.strip()]
+        )
+
+        if (
+            allow_all_status
+            or response.status is None  # allows serialized responses from tests
+            or response.status < 400
+            or str(response.status) in allow_status_normalized
+        ):
+            return
+
+        status = HTTPStatus(response.status)
+        msg = f"{response.status} {status.name} response for {response.url}"
+        raise HttpResponseError(msg, request=request, response=response)
+
     async def request(
         self,
         url: str,
@@ -52,11 +82,24 @@ class HttpClient:
         method: str = "GET",
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
-        """This is a shortcut for creating a :class:`~.HttpRequest` instance and executing
-        that request.
+        """This is a shortcut for creating a :class:`~.HttpRequest` instance and
+        executing that request.
 
-        A :class:`~.HttpResponse` instance should then be returned.
+        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
+        cases like *connection errors*, *connection and read timeouts*, etc.
+
+        A :class:`~.HttpResponse` instance should then be returned for successful
+        responses in the 100-3xx status code range. Otherwise, an exception of
+        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
+
+        This behavior can be changed by suppressing the exceptions on select
+        status codes using the ``allow_status`` param:
+
+            * Passing status code values would not raise the exception when it
+              occurs. This would return the response as-is.
+            * Passing a "*" value would basically allow any status codes.
 
         .. warning::
             By convention, the request implementation supplied optionally to
@@ -67,15 +110,25 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-        return await self.execute(req)
+        response = await self.execute(req, allow_status=allow_status)
+        return response
 
     async def get(
-        self, url: str, *, headers: Optional[_Headers] = None
+        self,
+        url: str,
+        *,
+        headers: Optional[_Headers] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
         """
-        return await self.request(url=url, method="GET", headers=headers)
+        return await self.request(
+            url=url,
+            method="GET",
+            headers=headers,
+            allow_status=allow_status,
+        )
 
     async def post(
         self,
@@ -83,23 +136,49 @@ class HttpClient:
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
+        allow_status: List[_Status] = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
         """
-        return await self.request(url=url, method="POST", headers=headers, body=body)
+        return await self.request(
+            url=url,
+            method="POST",
+            headers=headers,
+            body=body,
+            allow_status=allow_status,
+        )
 
-    async def execute(self, request: HttpRequest) -> HttpResponse:
+    async def execute(
+        self, request: HttpRequest, *, allow_status: List[_Status] = None
+    ) -> HttpResponse:
         """Accepts a single instance of :class:`~.HttpRequest` and executes it
         using the request implementation configured in the :class:`~.HttpClient`
         instance.
 
-        This returns a single :class:`~.HttpResponse`.
+        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
+        cases like *connection errors*, *connection and read timeouts*, etc.
+
+        A :class:`~.HttpResponse` instance should then be returned for successful
+        responses in the 100-3xx status code range. Otherwise, an exception of
+        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
+
+        This behavior can be changed by suppressing the exceptions on select
+        status codes using the ``allow_status`` param:
+
+            * Passing status code values would not raise the exception when it
+              occurs. This would return the response as-is.
+            * Passing a "*" value would basically allow any status codes.
         """
-        return await self._request_downloader(request)
+        response = await self._request_downloader(request)
+        self._handle_status(response, request, allow_status=allow_status)
+        return response
 
     async def batch_execute(
-        self, *requests: HttpRequest, return_exceptions: bool = False
+        self,
+        *requests: HttpRequest,
+        return_exceptions: bool = False,
+        allow_status: List[_Status] = None,
     ) -> List[Union[HttpResponse, Exception]]:
         """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
@@ -114,9 +193,21 @@ class HttpClient:
         successful :class:`~.HttpResponse`. This enables salvaging any usable
         responses despite any possible failures. This can be done by setting
         ``True`` to the ``return_exceptions`` parameter.
+
+        Like :meth:`~.HttpClient.execute`, :class:`web_poet.exceptions.http.HttpResponseError`
+        will be raised for responses with status codes in the ``400-5xx`` range.
+        The ``allow_status`` parameter could be used the same way here to prevent
+        these exceptions from being raised.
+
+        You can omit ``allow_status="*"`` if you're passing ``return_exceptions=True``.
+        However, it would be returning :class:`web_poet.exceptions.http.HttpResponseError`
+        instead of :class:`~.HttpResponse`.
+
+        Lastly, a :class:`web_poet.exceptions.http.HttpRequestError` may be raised
+        on cases like *connection errors*, *connection and read timeouts*, etc.
         """
 
-        coroutines = [self._request_downloader(r) for r in requests]
+        coroutines = [self.execute(r, allow_status=allow_status) for r in requests]
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )
