@@ -24,6 +24,8 @@ class HttpError(IOError):
 
     def __init__(self, msg: str = None, request: HttpRequest = None):
         self.request = request
+        if msg is None:
+            msg = f"An Error ocurred when executing this HTTP Request: {self.request}"
         super().__init__(msg)
 
 
@@ -61,6 +63,8 @@ class HttpResponseError(HttpError):
     :type response: HttpResponse
     """
 
-    def __init__(self, msg: str = None, response: HttpResponse = None, **kwargs):
+    def __init__(self, msg: str = None, response: HttpResponse = None, request: HttpRequest = None):
         self.response = response
-        super().__init__(msg, **kwargs)
+        if msg is None:
+            msg = f"Unexpected HTTP Response received: {self.response}"
+        super().__init__(msg, request=request)
