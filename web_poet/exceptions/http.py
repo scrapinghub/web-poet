@@ -22,9 +22,9 @@ class HttpError(IOError):
     :type request: HttpRequest
     """
 
-    def __init__(self, *args, request: HttpRequest = None, **kwargs):
+    def __init__(self, msg: str = None, request: HttpRequest = None):
         self.request = request
-        super().__init__(*args, **kwargs)
+        super().__init__(msg)
 
 
 class HttpRequestError(HttpError):
@@ -61,6 +61,6 @@ class HttpResponseError(HttpError):
     :type response: HttpResponse
     """
 
-    def __init__(self, *args, response: HttpResponse = None, **kwargs):
+    def __init__(self, msg: str = None, response: HttpResponse = None, **kwargs):
         self.response = response
-        super().__init__(*args, **kwargs)
+        super().__init__(msg, **kwargs)
