@@ -18,6 +18,16 @@ T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
+class ResponseURL(str):
+    """ URL of the response """
+    pass
+
+
+class RequestURL(str):
+    """ URL of the request """
+    pass
+
+
 class HttpRequestBody(bytes):
     """A container for holding the raw HTTP request body in bytes format."""
 
@@ -152,7 +162,7 @@ class HttpRequest:
     **web-poet** like :class:`~.HttpClient`.
     """
 
-    url: str = attrs.field()
+    url: RequestURL = attrs.field(converter=RequestURL)
     method: str = attrs.field(default="GET", kw_only=True)
     headers: HttpRequestHeaders = attrs.field(
         factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
@@ -185,7 +195,7 @@ class HttpResponse:
     is auto-detected from headers and body content.
     """
 
-    url: str = attrs.field()
+    url: ResponseURL = attrs.field(converter=ResponseURL)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
