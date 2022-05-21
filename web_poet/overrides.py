@@ -156,8 +156,9 @@ class PageObjectRegistry(dict):
             else:
                 warnings.warn(
                     f"Multiple @handle_urls annotations with the same 'overrides' "
-                    f"are ignored in the same Registry. Ignoring duplicate "
-                    f"annotation on '{include}' for {cls}."
+                    f"are ignored in the same Registry. The following rule is "
+                    f"ignored:\n{rule}",
+                    stacklevel=2,
                 )
 
             return cls
