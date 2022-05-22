@@ -7,15 +7,14 @@ from w3lib.html import get_base_url
 
 class SelectableMixin(abc.ABC):
     """
-    Inherit from this mixin, implement ``.text`` property,
+    Inherit from this mixin, implement ``._selector_input`` method,
     get ``.selector`` property and ``.xpath`` / ``.css`` methods.
     """
     __cached_selector = None
 
-    @property
     @abc.abstractmethod
-    def text(self) -> str:
-        raise NotImplementedError()
+    def _selector_input(self) -> str:
+        raise NotImplementedError()  # pragma: nocover
 
     # XXX: see https://github.com/python/mypy/issues/1362
     @property   # type: ignore
@@ -26,7 +25,7 @@ class SelectableMixin(abc.ABC):
         if self.__cached_selector is not None:
             return self.__cached_selector
         # XXX: should we pass base_url=self.url, as Scrapy does?
-        sel = parsel.Selector(text=self.text)
+        sel = parsel.Selector(text=self._selector_input())
         self.__cached_selector = sel
         return sel
 
@@ -58,12 +57,9 @@ class ResponseShortcutsMixin(SelectableMixin):
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
-        # required for backwards compatibility; todo: deprecate
         return self.response.text
 
-    @property
-    def text(self) -> str:
-        # required for SelectableMixin
+    def _selector_input(self) -> str:
         return self.html
 
     @property

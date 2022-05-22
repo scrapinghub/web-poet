@@ -213,6 +213,9 @@ class HttpResponse(SelectableMixin):
             self._cached_text = text
         return self._cached_text
 
+    def _selector_input(self) -> str:
+        return self.text
+
     @property
     def encoding(self):
         """ Encoding of the response """
