@@ -1,11 +1,50 @@
+import abc
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
 
-class ResponseShortcutsMixin:
+class SelectableMixin(abc.ABC):
+    """
+    Inherit from this mixin, implement ``.text`` property,
+    get ``.selector`` property and ``.xpath`` / ``.css`` methods.
+    """
+    __cached_selector = None
+
+    @property
+    @abc.abstractmethod
+    def text(self) -> str:
+        raise NotImplementedError()
+
+    # XXX: see https://github.com/python/mypy/issues/1362
+    @property   # type: ignore
+    def selector(self) -> parsel.Selector:
+        """Cached instance of :external:class:`parsel.selector.Selector`."""
+        # XXX: caching is implemented in a manual way to avoid issues with
+        # non-hashable classes, where memoizemethod_noargs doesn't work
+        if self.__cached_selector is not None:
+            return self.__cached_selector
+        # XXX: should we pass base_url=self.url, as Scrapy does?
+        sel = parsel.Selector(text=self.text)
+        self.__cached_selector = sel
+        return sel
+
+    def xpath(self, query, **kwargs):
+        """A shortcut to ``.selector.xpath()``."""
+        return self.selector.xpath(query, **kwargs)
+
+    def css(self, query):
+        """A shortcut to ``.selector.css()``."""
+        return self.selector.css(query)
+
+
+# TODO: when dropping Python 3.7 support,
+# fix untyped ResponseShortcutsMixin.response using typing.Protocol
+
+class ResponseShortcutsMixin(SelectableMixin):
     """Common shortcut methods for working with HTML responses.
+    This mixin could be used with Page Object base classes.
 
     It requires "response" attribute to be present.
     """
@@ -19,22 +58,13 @@ class ResponseShortcutsMixin:
     @property
     def html(self):
         """Shortcut to HTML Response's content."""
+        # required for backwards compatibility; todo: deprecate
         return self.response.text
 
     @property
-    def selector(self) -> parsel.Selector:
-        """``parsel.Selector`` instance for the HTML Response."""
-        # TODO: when dropping Python 3.7 support,
-        #  implement it using typing.Protocol
-        return self.response.selector  # type: ignore
-
-    def xpath(self, query, **kwargs):
-        """Run an XPath query on a response, using :class:`parsel.Selector`."""
-        return self.selector.xpath(query, **kwargs)
-
-    def css(self, query):
-        """Run a CSS query on a response, using :class:`parsel.Selector`."""
-        return self.selector.css(query)
+    def text(self) -> str:
+        # required for SelectableMixin
+        return self.html
 
     @property
     def base_url(self) -> str:
