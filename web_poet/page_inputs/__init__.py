@@ -8,3 +8,4 @@ from .http import (
     HttpRequestBody,
     HttpResponseBody,
 )
+from .browser import BrowserHtml
