@@ -16,8 +16,7 @@ class SelectableMixin(abc.ABC):
     def _selector_input(self) -> str:
         raise NotImplementedError()  # pragma: nocover
 
-    # XXX: see https://github.com/python/mypy/issues/1362
-    @property   # type: ignore
+    @property
     def selector(self) -> parsel.Selector:
         """Cached instance of :external:class:`parsel.selector.Selector`."""
         # XXX: caching is implemented in a manual way to avoid issues with
