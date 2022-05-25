@@ -7,4 +7,6 @@ from .http import (
     HttpResponseHeaders,
     HttpRequestBody,
     HttpResponseBody,
+    RequestURL,
+    ResponseURL
 )
