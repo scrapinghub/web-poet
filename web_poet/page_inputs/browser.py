@@ -1,7 +1,7 @@
 from web_poet.mixins import SelectableMixin
 
 
-class BrowserHtml(str, SelectableMixin):
+class BrowserHtml(SelectableMixin, str):
     """ HTML returned by a web browser,
     i.e. snapshot of the DOM tree in an HTML format.
     """
