@@ -4,6 +4,7 @@ import aiohttp.web_response
 import pytest
 import requests
 
+import parsel
 from web_poet.page_inputs import (
     HttpRequest,
     HttpResponse,
@@ -11,6 +12,7 @@ from web_poet.page_inputs import (
     HttpResponseBody,
     HttpRequestHeaders,
     HttpResponseHeaders,
+    BrowserHtml,
 )
 
 
@@ -421,3 +423,14 @@ def test_html5_meta_charset():
     response = HttpResponse("http://www.example.com", body=body)
     assert response.encoding == 'gb18030'
     assert response.text == body.decode('gb18030')
+
+
+def test_browser_html():
+    src = "<html><body><p>Hello, </p><p>world!</p></body></html>"
+    html = BrowserHtml(src)
+    assert html == src
+    assert html != "foo"
+
+    assert html.xpath("//p/text()").getall() == ["Hello, ", "world!"]
+    assert html.css("p::text").getall() == ["Hello, ", "world!"]
+    assert isinstance(html.selector, parsel.Selector)

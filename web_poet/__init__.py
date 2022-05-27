@@ -9,6 +9,7 @@ from .page_inputs import (
     HttpResponseHeaders,
     HttpRequestBody,
     HttpResponseBody,
+    BrowserHtml,
 )
 from .overrides import PageObjectRegistry, consume_modules, OverrideRule
 
