@@ -10,3 +10,4 @@ from .http import (
     RequestURL,
     ResponseURL
 )
+from .browser import BrowserHtml

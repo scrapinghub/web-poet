@@ -1,8 +1,7 @@
-import attrs
 import json
-import parsel
 from typing import Optional, Dict, List, Type, TypeVar, Union, Tuple, AnyStr
 
+import attrs
 from w3lib.encoding import (
     html_to_unicode,
     html_body_declared_encoding,
@@ -12,6 +11,7 @@ from w3lib.encoding import (
 
 from web_poet._base import _HttpHeaders
 from web_poet.utils import memoizemethod_noargs
+from web_poet.mixins import SelectableMixin
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
@@ -173,7 +173,7 @@ class HttpRequest:
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpResponse:
+class HttpResponse(SelectableMixin):
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
 
@@ -223,6 +223,9 @@ class HttpResponse:
             self._cached_text = text
         return self._cached_text
 
+    def _selector_input(self) -> str:
+        return self.text
+
     @property
     def encoding(self):
         """ Encoding of the response """
@@ -232,22 +235,6 @@ class HttpResponse:
             or self._body_declared_encoding()
             or self._body_inferred_encoding()
         )
-
-    # XXX: see https://github.com/python/mypy/issues/1362
-    @property   # type: ignore
-    @memoizemethod_noargs
-    def selector(self) -> parsel.Selector:
-        """Cached instance of :external:class:`parsel.selector.Selector`."""
-        # XXX: should we pass base_url=self.url, as Scrapy does?
-        return parsel.Selector(text=self.text)
-
-    def xpath(self, query, **kwargs):
-        """A shortcut to ``HttpResponse.selector.xpath()``."""
-        return self.selector.xpath(query, **kwargs)
-
-    def css(self, query):
-        """A shortcut to ``HttpResponse.selector.css()``."""
-        return self.selector.css(query)
 
     @memoizemethod_noargs
     def json(self):
