@@ -32,6 +32,28 @@ def test_url(cls):
     assert url.fragment == "frag1"
 
     new_url = cls(url)
+    assert url == new_url
+    assert str(url) == str(new_url)
+
+
+@pytest.mark.parametrize("compare_cls", [True, False])
+@pytest.mark.parametrize("cls", [RequestUrl, ResponseUrl])
+def test_url_equality(compare_cls, cls):
+    # Trailing / in the base URL
+    no_trail = cls("https://example.com")
+    with_trail = "https://example.com/"
+    if compare_cls:
+        with_trail = cls(with_trail)
+    assert no_trail == with_trail
+    assert str(no_trail) != str(with_trail)
+
+    # Trailing / in the path URL
+    no_trail = cls("https://example.com/foo")
+    with_trail = "https://example.com/foo/"
+    if compare_cls:
+        with_trail = cls(with_trail)
+    assert no_trail != with_trail  # Should not be equal
+    assert str(no_trail) != str(with_trail)
 
 
 @pytest.mark.parametrize("cls", [RequestUrl, ResponseUrl])
