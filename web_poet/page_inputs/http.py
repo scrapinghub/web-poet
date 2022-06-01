@@ -21,36 +21,36 @@ _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 class _Url:
     def __init__(self, url: Union[str, yarl.URL]):
-        self._url = yarl.URL(str(url))
+        self.__url = yarl.URL(str(url))
 
     def __str__(self) -> str:
-        return str(self._url)
+        return str(self.__url)
 
     def __repr__(self) -> str:
-        return f'{type(self).__name__}({str(self._url)!r})'
+        return f'{type(self).__name__}({str(self.__url)!r})'
 
     def __eq__(self, other) -> bool:
-        return str(self._url) == str(other)
+        return str(self.__url) == str(other)
 
     @property
     def scheme(self) -> str:
-        return self._url.scheme
+        return self.__url.scheme
 
     @property
     def host(self) -> Optional[str]:
-        return self._url.host
+        return self.__url.host
 
     @property
     def path(self) -> str:
-        return self._url.path
+        return self.__url.path
 
     @property
     def query_string(self) -> str:
-        return self._url.query_string
+        return self.__url.query_string
 
     @property
     def fragment(self) -> str:
-        return self._url.fragment
+        return self.__url.fragment
 
 
 class ResponseUrl(_Url):
