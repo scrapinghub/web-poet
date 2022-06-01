@@ -19,7 +19,7 @@ T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
-class _URL:
+class _Url:
     def __init__(self, url: Union[str, yarl.URL]):
         self._url = yarl.URL(str(url))
 
@@ -37,7 +37,7 @@ class _URL:
         return self._url.scheme
 
     @property
-    def host(self) -> str:
+    def host(self) -> Optional[str]:
         return self._url.host
 
     @property
@@ -53,12 +53,12 @@ class _URL:
         return self._url.fragment
 
 
-class ResponseURL(_URL):
+class ResponseUrl(_Url):
     """ URL of the response """
     pass
 
 
-class RequestURL(_URL):
+class RequestUrl(_Url):
     """ URL of the request """
     pass
 
@@ -197,7 +197,7 @@ class HttpRequest:
     **web-poet** like :class:`~.HttpClient`.
     """
 
-    url: RequestURL = attrs.field(converter=RequestURL)
+    url: RequestUrl = attrs.field(converter=RequestUrl)
     method: str = attrs.field(default="GET", kw_only=True)
     headers: HttpRequestHeaders = attrs.field(
         factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
@@ -230,7 +230,7 @@ class HttpResponse(SelectableMixin):
     is auto-detected from headers and body content.
     """
 
-    url: ResponseURL = attrs.field(converter=ResponseURL)
+    url: ResponseUrl = attrs.field(converter=ResponseUrl)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,

@@ -6,8 +6,8 @@ import requests
 
 import parsel
 from web_poet.page_inputs import (
-    ResponseURL,
-    RequestURL,
+    RequestUrl,
+    ResponseUrl,
     HttpRequest,
     HttpResponse,
     HttpRequestBody,
@@ -18,7 +18,7 @@ from web_poet.page_inputs import (
 )
 
 
-@pytest.mark.parametrize("cls", [ResponseURL, RequestURL])
+@pytest.mark.parametrize("cls", [RequestUrl, ResponseUrl])
 def test_url(cls):
     url_value = "https://example.com/category/product?query=123&id=xyz#frag1"
 
