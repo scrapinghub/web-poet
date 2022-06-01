@@ -9,6 +9,7 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
+import yarl
 from web_poet._base import _HttpHeaders
 from web_poet.utils import memoizemethod_noargs
 from web_poet.mixins import SelectableMixin
@@ -18,12 +19,46 @@ T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
-class ResponseURL(str):
+class _URL:
+    def __init__(self, url: Union[str, yarl.URL]):
+        self._url = yarl.URL(str(url))
+
+    def __str__(self) -> str:
+        return str(self._url)
+
+    def __repr__(self) -> str:
+        return str(self._url)
+
+    def __eq__(self, other) -> bool:
+        return str(self._url) == str(other)
+
+    @property
+    def scheme(self) -> str:
+        return self._url.scheme
+
+    @property
+    def host(self) -> str:
+        return self._url.host
+
+    @property
+    def path(self) -> str:
+        return self._url.path
+
+    @property
+    def query_string(self) -> str:
+        return self._url.query_string
+
+    @property
+    def fragment(self) -> str:
+        return self._url.fragment
+
+
+class ResponseURL(_URL):
     """ URL of the response """
     pass
 
 
-class RequestURL(str):
+class RequestURL(_URL):
     """ URL of the request """
     pass
 

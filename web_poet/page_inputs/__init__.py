@@ -1,6 +1,8 @@
 from .meta import Meta
 from .client import HttpClient
 from .http import (
+    ResponseURL,
+    RequestURL,
     HttpRequest,
     HttpResponse,
     HttpRequestHeaders,
