@@ -34,6 +34,17 @@ def test_url(cls):
     new_url = cls(url)
 
 
+@pytest.mark.parametrize("cls", [RequestUrl, ResponseUrl])
+def test_url_encoding(cls):
+    url_value = "http://εμπορικόσήμα.eu/путь/這裡"
+
+    url = cls(url_value)
+    str(url) == url_value
+
+    url = cls(url_value, encoded=False)
+    str(url) == "http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1"
+
+
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
 def test_http_body_hashable(body_cls):
     http_body = body_cls(b"content")

@@ -20,8 +20,8 @@ _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
 class _Url:
-    def __init__(self, url: Union[str, yarl.URL]):
-        self.__url = yarl.URL(str(url))
+    def __init__(self, url: Union[str, yarl.URL], encoded=True):
+        self.__url = yarl.URL(str(url), encoded=encoded)
 
     def __str__(self) -> str:
         return str(self.__url)
@@ -54,12 +54,24 @@ class _Url:
 
 
 class ResponseUrl(_Url):
-    """ URL of the response """
+    """ URL of the response
+
+    :param url: a string representation of a URL.
+    :param encoded: If set to False, the given ``url`` would be auto-encoded.
+        However, there's no guarantee that correct encoding is used. Thus,
+        it's recommended to set this in the *default* ``False`` value.
+    """
     pass
 
 
 class RequestUrl(_Url):
-    """ URL of the request """
+    """ URL of the request
+
+    :param url: a string representation of a URL.
+    :param encoded: If set to False, the given ``url`` would be auto-encoded.
+        However, there's no guarantee that correct encoding is used. Thus,
+        it's recommended to set this in the *default* ``False`` value.
+    """
     pass
 
 
