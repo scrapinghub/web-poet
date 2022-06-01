@@ -27,7 +27,7 @@ class _Url:
         return str(self._url)
 
     def __repr__(self) -> str:
-        return str(self._url)
+        return f'{type(self).__name__}({str(self._url)!r})'
 
     def __eq__(self, other) -> bool:
         return str(self._url) == str(other)
