@@ -3,8 +3,10 @@ import json
 import aiohttp.web_response
 import pytest
 import requests
-
 import parsel
+
+from web_poet import RequestUrl, ResponseUrl
+from web_poet._base import _Url
 from web_poet.page_inputs import (
     HttpRequest,
     HttpResponse,
@@ -72,7 +74,7 @@ def test_http_defaults(cls, body_cls):
     http_body = body_cls(b"content")
 
     obj = cls("url", body=http_body)
-    assert obj.url == "url"
+    assert str(obj.url) == "url"
     assert obj.body == b"content"
     assert not obj.headers
     assert obj.headers.get("user-agent") is None
@@ -164,7 +166,8 @@ def test_http_headers_init_dict(cls, headers_cls):
 
 def test_http_request_init_minimal():
     req = HttpRequest("url")
-    assert req.url == "url"
+    assert str(req.url) == "url"
+    assert isinstance(req.url, RequestUrl)
     assert req.method == "GET"
     assert isinstance(req.method, str)
     assert not req.headers
@@ -189,10 +192,18 @@ def test_http_request_init_full():
     http_body = HttpRequestBody(b"body")
     req_2 = HttpRequest("url", method="POST", headers=http_headers, body=http_body)
 
-    assert req_1.url == req_2.url
+    assert str(req_1.url) == str(req_2.url)
     assert req_1.method == req_2.method
     assert req_1.headers == req_2.headers
     assert req_1.body == req_2.body
+
+
+def test_http_request_init_with_response_url():
+    resp = HttpResponse("url", b"")
+    assert isinstance(resp.url, ResponseUrl)
+    req = HttpRequest(resp.url)
+    assert isinstance(req.url, RequestUrl)
+    assert str(req.url) == str(resp.url)
 
 
 def test_http_response_headers_from_bytes_dict():
@@ -434,3 +445,31 @@ def test_browser_html():
     assert html.xpath("//p/text()").getall() == ["Hello, ", "world!"]
     assert html.css("p::text").getall() == ["Hello, ", "world!"]
     assert isinstance(html.selector, parsel.Selector)
+
+
+def test_url_base_class():
+    url_str = "http://example.com"
+    url = _Url(url_str)
+    assert str(url) == url_str
+    assert repr(url) == "_Url('http://example.com')"
+
+    with pytest.raises(TypeError):
+        _Url(123)
+
+
+def test_url_subclass():
+    url_str = "http://example.com"
+
+    class MyUrl(_Url):
+        pass
+
+    class MyUrl2(_Url):
+        pass
+
+    url = MyUrl(url_str)
+    assert str(url) == url_str
+    assert url._url == url_str
+    assert repr(url) == "MyUrl('http://example.com')"
+
+    url2 = MyUrl2(url)
+    assert str(url2) == str(url)

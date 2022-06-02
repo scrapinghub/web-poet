@@ -9,7 +9,7 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
-from web_poet._base import _HttpHeaders
+from web_poet._base import _HttpHeaders, _Url
 from web_poet.utils import memoizemethod_noargs
 from web_poet.mixins import SelectableMixin
 
@@ -18,12 +18,12 @@ T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
-class ResponseUrl(str):
+class ResponseUrl(_Url):
     """ URL of the response """
     pass
 
 
-class RequestUrl(str):
+class RequestUrl(_Url):
     """ URL of the request """
     pass
 

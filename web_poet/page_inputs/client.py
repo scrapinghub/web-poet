@@ -22,6 +22,7 @@ from web_poet.page_inputs.http import (
 )
 from web_poet.exceptions import RequestBackendError, HttpResponseError
 from web_poet.utils import as_list
+from web_poet._base import _Url
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +73,12 @@ class HttpClient:
             return
 
         status = HTTPStatus(response.status)
-        msg = f"{response.status} {status.name} response for {response.url}"
+        msg = f"{response.status} {status.name} response for {response.url!s}"
         raise HttpResponseError(msg, request=request, response=response)
 
     async def request(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         method: str = "GET",
         headers: Optional[_Headers] = None,
@@ -115,7 +116,7 @@ class HttpClient:
 
     async def get(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         headers: Optional[_Headers] = None,
         allow_status: List[_Status] = None,
@@ -132,7 +133,7 @@ class HttpClient:
 
     async def post(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
