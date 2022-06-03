@@ -4,6 +4,7 @@ import aiohttp.web_response
 import pytest
 import requests
 
+import yarl
 import parsel
 from web_poet.page_inputs import (
     RequestUrl,
@@ -34,6 +35,19 @@ def test_url(cls):
     new_url = cls(url)
     assert url == new_url
     assert str(url) == str(new_url)
+
+
+@pytest.mark.parametrize("cls", [RequestUrl, ResponseUrl])
+def test_url_init(cls):
+    # via string
+    url_value = "https://example.com"
+    url = cls(url_value)
+
+    # via yarl
+    assert cls(yarl.URL(url_value)) == url
+
+    # via _Url subclasses
+    assert cls(cls(url_value)) == url
 
 
 @pytest.mark.parametrize("compare_cls", [True, False])

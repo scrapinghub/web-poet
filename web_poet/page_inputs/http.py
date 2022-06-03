@@ -20,7 +20,7 @@ _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
 class _Url:
-    def __init__(self, url: Union[str, yarl.URL], encoded=True):
+    def __init__(self, url: Union[str, yarl.URL, '_Url'], encoded=True):
         self._url = yarl.URL(str(url), encoded=encoded)
 
     def __str__(self) -> str:
