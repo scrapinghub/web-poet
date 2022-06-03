@@ -34,7 +34,7 @@ def test_web_page_object(book_list_html_response):
 
         def to_item(self) -> dict:
             return {
-                'url': self.url,
+                'url': str(self.url),
                 'title': self.css('title::text').get().strip(),
             }
 

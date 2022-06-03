@@ -44,7 +44,9 @@ def test_url_equality(compare_cls, cls):
     with_trail = "https://example.com/"
     if compare_cls:
         with_trail = cls(with_trail)
-    assert no_trail == with_trail
+        assert no_trail == with_trail
+    else:
+        assert no_trail != with_trail
     assert str(no_trail) != str(with_trail)
 
     # Trailing / in the path URL
@@ -113,17 +115,18 @@ def test_http_response_body_json():
 
 
 @pytest.mark.parametrize(
-    ["cls", "body_cls"],
+    ["cls", "body_cls", "url_cls"],
     [
-        (HttpRequest, HttpRequestBody),
-        (HttpResponse, HttpResponseBody),
+        (HttpRequest, HttpRequestBody, RequestUrl),
+        (HttpResponse, HttpResponseBody, ResponseUrl),
     ]
 )
-def test_http_defaults(cls, body_cls):
+def test_http_defaults(cls, body_cls, url_cls):
     http_body = body_cls(b"content")
 
     obj = cls("url", body=http_body)
-    assert obj.url == "url"
+    assert isinstance(obj.url, url_cls)
+    assert str(obj.url) == "url"
     assert obj.body == b"content"
     assert not obj.headers
     assert obj.headers.get("user-agent") is None
@@ -215,7 +218,8 @@ def test_http_headers_init_dict(cls, headers_cls):
 
 def test_http_request_init_minimal():
     req = HttpRequest("url")
-    assert req.url == "url"
+    assert isinstance(req.url, RequestUrl)
+    assert str(req.url) == "url"
     assert req.method == "GET"
     assert isinstance(req.method, str)
     assert not req.headers

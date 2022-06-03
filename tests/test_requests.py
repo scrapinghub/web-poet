@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 from web_poet.exceptions import RequestBackendError, HttpResponseError
 from web_poet.page_inputs import (
+    ResponseUrl,
     HttpClient,
     HttpRequest,
     HttpResponse,
@@ -37,7 +38,8 @@ async def test_perform_request_from_httpclient(async_mock):
     response = await client.get(url)
 
     # The async downloader implementation should return the HttpResponse
-    assert response.url == url
+    assert isinstance(response.url, ResponseUrl)
+    assert str(response.url) == url
     assert isinstance(response, HttpResponse)
 
 
@@ -161,8 +163,9 @@ async def test_http_client_execute(async_mock):
     request = HttpRequest("url-1")
     response = await client.execute(request)
 
+    assert isinstance(response.url, ResponseUrl)
     assert isinstance(response, HttpResponse)
-    assert response.url == "url-1"
+    assert str(response.url) == "url-1"
 
 
 @pytest.mark.asyncio

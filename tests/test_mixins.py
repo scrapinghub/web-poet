@@ -16,7 +16,7 @@ def my_page(book_list_html_response):
 
 
 def test_url(my_page):
-    assert my_page.url == 'http://books.toscrape.com/index.html'
+    assert str(my_page.url) == 'http://books.toscrape.com/index.html'
 
 
 def test_html(my_page, book_list_html):
@@ -56,7 +56,7 @@ def test_custom_baseurl():
     )
     page = MyPage(response=response)
 
-    assert page.url == 'http://www.example.com/path'
+    assert str(page.url) == 'http://www.example.com/path'
     assert page.base_url == 'http://example.com/foo/'
     assert page.urljoin("bar") == 'http://example.com/foo/bar'
     assert page.urljoin("http://example.com/1") == "http://example.com/1"

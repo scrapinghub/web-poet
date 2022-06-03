@@ -30,9 +30,9 @@ class _Url:
         return f'{type(self).__name__}({str(self._url)!r})'
 
     def __eq__(self, other) -> bool:
+        if not isinstance(other, type(self)):
+            return False
         if self._url.path == "/":
-            if isinstance(other, str):
-                other = _Url(other)
             if self._url.path == other.path:
                 return True
         return str(self._url) == str(other)
