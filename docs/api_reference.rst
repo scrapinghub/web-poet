@@ -15,7 +15,7 @@ Page Inputs
    :members:
    :undoc-members:
 
-.. automodule:: web_poet.page_inputs.meta
+.. automodule:: web_poet.page_inputs.page_params
    :members:
    :undoc-members:
 

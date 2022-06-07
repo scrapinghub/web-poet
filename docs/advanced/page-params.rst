@@ -1,8 +1,8 @@
-.. _`advanced-meta`:
+.. _page-params:
 
-============================
-Passing information via Meta
-============================
+=================
+Using page params
+=================
 
 In some cases, Page Objects might require additional information to be passed to
 them. Such information can dictate the behavior of the Page Object or affect its
@@ -14,8 +14,8 @@ be :class:`~.HttpResponse`. This holds the HTTP response information that the
 Page Object is trying to represent.
 
 In order to standardize how to pass arbitrary information inside Page Objects,
-we'll need to use :class:`~.Meta` similar on how we use :class:`~.HttpResponse`
-as a requirement to instantiate Page Objects:
+we'll need to use :class:`~.PageParams` similar on how we use
+:class:`~.HttpResponse` as a requirement to instantiate Page Objects:
 
 .. code-block:: python
 
@@ -25,19 +25,19 @@ as a requirement to instantiate Page Objects:
     @attrs.define
     class SomePage(web_poet.ItemWebPage):
         # The HttpResponse attribute is inherited from ItemWebPage
-        meta: web_poet.Meta
+        page_params: web_poet.PageParams
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
 
     # It uses Python's dict interface.
-    meta = web_poet.Meta({"arbitrary_value": 1234, "cool": True})
+    page_params = web_poet.PageParams({"arbitrary_value": 1234, "cool": True})
 
-    page = SomePage(response=response, meta=meta)
+    page = SomePage(response=response, page_params=page_params)
 
-However, similar with :class:`~.HttpResponse`, developers using :class:`~.Meta`
-shouldn't care about how they are being passed into Page Objects. This will
-depend on the framework that would use **web-poet**.
+However, similar with :class:`~.HttpResponse`, developers using
+:class:`~.PageParams` shouldn't care about how they are being passed into Page
+Objects. This will depend on the framework that would use **web-poet**.
 
 Let's checkout some examples on how to use it inside a Page Object.
 
@@ -52,7 +52,7 @@ Controlling item values
 
     @attrs.define
     class ProductPage(web_poet.ItemWebPage):
-        meta: web_poet.Meta
+        page_params: web_poet.PageParams
 
         default_tax_rate = 0.10
 
@@ -67,7 +67,7 @@ Controlling item values
 
         @staticmethod
         def calculate_price_with_tax(item):
-            tax_rate = self.meta.get("tax_rate") or self.default_tax_rate
+            tax_rate = self.page_params.get("tax_rate") or self.default_tax_rate
             item["price_with_tax"] = item["price"] * (1 + tax_rate)
 
 
@@ -81,9 +81,9 @@ the **tax_rate** as optional information, notice that we also have a the
 Controlling Page Object behavior
 --------------------------------
 
-Let's try an example wherein :class:`~.Meta` is able to control how 
+Let's try an example wherein :class:`~.PageParams` is able to control how
 :ref:`advanced-requests` are being used. Specifically, we are going to use
-:class:`~.Meta` to control the number of paginations being made.
+:class:`~.PageParams` to control the number of paginations being made.
 
 .. code-block:: python
 
@@ -96,7 +96,7 @@ Let's try an example wherein :class:`~.Meta` is able to control how
     @attrs.define
     class ProductPage(web_poet.ItemWebPage):
         http_client: web_poet.HttpClient
-        meta: web_poet.Meta
+        page_params: web_poet.PageParams
 
         default_max_pages = 5
 
@@ -106,7 +106,7 @@ Let's try an example wherein :class:`~.Meta` is able to control how
         async def get_product_urls(self) -> List[str]:
             # Simulates scrolling to the bottom of the page to load the next
             # set of items in an "Infinite Scrolling" category list page.
-            max_pages = self.meta.get("max_pages") or self.default_max_pages
+            max_pages = self.page_params.get("max_pages") or self.default_max_pages
             requests = [
                 self.create_next_page_request(page_num)
                 for page_num in range(2, max_pages + 1)
@@ -128,7 +128,7 @@ Let's try an example wherein :class:`~.Meta` is able to control how
         def parse_product_urls(response: web_poet.HttpResponse):
             return response.css("#main .products a.link ::attr(href)").getall()
 
-From the example above, we can see how :class:`~.Meta` is able to arbitrarily
-limit the pagination behavior by passing an optional **max_pages** info. Take
-note that a ``default_max_pages`` value is also present in the Page Object in
-case the :class:`~.Meta` instance did not provide it.
+From the example above, we can see how :class:`~.PageParams` is able to
+arbitrarily limit the pagination behavior by passing an optional **max_pages**
+info. Take note that a ``default_max_pages`` value is also present in the Page
+Object in case the :class:`~.PageParams` instance did not provide it.

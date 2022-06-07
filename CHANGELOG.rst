@@ -7,7 +7,7 @@ TBR
 
 * Added support for performing additional requests using
   ``web_poet.HttpClient``.
-* Introduced ``web_poet.Meta`` to pass arbitrary information
+* Introduced ``web_poet.PageParams`` to pass arbitrary information
   inside a Page Object.
 * added a ``PageObjectRegistry`` class which has the  ``handle_urls`` decorator
   to conveniently declare and collect ``OverrideRule``.
