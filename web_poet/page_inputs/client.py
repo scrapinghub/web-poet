@@ -73,7 +73,7 @@ class HttpClient:
             return
 
         status = HTTPStatus(response.status)
-        msg = f"{response.status} {status.name} response for {response.url!s}"
+        msg = f"{response.status} {status.name} response for {response.url}"
         raise HttpResponseError(msg, request=request, response=response)
 
     async def request(
