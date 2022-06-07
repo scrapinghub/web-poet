@@ -9,7 +9,7 @@ from .page_inputs import (
     HttpResponseHeaders,
     HttpRequestBody,
     HttpResponseBody,
-    Meta,
+    PageParams,
     RequestUrl,
     ResponseUrl,
 )
