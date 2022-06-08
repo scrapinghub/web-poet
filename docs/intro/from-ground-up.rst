@@ -503,7 +503,7 @@ For example, a very basic Page Object could look like this:
 
             def to_item(self) -> dict:
                 return {
-                    'url': self.response.url,
+                    'url': str(self.response.url),
                     'title': self.response.css("h1::text").get()
                 }
 
