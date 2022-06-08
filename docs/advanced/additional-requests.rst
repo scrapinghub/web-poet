@@ -54,7 +54,7 @@ a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
         ).encode("utf-8"),
     )
 
-    print(request.url)     # https://www.api.example.com/product-pagination/
+    print(request.url)     # RequestUrl('https://www.api.example.com/product-pagination/')
     print(request.method)  # POST
 
     print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
@@ -90,7 +90,7 @@ it's perfectly fine to define them as:
 
     request = web_poet.HttpRequest("https://api.example.com/product-info?id=123")
 
-    print(request.url)     # https://api.example.com/product-info?id=123
+    print(request.url)     # RequestUrl('https://api.example.com/product-info?id=123')
     print(request.method)  # GET
 
     print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
@@ -141,7 +141,7 @@ Let's check out an example to see its internals:
         headers={"Content-Type": "application/json;charset=UTF-8"}
     )
 
-    print(response.url)            # https://www.api.example.com/product-pagination/
+    print(response.url)            # ResponseUrl('https://www.api.example.com/product-pagination/')
     print(type(response.url))      # <class 'str'>
 
     print(response.body)           # b'{"data": "value \xf0\x9f\x91\x8d"}'
@@ -604,7 +604,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
             except web_poet.exceptions.HttpResponseError as err:
                 logger.warning(
                     f"Received a {err.response.status} response status for product ID "
-                    f"'{item['product_id']}' from this URL: {err.request.url}"
+                    f"'{item['product_id']}' from this URL: {str(err.request.url)}"
                 )
             else:
                 item["images"] = response.css(".product-images img::attr(src)").getall()
