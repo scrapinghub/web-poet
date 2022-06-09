@@ -10,17 +10,17 @@ You can read more about this in the :ref:`advanced-downloader-impl` documentatio
 
 import asyncio
 import logging
-from typing import Optional, Dict, List, Union, Callable
 from http import HTTPStatus
+from typing import Callable, Dict, List, Optional, Union
 
-from web_poet.requests import request_backend_var, _perform_request
+from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.http import (
     HttpRequest,
-    HttpRequestHeaders,
     HttpRequestBody,
+    HttpRequestHeaders,
     HttpResponse,
 )
-from web_poet.exceptions import RequestBackendError, HttpResponseError
+from web_poet.requests import _perform_request
 from web_poet.utils import as_list
 
 logger = logging.getLogger(__name__)
@@ -59,9 +59,7 @@ class HttpClient:
         allow_status: List[_Status] = None,
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
-        allow_all_status = any(
-            [True for s in allow_status_normalized if "*" == s.strip()]
-        )
+        allow_all_status = any([True for s in allow_status_normalized if "*" == s.strip()])
 
         if (
             allow_all_status
@@ -149,9 +147,7 @@ class HttpClient:
             allow_status=allow_status,
         )
 
-    async def execute(
-        self, request: HttpRequest, *, allow_status: List[_Status] = None
-    ) -> HttpResponse:
+    async def execute(self, request: HttpRequest, *, allow_status: List[_Status] = None) -> HttpResponse:
         """Accepts a single instance of :class:`~.HttpRequest` and executes it
         using the request implementation configured in the :class:`~.HttpClient`
         instance.
@@ -208,7 +204,5 @@ class HttpClient:
         """
 
         coroutines = [self.execute(r, allow_status=allow_status) for r in requests]
-        responses = await asyncio.gather(
-            *coroutines, return_exceptions=return_exceptions
-        )
+        responses = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         return responses

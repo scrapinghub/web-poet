@@ -2,12 +2,12 @@ from __future__ import annotations  # https://www.python.org/dev/peps/pep-0563/
 
 import importlib
 import importlib.util
-import warnings
 import pkgutil
+import warnings
 from collections import deque
 from dataclasses import dataclass, field
 from operator import attrgetter
-from typing import Iterable, Optional, Union, List, Callable, Dict, Any, TypeVar, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, TypeVar, Union
 
 from url_matcher import Patterns
 
@@ -96,9 +96,7 @@ class PageObjectRegistry(dict):
     """
 
     @classmethod
-    def from_override_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]
-    ) -> PageObjectRegistryTV:
+    def from_override_rules(cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]) -> PageObjectRegistryTV:
         """An alternative constructor for creating a :class:`~.PageObjectRegistry`
         instance by accepting a list of :class:`~.OverrideRule`.
 
@@ -203,8 +201,8 @@ class PageObjectRegistry(dict):
         def matcher(rule: OverrideRule):
             attribs = getter(rule)
             if not isinstance(attribs, tuple):
-                attribs = tuple([attribs])
-            if list(attribs) == list(kwargs.values()):
+                attribs = (attribs,)
+            if attribs == tuple(kwargs.values()):
                 return True
             return False
 
@@ -231,9 +229,7 @@ def _walk_module(module: str) -> Iterable:
     mod = importlib.import_module(spec.name)
     yield mod
     if spec.submodule_search_locations:
-        for info in pkgutil.walk_packages(
-            spec.submodule_search_locations, f"{spec.name}.", onerror
-        ):
+        for info in pkgutil.walk_packages(spec.submodule_search_locations, f"{spec.name}.", onerror):
             mod = importlib.import_module(info.name)
             yield mod
 

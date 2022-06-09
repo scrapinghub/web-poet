@@ -1,17 +1,17 @@
 import json
-from typing import Optional, Dict, List, Type, TypeVar, Union, Tuple, AnyStr
+from typing import AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import attrs
 from w3lib.encoding import (
-    html_to_unicode,
     html_body_declared_encoding,
+    html_to_unicode,
+    http_content_type_encoding,
     resolve_encoding,
-    http_content_type_encoding
 )
 
 from web_poet._base import _HttpHeaders
-from web_poet.utils import memoizemethod_noargs
 from web_poet.mixins import SelectableMixin
+from web_poet.utils import memoizemethod_noargs
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
@@ -28,8 +28,8 @@ class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
     def declared_encoding(self) -> Optional[str]:
-        """ Return the encoding specified in meta tags in the html body,
-        or ``None`` if no suitable encoding was found """
+        """Return the encoding specified in meta tags in the html body,
+        or ``None`` if no suitable encoding was found"""
         return html_body_declared_encoding(self)
 
     def json(self):
@@ -99,9 +99,7 @@ class HttpResponseHeaders(_HttpHeaders):
     """
 
     @classmethod
-    def from_bytes_dict(
-        cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
-    ) -> T_headers:
+    def from_bytes_dict(cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8") -> T_headers:
         """An alternative constructor for instantiation where the header-value
         pairs could be in raw bytes form.
 
@@ -140,9 +138,9 @@ class HttpResponseHeaders(_HttpHeaders):
         return cls(converted)
 
     def declared_encoding(self) -> Optional[str]:
-        """ Return encoding detected from the Content-Type header, or None
-        if encoding is not found """
-        content_type = self.get('Content-Type', '')
+        """Return encoding detected from the Content-Type header, or None
+        if encoding is not found"""
+        content_type = self.get("Content-Type", "")
         return http_content_type_encoding(content_type)
 
 
@@ -154,12 +152,8 @@ class HttpRequest:
 
     url: str = attrs.field()
     method: str = attrs.field(default="GET", kw_only=True)
-    headers: HttpRequestHeaders = attrs.field(
-        factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
-    )
-    body: HttpRequestBody = attrs.field(
-        factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
-    )
+    headers: HttpRequestHeaders = attrs.field(factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True)
+    body: HttpRequestBody = attrs.field(factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True)
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
@@ -188,12 +182,10 @@ class HttpResponse(SelectableMixin):
     url: str = attrs.field()
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
-    headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,
-                                               converter=HttpResponseHeaders,
-                                               kw_only=True)
+    headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders, converter=HttpResponseHeaders, kw_only=True)
     _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
 
-    _DEFAULT_ENCODING = 'ascii'
+    _DEFAULT_ENCODING = "ascii"
     _cached_text: Optional[str] = None
 
     @property
@@ -208,7 +200,7 @@ class HttpResponse(SelectableMixin):
         # while detecting the encoding
         encoding = self.encoding
         if self._cached_text is None:
-            fake_content_type_header = f'charset={encoding}'
+            fake_content_type_header = f"charset={encoding}"
             encoding, text = html_to_unicode(fake_content_type_header, self.body)
             self._cached_text = text
         return self._cached_text
@@ -218,7 +210,7 @@ class HttpResponse(SelectableMixin):
 
     @property
     def encoding(self):
-        """ Encoding of the response """
+        """Encoding of the response"""
         return (
             self._encoding
             or self._headers_declared_encoding()
@@ -228,7 +220,7 @@ class HttpResponse(SelectableMixin):
 
     @memoizemethod_noargs
     def json(self):
-        """ Deserialize a JSON document to a Python object. """
+        """Deserialize a JSON document to a Python object."""
         return self.body.json()
 
     @memoizemethod_noargs
@@ -241,18 +233,15 @@ class HttpResponse(SelectableMixin):
 
     @memoizemethod_noargs
     def _body_inferred_encoding(self):
-        content_type = self.headers.get('Content-Type', '')
+        content_type = self.headers.get("Content-Type", "")
         body_encoding, text = html_to_unicode(
-            content_type,
-            self.body,
-            auto_detect_fun=self._auto_detect_fun,
-            default_encoding=self._DEFAULT_ENCODING
+            content_type, self.body, auto_detect_fun=self._auto_detect_fun, default_encoding=self._DEFAULT_ENCODING
         )
         self._cached_text = text
         return body_encoding
 
     def _auto_detect_fun(self, body: bytes) -> Optional[str]:
-        for enc in (self._DEFAULT_ENCODING, 'utf-8', 'cp1252'):
+        for enc in (self._DEFAULT_ENCODING, "utf-8", "cp1252"):
             try:
                 body.decode(enc)
             except UnicodeError:

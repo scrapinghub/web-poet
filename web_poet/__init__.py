@@ -1,18 +1,17 @@
-from .pages import WebPage, ItemPage, ItemWebPage, Injectable
-from .requests import request_backend_var
+from .overrides import OverrideRule, PageObjectRegistry, consume_modules
 from .page_inputs import (
-    Meta,
+    BrowserHtml,
     HttpClient,
     HttpRequest,
-    HttpResponse,
-    HttpRequestHeaders,
-    HttpResponseHeaders,
     HttpRequestBody,
+    HttpRequestHeaders,
+    HttpResponse,
     HttpResponseBody,
-    BrowserHtml,
+    HttpResponseHeaders,
+    Meta,
 )
-from .overrides import PageObjectRegistry, consume_modules, OverrideRule
-
+from .pages import Injectable, ItemPage, ItemWebPage, WebPage
+from .requests import request_backend_var
 
 default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls

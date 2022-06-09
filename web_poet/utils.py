@@ -1,7 +1,7 @@
 import weakref
 from collections.abc import Iterable
 from functools import wraps
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 
 def memoizemethod_noargs(method):

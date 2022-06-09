@@ -10,6 +10,7 @@ class SelectableMixin(abc.ABC):
     Inherit from this mixin, implement ``._selector_input`` method,
     get ``.selector`` property and ``.xpath`` / ``.css`` methods.
     """
+
     __cached_selector = None
 
     @abc.abstractmethod
@@ -40,12 +41,14 @@ class SelectableMixin(abc.ABC):
 # TODO: when dropping Python 3.7 support,
 # fix untyped ResponseShortcutsMixin.response using typing.Protocol
 
+
 class ResponseShortcutsMixin(SelectableMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 
     It requires "response" attribute to be present.
     """
+
     _cached_base_url = None
 
     @property

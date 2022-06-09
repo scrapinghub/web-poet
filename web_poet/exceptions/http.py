@@ -6,7 +6,7 @@ These are exceptions pertaining to common issues faced when executing HTTP
 operations.
 """
 
-from web_poet.page_inputs.http import HttpResponse, HttpRequest
+from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
 
 class HttpError(IOError):

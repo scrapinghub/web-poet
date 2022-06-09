@@ -4,7 +4,7 @@ In general, users shouldn't import and use the contents of this module.
 """
 
 
-from typing import Type, TypeVar, List, Dict
+from typing import Dict, List, Type, TypeVar
 
 from multidict import CIMultiDict
 
