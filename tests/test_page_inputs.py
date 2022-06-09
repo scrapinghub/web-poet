@@ -4,20 +4,37 @@ import aiohttp.web_response
 import pytest
 import requests
 
-from web_poet.page_inputs import HttpResponse, HttpResponseBody, HttpResponseHeaders
+import parsel
+from web_poet.page_inputs import (
+    HttpRequest,
+    HttpResponse,
+    HttpRequestBody,
+    HttpResponseBody,
+    HttpRequestHeaders,
+    HttpResponseHeaders,
+    BrowserHtml,
+)
 
 
-def test_http_response_body_hashable():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_hashable(body_cls):
+    http_body = body_cls(b"content")
     assert http_body in {http_body}
     assert http_body in {b"content"}
     assert http_body not in {b"foo"}
 
 
-def test_http_response_body_bytes_api():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_bytes_api(body_cls):
+    http_body = body_cls(b"content")
     assert http_body == b"content"
     assert b"ent" in http_body
+
+
+@pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
+def test_http_body_str_api(body_cls):
+    with pytest.raises(TypeError):
+        body_cls("string content")
 
 
 def test_http_response_body_declared_encoding():
@@ -44,55 +61,168 @@ def test_http_response_body_json():
     assert http_body.json() == {"ключ": "значение"}
 
 
-def test_http_response_defaults():
-    http_body = HttpResponseBody(b"content")
+@pytest.mark.parametrize(
+    ["cls", "body_cls"],
+    [
+        (HttpRequest, HttpRequestBody),
+        (HttpResponse, HttpResponseBody),
+    ]
+)
+def test_http_defaults(cls, body_cls):
+    http_body = body_cls(b"content")
 
-    response = HttpResponse("url", body=http_body)
-    assert response.url == "url"
-    assert response.body == b"content"
-    assert response.status is None
-    assert not response.headers
-    assert response.headers.get("user-agent") is None
+    obj = cls("url", body=http_body)
+    assert obj.url == "url"
+    assert obj.body == b"content"
+    assert not obj.headers
+    assert obj.headers.get("user-agent") is None
 
-
-def test_http_response_with_headers():
-    http_body = HttpResponseBody(b"content")
-    headers = HttpResponseHeaders.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
-    response = HttpResponse("url", body=http_body, status=200, headers=headers)
-    assert response.status == 200
-    assert len(response.headers) == 1
-    assert response.headers.get("user-agent") == "test agent"
-
-
-def test_http_response_bytes_body():
-    response = HttpResponse("http://example.com", body=b"content")
-    assert isinstance(response.body, HttpResponseBody)
-    assert response.body == HttpResponseBody(b"content")
+    if cls == HttpResponse:
+        assert obj.status is None
+    else:
+        with pytest.raises(AttributeError):
+            obj.status
 
 
-def test_http_response_body_validation_str():
+@pytest.mark.parametrize(
+    ["cls", "headers_cls"],
+    [
+        (HttpRequest, HttpRequestHeaders),
+        (HttpResponse, HttpResponseHeaders),
+    ]
+)
+def test_http_with_headers_alt_constructor(cls, headers_cls):
+    headers = headers_cls.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
+    obj = cls("url", body=b"", headers=headers)
+    assert len(obj.headers) == 1
+    assert obj.headers.get("user-agent") == "test agent"
+
+
+@pytest.mark.parametrize(
+    ["cls", "body_cls"],
+    [
+        (HttpRequest, HttpRequestBody),
+        (HttpResponse, HttpResponseBody),
+    ]
+)
+def test_http_response_bytes_body(cls, body_cls):
+    obj = cls("http://example.com", body=b"content")
+    assert isinstance(obj.body, body_cls)
+    assert obj.body == body_cls(b"content")
+
+
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_str(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body="content")
+        cls("http://example.com", body="content")
 
 
-def test_http_response_body_validation_None():
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_None(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=None)
+        cls("http://example.com", body=None)
 
 
 @pytest.mark.xfail(reason="not implemented")
-def test_http_response_body_validation_other():
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_body_validation_other(cls):
     with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=123)
+        cls("http://example.com", body=123)
 
 
-def test_http_respose_headers():
-    headers = HttpResponseHeaders({"user-agent": "mozilla"})
+@pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
+def test_http_request_headers_init_invalid(cls):
+    with pytest.raises(TypeError):
+        cls("http://example.com", body=b"", headers=123)
+
+
+@pytest.mark.parametrize("headers_cls", [HttpRequestHeaders, HttpResponseHeaders])
+def test_http_response_headers(headers_cls):
+    headers = headers_cls({"user-agent": "mozilla"})
     assert headers['user-agent'] == "mozilla"
     assert headers['User-Agent'] == "mozilla"
 
     with pytest.raises(KeyError):
         headers["user agent"]
+
+
+@pytest.mark.parametrize(
+    ["cls", "headers_cls"],
+    [
+        (HttpRequest, HttpRequestHeaders),
+        (HttpResponse, HttpResponseHeaders),
+    ]
+)
+def test_http_headers_init_dict(cls, headers_cls):
+    obj = cls(
+        "http://example.com", body=b"", headers={"user-agent": "chrome"}
+    )
+    assert isinstance(obj.headers, headers_cls)
+    assert obj.headers['user-agent'] == "chrome"
+    assert obj.headers['User-Agent'] == "chrome"
+
+
+def test_http_request_init_minimal():
+    req = HttpRequest("url")
+    assert req.url == "url"
+    assert req.method == "GET"
+    assert isinstance(req.method, str)
+    assert not req.headers
+    assert isinstance(req.headers, HttpRequestHeaders)
+    assert not req.body
+    assert isinstance(req.body, HttpRequestBody)
+
+
+def test_http_request_init_full():
+    req_1 = HttpRequest(
+        "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
+    )
+    assert req_1.method == "POST"
+    assert isinstance(req_1.method, str)
+    assert req_1.headers == {"User-Agent": "test agent"}
+    assert req_1.headers.get("user-agent") == "test agent"
+    assert isinstance(req_1.headers, HttpRequestHeaders)
+    assert req_1.body == b"body"
+    assert isinstance(req_1.body, HttpRequestBody)
+
+    http_headers = HttpRequestHeaders({"User-Agent": "test agent"})
+    http_body = HttpRequestBody(b"body")
+    req_2 = HttpRequest("url", method="POST", headers=http_headers, body=http_body)
+
+    assert req_1.url == req_2.url
+    assert req_1.method == req_2.method
+    assert req_1.headers == req_2.headers
+    assert req_1.body == req_2.body
+
+
+def test_http_response_headers_from_bytes_dict():
+    raw_headers = {
+        b"Content-Length": [b"316"],
+        b"Content-Encoding": [b"gzip", b"br"],
+        b"server": b"sffe",
+        "X-string": "string",
+        "X-missing": None,
+        "X-tuple": (b"x", "y"),
+    }
+    headers = HttpResponseHeaders.from_bytes_dict(raw_headers)
+
+    assert headers.get("content-length") == "316"
+    assert headers.get("content-encoding") == "gzip"
+    assert headers.getall("Content-Encoding") == ["gzip", "br"]
+    assert headers.get("server") == "sffe"
+    assert headers.get("x-string") == "string"
+    assert headers.get("x-missing") is None
+    assert headers.get("x-tuple") == "x"
+    assert headers.getall("x-tuple") == ["x", "y"]
+
+
+def test_http_response_headers_from_bytes_dict_err():
+
+    with pytest.raises(ValueError):
+        HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
+
+    with pytest.raises(ValueError):
+        HttpResponseHeaders.from_bytes_dict({b"Content-Length": 316})
 
 
 def test_http_response_headers_init_requests():
@@ -117,20 +247,6 @@ def test_http_response_headers_init_aiohttp():
     assert response.headers['User-Agent'] == "mozilla"
 
 
-def test_http_response_headers_init_dict():
-    response = HttpResponse("http://example.com", body=b"",
-                            headers={"user-agent": "mozilla"})
-    assert isinstance(response.headers, HttpResponseHeaders)
-    assert response.headers['user-agent'] == "mozilla"
-    assert response.headers['User-Agent'] == "mozilla"
-
-
-def test_http_response_headers_init_invalid():
-    with pytest.raises(TypeError):
-        response = HttpResponse("http://example.com", body=b"",
-                                headers=123)
-
-
 def test_http_response_selectors(book_list_html_response):
     title = "All products | Books to Scrape - Sandbox"
 
@@ -148,7 +264,7 @@ def test_http_response_json():
     response = HttpResponse(url, body=b'{"key": "value"}')
     assert response.json() == {"key": "value"}
 
-    response = HttpResponse(url, '{"ключ": "значение"}'.encode("utf8"))
+    response = HttpResponse(url, body='{"ключ": "значение"}'.encode("utf8"))
     assert response.json() == {"ключ": "значение"}
 
 
@@ -160,7 +276,7 @@ def test_http_response_text():
     """
     text = "œ is a Weird Character"
     body = HttpResponseBody(b"\x9c is a Weird Character")
-    response = HttpResponse("http://example.com", body)
+    response = HttpResponse("http://example.com", body=body)
 
     assert response.text == text
 
@@ -179,7 +295,7 @@ def test_http_headers_declared_encoding(headers, encoding):
     headers = HttpResponseHeaders(headers)
     assert headers.declared_encoding() == encoding
 
-    response = HttpResponse("http://example.com", b'', headers=headers)
+    response = HttpResponse("http://example.com", body=b'', headers=headers)
     assert response.encoding == encoding or HttpResponse._DEFAULT_ENCODING
 
 
@@ -200,14 +316,14 @@ def test_explicit_encoding():
 
 
 def test_explicit_encoding_invalid():
-    response = HttpResponse("http://www.example.com", "£".encode('utf-8'),
+    response = HttpResponse("http://www.example.com", body="£".encode('utf-8'),
                             encoding='latin1')
     assert response.encoding == "latin1"
     assert response.text == "£".encode('utf-8').decode("latin1")
 
 
 def test_utf8_body_detection():
-    response = HttpResponse("http://www.example.com", body=b"\xc2\xa3",
+    response = HttpResponse("http://www.example.com", b"\xc2\xa3",
                             headers={"Content-type": "text/html; charset=None"})
     assert response.encoding == "utf-8"
 
@@ -307,3 +423,14 @@ def test_html5_meta_charset():
     response = HttpResponse("http://www.example.com", body=body)
     assert response.encoding == 'gb18030'
     assert response.text == body.decode('gb18030')
+
+
+def test_browser_html():
+    src = "<html><body><p>Hello, </p><p>world!</p></body></html>"
+    html = BrowserHtml(src)
+    assert html == src
+    assert html != "foo"
+
+    assert html.xpath("//p/text()").getall() == ["Hello, ", "world!"]
+    assert html.css("p::text").getall() == ["Hello, ", "world!"]
+    assert isinstance(html.selector, parsel.Selector)

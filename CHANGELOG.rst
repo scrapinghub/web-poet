@@ -5,6 +5,12 @@ Changelog
 TBR
 ------------------
 
+* Added support for performing additional requests using
+  ``web_poet.HttpClient``.
+* Introduced ``web_poet.Meta`` to pass arbitrary information
+  inside a Page Object.
+* added a ``PageObjectRegistry`` class which has the  ``handle_urls`` decorator
+  to conveniently declare and collect ``OverrideRule``.
 * removed support for Python 3.6
 * added support for Python 3.10
 * Backward Incompatible Change:
@@ -12,7 +18,6 @@ TBR
     * ``ResponseData`` is now ``HttpResponse`` which has a new
       specific attribute types like ``HttpResponseBody`` and
       ``HttpResponseHeaders``.
-
 
 0.1.1 (2021-06-02)
 ------------------

@@ -1,3 +1,5 @@
+.. _`api-reference`:
+
 =============
 API Reference
 =============
@@ -5,9 +7,17 @@ API Reference
 Page Inputs
 ===========
 
-.. automodule:: web_poet.page_inputs
-    :members:
-    :undoc-members:
+.. automodule:: web_poet.page_inputs.client
+   :members:
+   :undoc-members:
+
+.. automodule:: web_poet.page_inputs.http
+   :members:
+   :undoc-members:
+
+.. automodule:: web_poet.page_inputs.meta
+   :members:
+   :undoc-members:
 
 Pages
 =====
@@ -45,3 +55,34 @@ Mixins
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
    :no-special-members:
+
+Requests
+========
+
+.. automodule:: web_poet.requests
+    :members:
+    :undoc-members:
+
+Exceptions
+==========
+
+.. automodule:: web_poet.exceptions.core
+    :members:
+
+.. automodule:: web_poet.exceptions.http
+    :show-inheritance:
+    :members:
+
+.. _`api-overrides`:
+
+Overrides
+=========
+
+See the tutorial section on :ref:`intro-overrides` for more context about its
+use cases and some examples.
+
+.. autofunction:: web_poet.handle_urls
+
+.. automodule:: web_poet.overrides
+   :members:
+   :exclude-members: handle_urls

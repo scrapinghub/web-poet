@@ -22,6 +22,7 @@ setup(
     install_requires=[
         'attrs >= 21.3.0',
         'parsel',
+        'url-matcher',
         'multidict',
         'w3lib >= 1.22.0',
     ],
