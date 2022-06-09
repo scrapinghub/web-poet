@@ -14,7 +14,7 @@ from .page_inputs import (
     ResponseUrl,
 )
 from .overrides import PageObjectRegistry, consume_modules, OverrideRule
-
+from .functional import page_object
 
 default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls
