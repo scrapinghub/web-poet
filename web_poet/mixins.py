@@ -53,8 +53,8 @@ class ResponseShortcutsMixin(SelectableMixin):
 
     @property
     def url(self):
-        """Shortcut to HTML Response's URL."""
-        return self.response.url
+        """Shortcut to HTML Response's URL, as a string."""
+        return str(self.response.url)
 
     @property
     def html(self):

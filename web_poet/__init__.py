@@ -8,7 +8,9 @@ from .page_inputs import (
     HttpResponse,
     HttpResponseBody,
     HttpResponseHeaders,
-    Meta,
+    PageParams,
+    RequestUrl,
+    ResponseUrl,
 )
 from .pages import Injectable, ItemPage, ItemWebPage, WebPage
 from .requests import request_backend_var

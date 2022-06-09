@@ -13,6 +13,7 @@ import logging
 from http import HTTPStatus
 from typing import Callable, Dict, List, Optional, Union
 
+from web_poet._base import _Url
 from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.http import (
     HttpRequest,
@@ -75,7 +76,7 @@ class HttpClient:
 
     async def request(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         method: str = "GET",
         headers: Optional[_Headers] = None,
@@ -113,7 +114,7 @@ class HttpClient:
 
     async def get(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         headers: Optional[_Headers] = None,
         allow_status: List[_Status] = None,
@@ -130,7 +131,7 @@ class HttpClient:
 
     async def post(
         self,
-        url: str,
+        url: Union[str, _Url],
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,

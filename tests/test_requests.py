@@ -18,7 +18,7 @@ def async_mock():
     """Workaround since python 3.7 doesn't ship with asyncmock."""
 
     async def async_test(req):
-        return HttpResponse(req.url, body=b"")
+        return HttpResponse(str(req.url), body=b"")
 
     mock.MagicMock.__await__ = lambda x: async_test(x).__await__()
 
@@ -38,7 +38,7 @@ async def test_perform_request_from_httpclient(async_mock):
     response = await client.get(url)
 
     # The async downloader implementation should return the HttpResponse
-    assert response.url == url
+    assert str(response.url) == str(url)
     assert isinstance(response, HttpResponse)
 
 
@@ -153,7 +153,7 @@ async def test_http_client_execute(async_mock):
     response = await client.execute(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.url == "url-1"
+    assert str(response.url) == "url-1"
 
 
 @pytest.mark.asyncio
