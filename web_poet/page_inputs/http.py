@@ -9,13 +9,23 @@ from w3lib.encoding import (
     http_content_type_encoding
 )
 
-from web_poet._base import _HttpHeaders
+from web_poet._base import _HttpHeaders, _Url
 from web_poet.utils import memoizemethod_noargs
 from web_poet.mixins import SelectableMixin
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
+
+
+class ResponseUrl(_Url):
+    """ URL of the response """
+    pass
+
+
+class RequestUrl(_Url):
+    """ URL of the request """
+    pass
 
 
 class HttpRequestBody(bytes):
@@ -152,7 +162,7 @@ class HttpRequest:
     **web-poet** like :class:`~.HttpClient`.
     """
 
-    url: str = attrs.field()
+    url: RequestUrl = attrs.field(converter=RequestUrl)
     method: str = attrs.field(default="GET", kw_only=True)
     headers: HttpRequestHeaders = attrs.field(
         factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
@@ -185,7 +195,7 @@ class HttpResponse(SelectableMixin):
     is auto-detected from headers and body content.
     """
 
-    url: str = attrs.field()
+    url: ResponseUrl = attrs.field(converter=ResponseUrl)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders,

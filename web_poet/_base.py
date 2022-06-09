@@ -4,7 +4,7 @@ In general, users shouldn't import and use the contents of this module.
 """
 
 
-from typing import Type, TypeVar, List, Dict
+from typing import Type, TypeVar, List, Dict, Union
 
 from multidict import CIMultiDict
 
@@ -32,3 +32,19 @@ class _HttpHeaders(CIMultiDict):
         <_HttpHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
         """
         return cls([(pair["name"], pair["value"]) for pair in arg])
+
+
+class _Url:
+    """ Base URL class.
+    """
+    def __init__(self, url: Union[str, '_Url']):
+        if not isinstance(url, (str, _Url)):
+            raise TypeError(f"`url` must be a str or an instance of _Url, "
+                            f"got {url.__class__} instance instead")
+        self._url = str(url)
+
+    def __str__(self) -> str:
+        return self._url
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._url!r})"

@@ -17,7 +17,7 @@ def async_mock():
     """Workaround since python 3.7 doesn't ship with asyncmock."""
 
     async def async_test(req):
-        return HttpResponse(req.url, body=b"")
+        return HttpResponse(str(req.url), body=b"")
 
     mock.MagicMock.__await__ = lambda x: async_test(x).__await__()
 
@@ -37,7 +37,7 @@ async def test_perform_request_from_httpclient(async_mock):
     response = await client.get(url)
 
     # The async downloader implementation should return the HttpResponse
-    assert response.url == url
+    assert str(response.url) == str(url)
     assert isinstance(response, HttpResponse)
 
 
@@ -47,15 +47,15 @@ async def test_http_client_single_requests(async_mock):
 
     with mock.patch("web_poet.page_inputs.client.HttpRequest") as mock_request:
         response = await client.request("url")
-        response.url == "url"
+        str(response.url) == "url"
 
         response = await client.get("url-get", headers={"X-Headers": "123"})
-        response.url == "url-get"
+        str(response.url) == "url-get"
 
         response = await client.post(
             "url-post", headers={"X-Headers": "123"}, body=b"body value"
         )
-        response.url == "url-post"
+        str(response.url) == "url-post"
 
         assert mock_request.call_args_list == [
             mock.call(
@@ -162,7 +162,7 @@ async def test_http_client_execute(async_mock):
     response = await client.execute(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.url == "url-1"
+    assert str(response.url) == "url-1"
 
 
 @pytest.mark.asyncio

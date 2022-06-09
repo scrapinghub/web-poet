@@ -54,8 +54,9 @@ a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
         ).encode("utf-8"),
     )
 
-    print(request.url)     # https://www.api.example.com/product-pagination/
-    print(request.method)  # POST
+    print(request.url)        # https://www.api.example.com/product-pagination/
+    print(type(request.url))  # <class 'web_poet.page_inputs.http.RequestUrl'>
+    print(request.method)     # POST
 
     print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
     print(request.headers)       # <HttpRequestHeaders('Content-Type': 'application/json;charset=UTF-8')>
@@ -67,7 +68,8 @@ a generic HTTP Request: :class:`~.HttpRequest`. Here's an example:
 
 There are a few things to take note here:
 
-    * ``url`` and ``method`` are simply **strings**.
+    * ``method`` is simply a **string**.
+    * ``url`` is represented by the :class:`~.RequestUrl` class.
     * ``headers`` is represented by the :class:`~.HttpRequestHeaders` class which
       resembles a ``dict``-like interface. It supports case-insensitive header-key
       lookups as well as multi-key storage.
@@ -90,8 +92,9 @@ it's perfectly fine to define them as:
 
     request = web_poet.HttpRequest("https://api.example.com/product-info?id=123")
 
-    print(request.url)     # https://api.example.com/product-info?id=123
-    print(request.method)  # GET
+    print(request.url)        # https://api.example.com/product-info?id=123
+    print(type(request.url))  # <class 'web_poet.page_inputs.http.RequestUrl'>
+    print(request.method)     # GET
 
     print(type(request.headers)  # <class 'web_poet.page_inputs.HttpRequestHeaders'>
     print(request.headers)       # <HttpRequestHeaders()>
@@ -141,8 +144,8 @@ Let's check out an example to see its internals:
         headers={"Content-Type": "application/json;charset=UTF-8"}
     )
 
-    print(response.url)            # https://www.api.example.com/product-pagination/
-    print(type(response.url))      # <class 'str'>
+    print(response.url)        # https://www.api.example.com/product-pagination/
+    print(type(response.url))  # <class 'web_poet.page_inputs.http.ResponseUrl'>
 
     print(response.body)           # b'{"data": "value \xf0\x9f\x91\x8d"}'
     print(type(response.body))     # <class 'web_poet.page_inputs.HttpResponseBody'>
@@ -174,7 +177,8 @@ methods.
 
 Here are the key take aways from the example above:
 
-    * The ``url`` and ``status`` are simply **string** and **int** respectively.
+    * ``status`` is simply an **int**.
+    * ``url`` is represented by the :class:`~.ResponseUrl` class.
     * ``headers`` is represented by the :class:`~.HttpResponseHeaders` class.
       It's similar to :class:`~.HttpRequestHeaders` where it inherits from
       :external:py:class:`multidict.CIMultiDict`, granting it case-insensitive

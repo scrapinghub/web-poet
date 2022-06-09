@@ -7,5 +7,7 @@ from .http import (
     HttpResponseHeaders,
     HttpRequestBody,
     HttpResponseBody,
+    RequestUrl,
+    ResponseUrl
 )
 from .browser import BrowserHtml
