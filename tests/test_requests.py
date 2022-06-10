@@ -1,13 +1,14 @@
 from unittest import mock
 
 import pytest
-from web_poet.exceptions import RequestBackendError, HttpResponseError
+
+from web_poet.exceptions import HttpResponseError, RequestBackendError
 from web_poet.page_inputs import (
     HttpClient,
     HttpRequest,
-    HttpResponse,
     HttpRequestBody,
-    HttpRequestHeaders
+    HttpRequestHeaders,
+    HttpResponse,
 )
 from web_poet.requests import request_backend_var
 
@@ -46,24 +47,11 @@ async def test_http_client_single_requests(async_mock):
     client = HttpClient(async_mock)
 
     with mock.patch("web_poet.page_inputs.client.HttpRequest") as mock_request:
-        response = await client.request("url")
-        str(response.url) == "url"
-
-        response = await client.get("url-get", headers={"X-Headers": "123"})
-        str(response.url) == "url-get"
-
-        response = await client.post(
-            "url-post", headers={"X-Headers": "123"}, body=b"body value"
-        )
-        str(response.url) == "url-post"
-
+        await client.request("url")
+        await client.get("url-get", headers={"X-Headers": "123"})
+        await client.post("url-post", headers={"X-Headers": "123"}, body=b"body value")
         assert mock_request.call_args_list == [
-            mock.call(
-                url="url",
-                method="GET",
-                headers=HttpRequestHeaders(),
-                body=HttpRequestBody()
-            ),
+            mock.call(url="url", method="GET", headers=HttpRequestHeaders(), body=HttpRequestBody()),
             mock.call(
                 url="url-get",
                 method="GET",
@@ -85,8 +73,11 @@ def client_with_status():
         async def stub_request_downloader(*args, **kwargs):
             async def stub(req):
                 return HttpResponse(req.url, body=b"", status=status_code)
+
             return await stub(*args, **kwargs)
+
         return stub_request_downloader
+
     return _param_wrapper
 
 
@@ -120,7 +111,7 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
     assert isinstance(excinfo.value.response, HttpResponse)
     assert str(excinfo.value).startswith("500 INTERNAL_SERVER_ERROR response for")
 
-    with pytest.raises(HttpResponseError) as err:
+    with pytest.raises(HttpResponseError):
         await method(url_or_request, allow_status=406)
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
@@ -131,7 +122,7 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
     await method(url_or_request, allow_status=[500, "*"])
 
     # Globbing isn't supported
-    with pytest.raises(HttpResponseError) as err:
+    with pytest.raises(HttpResponseError):
         await method(url_or_request, allow_status="5*")
     assert isinstance(excinfo.value.request, HttpRequest)
     assert isinstance(excinfo.value.response, HttpResponse)
@@ -187,7 +178,9 @@ def client_that_errs(async_mock):
     async def stub_request_downloader(*args, **kwargs):
         async def err():
             raise ValueError("test exception")
+
         return await err()
+
     client._request_downloader = stub_request_downloader
 
     return client

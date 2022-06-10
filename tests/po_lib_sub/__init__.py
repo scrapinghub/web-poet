@@ -1,7 +1,7 @@
 """This package is being used by tests/po_lib to validate some behaviors on
 external depedencies.
 """
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
 from url_matcher import Patterns
 

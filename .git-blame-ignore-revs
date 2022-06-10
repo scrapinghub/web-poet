@@ -1,0 +1,8 @@
+# Contains commits to be ignored due to linting
+
+# https://github.com/scrapinghub/web-poet/pull/34
+660b1192da0e765a62b51bfe0cac1aec202e6310
+be4bb7db17772f9128357246fdb88177f61c3ca8
+2c8b9218bf90e9bad96b5d5eb59212dcb92dab43
+279a90ac3e14522a8e2e7f8dabc2378f630a5c6f
+fff64aa4def52ed792691d1a8f8bd5e44f36e2bc

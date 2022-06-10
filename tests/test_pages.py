@@ -16,45 +16,41 @@ def test_abstract_web_page_object():
 
 
 def test_page_object():
-
     class MyItemPage(ItemPage):
-
         def to_item(self) -> dict:
             return {
-                'foo': 'bar',
+                "foo": "bar",
             }
 
     page_object = MyItemPage()
-    assert page_object.to_item() == {'foo': 'bar', }
+    assert page_object.to_item() == {
+        "foo": "bar",
+    }
 
 
 def test_web_page_object(book_list_html_response):
-
     class MyWebPage(ItemWebPage):
-
         def to_item(self) -> dict:
             return {
-                'url': self.url,
-                'title': self.css('title::text').get().strip(),
+                "url": self.url,
+                "title": self.css("title::text").get().strip(),
             }
 
     page_object = MyWebPage(book_list_html_response)
     assert page_object.to_item() == {
-        'url': 'http://books.toscrape.com/index.html',
-        'title': 'All products | Books to Scrape - Sandbox',
+        "url": "http://books.toscrape.com/index.html",
+        "title": "All products | Books to Scrape - Sandbox",
     }
 
 
 def test_is_injectable():
-
     class MyClass:
         pass
 
     class MyItemPage(ItemPage):
-
         def to_item(self) -> dict:
             return {
-                'foo': 'bar',
+                "foo": "bar",
             }
 
     assert is_injectable(None) is False

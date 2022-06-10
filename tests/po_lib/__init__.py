@@ -1,12 +1,14 @@
 """
 This package is just for overrides testing purposes.
 """
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
 from url_matcher import Patterns
 
-from .. import po_lib_sub # NOTE: this module contains a PO with @handle_rules
-from web_poet import handle_urls, PageObjectRegistry
+from web_poet import handle_urls
+
+# NOTE: this module contains a PO with @handle_rules
+from .. import po_lib_sub  # noqa: F401
 
 
 class POBase:

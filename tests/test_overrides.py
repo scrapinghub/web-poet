@@ -1,22 +1,12 @@
 import pytest
 from url_matcher import Patterns
 
-from tests.po_lib_sub import POLibSub
-from tests.po_lib import (
-    POTopLevel1,
-    POTopLevel2,
-    POTopLevelOverriden2,
-)
+from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
 from tests.po_lib.a_module import POModule, POModuleOverriden
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import PONestedModule
-from web_poet import (
-    default_registry,
-    consume_modules,
-    OverrideRule,
-    PageObjectRegistry,
-)
-
+from tests.po_lib_sub import POLibSub
+from web_poet import OverrideRule, PageObjectRegistry, consume_modules, default_registry
 
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
 
