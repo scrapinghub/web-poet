@@ -2,22 +2,28 @@
 Changelog
 =========
 
-TBR
+0.2.0 (2022-06-10)
 ------------------
+
+* Backward Incompatible Change:
+
+    * ``ResponseData`` is replaced with ``HttpResponse``.
+
+      ``HttpResponse`` exposes methods useful for web scraping
+      (such as xpath and css selectors, json loading),
+      and handles web page encoding detection. There are also new
+      types like ``HttpResponseBody`` and ``HttpResponseHeaders``.
 
 * Added support for performing additional requests using
   ``web_poet.HttpClient``.
+* Introduced ``web_poet.BrowserHtml`` dependency
 * Introduced ``web_poet.PageParams`` to pass arbitrary information
   inside a Page Object.
-* added a ``PageObjectRegistry`` class which has the  ``handle_urls`` decorator
-  to conveniently declare and collect ``OverrideRule``.
+* Added ``web_poet.handle_urls`` decorator, which allows to declare which
+  websites should be handled by the page objects. Lower-level
+  ``PageObjectRegistry`` class is also available.
 * removed support for Python 3.6
 * added support for Python 3.10
-* Backward Incompatible Change:
-
-    * ``ResponseData`` is now ``HttpResponse`` which has a new
-      specific attribute types like ``HttpResponseBody`` and
-      ``HttpResponseHeaders``.
 
 0.1.1 (2021-06-02)
 ------------------

@@ -7,6 +7,10 @@ API Reference
 Page Inputs
 ===========
 
+.. automodule:: web_poet.page_inputs.browser
+   :members:
+   :undoc-members:
+
 .. automodule:: web_poet.page_inputs.client
    :members:
    :undoc-members:

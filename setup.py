@@ -5,8 +5,8 @@ with open("README.rst") as f:
 
 
 setup(
-    name="web-poet",
-    version="0.1.1",
+    name='web-poet',
+    version='0.2.0',
     description="Zyte's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type="text/x-rst",
