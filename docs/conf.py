@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = u'web-poet'
-copyright = u'2020, Scrapinghub'
-author = u'Scrapinghub'
+copyright = u'2020-2022, Zyte Group Ltd'
+author = u'Zyte Group Ltd'
 
 # The short X.Y version
 version = u''
@@ -138,7 +138,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'web-poet.tex', u'web-poet Documentation',
-     u'Scrapinghub', 'manual'),
+     u'Zyte Group Ltd', 'manual'),
 ]
 
 
