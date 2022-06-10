@@ -1,7 +1,7 @@
 import pytest
 
-from web_poet.page_inputs import HttpRequest, HttpResponse
 from web_poet.exceptions import HttpError, HttpRequestError, HttpResponseError
+from web_poet.page_inputs import HttpRequest, HttpResponse
 
 URL = "https://example.com"
 

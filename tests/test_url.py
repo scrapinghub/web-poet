@@ -1,7 +1,7 @@
 import pytest
 
-from web_poet._base import _Url
 from web_poet import RequestUrl, ResponseUrl
+from web_poet._base import _Url
 
 
 def test_url_base_class():
@@ -34,7 +34,7 @@ def test_url_subclasses():
     assert str(url2) == str(url)
 
 
-@pytest.mark.parametrize('url_cls', [_Url, RequestUrl, ResponseUrl])
+@pytest.mark.parametrize("url_cls", [_Url, RequestUrl, ResponseUrl])
 def test_str_equality(url_cls):
     url_str = "http://example.com#foo"
     url = url_cls(url_str)

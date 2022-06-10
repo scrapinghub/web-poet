@@ -1,6 +1,7 @@
 import abc
-import attr
 import typing
+
+import attr
 
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
@@ -19,6 +20,7 @@ class Injectable(abc.ABC):
     Instead of inheriting you can also use ``Injectable.register(MyWebPage)``.
     ``Injectable.register`` can also be used as a decorator.
     """
+
     pass
 
 
@@ -51,6 +53,7 @@ class WebPage(Injectable, ResponseShortcutsMixin):
     Use this class as a base class for Page Objects which work on
     HTML downloaded using an HTTP client directly.
     """
+
     response: HttpResponse
 
 
@@ -59,4 +62,5 @@ class ItemWebPage(WebPage, ItemPage):
     """:class:`WebPage` that requires the :meth:`to_item` method to
     be implemented.
     """
+
     pass

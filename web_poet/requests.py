@@ -2,10 +2,7 @@ import logging
 from contextvars import ContextVar
 
 from web_poet.exceptions import RequestBackendError
-from web_poet.page_inputs.http import (
-    HttpRequest,
-    HttpResponse,
-)
+from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
 logger = logging.getLogger(__name__)
 
