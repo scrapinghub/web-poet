@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.2.0 (TBD)
------------
+0.2.0 (2022-06-10)
+------------------
 
 * Backward Incompatible Change:
 
