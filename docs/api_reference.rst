@@ -13,10 +13,6 @@ Page Inputs
    :inherited-members: str
    :show-inheritance:
 
-.. automodule:: web_poet.page_inputs.client
-   :members:
-   :undoc-members:
-
 .. automodule:: web_poet.page_inputs.http
    :members:
    :undoc-members:
@@ -27,6 +23,10 @@ Page Inputs
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: web_poet.page_inputs.client
+   :members:
+   :undoc-members:
 
 Pages
 =====

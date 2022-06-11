@@ -1,13 +1,3 @@
-"""This module has a full support for :mod:`asyncio` that enables developers to
-perform asynchronous additional requests inside of Page Objects.
-
-Note that the implementation to fully execute any :class:`~.Request` is not
-handled in this module. With that, the framework using **web-poet** must supply
-the implementation.
-
-You can read more about this in the :ref:`advanced-downloader-impl` documentation.
-"""
-
 import asyncio
 import logging
 from http import HTTPStatus
@@ -33,20 +23,19 @@ _Status = Union[str, int]
 
 
 class HttpClient:
-    """A convenient client to easily execute requests.
+    """Async HTTP client to be used in Page Objects.
 
-    By default, it uses the request implementation assigned in the
-    ``web_poet.request_backend_var`` which is a :mod:`contextvars` instance to
-    download the actual requests. However, it can easily be overridable by
-    providing an optional ``request_downloader`` callable.
+    See :ref:`advanced-requests` for the usage information.
 
-    Providing the request implementation by dependency injection would be a good
-    alternative solution when you want to avoid setting up :mod:`contextvars`
-    like ``web_poet.request_backend_var``.
+    HttpClient doesn't make HTTP requests on itself. It uses either the
+    request function assigned to the ``web_poet.request_backend_var``
+    :mod:`contextvar <contextvars>`, or a function passed via
+    ``request_downloader`` argument of the :meth:`~.HttpClient.__init__` method.
 
-    In any case, this doesn't contain any implementation about how to execute
-    any requests fed into it. When setting that up, make sure that the downloader
-    implementation returns a :class:`~.HttpResponse` instance.
+    Either way, this function should be an ``async def`` function which receives
+    :class:`~.HttpRequest` instance, and either returns :class:`~.HttpResponse`
+    instance, or raises a subclass of :class:`~.HttpError`. You can read
+    more in the :ref:`advanced-downloader-impl` documentation.
     """
 
     def __init__(self, request_downloader: Callable = None):
@@ -83,28 +72,27 @@ class HttpClient:
         body: Optional[_Body] = None,
         allow_status: List[_Status] = None,
     ) -> HttpResponse:
-        """This is a shortcut for creating a :class:`~.HttpRequest` instance and
+        """This is a shortcut for creating an :class:`~.HttpRequest` instance and
         executing that request.
 
-        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
-        cases like *connection errors*, *connection and read timeouts*, etc.
+        :class:`~.HttpRequestError` is raised for
+        *connection errors*, *connection and read timeouts*, etc.
 
-        A :class:`~.HttpResponse` instance should then be returned for successful
-        responses in the 100-3xx status code range. Otherwise, an exception of
-        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
+        :class:`~.HttpResponse` instance is returned for successful
+        responses in the 100-3xx status code range.
 
-        This behavior can be changed by suppressing the exceptions on select
-        status codes using the ``allow_status`` param:
+        Otherwise, an exception of type :class:`~.HttpResponseError` is raised.
 
-            * Passing status code values would not raise the exception when it
-              occurs. This would return the response as-is.
-            * Passing a "*" value would basically allow any status codes.
+        Rasing :class:`~.HttpResponseError` can be suppressed for certain
+        status codes using the ``allow_status`` param - it is
+        a list of status code values for which :class:`~.HttpResponse`
+        should be returned instead of raising :class:`~.HttpResponseError`.
 
-        .. warning::
-            By convention, the request implementation supplied optionally to
-            :class:`~.HttpClient` should return a :class:`~.HttpResponse` instance.
-            However, the underlying implementation supplied might change that,
-            depending on how the framework using **web-poet** implements it.
+        There is a special "*" ``allow_status`` value which allows
+        any status code.
+
+        There is no need to include 100-3xx status codes in ``allow_status``,
+        because :class:`~.HttpResponseError` is not raised for them.
         """
         headers = headers or {}
         body = body or b""
@@ -149,23 +137,28 @@ class HttpClient:
         )
 
     async def execute(self, request: HttpRequest, *, allow_status: List[_Status] = None) -> HttpResponse:
-        """Accepts a single instance of :class:`~.HttpRequest` and executes it
+        """Accepts a single instance of :class:`~.HttpRequest` and execute it
         using the request implementation configured in the :class:`~.HttpClient`
         instance.
 
-        A :class:`web_poet.exceptions.http.HttpRequestError` will be raised on
-        cases like *connection errors*, *connection and read timeouts*, etc.
+        :class:`~.HttpRequestError` is raised for
+        *connection errors*, *connection and read timeouts*, etc.
 
-        A :class:`~.HttpResponse` instance should then be returned for successful
-        responses in the 100-3xx status code range. Otherwise, an exception of
-        type :class:`web_poet.exceptions.http.HttpResponseError` will be raised.
+        :class:`~.HttpResponse` instance is returned for successful
+        responses in the 100-3xx status code range.
 
-        This behavior can be changed by suppressing the exceptions on select
-        status codes using the ``allow_status`` param:
+        Otherwise, an exception of type :class:`~.HttpResponseError` is raised.
 
-            * Passing status code values would not raise the exception when it
-              occurs. This would return the response as-is.
-            * Passing a "*" value would basically allow any status codes.
+        Rasing :class:`~.HttpResponseError` can be suppressed for certain
+        status codes using the ``allow_status`` param - it is
+        a list of status code values for which :class:`~.HttpResponse`
+        should be returned instead of raising :class:`~.HttpResponseError`.
+
+        There is a special "*" ``allow_status`` value which allows
+        any status code.
+
+        There is no need to include 100-3xx status codes in ``allow_status``,
+        because :class:`~.HttpResponseError` is not raised for them.
         """
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
@@ -191,16 +184,16 @@ class HttpClient:
         responses despite any possible failures. This can be done by setting
         ``True`` to the ``return_exceptions`` parameter.
 
-        Like :meth:`~.HttpClient.execute`, :class:`web_poet.exceptions.http.HttpResponseError`
+        Like :meth:`~.HttpClient.execute`, :class:`~.HttpResponseError`
         will be raised for responses with status codes in the ``400-5xx`` range.
         The ``allow_status`` parameter could be used the same way here to prevent
         these exceptions from being raised.
 
         You can omit ``allow_status="*"`` if you're passing ``return_exceptions=True``.
-        However, it would be returning :class:`web_poet.exceptions.http.HttpResponseError`
+        However, it would be returning :class:`~.HttpResponseError`
         instead of :class:`~.HttpResponse`.
 
-        Lastly, a :class:`web_poet.exceptions.http.HttpRequestError` may be raised
+        Lastly, a :class:`~.HttpRequestError` may be raised
         on cases like *connection errors*, *connection and read timeouts*, etc.
         """
 
