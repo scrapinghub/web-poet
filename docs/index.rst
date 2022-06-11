@@ -46,7 +46,7 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    :caption: Reference
    :maxdepth: 1
 
-   api_reference
+   api-reference
    contributing
    changelog
    license
