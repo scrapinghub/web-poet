@@ -815,8 +815,8 @@ HTTP downloader implementation in two ways:
 
 :mod:`contextvars` is natively supported in :mod:`asyncio` in order to set and
 access context-aware values. This means that the framework using **web-poet**
-can easily assign the implementation using the readily available :mod:`contextvars`
-instance named ``web_poet.request_backend_var``.
+can assign the request downloader implementation using the :mod:`contextvars`
+instance named ``web_poet.request_downloader_var``.
 
 This can be set using:
 
@@ -825,7 +825,7 @@ This can be set using:
     import attrs
     import web_poet
 
-    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
 
@@ -840,25 +840,26 @@ This can be set using:
         async def to_item(self):
             ...
 
-    # Once this is set, the ``request_implementation`` will become available to
-    # all instances of HttpClient unless a ``request_downloader`` is injected
-    # to it (see #2 Dependency Injection example below).
-    web_poet.request_backend_var.set(request_implementation)
+    # Once this is set, the ``request_implementation`` becomes available to
+    # all instances of HttpClient, unless HttpClient is created with
+    # ``request_downloader`` argument
+    # (see #2 Dependency Injection example below).
+    web_poet.request_downloader_var.set(request_implementation)
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
 
     page = SomePage(response=response, http_client=create_http_client())
-    item = page.to_item()
+    item = await page.to_item()
 
-Setting this up would allow access to the request implementation in a
-:class:`~.HttpClient` instance which uses it by default.
+When the ``web_poet.request_downloader_var`` contextvar is set,
+:class:`~.HttpClient` instances use it by default.
 
 .. warning::
 
-    If no value for ``web_poet.request_backend_var`` was set, then a
-    :class:`~.RequestBackendError` is raised. However, no exception would
-    be raised if **option 2** below is used.
+    If no value for ``web_poet.request_downloader_var`` is set, then a
+    :class:`~.RequestDownloaderVarError` is raised. However, no exception is
+    raised if **option 2** below is used.
 
 
 2. Dependency Injection
@@ -866,15 +867,15 @@ Setting this up would allow access to the request implementation in a
 
 The framework using **web-poet** MAY be using other libraries which doesn't
 have a full support to :mod:`contextvars` `(e.g. Twisted)`. With that, an
-alternative approach would be to supply the request implementation when creating
-an :class:`~.HttpClient` instance:
+alternative approach would be to supply the request downloader implementation
+when creating an :class:`~.HttpClient` instance:
 
 .. code-block:: python
 
     import attrs
     import web_poet
 
-    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
     def create_http_client():
@@ -892,7 +893,7 @@ an :class:`~.HttpClient` instance:
     response = web_poet.HttpResponse(...)
 
     page = SomePage(response=response, http_client=create_http_client())
-    item = page.to_item()
+    item = await page.to_item()
 
 From the code sample above, we can see that every time an :class:`~.HttpClient`
 is created for Page Objects needing an ``http_client``, the specific **request

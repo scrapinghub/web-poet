@@ -36,13 +36,13 @@ class HttpClient:
     """A convenient client to easily execute requests.
 
     By default, it uses the request implementation assigned in the
-    ``web_poet.request_backend_var`` which is a :mod:`contextvars` instance to
+    ``web_poet.request_downloader_var`` which is a :mod:`contextvars` instance to
     download the actual requests. However, it can easily be overridable by
     providing an optional ``request_downloader`` callable.
 
     Providing the request implementation by dependency injection would be a good
     alternative solution when you want to avoid setting up :mod:`contextvars`
-    like ``web_poet.request_backend_var``.
+    like ``web_poet.request_downloader_var``.
 
     In any case, this doesn't contain any implementation about how to execute
     any requests fed into it. When setting that up, make sure that the downloader
