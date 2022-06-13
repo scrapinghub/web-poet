@@ -13,7 +13,7 @@ request_downloader_var: ContextVar = ContextVar("request_downloader")
 
 async def _perform_request(request: HttpRequest) -> HttpResponse:
     """Given a :class:`~.Request`, execute it using the **request implementation**
-    that was set in the ``web_poet.request_downloader`` :mod:`contextvars`
+    that was set in the ``web_poet.request_downloader_var`` :mod:`contextvars`
     instance.
     """
 
