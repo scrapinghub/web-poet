@@ -79,7 +79,7 @@ class HttpClient:
         *connection errors*, *connection and read timeouts*, etc.
 
         :class:`~.HttpResponse` instance is returned for successful
-        responses in the 100-3xx status code range.
+        responses in the ``100-3xx`` status code range.
 
         Otherwise, an exception of type :class:`~.HttpResponseError` is raised.
 
@@ -91,7 +91,7 @@ class HttpClient:
         There is a special "*" ``allow_status`` value which allows
         any status code.
 
-        There is no need to include 100-3xx status codes in ``allow_status``,
+        There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
         headers = headers or {}
@@ -145,7 +145,7 @@ class HttpClient:
         *connection errors*, *connection and read timeouts*, etc.
 
         :class:`~.HttpResponse` instance is returned for successful
-        responses in the 100-3xx status code range.
+        responses in the ``100-3xx`` status code range.
 
         Otherwise, an exception of type :class:`~.HttpResponseError` is raised.
 
@@ -157,7 +157,7 @@ class HttpClient:
         There is a special "*" ``allow_status`` value which allows
         any status code.
 
-        There is no need to include 100-3xx status codes in ``allow_status``,
+        There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
         response = await self._request_downloader(request)
