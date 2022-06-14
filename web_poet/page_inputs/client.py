@@ -32,10 +32,11 @@ class HttpClient:
     :mod:`contextvar <contextvars>`, or a function passed via
     ``request_downloader`` argument of the :meth:`~.HttpClient.__init__` method.
 
-    Either way, this function should be an ``async def`` function which receives
-    :class:`~.HttpRequest` instance, and either returns :class:`~.HttpResponse`
-    instance, or raises a subclass of :class:`~.HttpError`. You can read
-    more in the :ref:`advanced-downloader-impl` documentation.
+    Either way, this function should be an ``async def`` function which 
+    receives an  :class:`~.HttpRequest` instance, and either returns a
+    :class:`~.HttpResponse` instance, or raises a subclass of 
+    :class:`~.HttpError`. You can read more in the 
+    :ref:`advanced-downloader-impl` documentation.
     """
 
     def __init__(self, request_downloader: Callable = None):
@@ -78,7 +79,7 @@ class HttpClient:
         :class:`~.HttpRequestError` is raised for
         *connection errors*, *connection and read timeouts*, etc.
 
-        :class:`~.HttpResponse` instance is returned for successful
+        An :class:`~.HttpResponse` instance is returned for successful
         responses in the ``100-3xx`` status code range.
 
         Otherwise, an exception of type :class:`~.HttpResponseError` is raised.
@@ -137,8 +138,8 @@ class HttpClient:
         )
 
     async def execute(self, request: HttpRequest, *, allow_status: List[_Status] = None) -> HttpResponse:
-        """Accepts a single instance of :class:`~.HttpRequest` and execute it
-        using the request implementation configured in the :class:`~.HttpClient`
+        """Execute the specified :class:`~.HttpRequest` instance using the 
+        request implementation configured in the :class:`~.HttpClient`
         instance.
 
         :class:`~.HttpRequestError` is raised for
