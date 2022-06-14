@@ -10,16 +10,21 @@ Page Inputs
 .. automodule:: web_poet.page_inputs.browser
    :members:
    :undoc-members:
-
-.. automodule:: web_poet.page_inputs.client
-   :members:
-   :undoc-members:
+   :inherited-members: str
+   :show-inheritance:
 
 .. automodule:: web_poet.page_inputs.http
    :members:
    :undoc-members:
+   :inherited-members: str,bytes,MultiDict
+   :show-inheritance:
 
 .. automodule:: web_poet.page_inputs.page_params
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: web_poet.page_inputs.client
    :members:
    :undoc-members:
 

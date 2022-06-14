@@ -10,8 +10,8 @@ setup(
     description="Zyte's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    author="Scrapinghub",
-    author_email="info@scrapinghub.com",
+    author="Zyte Group Ltd",
+    author_email="opensource@zyte.com",
     url="https://github.com/scrapinghub/web-poet",
     packages=find_packages(exclude=("tests",)),
     install_requires=[

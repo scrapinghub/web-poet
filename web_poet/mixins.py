@@ -29,11 +29,11 @@ class SelectableMixin(abc.ABC):
         self.__cached_selector = sel
         return sel
 
-    def xpath(self, query, **kwargs):
+    def xpath(self, query, **kwargs) -> parsel.SelectorList:
         """A shortcut to ``.selector.xpath()``."""
         return self.selector.xpath(query, **kwargs)
 
-    def css(self, query):
+    def css(self, query) -> parsel.SelectorList:
         """A shortcut to ``.selector.css()``."""
         return self.selector.css(query)
 

@@ -4,6 +4,9 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
+import os
+import sys
+
 import sphinx_rtd_theme
 
 # -- Path setup --------------------------------------------------------------
@@ -11,17 +14,17 @@ import sphinx_rtd_theme
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+
+sys.path.insert(0, os.path.abspath(".."))
 
 
 # -- Project information -----------------------------------------------------
 
 project = "web-poet"
-copyright = "2020, Scrapinghub"
-author = "Scrapinghub"
+copyright = "2020-2022, Zyte Group Ltd"
+author = "Zyte Group Ltd"
+
 
 # The short X.Y version
 version = ""
@@ -61,7 +64,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -134,7 +137,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "web-poet.tex", "web-poet Documentation", "Scrapinghub", "manual"),
+    (master_doc, "web-poet.tex", "web-poet Documentation", "Zyte Group Ltd", "manual"),
 ]
 
 
