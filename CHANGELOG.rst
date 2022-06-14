@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.3.0 (2022-06-14)
+------------------
+
+* Backwards Incompatible Change:
+
+    * ``web_poet.requests.request_backend_var``
+      is renamed to ``web_poet.requests.request_downloader_var``.
+
+* Documentation and CI improvements.
+
 0.2.0 (2022-06-10)
 ------------------
 
