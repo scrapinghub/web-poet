@@ -11,7 +11,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Zyte Group Ltd",
-    author_email="info@scrapinghub.com",
+    author_email="opensource@zyte.com",
     url="https://github.com/scrapinghub/web-poet",
     packages=find_packages(exclude=("tests",)),
     install_requires=[
