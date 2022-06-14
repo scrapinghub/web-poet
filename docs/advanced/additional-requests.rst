@@ -265,9 +265,9 @@ The key take aways for this example are:
       :external:py:class:`parsel.selector.Selector`; there are also
       :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` methods.
 
-        * Usually there's no need to use :meth:`~.HttpResponse.selector`,
-          as the :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath`
-          are available.
+        * Usually there's no need to use :meth:`~.HttpResponse.selector`, as 
+          :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` are 
+          available.
 
 
 .. _`httpclient`:
@@ -372,7 +372,7 @@ There are a few things to take note in this example:
 
     * A ``GET`` request can be done via :class:`~.HttpClient`'s
       :meth:`~.HttpClient.get` method.
-    * There is no need to instantiate a :class:`~.HttpRequest` when
+    * There is no need create an instance of :class:`~.HttpRequest` when
       :meth:`~.HttpClient.get` is used.
 
 .. _`request-post-example`:
@@ -544,7 +544,7 @@ The key takeaways for this example are:
 
 .. tip::
 
-    The :meth:`~.HttpClient.batch_execute` method can multiple
+    The :meth:`~.HttpClient.batch_execute` method can execute multiple
     :class:`~.HttpRequest` instances. For example, it could be a mixture
     of ``GET`` and ``POST`` requests or even
     representing requests for various parts of the page altogether.
@@ -843,8 +843,8 @@ This can be set using:
 
     # Once this is set, the ``request_implementation`` becomes available to
     # all instances of HttpClient, unless HttpClient is created with
-    # ``request_downloader`` argument
-    # (see #2 Dependency Injection example below).
+    # the ``request_downloader`` argument (see the #2 Dependency Injection 
+    # example below).
     web_poet.request_downloader_var.set(request_implementation)
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
@@ -858,7 +858,7 @@ When the ``web_poet.request_downloader_var`` contextvar is set,
 
 .. warning::
 
-    If no value for ``web_poet.request_downloader_var`` is set, then a
+    If no value for ``web_poet.request_downloader_var`` is set, then
     :class:`~.RequestDownloaderVarError` is raised. However, no exception is
     raised if **option 2** below is used.
 
@@ -866,7 +866,7 @@ When the ``web_poet.request_downloader_var`` contextvar is set,
 2. Dependency Injection
 ***********************
 
-The framework using **web-poet** may be using libraries which doesn't
+The framework using **web-poet** may be using libraries that don't
 have a full support to :mod:`contextvars` `(e.g. Twisted)`. With that, an
 alternative approach would be to supply the request downloader implementation
 when creating an :class:`~.HttpClient` instance:
@@ -897,9 +897,9 @@ when creating an :class:`~.HttpClient` instance:
     item = await page.to_item()
 
 From the code sample above, we can see that every time an :class:`~.HttpClient`
-is created for Page Objects needing an ``http_client``, framework must create
-:class:`~.HttpClient` with the specific **request downloader implementation**,
-using ``request_downloader`` argument.
+instance is created for Page Objects needing an ``http_client``, the framework 
+must create :class:`~.HttpClient` with a framework-specific **request 
+downloader implementation**, using the ``request_downloader`` argument.
 
 Downloader Behavior
 -------------------
@@ -932,8 +932,8 @@ Rationale
 *********
 
 Frameworks that handle **web-poet** MUST be able to ensure that Page Objects
-having additional requests using the :class:`~.HttpClient` are able to work
-with any type of HTTP downloader implementation.
+having additional requests using :class:`~.HttpClient` are able to work with 
+any type of HTTP downloader implementation.
 
 For example, in Python, the common HTTP libraries have different types of base
 exceptions when something has ocurred:
