@@ -122,8 +122,9 @@ HttpResponse
 :class:`~.HttpResponse` is what comes after a :class:`~.HttpRequest` has been
 executed. It's typically returned by the methods from :class:`~.HttpClient` (see
 :ref:`httpclient` tutorial section) which holds the information regarding the response.
-It's also the REQUIRED input for Page Objects inheriting from the :class:`~.ItemWebPage`
-class as explained from the :ref:`from-ground-up` tutorial.
+
+:class:`~.HttpResponse` can also be used as a Page Object dependency,
+e.g. :class:`~.WebPage` uses it.
 
 .. note::
 
@@ -260,13 +261,13 @@ The key take aways for this example are:
     * Since we now have an HTML response, using :meth:`~.HttpResponseBody.json`
       method would raise a ``JSONDecodeError`` as a JSON document cannot be
       parsed from it.
-    * The :meth:`~.HttpResponse.selector` property method returns an instance of
-      :external:py:class:`parsel.selector.Selector` which allows parsing via
-      :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` calls.
+    * The :meth:`~.HttpResponse.selector` property is an instance of
+      :external:py:class:`parsel.selector.Selector`; there are also
+      :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` methods.
 
-        * At the same time, there's no need to call :meth:`~.HttpResponse.selector`
-          each time as the :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath`
-          are already conveniently available.
+        * Usually there's no need to use :meth:`~.HttpResponse.selector`, as 
+          :meth:`~.HttpResponse.css` and :meth:`~.HttpResponse.xpath` are 
+          available.
 
 
 .. _`httpclient`:
@@ -304,7 +305,7 @@ Executing a HttpRequest instance
                 "product_id": self.css("#product ::attr(product-id)").get(),
             }
 
-            # Simulates clicking on a button that says "View All Images"
+            # Simulate clicking on a button that says "View All Images"
             request = web_poet.HttpRequest(f"https://api.example.com/v2/images?id={item['product_id']}")
             response: web_poet.HttpResponse = await self.http_client.execute(request)
 
@@ -371,8 +372,8 @@ There are a few things to take note in this example:
 
     * A ``GET`` request can be done via :class:`~.HttpClient`'s
       :meth:`~.HttpClient.get` method.
-    * There was no need to instantiate a :class:`~.HttpRequest` since :meth:`~.HttpClient.get`
-      already handles it before executing the request.
+    * There is no need create an instance of :class:`~.HttpRequest` when
+      :meth:`~.HttpClient.get` is used.
 
 .. _`request-post-example`:
 
@@ -429,8 +430,8 @@ Thus, additional requests inside the Page Object are typically needed for it:
 Here's the key takeaway in this example:
 
     * Similar to :class:`~.HttpClient`'s :meth:`~.HttpClient.get` method,
-      a :meth:`~.HttpClient.post` method is also available that's
-      typically used to submit forms.
+      a :meth:`~.HttpClient.post` method is also available. It is
+      often used to submit forms.
 
 Other Single Requests
 ---------------------
@@ -447,12 +448,12 @@ quick shortcuts for :meth:`~.HttpClient.request`:
     body = b'{"data": "value"}'
 
     # These are the same:
-    client.get(url)
-    client.request(url, method="GET")
+    response = await client.get(url)
+    response = await client.request(url, method="GET")
 
     # The same goes for these:
-    client.post(url, headers=headers, body=body)
-    client.request(url, method="POST", headers=headers, body=body)
+    response = await client.post(url, headers=headers, body=body)
+    response = await client.request(url, method="POST", headers=headers, body=body)
 
 Thus, apart from the common ``GET`` and ``POST`` HTTP methods, you can use 
 :meth:`~.HttpClient.request` for them (`e.g.` ``HEAD``, ``PUT``, ``DELETE``, etc).
@@ -543,9 +544,9 @@ The key takeaways for this example are:
 
 .. tip::
 
-    The :meth:`~.HttpClient.batch_execute` method can accept different varieties
-    of :class:`~.HttpRequest` that MAY NOT be related with one another. For
-    example, it could be a mixture of ``GET`` and ``POST`` requests or even
+    The :meth:`~.HttpClient.batch_execute` method can execute multiple
+    :class:`~.HttpRequest` instances. For example, it could be a mixture
+    of ``GET`` and ``POST`` requests or even
     representing requests for various parts of the page altogether.
 
     Processing the additional requests in batch is useful since it takes advantage
@@ -567,8 +568,8 @@ The key takeaways for this example are:
 
 .. _`exception-handling`:
 
-Handling Exceptions in PO
-=========================
+Handling Exceptions in Page Objects
+===================================
 
 Let's have a look at how we could handle exceptions when performing additional
 requests inside Page Objects. For this example, let's improve the code snippet
@@ -643,7 +644,7 @@ behavior could be altered by using the ``allow_status`` param in the methods of
 
     In the future, more specific exceptions which inherits from the base
     :class:`web_poet.exceptions.http.HttpError` exception would be available.
-    This SHOULD enable developers writing Page Objects to properly identify what
+    This should allow developers writing Page Objects to properly identify what
     went wrong and act specifically based on the problem.
 
 Let's take another example when executing requests in batch as opposed to using
@@ -788,8 +789,8 @@ functionalities. However, as the docs have repeatedly mentioned, **web-poet**
 doesn't know how to execute any of these HTTP requests at all. It would be
 up to the framework that's handling **web-poet** to do so.
 
-In this section, we'll explore the guidelines for how frameworks MUST use
-**web-poet**. If you're a Page Object developer, you can skip this part as it
+In this section, we'll explore the guidelines for frameworks.
+If you're a Page Object developer, you can skip this part as it
 mostly discusses the internals. However, reading through this section could
 render a better understanding of **web-poet** as a whole.
 
@@ -798,7 +799,7 @@ render a better understanding of **web-poet** as a whole.
 Providing the Downloader 
 ------------------------
 
-Please note that on its own, :class:`~.HttpClient` doesn't do anything. It doesn't
+On its own, :class:`~.HttpClient` doesn't do anything. It doesn't
 know how to execute the request on its own. Thus, for frameworks or projects
 wanting to use additional requests in Page Objects, they need to set the
 implementation on how to execute an :class:`~.HttpRequest`.
@@ -815,8 +816,8 @@ HTTP downloader implementation in two ways:
 
 :mod:`contextvars` is natively supported in :mod:`asyncio` in order to set and
 access context-aware values. This means that the framework using **web-poet**
-can easily assign the implementation using the readily available :mod:`contextvars`
-instance named ``web_poet.request_backend_var``.
+can assign the request downloader implementation using the :mod:`contextvars`
+instance named ``web_poet.request_downloader_var``.
 
 This can be set using:
 
@@ -825,7 +826,7 @@ This can be set using:
     import attrs
     import web_poet
 
-    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
 
@@ -840,41 +841,42 @@ This can be set using:
         async def to_item(self):
             ...
 
-    # Once this is set, the ``request_implementation`` will become available to
-    # all instances of HttpClient unless a ``request_downloader`` is injected
-    # to it (see #2 Dependency Injection example below).
-    web_poet.request_backend_var.set(request_implementation)
+    # Once this is set, the ``request_implementation`` becomes available to
+    # all instances of HttpClient, unless HttpClient is created with
+    # the ``request_downloader`` argument (see the #2 Dependency Injection 
+    # example below).
+    web_poet.request_downloader_var.set(request_implementation)
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
 
     page = SomePage(response=response, http_client=create_http_client())
-    item = page.to_item()
+    item = await page.to_item()
 
-Setting this up would allow access to the request implementation in a
-:class:`~.HttpClient` instance which uses it by default.
+When the ``web_poet.request_downloader_var`` contextvar is set,
+:class:`~.HttpClient` instances use it by default.
 
 .. warning::
 
-    If no value for ``web_poet.request_backend_var`` was set, then a
-    :class:`~.RequestBackendError` is raised. However, no exception would
-    be raised if **option 2** below is used.
+    If no value for ``web_poet.request_downloader_var`` is set, then
+    :class:`~.RequestDownloaderVarError` is raised. However, no exception is
+    raised if **option 2** below is used.
 
 
 2. Dependency Injection
 ***********************
 
-The framework using **web-poet** MAY be using other libraries which doesn't
+The framework using **web-poet** may be using libraries that don't
 have a full support to :mod:`contextvars` `(e.g. Twisted)`. With that, an
-alternative approach would be to supply the request implementation when creating
-an :class:`~.HttpClient` instance:
+alternative approach would be to supply the request downloader implementation
+when creating an :class:`~.HttpClient` instance:
 
 .. code-block:: python
 
     import attrs
     import web_poet
 
-    def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
+    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
 
     def create_http_client():
@@ -892,28 +894,29 @@ an :class:`~.HttpClient` instance:
     response = web_poet.HttpResponse(...)
 
     page = SomePage(response=response, http_client=create_http_client())
-    item = page.to_item()
+    item = await page.to_item()
 
 From the code sample above, we can see that every time an :class:`~.HttpClient`
-is created for Page Objects needing an ``http_client``, the specific **request
-implementation** from a given framework is injected to it.
+instance is created for Page Objects needing an ``http_client``, the framework 
+must create :class:`~.HttpClient` with a framework-specific **request 
+downloader implementation**, using the ``request_downloader`` argument.
 
 Downloader Behavior
 -------------------
 
-The Downloader MUST be able to accept an instance of :class:`~.HttpRequest`
+The request downloader MUST accept an instance of :class:`~.HttpRequest`
 as the input and return an instance of :class:`~.HttpResponse`. This is important
 in order to handle and represent generic HTTP operations. The only time that
 it won't be returning :class:`~.HttpResponse` would be when it's raising exceptions
 (see :ref:`framework-exception-handling`).
 
-The Downloader MUST resolve Location-based **redirections** when the HTTP 
+The request downloader MUST resolve Location-based **redirections** when the HTTP
 method is not ``HEAD``. In other words, for non-``HEAD`` requests the 
 returned :class:`~.HttpResponse` must be the final response, after all redirects. 
 For ``HEAD`` requests redirects MUST NOT be resolved. 
 
-Lastly, the Downloader MUST support the ``async/await``
-syntax in order to enable developers to perform additional requests asynchronously.
+Lastly, the request downloader function MUST support the ``async/await``
+syntax.
 
 .. _framework-exception-handling:
 
@@ -929,8 +932,8 @@ Rationale
 *********
 
 Frameworks that handle **web-poet** MUST be able to ensure that Page Objects
-having additional requests using the :class:`~.HttpClient` is able to work in any
-type of HTTP downloader implementation.
+having additional requests using :class:`~.HttpClient` are able to work with 
+any type of HTTP downloader implementation.
 
 For example, in Python, the common HTTP libraries have different types of base
 exceptions when something has ocurred:
@@ -963,17 +966,17 @@ like the ones above, then it would cause the code to look like:
                 # handle the error here
 
 Such code could turn messy in no time especially when the number of HTTP backends
-that Page Objects SHOULD support are steadily increasing. Not to mention the 
+that Page Objects have to support are steadily increasing. Not to mention the
 plethora of exception types that HTTP libraries have. This means that Page
 Objects aren't truly portable in different types of frameworks or environments.
 Rather, they're only limited to work in the specific framework they're supported.
 
-In order for Page Objects to easily work in different Downloader Implementations,
-the framework that implements the HTTP Downloader backend MUST be able to raise
+In order for Page Objects to work in different Downloader Implementations,
+the framework that implements the HTTP Downloader backend MUST raise
 exceptions from the :mod:`web_poet.exceptions.http` module in lieu of the backend
 specific ones `(e.g. aiohttp, requests, urllib, etc.)`.
 
-This makes the code much simpler:
+This makes the code simpler:
 
 .. code-block:: python
 

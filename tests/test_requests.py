@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from web_poet.exceptions import HttpResponseError, RequestBackendError
+from web_poet.exceptions import HttpResponseError, RequestDownloaderVarError
 from web_poet.page_inputs import (
     HttpClient,
     HttpRequest,
@@ -10,7 +10,7 @@ from web_poet.page_inputs import (
     HttpRequestHeaders,
     HttpResponse,
 )
-from web_poet.requests import request_backend_var
+from web_poet.requests import request_downloader_var
 
 
 @pytest.fixture
@@ -31,10 +31,10 @@ async def test_perform_request_from_httpclient(async_mock):
     url = "http://example.com"
     client = HttpClient()
 
-    with pytest.raises(RequestBackendError):
+    with pytest.raises(RequestDownloaderVarError):
         await client.get(url)
 
-    request_backend_var.set(async_mock)
+    request_downloader_var.set(async_mock)
     response = await client.get(url)
 
     # The async downloader implementation should return the HttpResponse

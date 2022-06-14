@@ -28,14 +28,14 @@ class HttpClient:
     See :ref:`advanced-requests` for the usage information.
 
     HttpClient doesn't make HTTP requests on itself. It uses either the
-    request function assigned to the ``web_poet.request_backend_var``
+    request function assigned to the ``web_poet.request_downloader_var``
     :mod:`contextvar <contextvars>`, or a function passed via
     ``request_downloader`` argument of the :meth:`~.HttpClient.__init__` method.
 
-    Either way, this function should be an ``async def`` function which 
+    Either way, this function should be an ``async def`` function which
     receives an  :class:`~.HttpRequest` instance, and either returns a
-    :class:`~.HttpResponse` instance, or raises a subclass of 
-    :class:`~.HttpError`. You can read more in the 
+    :class:`~.HttpResponse` instance, or raises a subclass of
+    :class:`~.HttpError`. You can read more in the
     :ref:`advanced-downloader-impl` documentation.
     """
 
@@ -138,7 +138,7 @@ class HttpClient:
         )
 
     async def execute(self, request: HttpRequest, *, allow_status: List[_Status] = None) -> HttpResponse:
-        """Execute the specified :class:`~.HttpRequest` instance using the 
+        """Execute the specified :class:`~.HttpRequest` instance using the
         request implementation configured in the :class:`~.HttpClient`
         instance.
 
