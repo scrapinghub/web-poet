@@ -13,7 +13,7 @@ from .page_inputs import (
     ResponseUrl,
 )
 from .pages import Injectable, ItemPage, ItemWebPage, WebPage
-from .requests import request_backend_var
+from .requests import request_downloader_var
 
 default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls
