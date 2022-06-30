@@ -83,7 +83,7 @@ class ResponseShortcutsMixin(SelectableMixin):
         return urljoin(self.base_url, url)
 
 
-class UrlMixin(abc.ABC):
+class _UrlMixin(abc.ABC):
     """Common shortcut methods for working with the URL of HTTP requests and
     responses.
 

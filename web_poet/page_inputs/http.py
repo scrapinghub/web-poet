@@ -10,7 +10,7 @@ from w3lib.encoding import (
 )
 
 from web_poet._base import _HttpHeaders
-from web_poet.mixins import SelectableMixin, UrlMixin
+from web_poet.mixins import SelectableMixin, _UrlMixin
 from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
@@ -152,7 +152,7 @@ class HttpResponseHeaders(_HttpHeaders):
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpRequest(UrlMixin):
+class HttpRequest(_UrlMixin):
     """Represents a generic HTTP request used by other functionalities in
     **web-poet** like :class:`~.HttpClient`.
     """
@@ -164,7 +164,7 @@ class HttpRequest(UrlMixin):
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpResponse(UrlMixin, SelectableMixin):
+class HttpResponse(_UrlMixin, SelectableMixin):
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
 
