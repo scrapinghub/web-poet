@@ -9,25 +9,20 @@ from w3lib.encoding import (
     resolve_encoding,
 )
 
-from web_poet._base import _HttpHeaders, _Url
-from web_poet.mixins import SelectableMixin
-from web_poet.utils import memoizemethod_noargs
+from web_poet._base import _HttpHeaders
+from web_poet.mixins import SelectableMixin, UrlMixin
+from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
+
+from .url import RequestUrl as _RequestUrl
+from .url import ResponseUrl as _ResponseUrl
 
 T_headers = TypeVar("T_headers", bound="HttpResponseHeaders")
 
 _AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 
 
-class ResponseUrl(_Url):
-    """URL of the response"""
-
-    pass
-
-
-class RequestUrl(_Url):
-    """URL of the request"""
-
-    pass
+RequestUrl = _create_deprecated_class("RequestUrl", _RequestUrl)
+ResponseUrl = _create_deprecated_class("ResponseUrl", _ResponseUrl)
 
 
 class HttpRequestBody(bytes):
@@ -157,19 +152,19 @@ class HttpResponseHeaders(_HttpHeaders):
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpRequest:
+class HttpRequest(UrlMixin):
     """Represents a generic HTTP request used by other functionalities in
     **web-poet** like :class:`~.HttpClient`.
     """
 
-    url: RequestUrl = attrs.field(converter=RequestUrl)
+    url: _RequestUrl = attrs.field(converter=_RequestUrl)
     method: str = attrs.field(default="GET", kw_only=True)
     headers: HttpRequestHeaders = attrs.field(factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True)
     body: HttpRequestBody = attrs.field(factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True)
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpResponse(SelectableMixin):
+class HttpResponse(UrlMixin, SelectableMixin):
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
 
@@ -191,7 +186,7 @@ class HttpResponse(SelectableMixin):
     is auto-detected from headers and body content.
     """
 
-    url: ResponseUrl = attrs.field(converter=ResponseUrl)
+    url: _ResponseUrl = attrs.field(converter=_ResponseUrl)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders, converter=HttpResponseHeaders, kw_only=True)

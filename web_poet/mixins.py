@@ -1,8 +1,11 @@
 import abc
+from typing import Union
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
+
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
 class SelectableMixin(abc.ABC):
@@ -78,3 +81,30 @@ class ResponseShortcutsMixin(SelectableMixin):
         url and baseurl of the response"""
         # FIXME: move it to HttpResponse
         return urljoin(self.base_url, url)
+
+
+class UrlMixin(abc.ABC):
+    """Common shortcut methods for working with the URL of HTTP requests and
+    responses.
+
+    This mixin could be used with Page Object base classes.
+
+    It requires the ``url`` attribute to be present.
+    """
+
+    _cached_base_url = None
+    url: Union[str, RequestUrl, ResponseUrl]
+
+    @property
+    def _base_url(self) -> str:
+        if self._cached_base_url is None:
+            text = getattr(self, "text", "")[:4096]
+            self._cached_base_url = get_base_url(text, str(self.url))
+        return self._cached_base_url
+
+    def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
+        """Return *url* as an absolute URL.
+
+        If *url* is relative, it is made absolute relative to the base URL of
+        *self*."""
+        return RequestUrl(urljoin(self._base_url, str(url)))
