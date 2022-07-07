@@ -92,15 +92,15 @@ class _UrlMixin(abc.ABC):
     It requires the ``url`` attribute to be present.
     """
 
-    _cached_base_url = None
+    __cached_base_url = None
     url: Union[str, RequestUrl, ResponseUrl]
 
     @property
     def _base_url(self) -> str:
-        if self._cached_base_url is None:
+        if self.__cached_base_url is None:
             text = getattr(self, "text", "")[:4096]
-            self._cached_base_url = get_base_url(text, str(self.url))
-        return self._cached_base_url
+            self.__cached_base_url = get_base_url(text, str(self.url))
+        return self.__cached_base_url
 
     def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
         """Return *url* as an absolute URL.
