@@ -90,6 +90,10 @@ class _UrlMixin(abc.ABC):
     This mixin could be used with Page Object base classes.
 
     It requires the ``url`` attribute to be present.
+
+    For HTML responses, the ``text`` attribute should also be present and give
+    access to the HTML response as a string, so that the right base URL can be
+    detected.
     """
 
     __cached_base_url = None
