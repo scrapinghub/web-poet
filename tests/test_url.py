@@ -1,7 +1,7 @@
 import pytest
 
 from web_poet import RequestUrl, ResponseUrl
-from web_poet._base import _Url
+from web_poet.page_inputs.url import _Url
 
 
 def test_url_base_class():
