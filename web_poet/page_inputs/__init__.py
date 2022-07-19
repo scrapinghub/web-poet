@@ -7,7 +7,6 @@ from .http import (
     HttpResponse,
     HttpResponseBody,
     HttpResponseHeaders,
-    RequestUrl,
-    ResponseUrl,
 )
 from .page_params import PageParams
+from .url import RequestUrl, ResponseUrl

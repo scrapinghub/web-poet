@@ -437,3 +437,87 @@ def test_browser_html():
     assert html.xpath("//p/text()").getall() == ["Hello, ", "world!"]
     assert html.css("p::text").getall() == ["Hello, ", "world!"]
     assert isinstance(html.selector, parsel.Selector)
+
+
+@pytest.mark.parametrize(
+    ["cls"],
+    [
+        (HttpRequest,),
+        (HttpResponse,),
+    ],
+)
+def test_urljoin_absolute(cls):
+    obj = cls("https://example.com", body=b"")
+    new_url = obj.urljoin("https://toscrape.com/foo")
+    assert isinstance(new_url, RequestUrl)
+    assert str(new_url) == "https://toscrape.com/foo"
+
+
+@pytest.mark.parametrize(
+    ["cls"],
+    [
+        (HttpRequest,),
+        (HttpResponse,),
+    ],
+)
+def test_urljoin_relative(cls):
+    obj = cls("https://example.com", body=b"")
+    new_url = obj.urljoin("foo")
+    assert isinstance(new_url, RequestUrl)
+    assert str(new_url) == "https://example.com/foo"
+
+
+def test_urljoin_relative_html_base():
+    body = b"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <base href="https://toscrape.com/">
+    </head>
+    <body></body>
+    </html>
+    """
+    obj = HttpResponse("https://example.com", body=body)
+    new_url = obj.urljoin("foo")
+    assert isinstance(new_url, RequestUrl)
+    assert str(new_url) == "https://toscrape.com/foo"
+
+
+@pytest.mark.parametrize(
+    ["cls"],
+    [
+        (RequestUrl,),
+        (ResponseUrl,),
+    ],
+)
+def test_urljoin_input_classes(cls):
+    obj = HttpResponse("https://example.com", body=b"")
+    new_url = obj.urljoin(cls("foo"))
+    assert isinstance(new_url, RequestUrl)
+    assert str(new_url) == "https://example.com/foo"
+
+
+def test_requesturl_move():
+    from web_poet.page_inputs.http import RequestUrl
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            "web_poet.page_inputs.http.RequestUrl is deprecated, instantiate "
+            "web_poet.page_inputs.url.RequestUrl instead."
+        ),
+    ):
+        RequestUrl("https://example.com")
+
+
+def test_responseurl_move():
+    from web_poet.page_inputs.http import ResponseUrl
+
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            "web_poet.page_inputs.http.ResponseUrl is deprecated, instantiate "
+            "web_poet.page_inputs.url.ResponseUrl instead."
+        ),
+    ):
+        ResponseUrl("https://example.com")

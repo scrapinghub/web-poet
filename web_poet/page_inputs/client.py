@@ -3,7 +3,6 @@ import logging
 from http import HTTPStatus
 from typing import Callable, Dict, List, Optional, Union
 
-from web_poet._base import _Url
 from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.http import (
     HttpRequest,
@@ -11,6 +10,7 @@ from web_poet.page_inputs.http import (
     HttpRequestHeaders,
     HttpResponse,
 )
+from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
 from web_poet.utils import as_list
 
