@@ -1,3 +1,4 @@
+from .fields import field, item_from_fields, item_from_fields_sync
 from .overrides import OverrideRule, PageObjectRegistry, consume_modules
 from .page_inputs import (
     BrowserHtml,

@@ -154,3 +154,10 @@ def as_list(value: Optional[Any]) -> List[Any]:
     if not isinstance(value, Iterable):
         return [value]
     return list(value)
+
+
+async def maybe_await(obj):
+    """Return the value of obj, awaiting it if needed"""
+    if inspect.isawaitable(obj):
+        return await obj
+    return obj
