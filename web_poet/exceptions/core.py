@@ -15,3 +15,13 @@ class RequestDownloaderVarError(Exception):
     """
 
     pass
+
+
+class Retry(ValueError):
+    """The page object found that the input data is partial or empty, and a
+    request retry may provide better input.
+
+    See :ref:`retries`.
+    """
+
+    pass

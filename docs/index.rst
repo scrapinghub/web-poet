@@ -39,6 +39,7 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    :caption: Advanced
    :maxdepth: 1
 
+   advanced/retries
    advanced/additional-requests
    advanced/page-params
 
