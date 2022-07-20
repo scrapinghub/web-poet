@@ -60,4 +60,5 @@ async def item_from_fields(obj, item_cls=dict):
 
 def item_from_fields_sync(obj, item_cls=dict):
     """Synchronous version of :func:`item_from_fields`."""
-    return item_cls(**{name: getattr(obj, name)() for name in getattr(obj, "_auto_item_fields", {})})
+    field_names = getattr(obj, "_auto_item_fields", {})
+    return item_cls(**{name: getattr(obj, name)() for name in field_names})
