@@ -93,6 +93,34 @@ def test_item_from_fields_sync():
     assert page.to_item() == dict(name="name")
 
 
+def test_field_non_callable():
+    with pytest.raises(TypeError):
+
+        @attrs.define
+        class Page(ItemPage):
+            @field
+            @property
+            def name(self):  # noqa: D102
+                return "name"
+
+            def to_item(self):  # noqa: D102
+                return item_from_fields_sync(self, dict)
+
+
+def test_field_classmethod():
+    with pytest.raises(TypeError):
+
+        @attrs.define
+        class Page(ItemPage):
+            @field
+            @classmethod
+            def name(cls):  # noqa: D102
+                return "name"
+
+            def to_item(self):  # noqa: D102
+                return item_from_fields_sync(self, dict)
+
+
 @pytest.mark.asyncio
 async def test_field_order():
     class DictItemPage(Page):

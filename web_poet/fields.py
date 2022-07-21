@@ -37,7 +37,8 @@ class field:
     """
 
     def __init__(self, meth):
-        # fixme: validation?
+        if not callable(meth):
+            raise TypeError(f"@field decorator must be used on methods, " f"{meth!r} is decorated instead")
         self.meth = meth
 
     def __set_name__(self, owner, name):
