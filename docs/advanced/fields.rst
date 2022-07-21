@@ -9,7 +9,7 @@ Background
 
 It is common for Page Objects not to put all the extraction code to the
 ``to_item()`` method, but create properties or methods to extract
-individual attributes, a method per attribute:
+individual attributes, a method or property per attribute:
 
 .. code-block:: python
 
@@ -89,8 +89,9 @@ Asynchronous extraction methods
 -------------------------------
 
 ``async def`` extraction methods are also supported, as well as a mix of
-sync and async methods. For example, you might use :ref:`advanced-requests`
-to extract some of the attributes:
+sync and async methods - use :func:`~.item_from_fields` for this.
+For example, you might send :ref:`advanced-requests` to extract some
+of the attributes:
 
 .. code-block:: python
 
@@ -116,13 +117,13 @@ to extract some of the attributes:
             return item_from_fields(self)
 
 Because :func:`~.item_from_fields` supports both sync and async extraction
-methods, it's recommended to use over :func:`~.item_from_fields_sync`, even
+methods, it's recommended to use it over :func:`~.item_from_fields_sync`, even
 if there are no async extraction methods yet.
 
 Item clasess
 ------------
 
-In previous examples, ``to_item`` methods are returning ``dict``
+In all previous examples, ``to_item`` methods are returning ``dict``
 instances. It is common to use item classes (e.g. dataclasses or
 attrs instances) instead of unstructured dicts to hold the data:
 
@@ -187,8 +188,8 @@ Consider the following badly written page object:
         async def to_item(self) -> Item:
             return item_from_fields(self, item_cls=Item)
 
-Because Item class is used, a typo ("nane" instead of "name") will be detected:
-creation of Item instance would fail with a ``TypeError``, because
+Because Item class is used, a typo ("nane" instead of "name") is detected
+at runtime: creation of Item instance would fail with a ``TypeError``, because
 of unexpected keyword argument "nane".
 
 After fixing it (renaming "nane" method to "name"), another error is going to be
