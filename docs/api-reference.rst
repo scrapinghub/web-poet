@@ -95,3 +95,9 @@ use cases and some examples.
 .. automodule:: web_poet.overrides
    :members:
    :exclude-members: handle_urls
+
+Fields
+======
+
+.. automodule:: web_poet.fields
+    :members:

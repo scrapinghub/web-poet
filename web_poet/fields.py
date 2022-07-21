@@ -1,8 +1,8 @@
 """
-Module with helpers for defining Page Objects. It allows to define Page Objects
-in the following way:
+``web_poet.fields`` is a module with helpers for defining Page Objects.
+It allows to define Page Objects in the following way:
 
-.. code-block: python
+.. code-block:: python
 
     from web_poet import ItemPage, field, item_from_fields
 
