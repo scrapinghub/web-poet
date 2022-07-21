@@ -1012,4 +1012,4 @@ the ``400-5xx`` range, **web-poet** raises the :class:`web_poet.exceptions.http.
 exception.
 
 From this distinction, the framework MUST NOT raise :class:`web_poet.exceptions.http.HttpResponseError`
-on its own at all, since the :class:`~.HttpClient` already handles that. 
+on its own at all, since the :class:`~.HttpClient` already handles that.
