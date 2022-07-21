@@ -67,7 +67,6 @@ class ResponseShortcutsMixin(SelectableMixin):
     @property
     def base_url(self) -> str:
         """Return the base url of the given response"""
-        # FIXME: move it to HttpResponse
         if self._cached_base_url is None:
             text = self.html[:4096]
             self._cached_base_url = get_base_url(text, self.url)
@@ -76,5 +75,4 @@ class ResponseShortcutsMixin(SelectableMixin):
     def urljoin(self, url: str) -> str:
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
-        # FIXME: move it to HttpResponse
         return urljoin(self.base_url, url)
