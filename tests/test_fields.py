@@ -3,7 +3,13 @@ import asyncio
 import attrs
 import pytest
 
-from web_poet import HttpResponse, ItemPage, field, item_from_fields
+from web_poet import (
+    HttpResponse,
+    ItemPage,
+    field,
+    item_from_fields,
+    item_from_fields_sync,
+)
 
 
 @attrs.define
@@ -71,3 +77,37 @@ async def test_fields_invalid_page():
     page = InvalidPage(response=response)
     with pytest.raises(TypeError, match="unexpected keyword argument 'unknown_attribute'"):
         await page.to_item()
+
+
+def test_item_from_fields_sync():
+    @attrs.define
+    class Page(ItemPage):
+        @field
+        def name(self):  # noqa: D102
+            return "name"
+
+        def to_item(self):  # noqa: D102
+            return item_from_fields_sync(self, dict)
+
+    page = Page()
+    assert page.to_item() == dict(name="name")
+
+
+@pytest.mark.asyncio
+async def test_field_order():
+    class DictItemPage(Page):
+        async def to_item(self):
+            return await item_from_fields(self)
+
+    response = HttpResponse(
+        "http://example.com",
+        b"""
+    <html>
+    <head><title>Hello!</title>
+    </html>
+    """,
+    )
+    page = DictItemPage(response=response)
+    item = await page.to_item()
+    assert item == {"name": "Hello!", "price": "$123"}
+    assert list(item.keys()) == ["name", "price"]
