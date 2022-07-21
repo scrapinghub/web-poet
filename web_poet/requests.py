@@ -6,8 +6,9 @@ from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
 logger = logging.getLogger(__name__)
 
-# Frameworks that wants to support additional requests in ``web-poet`` should
-# set the appropriate implementation for requesting data.
+#: Frameworks that wants to support additional requests in ``web-poet`` should
+#: set the appropriate implementation of ``request_downloader_var``
+#: for requesting data.
 request_downloader_var: ContextVar = ContextVar("request_downloader")
 
 
