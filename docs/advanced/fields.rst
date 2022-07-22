@@ -120,7 +120,7 @@ Because :func:`~.item_from_fields` supports both sync and async extraction
 methods, it's recommended to use it over :func:`~.item_from_fields_sync`, even
 if there are no async extraction methods yet.
 
-Item clasess
+Item classes
 ------------
 
 In all previous examples, ``to_item`` methods are returning ``dict``
@@ -147,7 +147,7 @@ attrs instances) instead of unstructured dicts to hold the data:
                 price=self.price()
             )
 
-web_poet.fields support it, by allowing to pass an item class to the
+:mod:`web_poet.fields` supports it, by allowing to pass an item class to the
 :func:`~.item_from_fields` / :func:`~.item_from_fields_sync` functions:
 
 .. code-block:: python
