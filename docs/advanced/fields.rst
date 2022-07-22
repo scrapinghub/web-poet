@@ -118,7 +118,9 @@ of the attributes:
 
 Because :func:`~.item_from_fields` supports both sync and async extraction
 methods, it's recommended to use it over :func:`~.item_from_fields_sync`, even
-if there are no async extraction methods yet.
+if there are no async extraction methods yet. The only reason to use
+:func:`~.item_from_fields_sync` would be to avoid using
+``async def to_item`` method.
 
 Item classes
 ------------
