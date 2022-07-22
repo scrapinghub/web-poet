@@ -114,7 +114,7 @@ of the attributes:
             return resp.json()['price']
 
         async def to_item(self) -> dict:
-            return item_from_fields(self)
+            return await item_from_fields(self)
 
 Because :func:`~.item_from_fields` supports both sync and async extraction
 methods, it's recommended to use it over :func:`~.item_from_fields_sync`, even
@@ -159,7 +159,7 @@ attrs instances) instead of unstructured dicts to hold the data:
         # ...
 
         async def to_item(self) -> Item:
-            return item_from_fields(self, item_cls=Item)
+            return await item_from_fields(self, item_cls=Item)
 
 
 This approach plays particularly well with the
@@ -188,7 +188,7 @@ Consider the following badly written page object:
             return self.response.css(".name").get()
 
         async def to_item(self) -> Item:
-            return item_from_fields(self, item_cls=Item)
+            return await item_from_fields(self, item_cls=Item)
 
 Because Item class is used, a typo ("nane" instead of "name") is detected
 at runtime: creation of Item instance would fail with a ``TypeError``, because
