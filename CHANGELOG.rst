@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.4.0 (2022-07-26)
+------------------
+
+* New ``HttpResponse.urljoin`` method, which take page's base url in account.
+* New ``HttpRequest.urljoin`` method.
+* standardized ``web_poet.exceptions.Retry`` exception, which allows
+  to initiate a retry from the Page Object, e.g. based on page content.
+* Documentation improvements.
+
 0.3.0 (2022-06-14)
 ------------------
 
