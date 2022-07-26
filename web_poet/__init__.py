@@ -15,6 +15,7 @@ from .page_inputs import (
 )
 from .pages import Injectable, ItemPage, ItemWebPage, WebPage
 from .requests import request_downloader_var
+from .utils import cached_method
 
 default_registry = PageObjectRegistry()
 handle_urls = default_registry.handle_urls

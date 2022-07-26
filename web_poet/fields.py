@@ -24,31 +24,48 @@ It allows to define Page Objects in the following way:
             return await item_from_fields(self)
 
 """
+from functools import update_wrapper
 from types import MethodType
 
-from web_poet.utils import maybe_await
+from web_poet.utils import cached_method, maybe_await
 
 
-class field:
+def field(method=None, *, cached=False):
     """
-    Page Object methods decorated with ``field`` decorator
+    Page Object methods decorated with ``@field`` decorator
     are called by :func:`item_from_fields` or :func:`item_from_fields_sync`
     to populate item attributes.
+
+    By default, decorating a method with ``@field`` decorator make them cache
+    their results. Use ``@field(cached=False)`` to disable this behavior.
     """
 
-    def __init__(self, meth):
-        if not callable(meth):
-            raise TypeError(f"@field decorator must be used on methods, {meth!r} is decorated instead")
-        self.meth = meth
+    class _field:
+        def __init__(self, method):
+            if not callable(method):
+                raise TypeError(f"@field decorator must be used on methods, {method!r} is decorated instead")
+            if cached:
+                self.unbound_method = cached_method(method)
+            else:
+                self.unbound_method = method
 
-    def __set_name__(self, owner, name):
-        if not hasattr(owner, "_auto_item_fields"):
-            # dict is used instead of set to preserve the insertion order
-            owner._auto_item_fields = {}
-        owner._auto_item_fields[name] = True
+        def __set_name__(self, owner, name):
+            if not hasattr(owner, "_auto_item_fields"):
+                # dict is used instead of set to preserve the insertion order
+                owner._auto_item_fields = {}
+            owner._auto_item_fields[name] = True
 
-    def __get__(self, obj, objtype=None):
-        return MethodType(self.meth, obj)
+        def __get__(self, instance, owner=None):
+            return MethodType(self.unbound_method, instance)
+
+    if method is not None:
+        # @field syntax
+        res = _field(method)
+        update_wrapper(res, method)
+        return res
+    else:
+        # @field(...) syntax
+        return _field
 
 
 async def item_from_fields(obj, item_cls=dict):

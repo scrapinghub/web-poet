@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import attrs
 import pytest
@@ -51,17 +52,15 @@ class InvalidPage(ItemPage):
         return await item_from_fields(self, Item)
 
 
+EXAMPLE_RESPONSE = HttpResponse(
+    "http://example.com",
+    body=b"<html><head><title>Hello!</title></html>",
+)
+
+
 @pytest.mark.asyncio
 async def test_fields():
-    response = HttpResponse(
-        "http://example.com",
-        b"""
-    <html>
-    <head><title>Hello!</title>
-    </html>
-    """,
-    )
-    page = Page(response=response)
+    page = Page(response=EXAMPLE_RESPONSE)
 
     assert page.name() == "Hello!"
 
@@ -73,8 +72,7 @@ async def test_fields():
 
 @pytest.mark.asyncio
 async def test_fields_invalid_page():
-    response = HttpResponse("http://example.com", b"")
-    page = InvalidPage(response=response)
+    page = InvalidPage(response=EXAMPLE_RESPONSE)
     with pytest.raises(TypeError, match="unexpected keyword argument 'unknown_attribute'"):
         await page.to_item()
 
@@ -127,15 +125,94 @@ async def test_field_order():
         async def to_item(self):
             return await item_from_fields(self)
 
-    response = HttpResponse(
-        "http://example.com",
-        b"""
-    <html>
-    <head><title>Hello!</title>
-    </html>
-    """,
-    )
-    page = DictItemPage(response=response)
+    page = DictItemPage(response=EXAMPLE_RESPONSE)
     item = await page.to_item()
     assert item == {"name": "Hello!", "price": "$123"}
     assert list(item.keys()) == ["name", "price"]
+
+
+def test_field_decorator_no_arguments():
+    class Page:
+        @field()
+        def name(self):
+            return "Name"
+
+    page = Page()
+    assert item_from_fields_sync(page) == {"name": "Name"}
+
+
+def test_field_cache_sync():
+    class Page:
+        _n_called_1 = 0
+        _n_called_2 = 0
+
+        def __init__(self, name):
+            self.name = name
+
+        @field(cached=True)
+        def n_called_1(self):
+            self._n_called_1 += 1
+            return self._n_called_1, self.name
+
+        @field(cached=False)
+        def n_called_2(self):
+            self._n_called_2 += 1
+            return self._n_called_2, self.name
+
+    pages = [Page("first"), Page("second")]
+    for page in pages:
+        assert page.n_called_1() == (1, page.name)
+        assert page.n_called_1() == (1, page.name)
+
+        assert page.n_called_2() == (1, page.name)
+        assert page.n_called_2() == (2, page.name)
+
+
+@pytest.mark.asyncio
+async def test_field_cache_async():
+    class Page:
+        _n_called_1 = 0
+        _n_called_2 = 0
+
+        def __init__(self, name):
+            self.name = name
+
+        @field(cached=True)
+        async def n_called_1(self):
+            self._n_called_1 += 1
+            return self._n_called_1, self.name
+
+        @field(cached=False)
+        async def n_called_2(self):
+            self._n_called_2 += 1
+            return self._n_called_2, self.name
+
+    pages = [Page("first"), Page("second")]
+    for page in pages:
+        assert await page.n_called_1() == (1, page.name)
+        assert await page.n_called_1() == (1, page.name)
+
+        assert await page.n_called_2() == (1, page.name)
+        assert await page.n_called_2() == (2, page.name)
+
+
+@pytest.mark.asyncio
+async def test_field_cache_async_locked():
+    class Page:
+        _n_called = 0
+
+        @field(cached=True)
+        async def n_called(self):
+            await asyncio.sleep(random.randint(0, 10) / 100.0)
+            self._n_called += 1
+            return self._n_called
+
+    page = Page()
+    results = await asyncio.gather(
+        page.n_called(),
+        page.n_called(),
+        page.n_called(),
+        page.n_called(),
+        page.n_called(),
+    )
+    assert results == [1, 1, 1, 1, 1]
