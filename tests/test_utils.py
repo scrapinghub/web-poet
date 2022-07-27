@@ -51,6 +51,28 @@ def test_cached_method_basic():
     assert bar.meth() == (1, "second")
 
 
+@pytest.mark.asyncio
+async def test_cached_method_async():
+    class Foo:
+        n_called = 0
+
+        def __init__(self, name):
+            self.name = name
+
+        @cached_method
+        async def meth(self):
+            self.n_called += 1
+            return self.n_called, self.name
+
+    foo = Foo("first")
+    assert await foo.meth() == (1, "first")
+    assert await foo.meth() == (1, "first")
+
+    bar = Foo("second")
+    assert await bar.meth() == (1, "second")
+    assert await bar.meth() == (1, "second")
+
+
 def test_cached_method_argument():
     class Foo:
         n_called = 0
@@ -119,26 +141,46 @@ async def test_cached_method_unhashable_async():
     assert await foo.meth() == 1
 
 
-@pytest.mark.asyncio
-async def test_cached_method_async():
-    class Foo:
+@pytest.mark.xfail
+def test_cached_method_exception():
+    class Error(Exception):
+        pass
+
+    class Foo(list):
         n_called = 0
 
-        def __init__(self, name):
-            self.name = name
+        @cached_method
+        def meth(self):
+            self.n_called += 1
+            raise Error()
+
+    foo = Foo()
+
+    for _ in range(2):
+        with pytest.raises(Error):
+            foo.meth()
+        assert foo.n_called == 1
+
+
+@pytest.mark.asyncio
+async def test_cached_method_exception_async():
+    class Error(Exception):
+        pass
+
+    class Foo(list):
+        n_called = 0
 
         @cached_method
         async def meth(self):
             self.n_called += 1
-            return self.n_called, self.name
+            raise Error()
 
-    foo = Foo("first")
-    assert await foo.meth() == (1, "first")
-    assert await foo.meth() == (1, "first")
+    foo = Foo()
 
-    bar = Foo("second")
-    assert await bar.meth() == (1, "second")
-    assert await bar.meth() == (1, "second")
+    for _ in range(2):
+        with pytest.raises(Error):
+            await foo.meth()
+        assert foo.n_called == 1
 
 
 @pytest.mark.asyncio
