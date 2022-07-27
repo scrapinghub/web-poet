@@ -1,4 +1,3 @@
-import hashlib
 import inspect
 import weakref
 from collections.abc import Iterable
@@ -146,9 +145,12 @@ def cached_method(method):
         doesn't work well on methods: self is used as a cache key,
         so a reference to an instance is kept in the cache, and this
         prevents deallocation of instances.
+
+    This decorator adds a new private attribute to the instance named
+    ``_cached_method_{decorated_method_name}``; make sure the class
+    doesn't define an attribute of the same name.
     """
-    name_hash = hashlib.sha1(method.__name__.encode("utf8")).hexdigest()[:4]
-    cached_meth_name = f"_cached_{method.__name__}_{name_hash}"
+    cached_meth_name = f"_cached_method_{method.__name__}"
     if inspect.iscoroutinefunction(method):
         meth = _cached_method_async(method, cached_meth_name)
     else:
