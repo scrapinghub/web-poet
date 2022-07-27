@@ -206,3 +206,78 @@ but item classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
 * if you want to define the schema upfront.
+
+Caching
+-------
+
+When writing extraction code for Page Objects, it's common that several
+attributes reuse some computation. For example, you might need to do
+an additional request to get an API response, and then fill several
+attributes from this response:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, HttpClient
+
+    class MyPage(ItemPage):
+        response: HttpResponse
+        http: HttpClient
+
+        async def to_item(self):
+            api_url = self.response.css("...").get()
+            api_response = await self.http.get(api_url).json()
+            return {
+                'name': self.response.css(".name ::text").get(),
+                'price': api_response["price"],
+                'sku': api_response["sku"],
+            }
+
+When converting such Page Objects to use fields, be careful not to make an
+API call (or some other heavy computation) twice. You can do it by extracting
+the heavy operation to a method, and caching the results:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, HttpClient, field, cached_method
+
+    class MyPage(ItemPage):
+        response: HttpResponse
+        http: HttpClient
+
+        @cached_method
+        async def api_response(self):
+            api_url = self.response.css("...").get()
+            return await self.http.get(api_url).json()
+
+        @field
+        def name(self):
+            return self.response.css(".name ::text").get()
+
+        @field
+        async def price(self):
+            api_response = await self.api_response()
+            return api_response["price"]
+
+        @field
+        async def sku(self):
+            api_response = await self.api_response()
+            return api_response["sku"]
+
+        async def to_item(self):
+            return await item_from_fields(self)
+
+As you can see, ``web-poet`` provides :func:`~.cached_method` decorator,
+which allows to memoize the function results. It supports both sync and
+async methods, i.e. you can use it on regular methods (``def foo(self)``),
+as well as on async methods (``async def foo(self)``).
+
+The refactored example, with per-attribute fields, is more verbose than
+the original one, where a single ``to_item`` method is used. However, it
+provides some advantages - if only a subset of attributes is needed, then
+it's possible to use the Page Object without doing unnecessary work.
+For example, if user only needs ``name`` field in the example above, no
+additional requests (API calls) will be made.
+
+Sometimes you might want to cache ``field``, i.e. a method which computes an
+attribute of the final item. In such cases, use ``@field(cached=True)``
+decorator instead of ``@field``.

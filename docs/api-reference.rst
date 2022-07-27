@@ -101,3 +101,9 @@ Fields
 
 .. automodule:: web_poet.fields
     :members:
+
+utils
+=====
+
+.. automodule:: web_poet.utils
+    :members:
