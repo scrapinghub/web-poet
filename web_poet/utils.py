@@ -160,14 +160,14 @@ def cached_method(method):
     return meth
 
 
-def _cached_method_sync(method, cached_method_name, maxsize=None):
+def _cached_method_sync(method, cached_method_name):
     @wraps(method)
     def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
             # on a first call, create a lru_cache-wrapped method,
             # and store it on the instance
             bound_method = MethodType(method, self)
-            cached_meth = lru_cache(maxsize=maxsize)(bound_method)
+            cached_meth = lru_cache(maxsize=None)(bound_method)
             setattr(self, cached_method_name, cached_meth)
         else:
             cached_meth = getattr(self, cached_method_name)
@@ -176,14 +176,14 @@ def _cached_method_sync(method, cached_method_name, maxsize=None):
     return inner
 
 
-def _cached_method_async(method, cached_method_name, maxsize=None):
+def _cached_method_async(method, cached_method_name):
     @wraps(method)
     async def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
             # on a first call, create an alru_cache-wrapped method,
             # and store it on the instance
             bound_method = MethodType(method, self)
-            cached_meth = alru_cache(maxsize=maxsize)(bound_method)
+            cached_meth = alru_cache(maxsize=None)(bound_method)
             setattr(self, cached_method_name, cached_meth)
         else:
             cached_meth = getattr(self, cached_method_name)
