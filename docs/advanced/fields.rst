@@ -281,3 +281,33 @@ additional requests (API calls) will be made.
 Sometimes you might want to cache ``field``, i.e. a method which computes an
 attribute of the final item. In such cases, use ``@field(cached=True)``
 decorator instead of ``@field``.
+
+cached_method vs lru_cache
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you're an experienced Python developer, you might wonder why is
+:func:`~.cached_method` decorator needed, if Python already provides
+:func:`functools.lru_cache`. For example, one can write this:
+
+.. code-block:: python
+
+    from functools import lru_cache
+    from web_poet import ItemPage
+
+    class MyPage(ItemPage):
+        # ...
+        @lru_cache
+        def heavy_method(self):
+            # ...
+
+Don't do it! There are two issues with ``lru_cache``, which make it unsuitable
+here:
+
+1. It doesn't work properly on methods, because ``self`` is used as a part of the
+   cache key. It means a reference to an instance is kept in the cache,
+   and so created page objects are never deallocated, causing a memory leak.
+2. ``lru_cache`` doesn't work on ``async def`` methods, so you can't cache
+   e.g. results of API calls using ``lru_cache``.
+
+
+:func:`~.cached_method` solves both of these issues.
