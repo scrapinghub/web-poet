@@ -36,8 +36,7 @@ def field(method=None, *, cached=False):
     are called by :func:`item_from_fields` or :func:`item_from_fields_sync`
     to populate item attributes.
 
-    By default, decorating a method with ``@field`` decorator make them cache
-    their results. Use ``@field(cached=False)`` to disable this behavior.
+    Use ``@field(cached=True)`` to cache the method result.
     """
 
     class _field:
