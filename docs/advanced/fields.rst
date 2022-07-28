@@ -122,6 +122,41 @@ if there are no async extraction methods yet. The only reason to use
 :func:`~.item_from_fields_sync` would be to avoid using
 ``async def to_item`` method.
 
+Using Page Objects with async fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you want to a Page Object with async fields without calling its
+``to_item`` method, make sure to await the result when needed, and
+not await it when it's not needed:
+
+.. code-block:: python
+
+    page = MyPage(...)
+    name = page.name()
+    price = await page.price()
+
+This is not ideal, because now the code which needs to use a page object
+must be aware if a field is sync or async. If a field needs to be changed
+from being sync to ``async def`` (or the other way around),
+e.g. because of a website change, all the code which uses this page
+object must be updated.
+
+One approach to solve it is to always define all fields as ``async def``.
+It works, but it makes the page objects harder to use in non-async environments.
+
+Instead of doing this, you can also use :func:`~.ensure_awaitable` utility
+function when accessing the fields:
+
+.. code-block:: python
+
+    from web_poet.utils import ensure_awaitable
+
+    page = MyPage(...)
+    name = await ensure_awaitable(page.name())
+    price = await ensure_awaitable(page.price())
+
+Now any field can be converted from sync to async, or the other way around,
+and the code would keep working.
+
 Item classes
 ------------
 
