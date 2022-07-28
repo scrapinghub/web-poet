@@ -25,18 +25,18 @@ It allows to define Page Objects in the following way:
 
 """
 from functools import update_wrapper
-from types import MethodType
 
 from web_poet.utils import cached_method, ensure_awaitable
 
 
 def field(method=None, *, cached=False):
     """
-    Page Object methods decorated with ``@field`` decorator
-    are called by :func:`item_from_fields` or :func:`item_from_fields_sync`
+    Page Object method decorated with ``@field`` decorator becomes a property,
+    which is used by :func:`item_from_fields` or :func:`item_from_fields_sync`
     to populate item attributes.
 
-    Use ``@field(cached=True)`` to cache the method result.
+    By default, the value is computed on each property access.
+    Use ``@field(cached=True)`` to cache the property value.
     """
 
     class _field:
@@ -55,7 +55,7 @@ def field(method=None, *, cached=False):
             owner._auto_item_fields[name] = True
 
         def __get__(self, instance, owner=None):
-            return MethodType(self.unbound_method, instance)
+            return self.unbound_method(instance)
 
     if method is not None:
         # @field syntax
@@ -78,4 +78,4 @@ async def item_from_fields(obj, item_cls=dict):
 def item_from_fields_sync(obj, item_cls=dict):
     """Synchronous version of :func:`item_from_fields`."""
     field_names = getattr(obj, "_auto_item_fields", {})
-    return item_cls(**{name: getattr(obj, name)() for name in field_names})
+    return item_cls(**{name: getattr(obj, name) for name in field_names})

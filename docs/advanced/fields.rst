@@ -21,16 +21,18 @@ individual attributes, a method or property per attribute:
     class MyPage(ItemPage):
         response: HttpResponse
 
+        @property
         def name(self):
             return self.response.css(".name").get()
 
+        @property
         def price(self):
             return self.response.css(".price").get()
 
         def to_item(self) -> dict:
             return {
-                'name': self.name(),
-                'price': self.price()
+                'name': self.name,
+                'price': self.price
             }
 
 This approach has 2 main advantages:
@@ -38,12 +40,12 @@ This approach has 2 main advantages:
 1. Often the code looks cleaner this way, it's easier to follow.
 2. The resulting page object becomes more flexible and reusable:
    if not all data extracted in the ``to_item()`` method is needed,
-   user can call extraction methods for individual attributes. It's
+   user can use properties for individual attributes. It's
    more efficient than running ``to_item()`` and only using some of the
    result.
 
 However, writing and maintaining ``to_item()`` method can get tedious,
-especially if there is a lot of extraction methods.
+especially if there is a lot of properties.
 
 web_poet.fields
 ---------------
@@ -79,18 +81,23 @@ We can rewrite the example like this:
         def to_item(self) -> dict:
             return item_from_fields_sync(self)
 
+Methods annotated with :func:`@field <web_poet.fields.field>` decorator
+become properties; for ``page = MyPage(...)`` instance
+you can access them as ``page.name``.
 
-As you can guess, :func:`~.item_from_fields_sync` uses all the methods annotated
-with :func:`@field <web_poet.fields.field>` decorator, and creates a dict
-with the result, where keys are method names, and values are results of
-calling these methods.
+As you can guess, :func:`~.item_from_fields_sync` uses all the properties
+created with :func:`@field <web_poet.fields.field>` decorator, and returns
+a dict with the result, where keys are method names, and values are
+property values.
 
-Asynchronous extraction methods
--------------------------------
+Asynchronous fields
+-------------------
 
-``async def`` extraction methods are also supported, as well as a mix of
-sync and async methods - use :func:`~.item_from_fields` for this.
-For example, you might send :ref:`advanced-requests` to extract some
+``async def`` fields are also supported, as well as a mix of
+sync and async methods - use :func:`~.item_from_fields` in ``to_item``
+to make it work.
+
+For example, you might need to send :ref:`advanced-requests` to extract some
 of the attributes:
 
 .. code-block:: python
@@ -116,23 +123,31 @@ of the attributes:
         async def to_item(self) -> dict:
             return await item_from_fields(self)
 
-Because :func:`~.item_from_fields` supports both sync and async extraction
-methods, it's recommended to use it over :func:`~.item_from_fields_sync`, even
-if there are no async extraction methods yet. The only reason to use
+Because :func:`~.item_from_fields` supports both sync and async fields,
+it's recommended to use it over :func:`~.item_from_fields_sync`, even
+if there are no async fields yet. The only reason to use
 :func:`~.item_from_fields_sync` would be to avoid using
 ``async def to_item`` method.
 
-Using Page Objects with async fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you want to a Page Object with async fields without calling its
-``to_item`` method, make sure to await the result when needed, and
-not await it when it's not needed:
+If you want to get a value of an async field, make sure to await it:
 
 .. code-block:: python
 
     page = MyPage(...)
-    name = page.name()
-    price = await page.price()
+    price = await page.price
+
+Using Page Objects with async fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to a Page Object with async fields without calling its
+``to_item`` method, make sure to await the field when needed, and
+not await it when that's not needed:
+
+.. code-block:: python
+
+    page = MyPage(...)
+    name = page.name
+    price = await page.price
 
 This is not ideal, because now the code which needs to use a page object
 must be aware if a field is sync or async. If a field needs to be changed
@@ -151,8 +166,8 @@ function when accessing the fields:
     from web_poet.utils import ensure_awaitable
 
     page = MyPage(...)
-    name = await ensure_awaitable(page.name())
-    price = await ensure_awaitable(page.price())
+    name = await ensure_awaitable(page.name)
+    price = await ensure_awaitable(page.price)
 
 Now any field can be converted from sync to async, or the other way around,
 and the code would keep working.
@@ -180,8 +195,8 @@ attrs instances) instead of unstructured dicts to hold the data:
         # ...
         def to_item(self) -> Item:
             return Item(
-                name=self.name(),
-                price=self.price()
+                name=self.name,
+                price=self.price
             )
 
 :mod:`web_poet.fields` supports it, by allowing to pass an item class to the
@@ -268,8 +283,8 @@ attributes from this response:
             }
 
 When converting such Page Objects to use fields, be careful not to make an
-API call (or some other heavy computation) twice. You can do it by extracting
-the heavy operation to a method, and caching the results:
+API call (or some other heavy computation) multiple times. You can do it by
+extracting the heavy operation to a method, and caching the results:
 
 .. code-block:: python
 
@@ -313,7 +328,7 @@ it's possible to use the Page Object without doing unnecessary work.
 For example, if user only needs ``name`` field in the example above, no
 additional requests (API calls) will be made.
 
-Sometimes you might want to cache ``field``, i.e. a method which computes an
+Sometimes you might want to cache ``field``, i.e. a property which computes an
 attribute of the final item. In such cases, use ``@field(cached=True)``
 decorator instead of ``@field``.
 
