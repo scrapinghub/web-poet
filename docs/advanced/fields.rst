@@ -346,7 +346,7 @@ here:
 
 :func:`~.cached_method` solves both of these issues. You may also use
 :func:`functools.cached_property`, or an external package like async_property_
-with async versions of `@property` and `@cached_property` decorators; unlike
+with async versions of ``@property`` and ``@cached_property`` decorators; unlike
 ``lru_cache``, they all work fine for this use case.
 
 .. _async_property: https://github.com/ryananguiano/async_property
