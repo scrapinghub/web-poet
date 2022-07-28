@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 
-from web_poet.utils import _create_deprecated_class, cached_method, maybe_await
+from web_poet.utils import _create_deprecated_class, cached_method, ensure_awaitable
 
 
 class SomeBaseClass:
@@ -258,27 +258,27 @@ def test_inspect_stack():
 
 
 @pytest.mark.asyncio
-async def test_maybe_await_sync():
-    assert await maybe_await(5) == 5
+async def test_ensure_awaitable_sync():
+    assert await ensure_awaitable(5) == 5
 
     def foo():
         return 42
 
-    assert await maybe_await(foo()) == 42
+    assert await ensure_awaitable(foo()) == 42
 
 
 @pytest.mark.asyncio
-async def test_maybe_await_async():
+async def test_ensure_awaitable_async():
     async def foo():
         return 42
 
-    assert await maybe_await(foo()) == 42
+    assert await ensure_awaitable(foo()) == 42
 
     async def bar():
         await asyncio.sleep(0.01)
         return 42
 
-    assert await maybe_await(bar()) == 42
+    assert await ensure_awaitable(bar()) == 42
 
 
 def test_cached_method_basic():

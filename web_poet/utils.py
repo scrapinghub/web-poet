@@ -222,7 +222,7 @@ def as_list(value: Optional[Any]) -> List[Any]:
     return list(value)
 
 
-async def maybe_await(obj):
+async def ensure_awaitable(obj):
     """Return the value of obj, awaiting it if needed"""
     if inspect.isawaitable(obj):
         return await obj

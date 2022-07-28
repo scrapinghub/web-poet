@@ -27,7 +27,7 @@ It allows to define Page Objects in the following way:
 from functools import update_wrapper
 from types import MethodType
 
-from web_poet.utils import cached_method, maybe_await
+from web_poet.utils import cached_method, ensure_awaitable
 
 
 def field(method=None, *, cached=False):
@@ -72,7 +72,7 @@ async def item_from_fields(obj, item_cls=dict):
     from the ``obj`` methods decorated with :class:`field` decorator.
     """
     data = item_from_fields_sync(obj, item_cls=dict)
-    return item_cls(**{name: await maybe_await(value) for name, value in data.items()})
+    return item_cls(**{name: await ensure_awaitable(value) for name, value in data.items()})
 
 
 def item_from_fields_sync(obj, item_cls=dict):
