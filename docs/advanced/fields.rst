@@ -282,8 +282,8 @@ Sometimes you might want to cache ``field``, i.e. a method which computes an
 attribute of the final item. In such cases, use ``@field(cached=True)``
 decorator instead of ``@field``.
 
-cached_method vs lru_cache
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+cached_method vs lru_cache vs cached_property
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you're an experienced Python developer, you might wonder why is
 :func:`~.cached_method` decorator needed, if Python already provides
@@ -309,5 +309,9 @@ here:
 2. ``lru_cache`` doesn't work on ``async def`` methods, so you can't cache
    e.g. results of API calls using ``lru_cache``.
 
+:func:`~.cached_method` solves both of these issues. You may also use
+:func:`functools.cached_property`, or an external package like async_property_
+with async versions of `@property` and `@cached_property` decorators; unlike
+``lru_cache``, they all work fine for this use case.
 
-:func:`~.cached_method` solves both of these issues.
+.. _async_property: https://github.com/ryananguiano/async_property
