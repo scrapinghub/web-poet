@@ -62,7 +62,8 @@ EXAMPLE_RESPONSE = HttpResponse(
 async def test_fields():
     page = Page(response=EXAMPLE_RESPONSE)
 
-    assert page.name() == "Hello!"
+    assert page.name == "Hello!"
+    assert await page.price == "$123"
 
     item = await page.to_item()
     assert isinstance(item, Item)
@@ -161,11 +162,11 @@ def test_field_cache_sync():
 
     pages = [Page("first"), Page("second")]
     for page in pages:
-        assert page.n_called_1() == (1, page.name)
-        assert page.n_called_1() == (1, page.name)
+        assert page.n_called_1 == (1, page.name)
+        assert page.n_called_1 == (1, page.name)
 
-        assert page.n_called_2() == (1, page.name)
-        assert page.n_called_2() == (2, page.name)
+        assert page.n_called_2 == (1, page.name)
+        assert page.n_called_2 == (2, page.name)
 
 
 @pytest.mark.asyncio
@@ -189,11 +190,11 @@ async def test_field_cache_async():
 
     pages = [Page("first"), Page("second")]
     for page in pages:
-        assert await page.n_called_1() == (1, page.name)
-        assert await page.n_called_1() == (1, page.name)
+        assert await page.n_called_1 == (1, page.name)
+        assert await page.n_called_1 == (1, page.name)
 
-        assert await page.n_called_2() == (1, page.name)
-        assert await page.n_called_2() == (2, page.name)
+        assert await page.n_called_2 == (1, page.name)
+        assert await page.n_called_2 == (2, page.name)
 
 
 @pytest.mark.asyncio
@@ -209,10 +210,10 @@ async def test_field_cache_async_locked():
 
     page = Page()
     results = await asyncio.gather(
-        page.n_called(),
-        page.n_called(),
-        page.n_called(),
-        page.n_called(),
-        page.n_called(),
+        page.n_called,
+        page.n_called,
+        page.n_called,
+        page.n_called,
+        page.n_called,
     )
     assert results == [1, 1, 1, 1, 1]
