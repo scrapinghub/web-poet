@@ -14,7 +14,15 @@ setup(
     author_email="opensource@zyte.com",
     url="https://github.com/scrapinghub/web-poet",
     packages=find_packages(exclude=("tests",)),
-    install_requires=["attrs >= 21.3.0", "parsel", "url-matcher", "multidict", "w3lib >= 1.22.0", "async-lru >= 1.0.3"],
+    install_requires=[
+        "attrs >= 21.3.0",
+        "parsel",
+        "url-matcher",
+        "multidict",
+        "w3lib >= 1.22.0",
+        "async-lru >= 1.0.3",
+        "itemadapter >= 0.4.0",
+    ],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

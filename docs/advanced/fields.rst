@@ -175,6 +175,9 @@ and the code would keep working.
 Item classes
 ------------
 
+Structured items
+~~~~~~~~~~~~~~~~
+
 In all previous examples, ``to_item`` methods are returning ``dict``
 instances. It is common to use item classes (e.g. dataclasses or
 attrs instances) instead of unstructured dicts to hold the data:
@@ -211,6 +214,8 @@ attrs instances) instead of unstructured dicts to hold the data:
         async def to_item(self) -> Item:
             return await item_from_fields(self, item_cls=Item)
 
+Error prevention
+~~~~~~~~~~~~~~~~
 
 This approach plays particularly well with the
 :func:`@field <web_poet.fields.field>` decorator, preventing some of the errors,
@@ -256,6 +261,112 @@ but item classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
 * if you want to define the schema upfront.
+
+Changing Item type
+~~~~~~~~~~~~~~~~~~
+
+Let's say there is a Page Object implemented, which outputs some standard
+item. Maybe there is a library of such Page Objects available. But for a
+particular project we might want to output an item of a different type:
+
+* some attributes of the standard item may be not needed;
+* there might be a need to implement extra attributes, which are not
+  available in the standard item;
+* names of attributes might be different.
+
+There are a few ways to approach it. For example, if items are very
+different, you might use the original Page Object as a dependency:
+
+.. code-block:: python
+
+    import attrs
+    from my_library import FooPage, StandardItem
+    from web_poet import ItemPage, ensure_awaitable
+
+    @attrs.define
+    class CustomItem:
+        new_name: str
+        new_price: str
+
+    @attrs.define
+    class CustomFooPage(ItemPage):
+        response: HttpResponse
+        standard: FooPage
+
+        @field
+        async def new_name(self):
+            orig_name = await ensure_awaitable(self.standard.name)
+            orig_brand = await ensure_awaitable(self.standard.brand)
+            return f"{orig_brand}: {orig_name}"
+
+        @field
+        async def new_price(self):
+            # ...
+
+        async def to_item(self) -> CustomItem:
+            return await item_from_fields(self, item_cls=CustomItem)
+
+However, in many cases the items are quite similar, and share many of
+the attributes. The easiest case is an addition of a new field; you can do
+it like this:
+
+.. code-block:: python
+
+    @attrs.define
+    class CustomItem(StandardItem):
+        new_field: str
+
+    @attrs.define
+    class CustomFooPage(FooPage):
+
+        @field
+        def new_field(self) -> str:
+            # ...
+
+        async def to_item(self) -> CustomItem:
+            # we need to override to_item to ensure CustomItem is returned
+            return await item_from_fields(self, item_cls=CustomItem)
+
+Removing fields (as well as renaming) is more tricky. The caveat is that
+by default :func:`item_from_fields` uses all fields defined as ``@field``
+to produce an item, passing all these values to ``Item.__init__``.
+
+But if you follow the previous example, and inherit from the "base",
+"standard" Page Object, there could be a ``@field`` which is not present
+in then ``CustomItem``. It'd be passed to ``CustomItem.__init__``, causing
+an exception.
+
+To solve it, you can use ``item_cls_fields=True`` argument
+of :func:`item_from_fields`. When this parameter is True, ``@fields`` which
+are not defined in the item are skipped.
+
+.. code-block:: python
+
+    @attrs.define
+    class CustomItem(Item):
+        # let's pick only 1 attribute from StandardItem, nothing more
+        name: str
+
+    @attrs.define
+    class CustomFooPage(FooPage):
+        # inheriting from a page object which defines all StandardItem fields
+
+        async def to_item(self) -> CustomItem:
+            return await item_from_fields(self, item_cls=CustomItem,
+                                          item_cls_fields=True)
+
+Here CustomFooPage only uses ``name`` field of the ``FooPage``, ignoring
+all other fields defined in ``FooPage``, because ``name`` is the only
+field ``CustomItem`` supports.
+
+To recap:
+
+* Use ``item_cls_fields=False`` (default) when your Page Object corresponds
+  to an item exactly, and you want to detect typos in field names even
+  for optional fields.
+* Use ``item_cls_fields=True`` when it's possible for the Page Object
+  to contain more ``@fields`` than defined in the item class, e.g. because
+  Page Object is inherited from some other base Page Object.
 
 Caching
 -------

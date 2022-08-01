@@ -26,7 +26,11 @@ It allows to define Page Objects in the following way:
 """
 from functools import update_wrapper
 
+from itemadapter import ItemAdapter
+
 from web_poet.utils import cached_method, ensure_awaitable
+
+_FIELDS_ATTRIBUTE = "_marked_as_fields"
 
 
 def field(method=None, *, cached=False):
@@ -49,10 +53,10 @@ def field(method=None, *, cached=False):
                 self.unbound_method = method
 
         def __set_name__(self, owner, name):
-            if not hasattr(owner, "_auto_item_fields"):
+            if not hasattr(owner, _FIELDS_ATTRIBUTE):
                 # dict is used instead of set to preserve the insertion order
-                owner._auto_item_fields = {}
-            owner._auto_item_fields[name] = True
+                setattr(owner, _FIELDS_ATTRIBUTE, {})
+            getattr(owner, _FIELDS_ATTRIBUTE)[name] = True
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
@@ -67,15 +71,26 @@ def field(method=None, *, cached=False):
         return _field
 
 
-async def item_from_fields(obj, item_cls=dict):
+async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
+
+    If ``item_cls_fields`` is True, ``@fields`` which names don't match
+    any of the ``item_cls`` attributes are not passed to ``item_cls.__init__``.
+    When ``item_cls_fields`` is False (default), all ``@fields`` are passed
+    to ``item_cls.__init__``.
     """
-    data = item_from_fields_sync(obj, item_cls=dict)
+    data = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=item_cls_fields)
     return item_cls(**{name: await ensure_awaitable(value) for name, value in data.items()})
 
 
-def item_from_fields_sync(obj, item_cls=dict):
+def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = getattr(obj, "_auto_item_fields", {})
+    field_names = list(getattr(obj, _FIELDS_ATTRIBUTE, {}))
+
+    if item_cls_fields:
+        item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
+        if item_field_names is not None:
+            field_names = list(set(field_names) | set(item_field_names))
+
     return item_cls(**{name: getattr(obj, name) for name in field_names})
