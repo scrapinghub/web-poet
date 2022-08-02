@@ -175,9 +175,6 @@ and the code would keep working.
 Item classes
 ------------
 
-Structured items
-~~~~~~~~~~~~~~~~
-
 In all previous examples, ``to_item`` methods are returning ``dict``
 instances. It is common to use item classes (e.g. dataclasses or
 attrs instances) instead of unstructured dicts to hold the data:
@@ -214,10 +211,16 @@ attrs instances) instead of unstructured dicts to hold the data:
         async def to_item(self) -> Item:
             return await item_from_fields(self, item_cls=Item)
 
+Defining an Item class may be an overkill if you only have a single Page Object,
+but item classes are of a great help when
+
+* you need to extract data in the same format from multiple websites, or
+* if you want to define the schema upfront.
+
 Error prevention
 ~~~~~~~~~~~~~~~~
 
-This approach plays particularly well with the
+Item classes play particularly well with the
 :func:`@field <web_poet.fields.field>` decorator, preventing some of the errors,
 which may happen if results are plain "dicts".
 
@@ -256,12 +259,6 @@ indicating that a required argument is missing.
 
 Without an Item class, none of these errors are detected.
 
-Defining an Item class may be an overkill if you only have a single Page Object,
-but item classes are of a great help when
-
-* you need to extract data in the same format from multiple websites, or
-* if you want to define the schema upfront.
-
 Changing Item type
 ~~~~~~~~~~~~~~~~~~
 
@@ -269,13 +266,13 @@ Let's say there is a Page Object implemented, which outputs some standard
 item. Maybe there is a library of such Page Objects available. But for a
 particular project we might want to output an item of a different type:
 
-* some attributes of the standard item may be not needed;
+* some attributes of the standard item might not be needed;
 * there might be a need to implement extra attributes, which are not
   available in the standard item;
 * names of attributes might be different.
 
-There are a few ways to approach it. For example, if items are very
-different, you might use the original Page Object as a dependency:
+There are a few ways to approach it. If items are very
+different, using the original Page Object as a dependency is a good approach:
 
 .. code-block:: python
 
@@ -306,9 +303,14 @@ different, you might use the original Page Object as a dependency:
         async def to_item(self) -> CustomItem:
             return await item_from_fields(self, item_cls=CustomItem)
 
-However, in many cases the items are quite similar, and share many of
-the attributes. The easiest case is an addition of a new field; you can do
-it like this:
+However, if items are similar, and share many attributes, this approach
+could lead to boilerplate code. For example, you might be extending an item
+with a new field, and it'd be required to duplicate definitions for all
+other fields.
+
+Instead of using dependency injection you can make your Page Object
+a subclass of the original Page Object; that's a nice way to add a new field
+to the item:
 
 .. code-block:: python
 
@@ -327,18 +329,22 @@ it like this:
             # we need to override to_item to ensure CustomItem is returned
             return await item_from_fields(self, item_cls=CustomItem)
 
-Removing fields (as well as renaming) is more tricky. The caveat is that
-by default :func:`item_from_fields` uses all fields defined as ``@field``
-to produce an item, passing all these values to ``Item.__init__``.
+Removing fields (as well as renaming) is more tricky with inheritance though.
 
-But if you follow the previous example, and inherit from the "base",
-"standard" Page Object, there could be a ``@field`` which is not present
-in then ``CustomItem``. It'd be passed to ``CustomItem.__init__``, causing
-an exception.
+The caveat is that by default :func:`item_from_fields` uses all fields
+defined as ``@field`` to produce an item, passing all these values to
+``Item.__init__``. So, if you follow the previous example, and inherit from
+the "base", "standard" Page Object, there could be a ``@field`` from the base
+class which is not present in the ``CustomItem``. It'd be still passed
+to ``CustomItem.__init__``, causing an exception.
 
-To solve it, you can use ``item_cls_fields=True`` argument
-of :func:`item_from_fields`. When this parameter is True, ``@fields`` which
-are not defined in the item are skipped.
+To solve it, you can either
+
+* make the orignal Page Object a dependency instead of inheriting from it
+  (as explained in the beginning), or
+* use ``item_cls_fields=True`` argument of :func:`item_from_fields`:
+  when ``item_cls_fields`` parameter is True, ``@fields`` which
+  are not defined in the item are skipped.
 
 .. code-block:: python
 
@@ -355,15 +361,15 @@ are not defined in the item are skipped.
             return await item_from_fields(self, item_cls=CustomItem,
                                           item_cls_fields=True)
 
-Here CustomFooPage only uses ``name`` field of the ``FooPage``, ignoring
-all other fields defined in ``FooPage``, because ``name`` is the only
-field ``CustomItem`` supports.
+Here CustomFooPage.to_item only uses ``name`` field of the ``FooPage``, ignoring
+all other fields defined in ``FooPage``, because ``item_cls_fields=True``
+is passed, and ``name`` is the only field ``CustomItem`` supports.
 
 To recap:
 
 * Use ``item_cls_fields=False`` (default) when your Page Object corresponds
-  to an item exactly, and you want to detect typos in field names even
-  for optional fields.
+  to an item exactly, or when you're only adding fields. This is a safe option,
+  which allows to detect typos in field names, even for optional fields.
 * Use ``item_cls_fields=True`` when it's possible for the Page Object
   to contain more ``@fields`` than defined in the item class, e.g. because
   Page Object is inherited from some other base Page Object.
