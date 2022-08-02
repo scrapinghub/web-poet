@@ -217,3 +217,57 @@ async def test_field_cache_async_locked():
         page.n_called,
     )
     assert results == [1, 1, 1, 1, 1]
+
+
+@pytest.mark.asyncio
+async def test_item_cls_fields_async():
+    class ExtendedPage(Page):
+        @field
+        def new_attribute(self):
+            return "foo"
+
+    page = ExtendedPage(response=EXAMPLE_RESPONSE)
+    with pytest.raises(TypeError, match="unexpected keyword argument 'new_attribute'"):
+        await page.to_item()
+
+    class ExtendedPage2(ExtendedPage):
+        async def to_item(self) -> Item:
+            return await item_from_fields(self, Item, item_cls_fields=True)
+
+    page = ExtendedPage2(response=EXAMPLE_RESPONSE)
+    item = await page.to_item()
+    assert item == Item(name="Hello!", price="$123")
+
+
+def test_item_cls_fields():
+    @attrs.define
+    class SyncPage(ItemPage):
+        response: HttpResponse
+
+        @field
+        def name(self):  # noqa: D102
+            return self.response.css("title ::text").get()
+
+        @field
+        def price(self):  # noqa: D102
+            return "$123"
+
+        def to_item(self):  # noqa: D102
+            return item_from_fields_sync(self, Item)
+
+    class ExtendedPage(SyncPage):
+        @field
+        def new_attribute(self):
+            return "foo"
+
+    page = ExtendedPage(response=EXAMPLE_RESPONSE)
+    with pytest.raises(TypeError, match="unexpected keyword argument 'new_attribute'"):
+        page.to_item()
+
+    class ExtendedPage2(ExtendedPage):
+        def to_item(self) -> Item:
+            return item_from_fields_sync(self, Item, item_cls_fields=True)
+
+    page = ExtendedPage2(response=EXAMPLE_RESPONSE)
+    item = page.to_item()
+    assert item == Item(name="Hello!", price="$123")

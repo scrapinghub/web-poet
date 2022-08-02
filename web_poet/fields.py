@@ -80,17 +80,25 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     When ``item_cls_fields`` is False (default), all ``@fields`` are passed
     to ``item_cls.__init__``.
     """
-    data = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=item_cls_fields)
-    return item_cls(**{name: await ensure_awaitable(value) for name, value in data.items()})
+    item_dict = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=False)
+    field_names = item_dict.keys()
+    if item_cls_fields:
+        field_names = _without_unsupported_field_names(item_cls, field_names)
+    return item_cls(**{name: await ensure_awaitable(item_dict[name]) for name in field_names})
 
 
 def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(getattr(obj, _FIELDS_ATTRIBUTE, {}))
-
     if item_cls_fields:
-        item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
-        if item_field_names is not None:
-            field_names = list(set(field_names) | set(item_field_names))
-
+        field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
+
+
+def _without_unsupported_field_names(item_cls, field_names):
+    item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
+
+    if item_field_names is not None:
+        field_names = list(set(field_names) & set(item_field_names))
+
+    return field_names
