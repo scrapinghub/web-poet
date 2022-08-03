@@ -97,8 +97,6 @@ def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
 
 def _without_unsupported_field_names(item_cls, field_names):
     item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
-
-    if item_field_names is not None:
-        field_names = list(set(field_names) & set(item_field_names))
-
-    return field_names
+    if item_field_names is None:  # item_cls doesn't define field names upfront
+        return field_names[:]
+    return list(set(field_names) & set(item_field_names))
