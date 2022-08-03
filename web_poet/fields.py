@@ -75,7 +75,7 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
-    If ``item_cls_fields`` is True, ``@fields`` which names don't match
+    If ``item_cls_fields`` is True, ``@fields`` whose names don't match
     any of the ``item_cls`` attributes are not passed to ``item_cls.__init__``.
     When ``item_cls_fields`` is False (default), all ``@fields`` are passed
     to ``item_cls.__init__``.
