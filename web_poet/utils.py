@@ -1,9 +1,12 @@
 import inspect
 import weakref
 from collections.abc import Iterable
-from functools import wraps
+from functools import lru_cache, wraps
+from types import MethodType
 from typing import Any, List, Optional
 from warnings import warn
+
+from async_lru import alru_cache
 
 
 def _clspath(cls, forced=None):
@@ -113,7 +116,10 @@ def _create_deprecated_class(
 
 def memoizemethod_noargs(method):
     """Decorator to cache the result of a method (without arguments) using a
-    weak reference to its object
+    weak reference to its object.
+
+    It is faster than :func:`cached_method`, and doesn't add new attributes
+    to the instance, but it doesn't work if objects are unhashable.
     """
     cache = weakref.WeakKeyDictionary()
 
@@ -124,6 +130,66 @@ def memoizemethod_noargs(method):
         return cache[self]
 
     return new_method
+
+
+def cached_method(method):
+    """A decorator to cache method or coroutine method results,
+    so that if it's called multiple times for the same instance,
+    computation is only done once.
+
+    The cache is unbound, but it's tied to the instance lifetime.
+
+    .. note::
+
+        :func:`cached_method` is needed because :func:`functools.lru_cache`
+        doesn't work well on methods: self is used as a cache key,
+        so a reference to an instance is kept in the cache, and this
+        prevents deallocation of instances.
+
+    This decorator adds a new private attribute to the instance named
+    ``_cached_method_{decorated_method_name}``; make sure the class
+    doesn't define an attribute of the same name.
+    """
+    cached_meth_name = f"_cached_method_{method.__name__}"
+    if inspect.iscoroutinefunction(method):
+        meth = _cached_method_async(method, cached_meth_name)
+    else:
+        meth = _cached_method_sync(method, cached_meth_name)
+
+    meth.cached_method_name = cached_meth_name
+    return meth
+
+
+def _cached_method_sync(method, cached_method_name):
+    @wraps(method)
+    def inner(self, *args, **kwargs):
+        if not hasattr(self, cached_method_name):
+            # on a first call, create a lru_cache-wrapped method,
+            # and store it on the instance
+            bound_method = MethodType(method, self)
+            cached_meth = lru_cache(maxsize=None)(bound_method)
+            setattr(self, cached_method_name, cached_meth)
+        else:
+            cached_meth = getattr(self, cached_method_name)
+        return cached_meth(*args, **kwargs)
+
+    return inner
+
+
+def _cached_method_async(method, cached_method_name):
+    @wraps(method)
+    async def inner(self, *args, **kwargs):
+        if not hasattr(self, cached_method_name):
+            # on a first call, create an alru_cache-wrapped method,
+            # and store it on the instance
+            bound_method = MethodType(method, self)
+            cached_meth = alru_cache(maxsize=None)(bound_method)
+            setattr(self, cached_method_name, cached_meth)
+        else:
+            cached_meth = getattr(self, cached_method_name)
+        return await cached_meth(*args, **kwargs)
+
+    return inner
 
 
 def as_list(value: Optional[Any]) -> List[Any]:
@@ -154,3 +220,10 @@ def as_list(value: Optional[Any]) -> List[Any]:
     if not isinstance(value, Iterable):
         return [value]
     return list(value)
+
+
+async def ensure_awaitable(obj):
+    """Return the value of obj, awaiting it if needed"""
+    if inspect.isawaitable(obj):
+        return await obj
+    return obj

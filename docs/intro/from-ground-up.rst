@@ -297,7 +297,15 @@ For example, we can extract logic for different attributes into properties:
                 # ...
             }
 
-You may write some base class to make it nicer - e.g. helper descriptors
+It might be easier to read the code written this way. Also, this style
+allows to extract only some of the attributes - if you don't need
+the complete to_item() output, you still can access individual properties.
+
+.. note::
+    web-poet provides a small framework to simplify writing Page Objects
+    in this style; see :ref:`web-poet-fields` .
+
+You may even write some base class to make it nicer - e.g. helper descriptors
 to define properties from CSS selectors, and a default ``to_item``
 implementation (so, no need to define ``to_item``).
 This is currently not implemented in ``web-poet``, but
@@ -310,9 +318,8 @@ nothing prevents us from having a DSL like this:
         description = Css('#product_description+ p') | Strip()
         url = TakeUrl()
 
-Another, and probably a more important reason to consider classes for the
-extraction code, is that sometimes there is no a single "main" method,
-but you still want to group the related code.
+Another reason to consider classes for the extraction code is that sometimes
+there is no a single "main" method, but you still want to group the related code.
 For example, you may define a "Pagination" page object:
 
 .. code-block:: python
