@@ -139,7 +139,7 @@ If you want to get a value of an async field, make sure to await it:
 Using Page Objects with async fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to a Page Object with async fields without calling its
+If you want to use a Page Object with async fields without calling its
 ``to_item`` method, make sure to await the field when needed, and
 not await it when that's not needed:
 
