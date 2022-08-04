@@ -361,7 +361,7 @@ To solve it, you can either
             return await item_from_fields(self, item_cls=CustomItem,
                                           item_cls_fields=True)
 
-Here, `CustomFooPage.to_item` only uses ``name`` field of the ``FooPage``, ignoring
+Here, ``CustomFooPage.to_item`` only uses ``name`` field of the ``FooPage``, ignoring
 all other fields defined in ``FooPage``, because ``item_cls_fields=True``
 is passed, and ``name`` is the only field ``CustomItem`` supports.
 
