@@ -278,7 +278,7 @@ different, using the original Page Object as a dependency is a good approach:
 
     import attrs
     from my_library import FooPage, StandardItem
-    from web_poet import ItemPage, ensure_awaitable
+    from web_poet import ItemPage, HttpResponse, field, ensure_awaitable, item_from_fields
 
     @attrs.define
     class CustomItem:
@@ -298,7 +298,7 @@ different, using the original Page Object as a dependency is a good approach:
 
         @field
         async def new_price(self):
-            # ...
+            ...
 
         async def to_item(self) -> CustomItem:
             return await item_from_fields(self, item_cls=CustomItem)
@@ -361,7 +361,7 @@ To solve it, you can either
             return await item_from_fields(self, item_cls=CustomItem,
                                           item_cls_fields=True)
 
-Here CustomFooPage.to_item only uses ``name`` field of the ``FooPage``, ignoring
+Here, `CustomFooPage.to_item` only uses ``name`` field of the ``FooPage``, ignoring
 all other fields defined in ``FooPage``, because ``item_cls_fields=True``
 is passed, and ``name`` is the only field ``CustomItem`` supports.
 
@@ -405,7 +405,14 @@ extracting the heavy operation to a method, and caching the results:
 
 .. code-block:: python
 
-    from web_poet import ItemPage, HttpResponse, HttpClient, field, cached_method
+    from web_poet import (
+        ItemPage,
+        HttpResponse,
+        HttpClient,
+        field,
+        cached_method,
+        item_from_fields
+    )
 
     class MyPage(ItemPage):
         response: HttpResponse
@@ -440,17 +447,17 @@ as well as on async methods (``async def foo(self)``).
 
 The refactored example, with per-attribute fields, is more verbose than
 the original one, where a single ``to_item`` method is used. However, it
-provides some advantages - if only a subset of attributes is needed, then
+provides some advantages — if only a subset of attributes is needed, then
 it's possible to use the Page Object without doing unnecessary work.
 For example, if user only needs ``name`` field in the example above, no
 additional requests (API calls) will be made.
 
-Sometimes you might want to cache ``field``, i.e. a property which computes an
-attribute of the final item. In such cases, use ``@field(cached=True)``
+Sometimes you might want to cache a ``@field``, i.e. a property which computes
+an attribute of the final item. In such cases, use ``@field(cached=True)``
 decorator instead of ``@field``.
 
-cached_method vs lru_cache vs cached_property
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``cached_method`` vs ``lru_cache`` vs ``cached_property``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you're an experienced Python developer, you might wonder why is
 :func:`~.cached_method` decorator needed, if Python already provides
@@ -467,18 +474,18 @@ If you're an experienced Python developer, you might wonder why is
         def heavy_method(self):
             # ...
 
-Don't do it! There are two issues with ``lru_cache``, which make it unsuitable
-here:
+Don't do it! There are two issues with :func:`functools.lru_cache`, which make
+it unsuitable here:
 
 1. It doesn't work properly on methods, because ``self`` is used as a part of the
    cache key. It means a reference to an instance is kept in the cache,
    and so created page objects are never deallocated, causing a memory leak.
-2. ``lru_cache`` doesn't work on ``async def`` methods, so you can't cache
-   e.g. results of API calls using ``lru_cache``.
+2. :func:`functools.lru_cache` doesn't work on ``async def`` methods, so you
+   can't cache e.g. results of API calls using :func:`functools.lru_cache`.
 
 :func:`~.cached_method` solves both of these issues. You may also use
 :func:`functools.cached_property`, or an external package like async_property_
 with async versions of ``@property`` and ``@cached_property`` decorators; unlike
-``lru_cache``, they all work fine for this use case.
+:func:`functools.lru_cache`, they all work fine for this use case.
 
 .. _async_property: https://github.com/ryananguiano/async_property
