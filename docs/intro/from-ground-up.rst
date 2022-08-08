@@ -32,9 +32,9 @@ a book web page from `books.toscrape.com <http://books.toscrape.com/>`_:
         resp = requests.get(url)
         sel = parsel.Selector(resp)
         return {
-            'url': resp.url,
-            'title': sel.css('h1').get(),
-            'description': sel.css('#product_description+ p').get().strip(),
+            "url": resp.url,
+            "title": sel.css("h1").get(),
+            "description": sel.css("#product_description+ p").get().strip(),
             # ...
         }
 
@@ -57,9 +57,9 @@ from the extraction:
         """
         sel = parsel.Selector(response.text)
         return {
-            'url': response.url,
-            'title': sel.css('h1').get(),
-            'description': sel.css('#product_description+ p').get().strip(),
+            "url": response.url,
+            "title": sel.css("h1").get(),
+            "description": sel.css("#product_description+ p").get().strip(),
             # ...
         }
 
@@ -102,29 +102,29 @@ No problem, let's refactor it further. You may end up with something like that:
         """
         sel = parsel.Selector(text)
         return {
-            'url': url,
-            'title': sel.css('h1').get(),
-            'description': sel.css('#product_description+ p').get().strip(),
+            "url": url,
+            "title": sel.css("h1").get(),
+            "description": sel.css("#product_description+ p").get().strip(),
             # ...
         }
 
     # === Framework-specific I/O code
     def download_sync(url):
         resp = requests.get(url)
-        return {'url': resp.url, 'text': resp.text}
+        return {"url": resp.url, "text": resp.text}
 
     async def download_async(url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 text = await response.text()
-        return {'url': url, 'text': text}
+        return {"url": url, "text": text}
 
     # === Usage example
     # the way to get resp_data depends on an HTTP client
     resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
 
     # but after we got resp_data, usage is the same
-    item = extract_book(url=resp_data['url'], text=resp_data['text'])
+    item = extract_book(url=resp_data["url"], text=resp_data["text"])
 
 
 ``extract_book`` function now has all the desired properties: it is
@@ -152,9 +152,9 @@ The same, but using web-poet
         """
         def extract_book(self):
             return {
-                'url': self.url,
-                'title': self.css('h1').get(),
-                'description': self.css('#product_description+ p').get().strip(),
+                "url": self.url,
+                "title": self.css("h1").get(),
+                "description": self.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -233,9 +233,9 @@ is implemented. Let's change the code to follow this standard:
         """
         def to_item(self):
             return {
-                'url': self.url,
-                'title': self.css('h1').get(),
-                'description': self.css('#product_description+ p').get().strip(),
+                "url": self.url,
+                "title": self.css("h1").get(),
+                "description": self.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -283,17 +283,17 @@ For example, we can extract logic for different attributes into properties:
 
         @property
         def title(self):
-            return self.css('h1').get()
+            return self.css("h1").get()
 
         @property
         def description(self):
-            return self.css('#product_description+ p').get().strip()
+            return self.css("#product_description+ p").get().strip()
 
         def to_item(self):
             return {
-                'url': self.url,
-                'title': self.title,
-                'description': self.description,
+                "url": self.url,
+                "title": self.title,
+                "description": self.description,
                 # ...
             }
 
@@ -314,8 +314,8 @@ nothing prevents us from having a DSL like this:
 .. code-block:: python
 
     class BookPage(ItemWebPage):
-        title = Css('h1')
-        description = Css('#product_description+ p') | Strip()
+        title = Css("h1")
+        description = Css("#product_description+ p") | Strip()
         url = TakeUrl()
 
 Another reason to consider classes for the extraction code is that sometimes
@@ -367,9 +367,9 @@ Let's recall the example we started with:
         resp = requests.get(url)
         sel = parsel.Selector(resp)
         return {
-            'url': resp.url,
-            'title': sel.css('h1').get(),
-            'description': sel.css('#product_description+ p').get().strip(),
+            "url": resp.url,
+            "title": sel.css("h1").get(),
+            "description": sel.css("#product_description+ p").get().strip(),
             # ...
         }
 
@@ -390,9 +390,9 @@ And this is what we ended up with:
         """
         def to_item(self):
             return {
-                'url': self.url,
-                'title': self.css('h1').get(),
-                'description': self.css('#product_description+ p').get().strip(),
+                "url": self.url,
+                "title": self.css("h1").get(),
+                "description": self.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -447,9 +447,9 @@ would only need to write the "extraction" part:
         """
         def to_item(self):
             return {
-                'url': self.url,
-                'title': self.css('h1').get(),
-                'description': self.css('#product_description+ p').get().strip(),
+                "url": self.url,
+                "title": self.css("h1").get(),
+                "description": self.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -510,8 +510,8 @@ For example, a very basic Page Object could look like this:
 
             def to_item(self) -> dict:
                 return {
-                    'url': str(self.response.url),
-                    'title': self.response.css("h1::text").get()
+                    "url": str(self.response.url),
+                    "title": self.response.css("h1::text").get()
                 }
 
 There is no *need* to use other base classes and mixins

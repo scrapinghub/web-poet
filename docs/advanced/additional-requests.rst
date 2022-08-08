@@ -227,13 +227,13 @@ take a look at another example having an HTML response:
     response = web_poet.HttpResponse(
         url="https://www.api.example.com/product-pagination/",
         body=(
-            '<html>'
-            '  <head>'
-            '    <title>Some page</title>'
-            '    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
-            '  </head>'
-            '  <body>Sample content 💯</body>'
-            '</html>'
+            "<html>"
+            "  <head>"
+            "    <title>Some page</title>"
+            "    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">"
+            "  </head>"
+            "  <body>Sample content 💯</body>"
+            "</html>"
         ).encode("utf-8"),
         status=200,
         headers={}

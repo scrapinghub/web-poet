@@ -29,7 +29,7 @@ supplies to your page object, your page object must raise
     class MyPage(ItemWebPage):
 
         def to_item(self) -> dict:
-            if not self.css('.expected'):
+            if not self.css(".expected"):
                 raise Retry
             return {}
 
@@ -70,18 +70,18 @@ times before giving up:
 
         @retry(stop=stop_after_attempt(3))
         async def get_data(self):
-            request = HttpRequest('https://toscrape.com/')
+            request = HttpRequest("https://toscrape.com/")
             response = await self.http_client.execute(request)
-            if not response.css('.expected'):
+            if not response.css(".expected"):
                 raise ValueError
-            return response.css('.data').get()
+            return response.css(".data").get()
 
         async def to_item(self) -> dict:
             try:
                 data = await self.get_data()
             except ValueError:
                 return {}
-            return {'data': data}
+            return {"data": data}
 
 If the reason your additional request fails is outdated or missing data from
 page object input, do not try to reproduce the request for that input as an
