@@ -25,15 +25,24 @@ It allows to define Page Objects in the following way:
 
 """
 from functools import update_wrapper
+from typing import Dict, Optional
 
+import attrs
 from itemadapter import ItemAdapter
 
 from web_poet.utils import cached_method, ensure_awaitable
 
-_FIELDS_ATTRIBUTE = "_marked_as_fields"
+_FIELDS_INFO_ATTRIBUTE = "_web_poet_fields_info"
 
 
-def field(method=None, *, cached=False):
+@attrs.define
+class FieldInfo:
+    name: str
+    meta: Optional[dict] = None
+    extra: bool = False
+
+
+def field(method=None, *, cached: bool = False, meta: Optional[dict] = None, extra: bool = False):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
     which is used by :func:`item_from_fields` or :func:`item_from_fields_sync`
@@ -41,6 +50,14 @@ def field(method=None, *, cached=False):
 
     By default, the value is computed on each property access.
     Use ``@field(cached=True)`` to cache the property value.
+
+    Fields decorated with ``@field(extra=True)`` are not passed to item
+    classes by :func:`item_from_fields` if items don't support them, regardless
+    of ``item_cls_fields`` argument.
+
+    ``meta`` parameter allows to store arbitrary information for the
+    field - e.g. ``@field(meta={"expensive": True})``. This information
+    can be later retrieved for all fields using :func:`fields_dict` function.
     """
 
     class _field:
@@ -53,10 +70,11 @@ def field(method=None, *, cached=False):
                 self.unbound_method = method
 
         def __set_name__(self, owner, name):
-            if not hasattr(owner, _FIELDS_ATTRIBUTE):
-                # dict is used instead of set to preserve the insertion order
-                setattr(owner, _FIELDS_ATTRIBUTE, {})
-            getattr(owner, _FIELDS_ATTRIBUTE)[name] = True
+            if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE):
+                setattr(owner, _FIELDS_INFO_ATTRIBUTE, {})
+
+            field_info = FieldInfo(name=name, meta=meta, extra=extra)
+            getattr(owner, _FIELDS_INFO_ATTRIBUTE)[name] = field_info
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
@@ -71,28 +89,45 @@ def field(method=None, *, cached=False):
         return _field
 
 
+def fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
+    """Return a dictionary with information about the fields defined
+    for the class"""
+    return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE, {})
+
+
 async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
     If ``item_cls_fields`` is True, ``@fields`` whose names don't match
     any of the ``item_cls`` attributes are not passed to ``item_cls.__init__``.
+
     When ``item_cls_fields`` is False (default), all ``@fields`` are passed
-    to ``item_cls.__init__``.
+    to ``item_cls.__init__``, unless they're created with ``extra=True``
+    argument.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=False)
-    field_names = item_dict.keys()
-    if item_cls_fields:
-        field_names = _without_unsupported_field_names(item_cls, field_names)
+    field_names = _final_field_names(obj, item_cls, item_cls_fields)
+    item_dict = {name: getattr(obj, name) for name in field_names}
     return item_cls(**{name: await ensure_awaitable(item_dict[name]) for name in field_names})
 
 
 def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = list(getattr(obj, _FIELDS_ATTRIBUTE, {}))
-    if item_cls_fields:
-        field_names = _without_unsupported_field_names(item_cls, field_names)
+    field_names = _final_field_names(obj, item_cls, item_cls_fields)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
+
+
+def _final_field_names(obj, item_cls, item_cls_fields):
+    fields = fields_dict(obj)
+    extra_field_names = _without_unsupported_field_names(
+        item_cls, [info.name for info in fields.values() if info.extra]
+    )
+
+    regular_field_names = [info.name for info in fields.values() if not info.extra]
+    if item_cls_fields:
+        regular_field_names = _without_unsupported_field_names(item_cls, regular_field_names)
+
+    return regular_field_names + extra_field_names
 
 
 def _without_unsupported_field_names(item_cls, field_names):

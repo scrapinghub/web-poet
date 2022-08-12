@@ -11,6 +11,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
+from web_poet.fields import fields_dict
 
 
 @attrs.define
@@ -271,3 +272,115 @@ def test_item_cls_fields():
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = page.to_item()
     assert item == Item(name="Hello!", price="$123")
+
+
+def test_field_meta():
+    class MyPage(ItemPage):
+        @field(meta={"good": True})
+        def field1(self):
+            return "foo"
+
+        @field
+        def field2(self):
+            return "foo"
+
+        def to_item(self):
+            return item_from_fields_sync(self)
+
+    page = MyPage()
+    for fields in [fields_dict(MyPage), fields_dict(page)]:
+        assert list(fields.keys()) == ["field1", "field2"]
+        assert fields["field1"].name == "field1"
+        assert fields["field1"].meta == {"good": True}
+
+        assert fields["field2"].name == "field2"
+        assert fields["field2"].meta is None
+
+
+def test_field_extra():
+    @attrs.define
+    class OnlyNameItem:
+        name: str
+
+    @attrs.define
+    class OnlyPriceItem:
+        price: str
+
+    class BasePage(ItemPage):
+        item_cls = OnlyNameItem
+
+        @field
+        def name(self):  # noqa: D102
+            return "name"
+
+        @field(extra=True)
+        def price(self):  # noqa: D102
+            return "price"
+
+        def to_item(self):  # noqa: D102
+            return item_from_fields_sync(self, self.item_cls)
+
+    # BasePage contains field which is not in item class,
+    # but the field is defined as extra, so an exception is not raised
+    page = BasePage()
+    assert page.to_item() == OnlyNameItem(name="name")
+
+    class FullItemPage(BasePage):
+        item_cls = Item
+
+    # extra field is available in an item, so it's used now
+    page = FullItemPage()
+    assert page.to_item() == Item(name="name", price="price")
+
+    class OnlyPricePage(BasePage):
+        item_cls = OnlyPriceItem
+
+    # regular fields are always passed
+    page = OnlyPricePage()
+    with pytest.raises(TypeError, match="unexpected keyword argument 'name'"):
+        page.to_item()
+
+
+@pytest.mark.asyncio
+async def test_field_extra_async():
+    @attrs.define
+    class OnlyNameItem:
+        name: str
+
+    @attrs.define
+    class OnlyPriceItem:
+        price: str
+
+    class BasePage(ItemPage):
+        item_cls = OnlyNameItem
+
+        @field
+        async def name(self):  # noqa: D102
+            return "name"
+
+        @field(extra=True)
+        async def price(self):  # noqa: D102
+            return "price"
+
+        async def to_item(self):  # noqa: D102
+            return await item_from_fields(self, self.item_cls)
+
+    # BasePage contains field which is not in item class,
+    # but the field is defined as extra, so an exception is not raised
+    page = BasePage()
+    assert await page.to_item() == OnlyNameItem(name="name")
+
+    class FullItemPage(BasePage):
+        item_cls = Item
+
+    # extra field is available in an item, so it's used now
+    page = FullItemPage()
+    assert await page.to_item() == Item(name="name", price="price")
+
+    class OnlyPricePage(BasePage):
+        item_cls = OnlyPriceItem
+
+    # regular fields are always passed
+    page = OnlyPricePage()
+    with pytest.raises(TypeError, match="unexpected keyword argument 'name'"):
+        await page.to_item()
