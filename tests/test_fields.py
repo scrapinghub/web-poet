@@ -11,6 +11,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
+from web_poet.fields import fields_dict
 
 
 @attrs.define
@@ -271,3 +272,26 @@ def test_item_cls_fields():
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = page.to_item()
     assert item == Item(name="Hello!", price="$123")
+
+
+def test_field_meta():
+    class MyPage(ItemPage):
+        @field(meta={"good": True})
+        def field1(self):
+            return "foo"
+
+        @field
+        def field2(self):
+            return "foo"
+
+        def to_item(self):
+            return item_from_fields_sync(self)
+
+    page = MyPage()
+    for fields in [fields_dict(MyPage), fields_dict(page)]:
+        assert list(fields.keys()) == ["field1", "field2"]
+        assert fields["field1"].name == "field1"
+        assert fields["field1"].meta == {"good": True}
+
+        assert fields["field2"].name == "field2"
+        assert fields["field2"].meta is None
