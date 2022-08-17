@@ -14,6 +14,9 @@ setup(
     author_email="opensource@zyte.com",
     url="https://github.com/scrapinghub/web-poet",
     packages=find_packages(exclude=("tests",)),
+    package_data={
+        "web_poet": ["py.typed"],
+    },
     install_requires=[
         "attrs >= 21.3.0",
         "parsel",
