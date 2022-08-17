@@ -46,7 +46,9 @@ def field(method=None, *, cached=False):
     class _field:
         def __init__(self, method):
             if not callable(method):
-                raise TypeError(f"@field decorator must be used on methods, {method!r} is decorated instead")
+                raise TypeError(
+                    f"@field decorator must be used on methods, {method!r} is decorated instead"
+                )
             if cached:
                 self.unbound_method = cached_method(method)
             else:
@@ -84,7 +86,9 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     field_names = item_dict.keys()
     if item_cls_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
-    return item_cls(**{name: await ensure_awaitable(item_dict[name]) for name in field_names})
+    return item_cls(
+        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
+    )
 
 
 def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):

@@ -8,8 +8,14 @@ class PONestedModuleOverriden:
     ...
 
 
-@handle_urls(include=["example.com", "example.org"], exclude=["/*.jpg|"], overrides=PONestedModuleOverriden)
+@handle_urls(
+    include=["example.com", "example.org"],
+    exclude=["/*.jpg|"],
+    overrides=PONestedModuleOverriden,
+)
 class PONestedModule(POBase):
     expected_overrides = PONestedModuleOverriden
-    expected_patterns = Patterns(include=["example.com", "example.org"], exclude=["/*.jpg|"])
+    expected_patterns = Patterns(
+        include=["example.com", "example.org"], exclude=["/*.jpg|"]
+    )
     expected_meta = {}  # type: ignore

@@ -63,7 +63,12 @@ class HttpResponseError(HttpError):
     :type response: HttpResponse
     """
 
-    def __init__(self, msg: str = None, response: HttpResponse = None, request: HttpRequest = None):
+    def __init__(
+        self,
+        msg: str = None,
+        response: HttpResponse = None,
+        request: HttpRequest = None,
+    ):
         self.response = response
         if msg is None:
             msg = f"Unexpected HTTP Response received: {self.response}"
