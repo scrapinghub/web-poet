@@ -50,7 +50,9 @@ class HttpClient:
         allow_status: List[_Status] = None,
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
-        allow_all_status = any([True for s in allow_status_normalized if "*" == s.strip()])
+        allow_all_status = any(
+            [True for s in allow_status_normalized if "*" == s.strip()]
+        )
 
         if (
             allow_all_status
@@ -137,7 +139,9 @@ class HttpClient:
             allow_status=allow_status,
         )
 
-    async def execute(self, request: HttpRequest, *, allow_status: List[_Status] = None) -> HttpResponse:
+    async def execute(
+        self, request: HttpRequest, *, allow_status: List[_Status] = None
+    ) -> HttpResponse:
         """Execute the specified :class:`~.HttpRequest` instance using the
         request implementation configured in the :class:`~.HttpClient`
         instance.
@@ -199,5 +203,7 @@ class HttpClient:
         """
 
         coroutines = [self.execute(r, allow_status=allow_status) for r in requests]
-        responses = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
+        responses = await asyncio.gather(
+            *coroutines, return_exceptions=return_exceptions
+        )
         return responses

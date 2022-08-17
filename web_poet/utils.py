@@ -61,7 +61,9 @@ def _create_deprecated_class(
             if old in bases and not (warn_once and meta.warned_on_subclass):
                 meta.warned_on_subclass = True
                 msg = subclass_warn_message.format(
-                    cls=_clspath(cls), old=_clspath(old, old_class_path), new=_clspath(new_class, new_class_path)
+                    cls=_clspath(cls),
+                    old=_clspath(old, old_class_path),
+                    new=_clspath(new_class, new_class_path),
                 )
                 if warn_once:
                     msg += " (warning only on first subclass, there may be others)"
@@ -92,7 +94,8 @@ def _create_deprecated_class(
             old = DeprecatedClass.deprecated_class
             if cls is old:
                 msg = instance_warn_message.format(
-                    cls=_clspath(cls, old_class_path), new=_clspath(new_class, new_class_path)
+                    cls=_clspath(cls, old_class_path),
+                    new=_clspath(new_class, new_class_path),
                 )
                 warn(msg, DeprecationWarning, stacklevel=2)
             return super().__call__(*args, **kwargs)

@@ -19,4 +19,6 @@ def book_list_html():
 @pytest.fixture
 def book_list_html_response(book_list_html):
     body = HttpResponseBody(bytes(book_list_html, "utf-8"))
-    return HttpResponse(url="http://books.toscrape.com/index.html", body=body, encoding="utf-8")
+    return HttpResponse(
+        url="http://books.toscrape.com/index.html", body=body, encoding="utf-8"
+    )

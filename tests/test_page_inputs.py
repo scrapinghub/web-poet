@@ -95,7 +95,9 @@ def test_http_defaults(cls, body_cls):
     ],
 )
 def test_http_with_headers_alt_constructor(cls, headers_cls):
-    headers = headers_cls.from_name_value_pairs([{"name": "User-Agent", "value": "test agent"}])
+    headers = headers_cls.from_name_value_pairs(
+        [{"name": "User-Agent", "value": "test agent"}]
+    )
     obj = cls("url", body=b"", headers=headers)
     assert len(obj.headers) == 1
     assert obj.headers.get("user-agent") == "test agent"
@@ -176,7 +178,9 @@ def test_http_request_init_minimal():
 
 
 def test_http_request_init_full():
-    req_1 = HttpRequest("url", method="POST", headers={"User-Agent": "test agent"}, body=b"body")
+    req_1 = HttpRequest(
+        "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
+    )
     assert req_1.method == "POST"
     assert isinstance(req_1.method, str)
     assert req_1.headers == {"User-Agent": "test agent"}
@@ -237,7 +241,9 @@ def test_http_response_headers_init_requests():
     requests_response = requests.Response()
     requests_response.headers["User-Agent"] = "mozilla"
 
-    response = HttpResponse("http://example.com", body=b"", headers=requests_response.headers)
+    response = HttpResponse(
+        "http://example.com", body=b"", headers=requests_response.headers
+    )
     assert isinstance(response.headers, HttpResponseHeaders)
     assert response.headers["user-agent"] == "mozilla"
     assert response.headers["User-Agent"] == "mozilla"
@@ -247,7 +253,9 @@ def test_http_response_headers_init_aiohttp():
     aiohttp_response = aiohttp.web_response.Response()
     aiohttp_response.headers["User-Agent"] = "mozilla"
 
-    response = HttpResponse("http://example.com", body=b"", headers=aiohttp_response.headers)
+    response = HttpResponse(
+        "http://example.com", body=b"", headers=aiohttp_response.headers
+    )
     assert isinstance(response.headers, HttpResponseHeaders)
     assert response.headers["user-agent"] == "mozilla"
     assert response.headers["User-Agent"] == "mozilla"
@@ -310,41 +318,59 @@ def test_http_headers_declared_encoding(headers, encoding):
 
 def test_http_response_utf16():
     """Test utf-16 because UnicodeDammit is known to have problems with"""
-    r = HttpResponse("http://www.example.com", body=b"\xff\xfeh\x00i\x00", encoding="utf-16")
+    r = HttpResponse(
+        "http://www.example.com", body=b"\xff\xfeh\x00i\x00", encoding="utf-16"
+    )
     assert r.text == "hi"
     assert r.encoding == "utf-16"
 
 
 def test_explicit_encoding():
-    response = HttpResponse("http://www.example.com", "£".encode("utf-8"), encoding="utf-8")
+    response = HttpResponse(
+        "http://www.example.com", "£".encode("utf-8"), encoding="utf-8"
+    )
     assert response.encoding == "utf-8"
     assert response.text == "£"
 
 
 def test_explicit_encoding_invalid():
-    response = HttpResponse("http://www.example.com", body="£".encode("utf-8"), encoding="latin1")
+    response = HttpResponse(
+        "http://www.example.com", body="£".encode("utf-8"), encoding="latin1"
+    )
     assert response.encoding == "latin1"
     assert response.text == "£".encode("utf-8").decode("latin1")
 
 
 def test_utf8_body_detection():
-    response = HttpResponse("http://www.example.com", b"\xc2\xa3", headers={"Content-type": "text/html; charset=None"})
+    response = HttpResponse(
+        "http://www.example.com",
+        b"\xc2\xa3",
+        headers={"Content-type": "text/html; charset=None"},
+    )
     assert response.encoding == "utf-8"
 
-    response = HttpResponse("http://www.example.com", body=b"\xc2", headers={"Content-type": "text/html; charset=None"})
+    response = HttpResponse(
+        "http://www.example.com",
+        body=b"\xc2",
+        headers={"Content-type": "text/html; charset=None"},
+    )
     assert response.encoding != "utf-8"
 
 
 def test_gb2312():
     response = HttpResponse(
-        "http://www.example.com", body=b"\xa8D", headers={"Content-type": "text/html; charset=gb2312"}
+        "http://www.example.com",
+        body=b"\xa8D",
+        headers={"Content-type": "text/html; charset=gb2312"},
     )
     assert response.text == "\u2015"
 
 
 def test_invalid_utf8_encoded_body_with_valid_utf8_BOM():
     response = HttpResponse(
-        "http://www.example.com", headers={"Content-type": "text/html; charset=utf-8"}, body=b"\xef\xbb\xbfWORD\xe3\xab"
+        "http://www.example.com",
+        headers={"Content-type": "text/html; charset=utf-8"},
+        body=b"\xef\xbb\xbfWORD\xe3\xab",
     )
     assert response.encoding == "utf-8"
     assert response.text == "WORD\ufffd"
@@ -380,7 +406,9 @@ def test_bom_is_removed_from_body():
 
 def test_replace_wrong_encoding():
     """Test invalid chars are replaced properly"""
-    r = HttpResponse("http://www.example.com", encoding="utf-8", body=b"PREFIX\xe3\xabSUFFIX")
+    r = HttpResponse(
+        "http://www.example.com", encoding="utf-8", body=b"PREFIX\xe3\xabSUFFIX"
+    )
     # XXX: Policy for replacing invalid chars may suffer minor variations
     # but it should always contain the unicode replacement char ('\ufffd')
     assert "\ufffd" in r.text, repr(r.text)
@@ -388,7 +416,9 @@ def test_replace_wrong_encoding():
     assert "SUFFIX" in r.text, repr(r.text)
 
     # Do not destroy html tags due to encoding bugs
-    r = HttpResponse("http://example.com", encoding="utf-8", body=b"\xf0<span>value</span>")
+    r = HttpResponse(
+        "http://example.com", encoding="utf-8", body=b"\xf0<span>value</span>"
+    )
     assert "<span>value</span>" in r.text, repr(r.text)
 
 
@@ -415,7 +445,9 @@ def test_html_headers_encoding_precedence():
     </head><body>Price: \xa3100</body></html>'
     """
     response = HttpResponse(
-        "http://www.example.com", body=body, headers={"Content-type": "text/html; charset=iso-8859-1"}
+        "http://www.example.com",
+        body=body,
+        headers={"Content-type": "text/html; charset=iso-8859-1"},
     )
     assert response.encoding == "cp1252"
     assert response.text == body.decode("cp1252")

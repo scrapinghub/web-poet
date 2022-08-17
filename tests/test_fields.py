@@ -75,7 +75,9 @@ async def test_fields():
 @pytest.mark.asyncio
 async def test_fields_invalid_page():
     page = InvalidPage(response=EXAMPLE_RESPONSE)
-    with pytest.raises(TypeError, match="unexpected keyword argument 'unknown_attribute'"):
+    with pytest.raises(
+        TypeError, match="unexpected keyword argument 'unknown_attribute'"
+    ):
         await page.to_item()
 
 

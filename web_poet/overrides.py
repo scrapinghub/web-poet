@@ -96,7 +96,9 @@ class PageObjectRegistry(dict):
     """
 
     @classmethod
-    def from_override_rules(cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]) -> PageObjectRegistryTV:
+    def from_override_rules(
+        cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]
+    ) -> PageObjectRegistryTV:
         """An alternative constructor for creating a :class:`~.PageObjectRegistry`
         instance by accepting a list of :class:`~.OverrideRule`.
 
@@ -229,7 +231,9 @@ def _walk_module(module: str) -> Iterable:
     mod = importlib.import_module(spec.name)
     yield mod
     if spec.submodule_search_locations:
-        for info in pkgutil.walk_packages(spec.submodule_search_locations, f"{spec.name}.", onerror):
+        for info in pkgutil.walk_packages(
+            spec.submodule_search_locations, f"{spec.name}.", onerror
+        ):
             mod = importlib.import_module(info.name)
             yield mod
 
