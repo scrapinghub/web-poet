@@ -50,9 +50,9 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     By default, the value is computed on each property access.
     Use ``@field(cached=True)`` to cache the property value.
 
-    ``meta`` parameter allows to store arbitrary information for the
-    field - e.g. ``@field(meta={"expensive": True})``. This information
-    can be later retrieved for all fields using :func:`fields_dict` function.
+    The ``meta`` parameter allows to store arbitrary information for the field, 
+    e.g. ``@field(meta={"expensive": True})``. This information can be later 
+    retrieved for all fields using the :func:`fields_dict` function.
     """
 
     class _field:
