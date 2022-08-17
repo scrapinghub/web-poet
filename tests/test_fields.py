@@ -11,7 +11,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
-from web_poet.fields import fields_dict
+from web_poet.fields import get_fields_dict
 
 
 @attrs.define
@@ -290,7 +290,7 @@ def test_field_meta():
             return item_from_fields_sync(self)
 
     page = MyPage()
-    for fields in [fields_dict(MyPage), fields_dict(page)]:
+    for fields in [get_fields_dict(MyPage), get_fields_dict(page)]:
         assert list(fields.keys()) == ["field1", "field2"]
         assert fields["field1"].name == "field1"
         assert fields["field1"].meta == {"good": True}

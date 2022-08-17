@@ -37,7 +37,12 @@ _FIELDS_INFO_ATTRIBUTE = "_web_poet_fields_info"
 
 @attrs.define
 class FieldInfo:
+    """Information about a field"""
+
+    #: name of the field
     name: str
+
+    #: field metadata
     meta: Optional[dict] = None
 
 
@@ -50,9 +55,9 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     By default, the value is computed on each property access.
     Use ``@field(cached=True)`` to cache the property value.
 
-    The ``meta`` parameter allows to store arbitrary information for the field, 
-    e.g. ``@field(meta={"expensive": True})``. This information can be later 
-    retrieved for all fields using the :func:`fields_dict` function.
+    The ``meta`` parameter allows to store arbitrary information for the field,
+    e.g. ``@field(meta={"expensive": True})``. This information can be later
+    retrieved for all fields using the :func:`get_fields_dict` function.
     """
 
     class _field:
@@ -86,9 +91,11 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
         return _field
 
 
-def fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
+def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
     """Return a dictionary with information about the fields defined
-    for the class"""
+    for the class: keys are field names, and values are
+    :class:`web_poet.fields.FieldInfo` instances.
+    """
     return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE, {})
 
 
@@ -112,7 +119,7 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
 
 def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = list(fields_dict(obj))
+    field_names = list(get_fields_dict(obj))
     if item_cls_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
