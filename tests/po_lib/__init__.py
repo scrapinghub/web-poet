@@ -27,7 +27,9 @@ class POTopLevelOverriden2:
 
 # This first annotation is ignored. A single annotation per registry is allowed
 @handle_urls("example.com", overrides=POTopLevelOverriden1)
-@handle_urls("example.com", overrides=POTopLevelOverriden1, exclude="/*.jpg|", priority=300)
+@handle_urls(
+    "example.com", overrides=POTopLevelOverriden1, exclude="/*.jpg|", priority=300
+)
 class POTopLevel1(POBase):
     expected_overrides = POTopLevelOverriden1
     expected_patterns = Patterns(["example.com"], ["/*.jpg|"], priority=300)

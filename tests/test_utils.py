@@ -50,7 +50,10 @@ def test_subclassing_warning_message():
 
 def test_custom_class_paths():
     Deprecated = _create_deprecated_class(
-        "Deprecated", NewName, new_class_path="foo.NewClass", old_class_path="bar.OldClass"
+        "Deprecated",
+        NewName,
+        new_class_path="foo.NewClass",
+        old_class_path="bar.OldClass",
     )
 
     with warnings.catch_warnings(record=True) as w:
@@ -119,7 +122,10 @@ def test_warning_on_instance():
 
     w = _mywarnings(w)
     assert len(w) == 1
-    expected = f"{__name__}.Deprecated is deprecated, instantiate " f"{__name__}.NewName instead."
+    expected = (
+        f"{__name__}.Deprecated is deprecated, instantiate "
+        f"{__name__}.NewName instead."
+    )
     assert str(w[0].message) == expected
     assert w[0].lineno == lineno
 
@@ -227,7 +233,9 @@ def test_deprecate_subclass_of_deprecated_class():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         Deprecated = _create_deprecated_class("Deprecated", NewName)
-        AlsoDeprecated = _create_deprecated_class("AlsoDeprecated", Deprecated, new_class_path="foo.Bar")
+        AlsoDeprecated = _create_deprecated_class(
+            "AlsoDeprecated", Deprecated, new_class_path="foo.Bar"
+        )
 
     w = _mywarnings(w)
     assert len(w) == 0, str(map(str, w))

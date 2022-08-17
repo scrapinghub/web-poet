@@ -51,7 +51,12 @@ async def test_http_client_single_requests(async_mock):
         await client.get("url-get", headers={"X-Headers": "123"})
         await client.post("url-post", headers={"X-Headers": "123"}, body=b"body value")
         assert mock_request.call_args_list == [
-            mock.call(url="url", method="GET", headers=HttpRequestHeaders(), body=HttpRequestBody()),
+            mock.call(
+                url="url",
+                method="GET",
+                headers=HttpRequestHeaders(),
+                body=HttpRequestBody(),
+            ),
             mock.call(
                 url="url-get",
                 method="GET",
@@ -241,9 +246,13 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     assert str(excinfo.value).startswith("400 BAD_REQUEST response for")
 
     await client.batch_execute(*requests, return_exceptions=True, allow_status=400)
-    await client.batch_execute(*requests, return_exceptions=True, allow_status=[400, 403])
+    await client.batch_execute(
+        *requests, return_exceptions=True, allow_status=[400, 403]
+    )
     await client.batch_execute(*requests, return_exceptions=True, allow_status="400")
-    await client.batch_execute(*requests, return_exceptions=True, allow_status=["400", "403"])
+    await client.batch_execute(
+        *requests, return_exceptions=True, allow_status=["400", "403"]
+    )
 
     responses = await client.batch_execute(*requests, return_exceptions=True)
     assert all([isinstance(r, HttpResponseError) for r in responses])
@@ -251,7 +260,9 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     assert all([isinstance(r.response, HttpResponse) for r in responses])
     assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
 
-    responses = await client.batch_execute(*requests, return_exceptions=True, allow_status=408)
+    responses = await client.batch_execute(
+        *requests, return_exceptions=True, allow_status=408
+    )
     assert all([isinstance(r, HttpResponseError) for r in responses])
     assert all([isinstance(r.request, HttpRequest) for r in responses])
     assert all([isinstance(r.response, HttpResponse) for r in responses])

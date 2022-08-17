@@ -108,7 +108,9 @@ class HttpResponseHeaders(_HttpHeaders):
     """
 
     @classmethod
-    def from_bytes_dict(cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8") -> T_headers:
+    def from_bytes_dict(
+        cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
+    ) -> T_headers:
         """An alternative constructor for instantiation where the header-value
         pairs could be in raw bytes form.
 
@@ -161,8 +163,12 @@ class HttpRequest:
 
     url: _RequestUrl = attrs.field(converter=_RequestUrl)
     method: str = attrs.field(default="GET", kw_only=True)
-    headers: HttpRequestHeaders = attrs.field(factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True)
-    body: HttpRequestBody = attrs.field(factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True)
+    headers: HttpRequestHeaders = attrs.field(
+        factory=HttpRequestHeaders, converter=HttpRequestHeaders, kw_only=True
+    )
+    body: HttpRequestBody = attrs.field(
+        factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
+    )
 
     def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:
         """Return *url* as an absolute URL.
@@ -197,7 +203,9 @@ class HttpResponse(SelectableMixin):
     url: _ResponseUrl = attrs.field(converter=_ResponseUrl)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
-    headers: HttpResponseHeaders = attrs.field(factory=HttpResponseHeaders, converter=HttpResponseHeaders, kw_only=True)
+    headers: HttpResponseHeaders = attrs.field(
+        factory=HttpResponseHeaders, converter=HttpResponseHeaders, kw_only=True
+    )
     _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
 
     _DEFAULT_ENCODING = "ascii"
@@ -265,7 +273,10 @@ class HttpResponse(SelectableMixin):
     def _body_inferred_encoding(self):
         content_type = self.headers.get("Content-Type", "")
         body_encoding, text = html_to_unicode(
-            content_type, self.body, auto_detect_fun=self._auto_detect_fun, default_encoding=self._DEFAULT_ENCODING
+            content_type,
+            self.body,
+            auto_detect_fun=self._auto_detect_fun,
+            default_encoding=self._DEFAULT_ENCODING,
         )
         self._cached_text = text
         return body_encoding

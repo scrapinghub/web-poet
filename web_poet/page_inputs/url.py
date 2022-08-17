@@ -6,7 +6,10 @@ class _Url:
 
     def __init__(self, url: Union[str, "_Url"]):
         if not isinstance(url, (str, _Url)):
-            raise TypeError(f"`url` must be a str or an instance of _Url, " f"got {url.__class__} instance instead")
+            raise TypeError(
+                f"`url` must be a str or an instance of _Url, "
+                f"got {url.__class__} instance instead"
+            )
         self._url = str(url)
 
     def __str__(self) -> str:
