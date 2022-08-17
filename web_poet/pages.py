@@ -3,11 +3,12 @@ import typing
 
 import attr
 
+from web_poet.fields import FieldsMixin
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 
 
-class Injectable(abc.ABC):
+class Injectable(abc.ABC, FieldsMixin):
     """Base Page Object class, which all Page Objects should inherit from
     (probably through Injectable subclasses).
 

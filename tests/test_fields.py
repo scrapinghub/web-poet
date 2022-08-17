@@ -136,13 +136,16 @@ async def test_field_order():
 
 
 def test_field_decorator_no_arguments():
-    class Page:
+    class Page(ItemPage):
         @field()
         def name(self):
             return "Name"
 
+        def to_item(self):
+            return item_from_fields_sync(self)
+
     page = Page()
-    assert item_from_fields_sync(page) == {"name": "Name"}
+    assert page.to_item() == {"name": "Name"}
 
 
 def test_field_cache_sync():
@@ -297,3 +300,32 @@ def test_field_meta():
 
         assert fields["field2"].name == "field2"
         assert fields["field2"].meta is None
+
+
+def test_field_subclassing():
+    class Page(ItemPage):
+        @field
+        def field1(self):
+            return 1
+
+        @field
+        def field3(self):
+            return 1
+
+    assert list(fields_dict(Page)) == ["field1", "field3"]
+    assert fields_dict(Page)["field3"].meta is None
+
+    class Page2(Page):
+        @field
+        def field2(self):
+            return 1
+
+        @field(meta={"foo": "bar"})
+        def field3(self):
+            return 1
+
+    assert fields_dict(Page2)["field3"].meta == {"foo": "bar"}
+    assert list(fields_dict(Page2)) == ["field1", "field3", "field2"]
+
+    assert fields_dict(Page)["field3"].meta is None
+    assert list(fields_dict(Page)) == ["field1", "field3"]

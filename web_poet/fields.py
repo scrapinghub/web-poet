@@ -32,7 +32,8 @@ from itemadapter import ItemAdapter
 
 from web_poet.utils import cached_method, ensure_awaitable
 
-_FIELDS_INFO_ATTRIBUTE = "_web_poet_fields_info"
+_FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
+_FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
 
 
 @attrs.define
@@ -44,6 +45,24 @@ class FieldInfo:
 
     #: field metadata
     meta: Optional[dict] = None
+
+
+class FieldsMixin:
+    """A mixin which is required for a class to support fields"""
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # To support fields, we must ensure that fields dict is not shared
+        # between subclasses, i.e. a decorator in a subclass doesn't affect
+        # the base class. This is done by making decorator write to a
+        # temporary location, and then merging it all on subclass creation.
+        this_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
+        base_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, {})
+        if base_class_fields or this_class_fields:
+            fields = {**base_class_fields, **this_class_fields}
+            setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
+            if hasattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE):
+                delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
 
 def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
@@ -72,11 +91,11 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
                 self.unbound_method = method
 
         def __set_name__(self, owner, name):
-            if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE):
-                setattr(owner, _FIELDS_INFO_ATTRIBUTE, {})
+            if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
+                setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
             field_info = FieldInfo(name=name, meta=meta)
-            getattr(owner, _FIELDS_INFO_ATTRIBUTE)[name] = field_info
+            getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
@@ -96,7 +115,7 @@ def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
     for the class: keys are field names, and values are
     :class:`web_poet.fields.FieldInfo` instances.
     """
-    return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE, {})
+    return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, {})
 
 
 async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
