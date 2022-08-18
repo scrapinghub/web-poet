@@ -1,8 +1,8 @@
-from web_poet.pages import ItemPage, ItemWebPage, is_injectable
+from web_poet.pages import Injectable, ItemPage, ItemWebPage, is_injectable
 
 
 def test_page_object():
-    class MyItemPage(ItemPage):
+    class MyItemPage(Injectable):
         def to_item(self) -> dict:
             return {
                 "foo": "bar",
@@ -16,7 +16,7 @@ def test_page_object():
 
 def test_web_page_object(book_list_html_response):
     class MyWebPage(ItemWebPage):
-        def to_item(self) -> dict:
+        def to_item(self) -> dict:  # type: ignore
             return {
                 "url": self.url,
                 "title": self.css("title::text").get().strip(),
@@ -34,7 +34,7 @@ def test_is_injectable():
         pass
 
     class MyItemPage(ItemPage):
-        def to_item(self) -> dict:
+        def to_item(self) -> dict:  # type: ignore
             return {
                 "foo": "bar",
             }

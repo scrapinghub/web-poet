@@ -6,6 +6,7 @@ import pytest
 
 from web_poet import (
     HttpResponse,
+    Injectable,
     ItemPage,
     field,
     item_from_fields,
@@ -241,7 +242,7 @@ async def test_item_cls_fields_async():
 
 def test_item_cls_fields():
     @attrs.define
-    class SyncPage(ItemPage):
+    class SyncPage(Injectable):
         response: HttpResponse
 
         @field
