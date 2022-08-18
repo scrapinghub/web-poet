@@ -21,7 +21,7 @@ class Item:
 
 
 @attrs.define
-class Page(ItemPage):
+class Page(ItemPage[Item]):
     response: HttpResponse
 
     @field
@@ -33,12 +33,9 @@ class Page(ItemPage):
         await asyncio.sleep(0.01)
         return "$123"
 
-    async def to_item(self):  # noqa: D102
-        return await item_from_fields(self, Item)
-
 
 @attrs.define
-class InvalidPage(ItemPage):
+class InvalidPage(ItemPage[Item]):
     response: HttpResponse
 
     @field
@@ -48,9 +45,6 @@ class InvalidPage(ItemPage):
     @field
     def unknown_attribute(self):  # noqa: D102
         return "foo"
-
-    async def to_item(self):  # noqa: D102
-        return await item_from_fields(self, Item)
 
 
 EXAMPLE_RESPONSE = HttpResponse(

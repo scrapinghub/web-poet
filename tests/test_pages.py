@@ -1,18 +1,4 @@
-import pytest
-
 from web_poet.pages import ItemPage, ItemWebPage, is_injectable
-
-
-def test_abstract_page_object():
-    with pytest.raises(TypeError) as exc:
-        ItemPage()
-    assert "Can't instantiate abstract class" in str(exc.value)
-
-
-def test_abstract_web_page_object():
-    with pytest.raises(TypeError) as exc:
-        ItemWebPage()
-    assert "Can't instantiate abstract class" in str(exc.value)
 
 
 def test_page_object():
