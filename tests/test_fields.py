@@ -312,8 +312,8 @@ def test_field_subclassing():
         def field3(self):
             return 1
 
-    assert list(fields_dict(Page)) == ["field1", "field3"]
-    assert fields_dict(Page)["field3"].meta is None
+    assert list(get_fields_dict(Page)) == ["field1", "field3"]
+    assert get_fields_dict(Page)["field3"].meta is None
 
     class Page2(Page):
         @field
@@ -324,8 +324,8 @@ def test_field_subclassing():
         def field3(self):
             return 1
 
-    assert fields_dict(Page2)["field3"].meta == {"foo": "bar"}
-    assert list(fields_dict(Page2)) == ["field1", "field3", "field2"]
+    assert get_fields_dict(Page2)["field3"].meta == {"foo": "bar"}
+    assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
 
-    assert fields_dict(Page)["field3"].meta is None
-    assert list(fields_dict(Page)) == ["field1", "field3"]
+    assert get_fields_dict(Page)["field3"].meta is None
+    assert list(get_fields_dict(Page)) == ["field1", "field3"]

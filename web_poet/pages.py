@@ -3,7 +3,8 @@ import typing
 
 import attr
 
-from web_poet.fields import FieldsMixin
+from web_poet._typing import get_generic_parameter
+from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 
@@ -35,15 +36,25 @@ def is_injectable(cls: typing.Any) -> bool:
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
-class ItemPage(Injectable, abc.ABC):
-    """Base Page Object with a required :meth:`to_item` method.
-    Make sure you're creating Page Objects with ``to_item`` methods
-    if their main goal is to extract a single data record from a web page.
+ItemTypeT = typing.TypeVar("ItemTypeT")
+
+
+class ItemPage(Injectable, typing.Generic[ItemTypeT]):
+    """Base Page Object, with a default :meth:`to_item` implementation
+    which supports web-poet fields.
     """
 
-    @abc.abstractmethod
-    def to_item(self):
+    @property
+    def item_cls(self) -> typing.Type[ItemTypeT]:
+        """Item class"""
+        param = get_generic_parameter(self.__class__)
+        if isinstance(param, typing.TypeVar):  # class is not parametrized
+            return dict  # type: ignore[return-value]
+        return param
+
+    async def to_item(self) -> ItemTypeT:
         """Extract an item from a web page"""
+        return await item_from_fields(self, item_cls=self.item_cls)
 
 
 @attr.s(auto_attribs=True)
