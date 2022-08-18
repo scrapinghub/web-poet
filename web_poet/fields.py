@@ -25,7 +25,7 @@ It allows to define Page Objects in the following way:
 
 """
 from functools import update_wrapper
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -118,7 +118,15 @@ def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
     return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, {})
 
 
-async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
+T = TypeVar("T")
+
+
+# FIXME: type is ignored as a workaround for https://github.com/python/mypy/issues/3737
+# inference works properly if a non-default item_cls is passed; for dict
+# it's not working (return type is Any)
+async def item_from_fields(
+    obj, item_cls: Type[T] = dict, *, item_cls_fields: bool = False  # type: ignore[assignment]
+) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
@@ -128,7 +136,7 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     to ``item_cls.__init__``.
     """
     item_dict = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=False)
-    field_names = item_dict.keys()
+    field_names = list(item_dict.keys())
     if item_cls_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
@@ -136,7 +144,9 @@ async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
     )
 
 
-def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
+def item_from_fields_sync(
+    obj, item_cls: Type[T] = dict, *, item_cls_fields: bool = False  # type: ignore[assignment]
+) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))
     if item_cls_fields:
@@ -144,7 +154,9 @@ def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
     return item_cls(**{name: getattr(obj, name) for name in field_names})
 
 
-def _without_unsupported_field_names(item_cls, field_names):
+def _without_unsupported_field_names(
+    item_cls: type, field_names: List[str]
+) -> List[str]:
     item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
     if item_field_names is None:  # item_cls doesn't define field names upfront
         return field_names[:]
