@@ -1,0 +1,41 @@
+import pytest
+import attrs
+
+from web_poet import ItemPage, field, item_from_fields, item_from_fields_sync
+
+
+class Page(ItemPage):
+    @field
+    def name(self):
+        return "hello"
+
+
+@attrs.define
+class Item:
+    name: str
+
+
+@pytest.mark.mypy_testing
+async def test_item_from_fields() -> None:
+    page = Page()
+    item1 = await item_from_fields(page, item_cls=dict)
+    reveal_type(item1)  # R: builtins.dict[Any, Any]
+    item2 = await item_from_fields(page, item_cls=Item)
+    reveal_type(item2)  # R: __main__.Item
+
+
+@pytest.mark.mypy_testing
+def test_item_from_fields_sync() -> None:
+    page = Page()
+    item1 = item_from_fields_sync(page, item_cls=dict)
+    reveal_type(item1)  # R: builtins.dict[Any, Any]
+    item2 = item_from_fields_sync(page, item_cls=Item)
+    reveal_type(item2)  # R: __main__.Item
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_item_from_fields_default_item_cls() -> None:
+    page = Page()
+    item1 = await item_from_fields(page)
+    reveal_type(item1)  # R: builtins.dict[Any, Any]

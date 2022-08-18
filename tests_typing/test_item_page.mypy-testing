@@ -1,0 +1,90 @@
+import attr
+import pytest
+import attrs
+
+from web_poet import ItemPage, field
+
+
+@attrs.define
+class Item:
+    name: str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_item_page() -> None:
+    class MyPage(ItemPage):
+        @field
+        def name(self):
+            return "hello"
+
+    page = MyPage()
+    item = await page.to_item()
+    reveal_type(item)  # R: dict
+
+
+@pytest.mark.mypy_testing
+async def test_item_page_parametrized() -> None:
+    class MyPage(ItemPage[Item]):
+        @field
+        def name(self):
+            return "hello"
+
+    page = MyPage()
+    item = await page.to_item()
+    reveal_type(item)  # R: __main__.Item
+
+
+@pytest.mark.mypy_testing
+async def test_item_page_parametrized_subclass() -> None:
+    class BasePage(ItemPage[Item]):
+        @field
+        def name(self):
+            return "hello"
+
+
+    class Subclass(BasePage):
+        pass
+
+    page = Subclass()
+    item = await page.to_item()
+    reveal_type(item)  # R: __main__.Item
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_item_page_subclass_parametrized() -> None:
+    class BasePage(ItemPage):
+        @field
+        def name(self):
+            return "hello"
+
+    class Subclass(BasePage[Item]):
+        pass
+
+    page = Subclass()
+    item = await page.to_item()
+    reveal_type(item)  # R: __main__.Item
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_item_page_change_type() -> None:
+
+    class BasePage(ItemPage[Item]):
+        @field
+        def name(self):
+            return "hello"
+
+    @attr.define
+    class MyItem(Item):
+        price: float
+
+    class Subclass(BasePage, ItemPage[MyItem]):
+        @field
+        def price(self):
+            return 123
+
+    page = Subclass()
+    item = await page.to_item()
+    reveal_type(item)  # R: MyItem
