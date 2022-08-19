@@ -1,7 +1,7 @@
 import attrs
 import pytest
 
-from web_poet import field
+from web_poet import HttpResponse, field
 from web_poet.pages import (
     Injectable,
     ItemPage,
@@ -82,6 +82,20 @@ async def test_item_page_typed():
             return "name"
 
     page = MyPage()
+    assert page.item_cls is Item
+    item = await page.to_item()
+    assert isinstance(item, Item)
+    assert item == Item(name="name")
+
+
+@pytest.mark.asyncio
+async def test_web_page_fields():
+    class MyPage(WebPage[Item]):
+        @field
+        def name(self):
+            return "name"
+
+    page = MyPage(HttpResponse(url="http://example.com", body=b""))
     assert page.item_cls is Item
     item = await page.to_item()
     assert isinstance(item, Item)
