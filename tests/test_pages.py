@@ -2,7 +2,14 @@ import attrs
 import pytest
 
 from web_poet import field
-from web_poet.pages import Injectable, ItemPage, ItemT, ItemWebPage, is_injectable
+from web_poet.pages import (
+    Injectable,
+    ItemPage,
+    ItemT,
+    ItemWebPage,
+    SetItemType,
+    is_injectable,
+)
 
 
 @attrs.define
@@ -101,7 +108,7 @@ async def test_item_page_change_item_type_extra_fields() -> None:
     class MyItem(Item):
         price: float
 
-    class Subclass(BasePage, ItemPage[MyItem]):
+    class Subclass(BasePage, SetItemType[MyItem]):
         @field
         def price(self):
             return 123
@@ -130,7 +137,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
             return 123
 
     # Item only contains "name", but not "price"
-    class Subclass(BasePage, ItemPage[Item], skip_nonitem_fields=True):
+    class Subclass(BasePage, SetItemType[Item], skip_nonitem_fields=True):
         pass
 
     page = Subclass()

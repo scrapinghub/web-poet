@@ -1,7 +1,12 @@
 import pytest
 import attrs
 
-from web_poet import ItemPage, field, item_from_fields, item_from_fields_sync
+from web_poet import (
+    ItemPage,
+    field,
+    item_from_fields,
+    item_from_fields_sync,
+)
 
 
 class Page(ItemPage):
