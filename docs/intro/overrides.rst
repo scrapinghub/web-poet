@@ -54,28 +54,28 @@ Let's take a look at how the following code is structured:
 
 .. code-block:: python
 
-    from web_poet import handle_urls, ItemWebPage
+    from web_poet import handle_urls, WebPage
 
 
-    class GenericProductPage(ItemWebPage):
+    class GenericProductPage(WebPage):
         def to_item(self):
             return {"product-title": self.css("title::text").get()}
 
 
     @handle_urls("example.com", overrides=GenericProductPage)
-    class ExampleProductPage(ItemWebPage):
+    class ExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
 
 
     @handle_urls("anotherexample.com", overrides=GenericProductPage, exclude="/digital-goods/")
-    class AnotherExampleProductPage(ItemWebPage):
+    class AnotherExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
 
 
     @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
-    class DualExampleProductPage(ItemWebPage):
+    class DualExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
 

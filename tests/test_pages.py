@@ -8,6 +8,7 @@ from web_poet.pages import (
     ItemT,
     ItemWebPage,
     Returns,
+    WebPage,
     is_injectable,
 )
 
@@ -31,7 +32,7 @@ def test_page_object():
 
 
 def test_web_page_object(book_list_html_response):
-    class MyWebPage(ItemWebPage):
+    class MyWebPage(WebPage):
         def to_item(self) -> dict:  # type: ignore
             return {
                 "url": self.url,
@@ -43,6 +44,15 @@ def test_web_page_object(book_list_html_response):
         "url": "http://books.toscrape.com/index.html",
         "title": "All products | Books to Scrape - Sandbox",
     }
+
+
+def test_item_web_page_deprecated():
+    with pytest.warns(
+        DeprecationWarning, match="deprecated class web_poet.pages.ItemWebPage"
+    ):
+
+        class MyItemWebPage(ItemWebPage):
+            pass
 
 
 def test_is_injectable():

@@ -23,10 +23,10 @@ supplies to your page object, your page object must raise
 
 .. code-block:: python
 
-    from web_poet import ItemWebPage
+    from web_poet import WebPage
     from web_poet.exceptions import Retry
 
-    class MyPage(ItemWebPage):
+    class MyPage(WebPage):
 
         def to_item(self) -> dict:
             if not self.css(".expected"):
@@ -62,10 +62,10 @@ times before giving up:
 
     import attrs
     from tenacity import retry, stop_after_attempt
-    from web_poet import HttpClient, HttpRequest, ItemWebPage
+    from web_poet import HttpClient, HttpRequest, WebPage
 
     @attrs.define
-    class MyPage(ItemWebPage):
+    class MyPage(WebPage):
         http_client: HttpClient
 
         @retry(stop=stop_after_attempt(3))

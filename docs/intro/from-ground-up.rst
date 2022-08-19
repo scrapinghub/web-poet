@@ -215,18 +215,17 @@ to_item() method
 It is common to have Page Objects for a web page where a single main
 data record needs to be extracted (e.g. book information in our example).
 ``web-poet`` standardizes this, by asking to name a method implementing the
-extraction ``to_item``. It also provides the :class:`~.ItemWebPage` base class
-and the :class:`ItemPage` mixin, which ensure the ``to_item`` method
-is implemented. Let's change the code to follow this standard:
+extraction ``to_item``. It also provides the :class:`~.ItemPage` and
+:class:`~.WebPage` base classes. Let's change the code to follow this standard:
 
 .. code-block:: python
 
     import requests
-    from web_poet import ItemWebPage, HttpResponse
+    from web_poet import WebPage, HttpResponse
 
 
     # === Extraction code
-    class BookPage(ItemWebPage):
+    class BookPage(WebPage):
         """
         A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
@@ -249,7 +248,7 @@ have ``ToscrapeBookPage`` and ``BamazonBookPage`` classes, and
 
 .. code-block:: python
 
-    def get_item(page_cls: ItemWebPage, response: HttpResponse) -> dict:
+    def get_item(page_cls: WebPage, response: HttpResponse) -> dict:
         page = page_cls(response=response)
         return page.to_item()
 
@@ -275,7 +274,7 @@ For example, we can extract logic for different attributes into properties:
 
 .. code-block:: python
 
-    class BookPage(ItemWebPage):
+    class BookPage(WebPage):
         """
         A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
@@ -313,7 +312,7 @@ nothing prevents us from having a DSL like this:
 
 .. code-block:: python
 
-    class BookPage(ItemWebPage):
+    class BookPage(WebPage):
         title = Css("h1")
         description = Css("#product_description+ p") | Strip()
         url = TakeUrl()
@@ -380,11 +379,11 @@ And this is what we ended up with:
 .. code-block:: python
 
     import requests
-    from web_poet import ItemWebPage, HttpResponse
+    from web_poet import WebPage, HttpResponse
 
 
     # === Extraction code
-    class BookPage(ItemWebPage):
+    class BookPage(WebPage):
         """ A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
@@ -410,7 +409,7 @@ And this is what we ended up with:
         return HttpResponse(url=resp.url, body=body, headers=headers)
 
     # === Usage example
-    def get_item(page_cls: ItemWebPage, resp_data: HttpResponse) -> dict:
+    def get_item(page_cls: WebPage, resp_data: HttpResponse) -> dict:
         page = page_cls(response=resp_data)
         return page.to_item()
 
@@ -439,9 +438,9 @@ would only need to write the "extraction" part:
 
 .. code-block:: python
 
-    from web_poet import ItemWebPage
+    from web_poet import WebPage
 
-    class BookPage(ItemWebPage):
+    class BookPage(WebPage):
         """ A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
@@ -516,7 +515,7 @@ For example, a very basic Page Object could look like this:
 
 There is no *need* to use other base classes and mixins
 defined by ``web-poet`` (:class:`~.WebPage`, :class:`~.ResponseShortcutsMixin`,
-:class:`~.ItemPage`, :class:`~.ItemWebPage`, etc.), but it can be a good
+:class:`~.ItemPage`, etc.), but it can be a good
 idea to familiarize yourself with them, as they are taking some of
 the boilerplate out.
 

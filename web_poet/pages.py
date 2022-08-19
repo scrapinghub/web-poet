@@ -7,6 +7,7 @@ from web_poet._typing import get_generic_parameter
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
+from web_poet.utils import _create_deprecated_class
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -71,21 +72,12 @@ class ItemPage(Injectable, Returns[ItemT]):
 
 
 @attr.s(auto_attribs=True)
-class WebPage(Injectable, ResponseShortcutsMixin):
+class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`
     and provides XPath / CSS shortcuts.
-
-    Use this class as a base class for Page Objects which work on
-    HTML downloaded using an HTTP client directly.
     """
 
     response: HttpResponse
 
 
-@attr.s(auto_attribs=True)
-class ItemWebPage(WebPage, ItemPage):
-    """:class:`WebPage` that requires the :meth:`to_item` method to
-    be implemented.
-    """
-
-    pass
+ItemWebPage = _create_deprecated_class("ItemWebPage", WebPage, warn_once=False)
