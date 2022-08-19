@@ -1,28 +1,6 @@
 """
-``web_poet.fields`` is a module with helpers for defining Page Objects.
-It allows to define Page Objects in the following way:
-
-.. code-block:: python
-
-    from web_poet import ItemPage, field, item_from_fields
-
-
-    class MyPage(ItemWebPage):
-        @field
-        def name(self):
-            return self.response.css(".name").get()
-
-        @field
-        def price(self):
-            return self.response.css(".price").get()
-
-        @field
-        def currency(self):
-            return "USD"
-
-        async def to_item(self):
-            return await item_from_fields(self)
-
+``web_poet.fields`` is a module with helpers putting extraction logic
+into separate Page Object methods / properties.
 """
 from functools import update_wrapper
 from typing import Dict, List, Optional, Type, TypeVar
@@ -68,8 +46,8 @@ class FieldsMixin:
 def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
-    which is used by :func:`item_from_fields` or :func:`item_from_fields_sync`
-    to populate item attributes.
+    which is then used by :class:`~.ItemPage`'s to_item() method to populate
+    a corresponding item attribute.
 
     By default, the value is computed on each property access.
     Use ``@field(cached=True)`` to cache the property value.
