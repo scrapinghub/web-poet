@@ -1,5 +1,5 @@
 """
-``web_poet.fields`` is a module with helpers putting extraction logic
+``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
 from functools import update_wrapper
