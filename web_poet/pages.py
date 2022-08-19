@@ -66,7 +66,7 @@ class ItemPage(Injectable, Returns[ItemT]):
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
         return await item_from_fields(
-            self, item_cls=self.item_cls, item_cls_fields=self._skip_nonitem_fields
+            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
 
 

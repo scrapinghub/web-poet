@@ -103,19 +103,21 @@ T = TypeVar("T")
 # inference works properly if a non-default item_cls is passed; for dict
 # it's not working (return type is Any)
 async def item_from_fields(
-    obj, item_cls: Type[T] = dict, *, item_cls_fields: bool = False  # type: ignore[assignment]
+    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
 ) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
-    If ``item_cls_fields`` is True, ``@fields`` whose names don't match
-    any of the ``item_cls`` attributes are not passed to ``item_cls.__init__``.
-    When ``item_cls_fields`` is False (default), all ``@fields`` are passed
-    to ``item_cls.__init__``.
+    If ``skip_nonitem_fields`` is True, ``@fields`` whose names are not
+    among ``item_cls`` field names are not passed to ``item_cls.__init__``.
+
+    When ``skip_nonitem_fields`` is False (default), all ``@fields`` are passed
+    to ``item_cls.__init__``, possibly causing exceptions if
+    ``item_cls.__init__`` doesn't support them.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=False)
+    item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
     field_names = list(item_dict.keys())
-    if item_cls_fields:
+    if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
         **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
@@ -123,11 +125,11 @@ async def item_from_fields(
 
 
 def item_from_fields_sync(
-    obj, item_cls: Type[T] = dict, *, item_cls_fields: bool = False  # type: ignore[assignment]
+    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))
-    if item_cls_fields:
+    if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
 

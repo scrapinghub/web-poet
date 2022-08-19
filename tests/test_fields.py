@@ -221,7 +221,7 @@ async def test_field_cache_async_locked():
 
 
 @pytest.mark.asyncio
-async def test_item_cls_fields_async():
+async def test_skip_nonitem_fields_async():
     class ExtendedPage(Page):
         @field
         def new_attribute(self):
@@ -233,14 +233,14 @@ async def test_item_cls_fields_async():
 
     class ExtendedPage2(ExtendedPage):
         async def to_item(self) -> Item:
-            return await item_from_fields(self, Item, item_cls_fields=True)
+            return await item_from_fields(self, Item, skip_nonitem_fields=True)
 
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = await page.to_item()
     assert item == Item(name="Hello!", price="$123")
 
 
-def test_item_cls_fields():
+def test_skip_nonitem_fields():
     @attrs.define
     class SyncPage(Injectable):
         response: HttpResponse
@@ -267,7 +267,7 @@ def test_item_cls_fields():
 
     class ExtendedPage2(ExtendedPage):
         def to_item(self) -> Item:
-            return item_from_fields_sync(self, Item, item_cls_fields=True)
+            return item_from_fields_sync(self, Item, skip_nonitem_fields=True)
 
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = page.to_item()
