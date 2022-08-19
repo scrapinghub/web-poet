@@ -44,6 +44,8 @@ class ItemPage(Injectable, typing.Generic[ItemT]):
     which supports web-poet fields.
     """
 
+    _skip_nonitem_fields: bool
+
     def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
         super().__init_subclass__(**kwargs)
         cls._skip_nonitem_fields = skip_nonitem_fields
