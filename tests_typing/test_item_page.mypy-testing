@@ -2,7 +2,7 @@ import attr
 import pytest
 import attrs
 
-from web_poet import ItemPage, field, SetItemType
+from web_poet import ItemPage, field
 from web_poet.pages import ItemT
 
 
@@ -26,7 +26,7 @@ async def test_item_page() -> None:
 
 @pytest.mark.mypy_testing
 async def test_item_page_parametrized() -> None:
-    class MyPage(ItemPage[Item]):
+    class MyPage(ItemPage, item_cls=Item):
         @field
         def name(self):
             return "hello"
@@ -38,7 +38,7 @@ async def test_item_page_parametrized() -> None:
 
 @pytest.mark.mypy_testing
 async def test_item_page_parametrized_subclass() -> None:
-    class BasePage(ItemPage[Item]):
+    class BasePage(ItemPage, item_cls=Item):
         @field
         def name(self):
             return "hello"
@@ -54,12 +54,12 @@ async def test_item_page_parametrized_subclass() -> None:
 
 @pytest.mark.mypy_testing
 async def test_item_page_subclass_parametrized() -> None:
-    class BasePage(ItemPage[ItemT]):
+    class BasePage(ItemPage):
         @field
         def name(self):
             return "hello"
 
-    class Subclass(BasePage[Item]):
+    class Subclass(BasePage, item_cls=Item):
         pass
 
     page = Subclass()
@@ -71,7 +71,7 @@ async def test_item_page_subclass_parametrized() -> None:
 @pytest.mark.xfail
 async def test_item_page_change_type() -> None:
 
-    class BasePage(ItemPage[Item]):
+    class BasePage(ItemPage, item_cls=Item):
         @field
         def name(self):
             return "hello"
@@ -80,7 +80,7 @@ async def test_item_page_change_type() -> None:
     class MyItem(Item):
         price: float
 
-    class Subclass(BasePage, SetItemType[MyItem]):
+    class Subclass(BasePage, item_cls=MyItem):
         @field
         def price(self):
             return 123

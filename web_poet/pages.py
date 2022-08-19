@@ -3,7 +3,6 @@ import typing
 
 import attr
 
-from web_poet._typing import get_generic_parameter
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
@@ -39,28 +38,35 @@ def is_injectable(cls: typing.Any) -> bool:
 ItemT = typing.TypeVar("ItemT")
 
 
-class SetItemType(typing.Generic[ItemT]):
-    """Inherit from this generic mixin to change item type used by
-    :class:`ItemPage`"""
+# class SetItemType(typing.Generic[ItemT]):
+#     """Inherit from this generic mixin to change item type used by
+#     :class:`ItemPage`"""
+#
+#     @property
+#     def item_cls(self) -> typing.Type[ItemT]:
+#         """Item class"""
+#         param = get_generic_parameter(self.__class__)
+#         if isinstance(param, typing.TypeVar):  # class is not parametrized
+#             return dict  # type: ignore[return-value]
+#         return param
 
-    @property
-    def item_cls(self) -> typing.Type[ItemT]:
-        """Item class"""
-        param = get_generic_parameter(self.__class__)
-        if isinstance(param, typing.TypeVar):  # class is not parametrized
-            return dict  # type: ignore[return-value]
-        return param
 
-
-class ItemPage(Injectable, SetItemType[ItemT]):
+class ItemPage(Injectable):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
     _skip_nonitem_fields: bool
+    item_cls: typing.Type[ItemT]
 
-    def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
+    def __init_subclass__(
+        cls,
+        item_cls: typing.Type[ItemT] = dict,
+        skip_nonitem_fields: bool = False,
+        **kwargs
+    ):
         super().__init_subclass__(**kwargs)
+        cls.item_cls = item_cls
         cls._skip_nonitem_fields = skip_nonitem_fields
 
     async def to_item(self) -> ItemT:

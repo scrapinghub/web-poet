@@ -2,14 +2,7 @@ import attrs
 import pytest
 
 from web_poet import field
-from web_poet.pages import (
-    Injectable,
-    ItemPage,
-    ItemT,
-    ItemWebPage,
-    SetItemType,
-    is_injectable,
-)
+from web_poet.pages import Injectable, ItemPage, ItemWebPage, is_injectable
 
 
 @attrs.define
@@ -66,7 +59,7 @@ def test_is_injectable():
 
 @pytest.mark.asyncio
 async def test_item_page_typed():
-    class MyPage(ItemPage[Item]):
+    class MyPage(ItemPage, item_cls=Item):
         @field
         def name(self):
             return "name"
@@ -80,12 +73,12 @@ async def test_item_page_typed():
 
 @pytest.mark.asyncio
 async def test_item_page_typed_subclass():
-    class BasePage(ItemPage[ItemT]):
+    class BasePage(ItemPage):
         @field
         def name(self):
             return "name"
 
-    class Subclass(BasePage[Item]):
+    class Subclass(BasePage, item_cls=Item):
         pass
 
     page = BasePage()
@@ -99,7 +92,7 @@ async def test_item_page_typed_subclass():
 
 @pytest.mark.asyncio
 async def test_item_page_change_item_type_extra_fields() -> None:
-    class BasePage(ItemPage[Item]):
+    class BasePage(ItemPage, item_cls=Item):
         @field
         def name(self):
             return "hello"
@@ -108,7 +101,7 @@ async def test_item_page_change_item_type_extra_fields() -> None:
     class MyItem(Item):
         price: float
 
-    class Subclass(BasePage, SetItemType[MyItem]):
+    class Subclass(BasePage, item_cls=MyItem):
         @field
         def price(self):
             return 123
@@ -127,7 +120,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
         name: str
         price: float
 
-    class BasePage(ItemPage[MyItem]):
+    class BasePage(ItemPage, item_cls=MyItem):
         @field
         def name(self):
             return "hello"
@@ -137,7 +130,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
             return 123
 
     # Item only contains "name", but not "price"
-    class Subclass(BasePage, SetItemType[Item], skip_nonitem_fields=True):
+    class Subclass(BasePage, item_cls=Item, skip_nonitem_fields=True):
         pass
 
     page = Subclass()

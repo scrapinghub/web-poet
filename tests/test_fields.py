@@ -22,7 +22,7 @@ class Item:
 
 
 @attrs.define
-class Page(ItemPage[Item]):
+class Page(ItemPage, item_cls=Item):
     response: HttpResponse
 
     @field
@@ -36,7 +36,7 @@ class Page(ItemPage[Item]):
 
 
 @attrs.define
-class InvalidPage(ItemPage[Item]):
+class InvalidPage(ItemPage, item_cls=Item):
     response: HttpResponse
 
     @field
@@ -57,6 +57,7 @@ EXAMPLE_RESPONSE = HttpResponse(
 @pytest.mark.asyncio
 async def test_fields():
     page = Page(response=EXAMPLE_RESPONSE)
+    print(page.item_cls)
 
     assert page.name == "Hello!"
     assert await page.price == "$123"
