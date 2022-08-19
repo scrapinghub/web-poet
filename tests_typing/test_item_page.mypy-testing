@@ -3,6 +3,7 @@ import pytest
 import attrs
 
 from web_poet import ItemPage, field
+from web_poet.pages import ItemT
 
 
 @attrs.define
@@ -52,9 +53,8 @@ async def test_item_page_parametrized_subclass() -> None:
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 async def test_item_page_subclass_parametrized() -> None:
-    class BasePage(ItemPage):
+    class BasePage(ItemPage[ItemT]):
         @field
         def name(self):
             return "hello"

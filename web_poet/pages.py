@@ -36,25 +36,31 @@ def is_injectable(cls: typing.Any) -> bool:
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
-ItemTypeT = typing.TypeVar("ItemTypeT")
+ItemT = typing.TypeVar("ItemT")
 
 
-class ItemPage(Injectable, typing.Generic[ItemTypeT]):
+class ItemPage(Injectable, typing.Generic[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
+    def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._skip_nonitem_fields = skip_nonitem_fields
+
     @property
-    def item_cls(self) -> typing.Type[ItemTypeT]:
+    def item_cls(self) -> typing.Type[ItemT]:
         """Item class"""
         param = get_generic_parameter(self.__class__)
         if isinstance(param, typing.TypeVar):  # class is not parametrized
             return dict  # type: ignore[return-value]
         return param
 
-    async def to_item(self) -> ItemTypeT:
+    async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
-        return await item_from_fields(self, item_cls=self.item_cls)
+        return await item_from_fields(
+            self, item_cls=self.item_cls, item_cls_fields=self._skip_nonitem_fields
+        )
 
 
 @attr.s(auto_attribs=True)
