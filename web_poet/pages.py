@@ -39,9 +39,9 @@ def is_injectable(cls: typing.Any) -> bool:
 ItemT = typing.TypeVar("ItemT")
 
 
-class SetItemType(typing.Generic[ItemT]):
+class Returns(typing.Generic[ItemT]):
     """Inherit from this generic mixin to change item type used by
-    :class:`ItemPage`"""
+    :class:`~.ItemPage`"""
 
     @property
     def item_cls(self) -> typing.Type[ItemT]:
@@ -52,7 +52,7 @@ class SetItemType(typing.Generic[ItemT]):
         return param
 
 
-class ItemPage(Injectable, SetItemType[ItemT]):
+class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """

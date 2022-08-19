@@ -7,7 +7,7 @@ from web_poet.pages import (
     ItemPage,
     ItemT,
     ItemWebPage,
-    SetItemType,
+    Returns,
     is_injectable,
 )
 
@@ -108,7 +108,7 @@ async def test_item_page_change_item_type_extra_fields() -> None:
     class MyItem(Item):
         price: float
 
-    class Subclass(BasePage, SetItemType[MyItem]):
+    class Subclass(BasePage, Returns[MyItem]):
         @field
         def price(self):
             return 123
@@ -137,7 +137,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
             return 123
 
     # Item only contains "name", but not "price"
-    class Subclass(BasePage, SetItemType[Item], skip_nonitem_fields=True):
+    class Subclass(BasePage, Returns[Item], skip_nonitem_fields=True):
         pass
 
     page = Subclass()

@@ -2,7 +2,7 @@ import attr
 import pytest
 import attrs
 
-from web_poet import ItemPage, field, SetItemType
+from web_poet import ItemPage, field, Returns
 from web_poet.pages import ItemT
 
 
@@ -80,7 +80,7 @@ async def test_item_page_change_type() -> None:
     class MyItem(Item):
         price: float
 
-    class Subclass(BasePage, SetItemType[MyItem]):
+    class Subclass(BasePage, Returns[MyItem]):
         @field
         def price(self):
             return 123

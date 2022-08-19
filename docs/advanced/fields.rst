@@ -294,20 +294,20 @@ to the item:
 
     import attrs
     from my_library import FooPage, StandardItem
-    from web_poet import SetItemType, HttpResponse, field, ensure_awaitable
+    from web_poet import HttpResponse, field, Returns
 
     @attrs.define
     class CustomItem(StandardItem):
         new_field: str
 
     @attrs.define
-    class CustomFooPage(FooPage, SetItemType[CustomItem]):
+    class CustomFooPage(FooPage, Returns[CustomItem]):
 
         @field
         def new_field(self) -> str:
             # ...
 
-Note how :class:`~.SetItemType` is used as one of the base classes of
+Note how :class:`~.Returns` is used as one of the base classes of
 ``CustomFooPage``; it allows to change the item type returned by a page object.
 
 Removing fields (as well as renaming) is a bit more tricky.
@@ -333,7 +333,7 @@ in the item:
         # let's pick only 1 attribute from StandardItem, nothing more
         name: str
 
-    class CustomFooPage(FooPage, SetItemType[CustomItem], skip_nonitem_fields=True):
+    class CustomFooPage(FooPage, Returns[CustomItem], skip_nonitem_fields=True):
         pass
 
 
@@ -343,6 +343,7 @@ is passed, and ``name`` is the only field ``CustomItem`` supports.
 
 To recap:
 
+* Use ``Returns[NewItemType]`` to change the item type in a subclass.
 * Don't use ``skip_nonitem_fields=True`` when your Page Object corresponds
   to an item exactly, or when you're only adding fields. This is a safe
   approach, which allows to detect typos in field names, even for optional

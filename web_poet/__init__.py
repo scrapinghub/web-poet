@@ -13,7 +13,7 @@ from .page_inputs import (
     RequestUrl,
     ResponseUrl,
 )
-from .pages import Injectable, ItemPage, ItemWebPage, SetItemType, WebPage
+from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage
 from .requests import request_downloader_var
 from .utils import cached_method
 
