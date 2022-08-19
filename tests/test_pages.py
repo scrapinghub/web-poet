@@ -71,6 +71,8 @@ async def test_item_page_typed():
         def name(self):
             return "name"
 
+    assert MyPage.item_cls is Item
+
     page = MyPage()
     assert page.item_cls is Item
     item = await page.to_item()
@@ -88,10 +90,12 @@ async def test_item_page_typed_subclass():
     class Subclass(BasePage[Item]):
         pass
 
+    assert BasePage.item_cls is dict
     page = BasePage()
     assert page.item_cls is dict
     assert (await page.to_item()) == {"name": "name"}
 
+    assert Subclass.item_cls is Item
     page2 = Subclass()
     assert page2.item_cls is Item
     assert (await page2.to_item()) == Item(name="name")
@@ -113,6 +117,7 @@ async def test_item_page_change_item_type_extra_fields() -> None:
         def price(self):
             return 123
 
+    assert Subclass.item_cls is MyItem
     page = Subclass()
     assert page.item_cls is MyItem
     item = await page.to_item()
@@ -140,6 +145,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
     class Subclass(BasePage, SetItemType[Item], skip_nonitem_fields=True):
         pass
 
+    assert Subclass.item_cls is Item
     page = Subclass()
     assert page.item_cls is Item
     item = await page.to_item()

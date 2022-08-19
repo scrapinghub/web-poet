@@ -43,13 +43,17 @@ class SetItemType(typing.Generic[ItemT]):
     """Inherit from this generic mixin to change item type used by
     :class:`ItemPage`"""
 
-    @property
-    def item_cls(self) -> typing.Type[ItemT]:
-        """Item class"""
-        param = get_generic_parameter(self.__class__)
-        if isinstance(param, typing.TypeVar):  # class is not parametrized
-            return dict  # type: ignore[return-value]
-        return param
+    #: Item class used by the Page Object. Please consider it read-only.
+    item_cls: typing.Type[ItemT]
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        param = get_generic_parameter(cls)
+        if isinstance(param, typing.TypeVar):
+            # class is not parametrized, use dict as a default
+            cls.item_cls = dict
+        else:
+            cls.item_cls = param
 
 
 class ItemPage(Injectable, SetItemType[ItemT]):
