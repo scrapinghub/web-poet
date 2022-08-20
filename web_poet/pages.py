@@ -4,7 +4,7 @@ import typing
 import attr
 
 from web_poet._typing import get_generic_parameter
-from web_poet.fields import FieldsMixin, item_from_fields
+from web_poet.fields import FieldsMixin, item_from_fields, item_from_fields_sync
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import _create_deprecated_class
@@ -67,6 +67,16 @@ class ItemPage(Injectable, Returns[ItemT]):
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
         return await item_from_fields(
+            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+        )
+
+    def to_item_sync(self) -> ItemT:
+        """
+        Synchronous version of :meth:`to_item`.
+        It doesn't support fields which are async; their values are
+        returned as awaitables.
+        """
+        return item_from_fields_sync(
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
 
