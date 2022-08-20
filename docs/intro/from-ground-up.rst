@@ -91,40 +91,46 @@ No problem, let's refactor it further. You may end up with something like that:
 .. code-block:: python
 
     import aiohttp
+    from dataclasses import dataclass
     import requests
     import parsel
 
+    @dataclass
+    class Response:
+        url: str
+        text: str
+
     # === Extraction code
-    def extract_book(url, text):
+    def extract_book(response: Response) -> dict:
         """ Extract book information from a book page
         on http://books.toscrape.com website, e.g. from
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
-        sel = parsel.Selector(text)
+        sel = parsel.Selector(response.text)
         return {
-            "url": url,
+            "url": response.url,
             "title": sel.css("h1").get(),
             "description": sel.css("#product_description+ p").get().strip(),
             # ...
         }
 
     # === Framework-specific I/O code
-    def download_sync(url):
+    def download_sync(url) -> Response:
         resp = requests.get(url)
-        return {"url": resp.url, "text": resp.text}
+        return Response(url=resp.url, text=resp.text)
 
-    async def download_async(url):
+    async def download_async(url) -> Response:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 text = await response.text()
-        return {"url": url, "text": text}
+        return Response(url=url, text=text)
 
     # === Usage example
-    # the way to get resp_data depends on an HTTP client
-    resp_data = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    # the way to get the Response instance depends on an HTTP client
+    resp = download_sync("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
 
-    # but after we got resp_data, usage is the same
-    item = extract_book(url=resp_data["url"], text=resp_data["text"])
+    # but after we got the response, the usage is the same
+    item = extract_book(resp)
 
 
 ``extract_book`` function now has all the desired properties: it is
@@ -135,35 +141,38 @@ The same, but using web-poet
 ============================
 
 ``web-poet`` asks you to organize code in a very similar way. Let's convert
-``extract_book`` function to a Page Object, by defining BookPage class:
+``extract_book`` function to a Page Object, by defining the BookPage class:
 
 .. code-block:: python
 
     import aiohttp
     import requests
-    from web_poet import WebPage, HttpResponse
+    from web_poet import ItemPage, HttpResponse
 
 
     # === Extraction code
-    class BookPage(WebPage):
+    class BookPage(ItemPage):
         """
         A book page on http://books.toscrape.com website, e.g.
         http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         """
-        def extract_book(self):
+        def __init__(self, response: HttpResponse):
+            self.response = response
+
+        def to_item(self):
             return {
-                "url": self.url,
-                "title": self.css("h1").get(),
-                "description": self.css("#product_description+ p").get().strip(),
+                "url": self.response.url,
+                "title": self.response.css("h1").get(),
+                "description": self.response.css("#product_description+ p").get().strip(),
                 # ...
             }
 
     # === Framework-specific I/O code
-    def download_sync(url):
+    def download_sync(url) -> HttpResponse:
         resp = requests.get(url)
         return HttpResponse(url=resp.url, body=resp.content, headers=resp.headers)
 
-    async def download_async(url):
+    async def download_async(url) -> HttpResponse:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 body = await response.content.read()
@@ -178,32 +187,40 @@ The same, but using web-poet
 
     # but after we got the response, the usage is the same
     book_page = BookPage(response=response)
-    item = book_page.extract_book()
+    item = book_page.to_item()
 
 
 Differences from a previous example:
 
-* instead of dicts with "url" and "text" fields, :class:`~.HttpResponse`
-  instances are used. :class:`~.HttpResponse` is a structure 
-  defined by web-poet acting as a generic data container for HTTP Responses.
-  *(check out the API reference of* :class:`~.HttpResponse` *for more info
-  about the fields it holds)*
+* web-poet provides a standard :class:`~.HttpResponse` class, with helper
+  methods like :meth:`~.HttpResponse.css`.
 
   Note how headers are passed when creating :class:`~.HttpResponse` instance.
   This is needed to decode body (which is ``bytes``) to unicode properly,
   using the web browser rules. It involves checking ``Content-Encoding``
   header, meta tags in HTML, BOM markers in the body, etc.
 
-* instead of ``extract_book`` function we got ``BookPage`` class,
-  which receives response data in its ``__init__`` method - see how it
-  is created: ``BookPage(response=response)``.
-* ``BookPage`` inherits from :class:`~.WebPage` base class. This base class
-  is not doing much: it
+* instead of ``extract_book`` function we've got a ``BookPage`` class,
+  which inherits from :class:`~.ItemPage` base class, receives response
+  data in its ``__init__`` method, and returns the extracted item
+  in the ``to_item()`` method.
 
-     * defines ``__init__`` method which receives :class:`~.HttpResponse`, and
-     * provides shortcut methods like :meth:`~.WebPage.css`, which work by
-       creating :external:py:class:`parsel.selector.Selector` behind the scenes
-       (so that you don't need to create a selector in the ``extract_book`` method).
+Receiving a ``response`` argument in ``__init__`` is very common for page
+objects, so ``web-poet`` provides a shortcur for it: inherit from
+:class:`~.WebPage`, which provides this ``__init__`` method implementation:
+
+.. code-block:: python
+
+    from web_poet import WebPage
+
+    class BookPage(WebPage):
+        def to_item(self):
+            return {
+                "url": self.response.url,
+                "title": self.response.css("h1").get(),
+                "description": self.response.css("#product_description+ p").get().strip(),
+                # ...
+            }
 
 There are pros and cons for using classes vs functions for writing
 such extraction code, but the distinction is not that important;
@@ -215,32 +232,7 @@ to_item() method
 It is common to have Page Objects for a web page where a single main
 data record needs to be extracted (e.g. book information in our example).
 ``web-poet`` standardizes this, by asking to name a method implementing the
-extraction ``to_item``. It also provides the :class:`~.ItemPage` and
-:class:`~.WebPage` base classes. Let's change the code to follow this standard:
-
-.. code-block:: python
-
-    import requests
-    from web_poet import WebPage, HttpResponse
-
-
-    # === Extraction code
-    class BookPage(WebPage):
-        """
-        A book page on http://books.toscrape.com website, e.g.
-        http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
-        """
-        def to_item(self):
-            return {
-                "url": self.url,
-                "title": self.css("h1").get(),
-                "description": self.css("#product_description+ p").get().strip(),
-                # ...
-            }
-
-    # ... get resp_data somehow
-    book_page = BookPage(response=response)
-    item = book_page.to_item()
+extraction ``to_item``.
 
 As the method name is now standardized, the code which creates a Page Object
 instance can now work for other Page Objects like that. For example, you can
@@ -262,8 +254,8 @@ it for free:
     def get_item(extract_func, response: HttpResponse) -> dict:
         return extract_func(url=response.url, text=response.text)
 
-No need to agree on ``to_item`` name and have a base class to check that the
-method is implemented. Why bother with classes then?
+No need to agree on ``to_item`` name or have a base class.
+Why bother with classes then?
 
 Classes for web scraping code
 =============================
@@ -282,15 +274,15 @@ For example, we can extract logic for different attributes into properties:
 
         @property
         def title(self):
-            return self.css("h1").get()
+            return self.response.css("h1").get()
 
         @property
         def description(self):
-            return self.css("#product_description+ p").get().strip()
+            return self.response.css("#product_description+ p").get().strip()
 
         def to_item(self):
             return {
-                "url": self.url,
+                "url": self.response.url,
                 "title": self.title,
                 "description": self.description,
                 # ...
@@ -300,22 +292,35 @@ It might be easier to read the code written this way. Also, this style
 allows to extract only some of the attributes - if you don't need
 the complete to_item() output, you still can access individual properties.
 
-.. note::
-    web-poet provides a small framework to simplify writing Page Objects
-    in this style; see :ref:`web-poet-fields` .
-
-You may even write some base class to make it nicer - e.g. helper descriptors
-to define properties from CSS selectors, and a default ``to_item``
-implementation (so, no need to define ``to_item``).
-This is currently not implemented in ``web-poet``, but
-nothing prevents us from having a DSL like this:
+web-poet provides a small framework to simplify writing Page Objects
+in this style; see :ref:`web-poet-fields`. The example above can be simplified
+using web-poet fields - there is no need to write ``to_item`` boilerplate:
 
 .. code-block:: python
 
+    from web_poet import WebPage, field
+
     class BookPage(WebPage):
-        title = Css("h1")
-        description = Css("#product_description+ p") | Strip()
-        url = TakeUrl()
+        """
+        A book page on http://books.toscrape.com website, e.g.
+        http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+        """
+
+        @field
+        def title(self):
+            return self.response.css("h1").get()
+
+        @field
+        def description(self):
+            return self.response.css("#product_description+ p").get().strip()
+
+        @field
+        def url(self):
+            return self.response.url
+
+.. note::
+    ``BookPage.to_item()`` method is `async`` in the example above.
+    Make sure to check :ref:`web-poet-fields` if you want to use web-poet fields.
 
 Another reason to consider classes for the extraction code is that sometimes
 there is no a single "main" method, but you still want to group the related code.
@@ -341,10 +346,10 @@ pages and pagination URLs:
 
     class BookListPage(ProductListingPage):
         def item_urls(self):
-            return self.css(".product a::attr(href)").getall()
+            return self.response.css(".product a::attr(href)").getall()
 
         def page_urls(self):
-            return self.css(".paginator a::attr(href)").getall()
+            return self.response.css(".paginator a::attr(href)").getall()
 
 
 Web Scraping Frameworks
@@ -367,8 +372,8 @@ Let's recall the example we started with:
         sel = parsel.Selector(resp)
         return {
             "url": resp.url,
-            "title": sel.css("h1").get(),
-            "description": sel.css("#product_description+ p").get().strip(),
+            "title": sel.response.css("h1").get(),
+            "description": sel.response.css("#product_description+ p").get().strip(),
             # ...
         }
 
@@ -389,9 +394,9 @@ And this is what we ended up with:
         """
         def to_item(self):
             return {
-                "url": self.url,
-                "title": self.css("h1").get(),
-                "description": self.css("#product_description+ p").get().strip(),
+                "url": self.response.url,
+                "title": self.response.css("h1").get(),
+                "description": self.response.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -446,9 +451,9 @@ would only need to write the "extraction" part:
         """
         def to_item(self):
             return {
-                "url": self.url,
-                "title": self.css("h1").get(),
-                "description": self.css("#product_description+ p").get().strip(),
+                "url": self.response.url,
+                "title": self.response.css("h1").get(),
+                "description": self.response.css("#product_description+ p").get().strip(),
                 # ...
             }
 
@@ -459,6 +464,7 @@ to process, and that's it:
 
     item = some_framework.extract(url, BookPage)
 
+``web-poet`` **does not** provide such a framework.
 The role of ``web-poet`` is to define a standard on how to write the
 extraction logic, and allow it to be reused in different frameworks.
 ``web-poet`` Page Objects should be flexible enough to be used with:
@@ -468,7 +474,6 @@ extraction logic, and allow it to be reused in different frameworks.
 * single node and distributed systems,
 * different underlying HTTP implementations - or without HTTP support
   at all, etc.
-
 
 Page Objects
 ============
@@ -514,10 +519,9 @@ For example, a very basic Page Object could look like this:
                 }
 
 There is no *need* to use other base classes and mixins
-defined by ``web-poet`` (:class:`~.WebPage`, :class:`~.ResponseShortcutsMixin`,
-:class:`~.ItemPage`, etc.), but it can be a good
-idea to familiarize yourself with them, as they are taking some of
-the boilerplate out.
+defined by ``web-poet`` (:class:`~.WebPage`, :class:`~.ItemPage`, etc.),
+but it can be a good idea to familiarize yourself with them, as they are
+taking some of the boilerplate out.
 
 Page Object Inputs
 ==================
@@ -554,7 +558,7 @@ You may define page objects for this task:
 .. code-block:: python
 
     class BamazonBookPage(Injectable):
-        def __init__(self, response: SplashResponseData):
+        def __init__(self, response: SplashResponse):
             self.response = response
 
         def to_item(self):
@@ -617,7 +621,7 @@ a different type annotation should be used:
 .. code-block:: python
 
     class BamazonBookPage(Injectable):
-        def __init__(self, response: SplashResponseData):
+        def __init__(self, response: SplashResponse):
             self.response = response
 
     class ToScrapeBookPage(Injectable):
@@ -627,7 +631,7 @@ a different type annotation should be used:
 
 For each possible input a separate class needs to be defined, even if the
 data has the same format. For example, both :class:`~.HttpResponse` and
-``SplashResponseData`` may have the same ``url`` and ``text`` properties,
+``SplashResponse`` may have the same ``url`` and ``text`` properties,
 but they can't be the same class, because they need to work as
 "markers" - tell frameworks if the html should be taken from HTTP
 response body or from Splash DOM snapshot.
@@ -707,10 +711,10 @@ Then, framework's role is to:
    (a common case is ``to_item``).
 
 For example, ``web-poet`` + Scrapy integration package (scrapy-poet_)
-may inspect a WebPage subclass you defined, figure out it needs
-:class:`~.HttpResponse` and nothing else, fetch scrapy's ``TextResponse``,
-create :class:`~.HttpResponse` instance from it, create your
-Page Object instance, and pass it to a spider callback.
+inspects a WebPage subclass you defined, figures out it needs
+:class:`~.HttpResponse` and nothing else, fetches scrapy's ``TextResponse``,
+creates :class:`~.HttpResponse` instance from it, creates your
+Page Object instance, and passes it to a spider callback.
 
 Finally, the Developer's role is to:
 
