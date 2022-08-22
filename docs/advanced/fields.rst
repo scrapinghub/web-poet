@@ -489,3 +489,34 @@ with async versions of ``@property`` and ``@cached_property`` decorators; unlike
 :func:`functools.lru_cache`, they all work fine for this use case.
 
 .. _async_property: https://github.com/ryananguiano/async_property
+
+Field metadata
+--------------
+
+``web-poet`` allows to store arbitrary information for each field, using
+``meta`` keyword argument:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, field
+
+    class MyPage(ItemPage):
+
+        @field(meta={"expensive": True})
+        async def my_field(self):
+            ...
+
+To retrieve this information, use :func:`web_poet.fields.get_fields_dict`; it
+returns a dictionary, where keys are field names, and values are
+:class:`web_poet.fields.FieldInfo` instances.
+
+.. code-block:: python
+
+    from web_poet.fields import get_fields_dict
+
+    fields_dict = get_fields_dict(MyPage)
+    field_names = fields_dict.keys()
+    my_field_meta = fields_dict["my_field"].meta
+    
+    print(field_names)  # dict_keys(['my_field'])
+    print(my_field_meta)  # {'expensive': True}
