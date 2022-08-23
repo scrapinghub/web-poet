@@ -461,7 +461,7 @@ with async versions of ``@property`` and ``@cached_property`` decorators; unlike
 Field metadata
 --------------
 
-web-poet allows to store arbitraty information for each field, using
+``web-poet`` allows to store arbitrary information for each field, using
 ``meta`` keyword argument:
 
 .. code-block:: python
@@ -486,3 +486,5 @@ returns a dictionary, where keys are field names, and values are
     field_names = fields_dict.keys()
     my_field_meta = fields_dict["my_field"].meta
 
+    print(field_names)  # dict_keys(['my_field'])
+    print(my_field_meta)  # {'expensive': True}
