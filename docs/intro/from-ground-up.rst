@@ -319,7 +319,7 @@ using web-poet fields - there is no need to write ``to_item`` boilerplate:
             return self.response.url
 
 .. note::
-    ``BookPage.to_item()`` method is `async`` in the example above.
+    ``BookPage.to_item()`` method is ``async`` in the example above.
     Make sure to check :ref:`web-poet-fields` if you want to use web-poet fields.
 
 Another reason to consider classes for the extraction code is that sometimes
