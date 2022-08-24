@@ -159,7 +159,7 @@ The same, but using web-poet
         def __init__(self, response: HttpResponse):
             self.response = response
 
-        def to_item(self):
+        def to_item(self) -> dict:
             return {
                 "url": self.response.url,
                 "title": self.response.css("h1").get(),
@@ -200,13 +200,13 @@ Differences from a previous example:
   using the web browser rules. It involves checking ``Content-Encoding``
   header, meta tags in HTML, BOM markers in the body, etc.
 
-* instead of ``extract_book`` function we've got a ``BookPage`` class,
-  which inherits from :class:`~.ItemPage` base class, receives response
+* instead of the ``extract_book`` function we've got a ``BookPage`` class,
+  which inherits from the :class:`~.ItemPage` base class, receives response
   data in its ``__init__`` method, and returns the extracted item
   in the ``to_item()`` method.
 
 Receiving a ``response`` argument in ``__init__`` is very common for page
-objects, so ``web-poet`` provides a shortcur for it: inherit from
+objects, so ``web-poet`` provides a shortcut for it: inherit from
 :class:`~.WebPage`, which provides this ``__init__`` method implementation:
 
 .. code-block:: python
@@ -214,7 +214,7 @@ objects, so ``web-poet`` provides a shortcur for it: inherit from
     from web_poet import WebPage
 
     class BookPage(WebPage):
-        def to_item(self):
+        def to_item(self) -> dict:
             return {
                 "url": self.response.url,
                 "title": self.response.css("h1").get(),
@@ -319,7 +319,7 @@ using web-poet fields - there is no need to write ``to_item`` boilerplate:
             return self.response.url
 
 .. note::
-    ``BookPage.to_item()`` method is ``async`` in the example above.
+    The ``BookPage.to_item()`` method is ``async`` in the example above.
     Make sure to check :ref:`web-poet-fields` if you want to use web-poet fields.
 
 Another reason to consider classes for the extraction code is that sometimes
@@ -712,8 +712,8 @@ Then, framework's role is to:
 
 For example, ``web-poet`` + Scrapy integration package (scrapy-poet_)
 inspects a WebPage subclass you defined, figures out it needs
-:class:`~.HttpResponse` and nothing else, fetches scrapy's ``TextResponse``,
-creates :class:`~.HttpResponse` instance from it, creates your
+:class:`~.HttpResponse` and nothing else, fetches Scrapy's ``TextResponse``,
+creates an :class:`~.HttpResponse` instance from it, creates your
 Page Object instance, and passes it to a spider callback.
 
 Finally, the Developer's role is to:

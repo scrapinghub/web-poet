@@ -71,14 +71,14 @@ the :func:`@web_poet.field <web_poet.fields.field>` decorator:
             return self.response.css(".price").get()
 
 :class:`~.ItemPage` has a default ``to_item()``
-implementation: it uses all the properties created with
+implementation: it uses all the properties created with the
 :func:`@field <web_poet.fields.field>` decorator, and returns
 a dict with the result, where keys are method names, and values are
 property values. In the example above, ``to_item()`` returns a
 ``{"name": ..., "price": ...}`` dict with the extracted data.
 
-Methods annotated with :func:`@field <web_poet.fields.field>` decorator
-become properties; for ``page = MyPage(...)`` instance
+Methods annotated with the :func:`@field <web_poet.fields.field>` decorator
+become properties; for a ``page = MyPage(...)`` instance
 you can access them as ``page.name``.
 
 It's important to note that the default
@@ -112,7 +112,7 @@ of the attributes:
 
         @field
         async def price(self):
-            resp = self.http.get("...")
+            resp = await self.http.get("...")
             return resp.json()['price']
 
 Using Page Objects with async fields
@@ -229,12 +229,12 @@ Consider the following badly written page object:
         def nane(self):
             return self.response.css(".name").get()
 
-Because Product item class is used, a typo ("nane" instead of "name") is detected
-at runtime: creation of Product instance would fail with a ``TypeError``, because
-of unexpected keyword argument "nane".
+Because the ``Product`` item class is used, a typo ("nane" instead of "name") 
+is detected at runtime: the creation of a ``Product`` instance would fail with 
+a ``TypeError``, because of the unexpected keyword argument "nane".
 
 After fixing it (renaming "nane" method to "name"), another error is going to be
-detected: ``price`` argument is required, but there is no extraction method for
+detected: the ``price`` argument is required, but there is no extraction method for
 this attribute, so ``Product.__init__`` will raise another ``TypeError``,
 indicating that a required argument is missing.
 
@@ -294,7 +294,7 @@ to the item:
 
     import attrs
     from my_library import FooPage, StandardItem
-    from web_poet import HttpResponse, field, Returns
+    from web_poet import field, Returns
 
     @attrs.define
     class CustomItem(StandardItem):
