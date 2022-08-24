@@ -1,3 +1,5 @@
+from typing import Optional
+
 import attrs
 import pytest
 
@@ -122,6 +124,39 @@ async def test_item_page_typed_subclass():
 
 
 @pytest.mark.asyncio
+async def test_item_page_fields_typo():
+    class MyPage(ItemPage[Item]):
+        @field
+        def nane(self):
+            return "name"
+
+    page = MyPage()
+    assert page.item_cls is Item
+    with pytest.raises(TypeError, match="unexpected keyword argument 'nane'"):
+        await page.to_item()
+
+
+@pytest.mark.asyncio
+async def test_item_page_required_field_missing():
+    @attrs.define
+    class MyItem:
+        name: str
+        price: Optional[float]
+
+    class MyPage(ItemPage[MyItem]):
+        @field
+        def price(self):
+            return 100
+
+    page = MyPage()
+    assert page.item_cls is MyItem
+    with pytest.raises(
+        TypeError, match="missing 1 required positional argument: 'name'"
+    ):
+        await page.to_item()
+
+
+@pytest.mark.asyncio
 async def test_item_page_change_item_type_extra_fields() -> None:
     class BasePage(ItemPage[Item]):
         @field
@@ -169,3 +204,12 @@ async def test_item_page_change_item_type_remove_fields() -> None:
     item = await page.to_item()
     assert isinstance(item, Item)
     assert item == Item(name="hello")
+
+    # Item only contains "name", but not "price", but "price" should be passed
+    class SubclassStrict(BasePage, Returns[Item]):
+        pass
+
+    page2 = SubclassStrict()
+    assert page2.item_cls is Item
+    with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
+        await page2.to_item()
