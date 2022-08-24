@@ -203,7 +203,8 @@ Differences from a previous example:
 * instead of the ``extract_book`` function we've got a ``BookPage`` class,
   which inherits from the :class:`~.ItemPage` base class, receives response
   data in its ``__init__`` method, and returns the extracted item
-  in the ``to_item()`` method.
+  in the ``to_item()`` method. ``to_item`` is a standard method name
+  used by ``web-poet``.
 
 Receiving a ``response`` argument in ``__init__`` is very common for page
 objects, so ``web-poet`` provides a shortcut for it: inherit from
