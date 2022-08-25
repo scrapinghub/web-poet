@@ -9,7 +9,7 @@ them. Such information can dictate the behavior of the Page Object or affect its
 data entirely depending on the needs of the developer.
 
 If you can recall from the previous basic tutorials, one essential requirement of
-Page Objects that inherit from :class:`~.WebPage` or :class:`~.ItemWebPage` would
+Page Objects that inherit from :class:`~.WebPage` would
 be :class:`~.HttpResponse`. This holds the HTTP response information that the
 Page Object is trying to represent.
 
@@ -23,8 +23,8 @@ we'll need to use :class:`~.PageParams` similar on how we use
     import web_poet
 
     @attrs.define
-    class SomePage(web_poet.ItemWebPage):
-        # The HttpResponse attribute is inherited from ItemWebPage
+    class SomePage(web_poet.WebPage):
+        # The HttpResponse attribute is inherited from WebPage
         page_params: web_poet.PageParams
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
@@ -51,7 +51,7 @@ Controlling item values
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         page_params: web_poet.PageParams
 
         default_tax_rate = 0.10
@@ -94,7 +94,7 @@ Let's try an example wherein :class:`~.PageParams` is able to control how
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
         page_params: web_poet.PageParams
 

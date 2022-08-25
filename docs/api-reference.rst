@@ -51,10 +51,9 @@ Pages
    :inherited-members:
    :no-special-members:
 
-.. autoclass:: ItemWebPage
+.. autoclass:: Returns
    :show-inheritance:
    :members:
-   :no-special-members:
 
 Mixins
 ======

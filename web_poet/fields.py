@@ -1,31 +1,9 @@
 """
-``web_poet.fields`` is a module with helpers for defining Page Objects.
-It allows to define Page Objects in the following way:
-
-.. code-block:: python
-
-    from web_poet import ItemPage, field, item_from_fields
-
-
-    class MyPage(ItemWebPage):
-        @field
-        def name(self):
-            return self.response.css(".name").get()
-
-        @field
-        def price(self):
-            return self.response.css(".price").get()
-
-        @field
-        def currency(self):
-            return "USD"
-
-        async def to_item(self):
-            return await item_from_fields(self)
-
+``web_poet.fields`` is a module with helpers for putting extraction logic
+into separate Page Object methods / properties.
 """
 from functools import update_wrapper
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -68,8 +46,8 @@ class FieldsMixin:
 def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
-    which is used by :func:`item_from_fields` or :func:`item_from_fields_sync`
-    to populate item attributes.
+    which is then used by :class:`~.ItemPage`'s to_item() method to populate
+    a corresponding item attribute.
 
     By default, the value is computed on each property access.
     Use ``@field(cached=True)`` to cache the property value.
@@ -118,33 +96,47 @@ def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
     return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, {})
 
 
-async def item_from_fields(obj, item_cls=dict, *, item_cls_fields=False):
+T = TypeVar("T")
+
+
+# FIXME: type is ignored as a workaround for https://github.com/python/mypy/issues/3737
+# inference works properly if a non-default item_cls is passed; for dict
+# it's not working (return type is Any)
+async def item_from_fields(
+    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
-    If ``item_cls_fields`` is True, ``@fields`` whose names don't match
-    any of the ``item_cls`` attributes are not passed to ``item_cls.__init__``.
-    When ``item_cls_fields`` is False (default), all ``@fields`` are passed
-    to ``item_cls.__init__``.
+    If ``skip_nonitem_fields`` is True, ``@fields`` whose names are not
+    among ``item_cls`` field names are not passed to ``item_cls.__init__``.
+
+    When ``skip_nonitem_fields`` is False (default), all ``@fields`` are passed
+    to ``item_cls.__init__``, possibly causing exceptions if
+    ``item_cls.__init__`` doesn't support them.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, item_cls_fields=False)
-    field_names = item_dict.keys()
-    if item_cls_fields:
+    item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
+    field_names = list(item_dict.keys())
+    if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
         **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
     )
 
 
-def item_from_fields_sync(obj, item_cls=dict, *, item_cls_fields=False):
+def item_from_fields_sync(
+    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))
-    if item_cls_fields:
+    if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
 
 
-def _without_unsupported_field_names(item_cls, field_names):
+def _without_unsupported_field_names(
+    item_cls: type, field_names: List[str]
+) -> List[str]:
     item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
     if item_field_names is None:  # item_cls doesn't define field names upfront
         return field_names[:]

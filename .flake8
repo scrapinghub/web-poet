@@ -24,7 +24,10 @@ ignore =
     D209,  # Multi-line docstring closing quotes should be on a separate line
     D400,  # First line should end with a period
     D401,  # First line should be in imperative mood
-    D402   # First line should not be the function's "signature"
+    D402,  # First line should not be the function's "signature"
+
+    # see https://github.com/PyCQA/flake8-bugbear/issues/278
+    B024   # abstract base class without abstract methods
 
 per-file-ignores =
     # F401: Ignore "imported but unused" errors in __init__ files, as those

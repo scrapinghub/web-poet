@@ -69,10 +69,10 @@ class PageObjectRegistry(dict):
 
     .. code-block:: python
 
-        from web_poet import handle_urls, default_registry, ItemWebPage
+        from web_poet import handle_urls, default_registry, WebPage
 
         @handle_urls("example.com", overrides=ProductPageObject)
-        class ExampleComProductPage(ItemWebPage):
+        class ExampleComProductPage(WebPage):
             ...
 
         override_rules = default_registry.get_overrides()

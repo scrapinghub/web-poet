@@ -3,9 +3,11 @@ import typing
 
 import attr
 
-from web_poet.fields import FieldsMixin
+from web_poet._typing import get_generic_parameter
+from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
+from web_poet.utils import _create_deprecated_class
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -35,33 +37,47 @@ def is_injectable(cls: typing.Any) -> bool:
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
-class ItemPage(Injectable, abc.ABC):
-    """Base Page Object with a required :meth:`to_item` method.
-    Make sure you're creating Page Objects with ``to_item`` methods
-    if their main goal is to extract a single data record from a web page.
+ItemT = typing.TypeVar("ItemT")
+
+
+class Returns(typing.Generic[ItemT]):
+    """Inherit from this generic mixin to change the item type used by
+    :class:`~.ItemPage`"""
+
+    @property
+    def item_cls(self) -> typing.Type[ItemT]:
+        """Item class"""
+        param = get_generic_parameter(self.__class__)
+        if isinstance(param, typing.TypeVar):  # class is not parametrized
+            return dict  # type: ignore[return-value]
+        return param
+
+
+class ItemPage(Injectable, Returns[ItemT]):
+    """Base Page Object, with a default :meth:`to_item` implementation
+    which supports web-poet fields.
     """
 
-    @abc.abstractmethod
-    def to_item(self):
+    _skip_nonitem_fields: bool
+
+    def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._skip_nonitem_fields = skip_nonitem_fields
+
+    async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
+        return await item_from_fields(
+            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+        )
 
 
 @attr.s(auto_attribs=True)
-class WebPage(Injectable, ResponseShortcutsMixin):
+class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`
     and provides XPath / CSS shortcuts.
-
-    Use this class as a base class for Page Objects which work on
-    HTML downloaded using an HTTP client directly.
     """
 
     response: HttpResponse
 
 
-@attr.s(auto_attribs=True)
-class ItemWebPage(WebPage, ItemPage):
-    """:class:`WebPage` that requires the :meth:`to_item` method to
-    be implemented.
-    """
-
-    pass
+ItemWebPage = _create_deprecated_class("ItemWebPage", WebPage, warn_once=False)

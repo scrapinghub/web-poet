@@ -6,6 +6,7 @@ import pytest
 
 from web_poet import (
     HttpResponse,
+    Injectable,
     ItemPage,
     field,
     item_from_fields,
@@ -21,7 +22,7 @@ class Item:
 
 
 @attrs.define
-class Page(ItemPage):
+class Page(ItemPage[Item]):
     response: HttpResponse
 
     @field
@@ -33,12 +34,9 @@ class Page(ItemPage):
         await asyncio.sleep(0.01)
         return "$123"
 
-    async def to_item(self):  # noqa: D102
-        return await item_from_fields(self, Item)
-
 
 @attrs.define
-class InvalidPage(ItemPage):
+class InvalidPage(ItemPage[Item]):
     response: HttpResponse
 
     @field
@@ -48,9 +46,6 @@ class InvalidPage(ItemPage):
     @field
     def unknown_attribute(self):  # noqa: D102
         return "foo"
-
-    async def to_item(self):  # noqa: D102
-        return await item_from_fields(self, Item)
 
 
 EXAMPLE_RESPONSE = HttpResponse(
@@ -226,7 +221,7 @@ async def test_field_cache_async_locked():
 
 
 @pytest.mark.asyncio
-async def test_item_cls_fields_async():
+async def test_skip_nonitem_fields_async():
     class ExtendedPage(Page):
         @field
         def new_attribute(self):
@@ -238,16 +233,16 @@ async def test_item_cls_fields_async():
 
     class ExtendedPage2(ExtendedPage):
         async def to_item(self) -> Item:
-            return await item_from_fields(self, Item, item_cls_fields=True)
+            return await item_from_fields(self, Item, skip_nonitem_fields=True)
 
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = await page.to_item()
     assert item == Item(name="Hello!", price="$123")
 
 
-def test_item_cls_fields():
+def test_skip_nonitem_fields():
     @attrs.define
-    class SyncPage(ItemPage):
+    class SyncPage(Injectable):
         response: HttpResponse
 
         @field
@@ -272,7 +267,7 @@ def test_item_cls_fields():
 
     class ExtendedPage2(ExtendedPage):
         def to_item(self) -> Item:
-            return item_from_fields_sync(self, Item, item_cls_fields=True)
+            return item_from_fields_sync(self, Item, skip_nonitem_fields=True)
 
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
     item = page.to_item()

@@ -295,7 +295,7 @@ Executing a HttpRequest instance
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -351,7 +351,7 @@ method on it.
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -396,7 +396,7 @@ Thus, additional requests inside the Page Object are typically needed for it:
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -485,7 +485,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         default_pagination_limit = 10
@@ -586,7 +586,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -664,7 +664,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
 
     @attrs.define
-    class ProductPage(web_poet.ItemWebPage):
+    class ProductPage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         default_pagination_limit = 10
@@ -835,7 +835,7 @@ This can be set using:
 
 
     @attrs.define
-    class SomePage(web_poet.ItemWebPage):
+    class SomePage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -884,7 +884,7 @@ when creating an :class:`~.HttpClient` instance:
 
 
     @attrs.define
-    class SomePage(web_poet.ItemWebPage):
+    class SomePage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -956,7 +956,7 @@ like the ones above, then it would cause the code to look like:
 
 
     @attrs.define
-    class SomePage(web_poet.ItemWebPage):
+    class SomePage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):
@@ -985,7 +985,7 @@ This makes the code simpler:
 
 
     @attrs.define
-    class SomePage(web_poet.ItemWebPage):
+    class SomePage(web_poet.WebPage):
         http_client: web_poet.HttpClient
 
         async def to_item(self):

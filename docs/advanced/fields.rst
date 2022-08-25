@@ -47,23 +47,15 @@ This approach has 2 main advantages:
 However, writing and maintaining ``to_item()`` method can get tedious,
 especially if there is a lot of properties.
 
-web_poet.fields
----------------
-
+@field decorator
+----------------
 To aid writing Page Objects in this style, ``web-poet`` provides
-a few utilities:
-
-* :func:`@web_poet.field <web_poet.fields.field>` decorator,
-* :func:`web_poet.item_from_fields <web_poet.fields.item_from_fields>`
-  and :func:`web_poet.item_from_fields_sync <web_poet.fields.item_from_fields_sync>`
-  functions.
-
-We can rewrite the example like this:
+the :func:`@web_poet.field <web_poet.fields.field>` decorator:
 
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse, field, item_from_fields_sync
+    from web_poet import ItemPage, HttpResponse, field
 
 
     @attrs.define
@@ -78,24 +70,27 @@ We can rewrite the example like this:
         def price(self):
             return self.response.css(".price").get()
 
-        def to_item(self) -> dict:
-            return item_from_fields_sync(self)
+:class:`~.ItemPage` has a default ``to_item()``
+implementation: it uses all the properties created with the
+:func:`@field <web_poet.fields.field>` decorator, and returns
+a dict with the result, where keys are method names, and values are
+property values. In the example above, ``to_item()`` returns a
+``{"name": ..., "price": ...}`` dict with the extracted data.
 
-Methods annotated with :func:`@field <web_poet.fields.field>` decorator
-become properties; for ``page = MyPage(...)`` instance
+Methods annotated with the :func:`@field <web_poet.fields.field>` decorator
+become properties; for a ``page = MyPage(...)`` instance
 you can access them as ``page.name``.
 
-As you can guess, :func:`~.item_from_fields_sync` uses all the properties
-created with :func:`@field <web_poet.fields.field>` decorator, and returns
-a dict with the result, where keys are method names, and values are
-property values.
+It's important to note that the default
+:meth:`ItemPage.to_item() <web_poet.pages.ItemPage.to_item>` implementation
+is an ``async def`` function - make sure to await its result:
+``item = await page.to_item()``
 
 Asynchronous fields
 -------------------
 
-``async def`` fields are also supported, as well as a mix of
-sync and async methods - use :func:`~.item_from_fields` in ``to_item``
-to make it work.
+The reason :class:`~.ItemPage` provides an async ``to_item`` method by
+default is that both regular and ``async def`` fields are supported.
 
 For example, you might need to send :ref:`advanced-requests` to extract some
 of the attributes:
@@ -103,13 +98,13 @@ of the attributes:
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse, HttpClient, field, item_from_fields
+    from web_poet import ItemPage, HttpResponse, HttpClient, field
 
 
     @attrs.define
     class MyPage(ItemPage):
         response: HttpResponse
-        http_client: HttpClient
+        http: HttpClient
 
         @field
         def name(self):
@@ -117,24 +112,8 @@ of the attributes:
 
         @field
         async def price(self):
-            resp = self.http_client.get("...")
+            resp = await self.http.get("...")
             return resp.json()['price']
-
-        async def to_item(self) -> dict:
-            return await item_from_fields(self)
-
-Because :func:`~.item_from_fields` supports both sync and async fields,
-it's recommended to use it over :func:`~.item_from_fields_sync`, even
-if there are no async fields yet. The only reason to use
-:func:`~.item_from_fields_sync` would be to avoid using
-``async def to_item`` method.
-
-If you want to get a value of an async field, make sure to await it:
-
-.. code-block:: python
-
-    page = MyPage(...)
-    price = await page.price
 
 Using Page Objects with async fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,37 +164,42 @@ attrs instances) instead of unstructured dicts to hold the data:
     from web_poet import ItemPage, HttpResponse
 
     @attrs.define
-    class Item:
+    class Product:
         name: str
         price: str
 
 
     @attrs.define
-    class MyPage(ItemPage):
+    class ProductPage(ItemPage):
         # ...
-        def to_item(self) -> Item:
-            return Item(
+        def to_item(self) -> Product:
+            return Product(
                 name=self.name,
                 price=self.price
             )
 
-:mod:`web_poet.fields` supports it, by allowing to pass an item class to the
-:func:`~.item_from_fields` / :func:`~.item_from_fields_sync` functions:
+:mod:`web_poet.fields` supports it, by allowing to parametrize
+:class:`~.ItemPage` with an item class:
 
 .. code-block:: python
 
     @attrs.define
-    class MyPage(ItemPage):
+    class ProductPage(ItemPage[Product]):
         # ...
 
-        async def to_item(self) -> Item:
-            return await item_from_fields(self, item_cls=Item)
+When :class:`~.ItemPage` is parametrized with an item class,
+its ``to_item()`` method starts to return item instances, instead
+of ``dict`` instances. In the example above ``ProductPage.to_item`` method
+returns ``Product`` instances.
 
 Defining an Item class may be an overkill if you only have a single Page Object,
 but item classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
 * if you want to define the schema upfront.
+
+Item classes can also be used to hold common attribute
+pre-processing and validation logic.
 
 Error prevention
 ~~~~~~~~~~~~~~~~
@@ -229,35 +213,32 @@ Consider the following badly written page object:
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse, field, item_from_fields
+    from web_poet import ItemPage, HttpResponse, field
 
     @attrs.define
-    class Item:
+    class Product:
         name: str
         price: str
 
 
     @attrs.define
-    class MyPage(ItemPage):
+    class ProductPage(ItemPage[Product]):
         response: HttpResponse
 
         @field
         def nane(self):
             return self.response.css(".name").get()
 
-        async def to_item(self) -> Item:
-            return await item_from_fields(self, item_cls=Item)
-
-Because Item class is used, a typo ("nane" instead of "name") is detected
-at runtime: creation of Item instance would fail with a ``TypeError``, because
-of unexpected keyword argument "nane".
+Because the ``Product`` item class is used, a typo ("nane" instead of "name") 
+is detected at runtime: the creation of a ``Product`` instance would fail with 
+a ``TypeError``, because of the unexpected keyword argument "nane".
 
 After fixing it (renaming "nane" method to "name"), another error is going to be
-detected: ``price`` argument is required, but there is no extraction method for
-this attribute, so ``Item.__init__`` will raise another ``TypeError``,
+detected: the ``price`` argument is required, but there is no extraction method for
+this attribute, so ``Product.__init__`` will raise another ``TypeError``,
 indicating that a required argument is missing.
 
-Without an Item class, none of these errors are detected.
+Without an item class, none of these errors are detected.
 
 Changing Item type
 ~~~~~~~~~~~~~~~~~~
@@ -278,7 +259,7 @@ different, using the original Page Object as a dependency is a good approach:
 
     import attrs
     from my_library import FooPage, StandardItem
-    from web_poet import ItemPage, HttpResponse, field, ensure_awaitable, item_from_fields
+    from web_poet import ItemPage, HttpResponse, field, ensure_awaitable
 
     @attrs.define
     class CustomItem:
@@ -286,7 +267,7 @@ different, using the original Page Object as a dependency is a good approach:
         new_price: str
 
     @attrs.define
-    class CustomFooPage(ItemPage):
+    class CustomFooPage(ItemPage[CustomItem]):
         response: HttpResponse
         standard: FooPage
 
@@ -300,9 +281,6 @@ different, using the original Page Object as a dependency is a good approach:
         async def new_price(self):
             ...
 
-        async def to_item(self) -> CustomItem:
-            return await item_from_fields(self, item_cls=CustomItem)
-
 However, if items are similar, and share many attributes, this approach
 could lead to boilerplate code. For example, you might be extending an item
 with a new field, and it'd be required to duplicate definitions for all
@@ -314,63 +292,63 @@ to the item:
 
 .. code-block:: python
 
+    import attrs
+    from my_library import FooPage, StandardItem
+    from web_poet import field, Returns
+
     @attrs.define
     class CustomItem(StandardItem):
         new_field: str
 
     @attrs.define
-    class CustomFooPage(FooPage):
+    class CustomFooPage(FooPage, Returns[CustomItem]):
 
         @field
         def new_field(self) -> str:
             # ...
 
-        async def to_item(self) -> CustomItem:
-            # we need to override to_item to ensure CustomItem is returned
-            return await item_from_fields(self, item_cls=CustomItem)
+Note how :class:`~.Returns` is used as one of the base classes of
+``CustomFooPage``; it allows to change the item type returned by a page object.
 
-Removing fields (as well as renaming) is more tricky with inheritance though.
+Removing fields (as well as renaming) is a bit more tricky.
 
-The caveat is that by default :func:`item_from_fields` uses all fields
+The caveat is that by default :class:`~.ItemPage` uses all fields
 defined as ``@field`` to produce an item, passing all these values to
-``Item.__init__``. So, if you follow the previous example, and inherit from
-the "base", "standard" Page Object, there could be a ``@field`` from the base
-class which is not present in the ``CustomItem``. It'd be still passed
-to ``CustomItem.__init__``, causing an exception.
+item's ``__init__`` method. So, if you follow the previous example, and
+inherit from the "base", "standard" Page Object, there could be a ``@field``
+from the base class which is not present in the ``CustomItem``.
+It'd be still passed to ``CustomItem.__init__``, causing an exception.
 
-To solve it, you can either
+One way to solve it is to make the orignal Page Object a dependency
+instead of inheriting from it, as explained in the beginning.
 
-* make the orignal Page Object a dependency instead of inheriting from it
-  (as explained in the beginning), or
-* use ``item_cls_fields=True`` argument of :func:`item_from_fields`:
-  when ``item_cls_fields`` parameter is True, ``@fields`` which
-  are not defined in the item are skipped.
+Alternatively, you can use ``skip_nonitem_fields=True`` class argument - it tells
+:meth:`~.ItemPage.to_item` to skip ``@fields`` which are not defined
+in the item:
 
 .. code-block:: python
 
     @attrs.define
-    class CustomItem(Item):
+    class CustomItem:
         # let's pick only 1 attribute from StandardItem, nothing more
         name: str
 
-    @attrs.define
-    class CustomFooPage(FooPage):
-        # inheriting from a page object which defines all StandardItem fields
+    class CustomFooPage(FooPage, Returns[CustomItem], skip_nonitem_fields=True):
+        pass
 
-        async def to_item(self) -> CustomItem:
-            return await item_from_fields(self, item_cls=CustomItem,
-                                          item_cls_fields=True)
 
 Here, ``CustomFooPage.to_item`` only uses ``name`` field of the ``FooPage``, ignoring
-all other fields defined in ``FooPage``, because ``item_cls_fields=True``
+all other fields defined in ``FooPage``, because ``skip_nonitem_fields=True``
 is passed, and ``name`` is the only field ``CustomItem`` supports.
 
 To recap:
 
-* Use ``item_cls_fields=False`` (default) when your Page Object corresponds
-  to an item exactly, or when you're only adding fields. This is a safe option,
-  which allows to detect typos in field names, even for optional fields.
-* Use ``item_cls_fields=True`` when it's possible for the Page Object
+* Use ``Returns[NewItemType]`` to change the item type in a subclass.
+* Don't use ``skip_nonitem_fields=True`` when your Page Object corresponds
+  to an item exactly, or when you're only adding fields. This is a safe
+  approach, which allows to detect typos in field names, even for optional
+  fields.
+* Use ``skip_nonitem_fields=True`` when it's possible for the Page Object
   to contain more ``@fields`` than defined in the item class, e.g. because
   Page Object is inherited from some other base Page Object.
 
@@ -405,14 +383,7 @@ extracting the heavy operation to a method, and caching the results:
 
 .. code-block:: python
 
-    from web_poet import (
-        ItemPage,
-        HttpResponse,
-        HttpClient,
-        field,
-        cached_method,
-        item_from_fields
-    )
+    from web_poet import ItemPage, HttpResponse, HttpClient, field, cached_method
 
     class MyPage(ItemPage):
         response: HttpResponse
@@ -436,9 +407,6 @@ extracting the heavy operation to a method, and caching the results:
         async def sku(self):
             api_response = await self.api_response()
             return api_response["sku"]
-
-        async def to_item(self):
-            return await item_from_fields(self)
 
 As you can see, ``web-poet`` provides :func:`~.cached_method` decorator,
 which allows to memoize the function results. It supports both sync and
@@ -517,6 +485,6 @@ returns a dictionary, where keys are field names, and values are
     fields_dict = get_fields_dict(MyPage)
     field_names = fields_dict.keys()
     my_field_meta = fields_dict["my_field"].meta
-    
+
     print(field_names)  # dict_keys(['my_field'])
     print(my_field_meta)  # {'expensive': True}

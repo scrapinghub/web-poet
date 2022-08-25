@@ -19,10 +19,10 @@ list page on `books.toscrape.com <http://books.toscrape.com/>`_.
 
 .. code-block:: python
 
-    from web_poet.pages import ItemWebPage
+    from web_poet.pages import WebPage
 
 
-    class BookLinksPage(ItemWebPage):
+    class BookLinksPage(WebPage):
 
         @property
         def links(self):
@@ -74,11 +74,11 @@ Our simple Python script might look like this:
 
     import requests
 
-    from web_poet.pages import ItemWebPage
+    from web_poet.pages import WebPage
     from web_poet.page_inputs import HttpResponse
 
 
-    class BookLinksPage(ItemWebPage):
+    class BookLinksPage(WebPage):
 
         @property
         def links(self):
