@@ -95,7 +95,7 @@ Let's try an example wherein :class:`~.PageParams` is able to control how
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
         page_params: web_poet.PageParams
 
         default_max_pages = 5
@@ -111,7 +111,7 @@ Let's try an example wherein :class:`~.PageParams` is able to control how
                 self.create_next_page_request(page_num)
                 for page_num in range(2, max_pages + 1)
             ]
-            responses = await http_client.batch_execute(*requests)
+            responses = await http.batch_execute(*requests)
             return [
                 url
                 for response in responses

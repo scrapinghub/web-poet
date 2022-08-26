@@ -296,7 +296,7 @@ Executing a HttpRequest instance
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             item = {
@@ -307,7 +307,7 @@ Executing a HttpRequest instance
 
             # Simulate clicking on a button that says "View All Images"
             request = web_poet.HttpRequest(f"https://api.example.com/v2/images?id={item['product_id']}")
-            response: web_poet.HttpResponse = await self.http_client.execute(request)
+            response: web_poet.HttpResponse = await self.http.execute(request)
 
             item["images"] = response.css(".product-images img::attr(src)").getall()
             return item
@@ -352,7 +352,7 @@ method on it.
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             item = {
@@ -362,7 +362,7 @@ method on it.
             }
 
             # Simulates clicking on a button that says "View All Images"
-            response: web_poet.HttpResponse = await self.http_client.get(
+            response: web_poet.HttpResponse = await self.http.get(
                 f"https://api.example.com/v2/images?id={item['product_id']}"
             )
             item["images"] = response.css(".product-images img::attr(src)").getall()
@@ -397,7 +397,7 @@ Thus, additional requests inside the Page Object are typically needed for it:
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             item = {
@@ -408,7 +408,7 @@ Thus, additional requests inside the Page Object are typically needed for it:
             }
 
             # Simulates "scrolling" through a carousel that loads related product items
-            response: web_poet.HttpResponse = await self.http_client.post(
+            response: web_poet.HttpResponse = await self.http.post(
                 url="https://www.api.example.com/related-products/",
                 headers={
                     "Content-Type": "application/json;charset=UTF-8"
@@ -486,7 +486,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         default_pagination_limit = 10
 
@@ -502,7 +502,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
                 self.create_request(item["product_id"], page_num=page_num)
                 for page_num in range(2, self.default_pagination_limit)
             ]
-            responses: List[web_poet.HttpResponse] = await self.http_client.batch_execute(*requests)
+            responses: List[web_poet.HttpResponse] = await self.http.batch_execute(*requests)
             related_product_ids = [
                 id_
                 for response in responses
@@ -587,7 +587,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             item = {
@@ -598,7 +598,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
             try:
                 # Simulates clicking on a button that says "View All Images"
-                response: web_poet.HttpResponse = await self.http_client.get(
+                response: web_poet.HttpResponse = await self.http.get(
                     f"https://api.example.com/v2/images?id={item['product_id']}"
                 )
             except web_poet.exceptions.HttpRequestError as err:
@@ -665,7 +665,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         default_pagination_limit = 10
 
@@ -683,7 +683,7 @@ For this example, let's improve the code snippet from the previous subsection na
             ]
 
             try:
-                responses: List[web_poet.HttpResponse] = await self.http_client.batch_execute(*requests)
+                responses: List[web_poet.HttpResponse] = await self.http.batch_execute(*requests)
             except web_poet.exceptions.HttpError:
                 logger.warning(
                     f"Unable to request for more related products for product ID: {item['product_id']}"
@@ -751,7 +751,7 @@ Here's an example:
     ]
 
     responses: List[Union[web_poet.HttpResponse, web_poet.exceptions.HttpError]] = (
-        await self.http_client.batch_execute(*requests, return_exceptions=True)
+        await self.http.batch_execute(*requests, return_exceptions=True)
     )
 
     related_product_ids = []
@@ -836,7 +836,7 @@ This can be set using:
 
     @attrs.define
     class SomePage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             ...
@@ -850,7 +850,7 @@ This can be set using:
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
 
-    page = SomePage(response=response, http_client=create_http_client())
+    page = SomePage(response=response, http=create_http_client())
     item = await page.to_item()
 
 When the ``web_poet.request_downloader_var`` contextvar is set,
@@ -885,7 +885,7 @@ when creating an :class:`~.HttpClient` instance:
 
     @attrs.define
     class SomePage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             ...
@@ -893,11 +893,11 @@ when creating an :class:`~.HttpClient` instance:
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
 
-    page = SomePage(response=response, http_client=create_http_client())
+    page = SomePage(response=response, http=create_http_client())
     item = await page.to_item()
 
 From the code sample above, we can see that every time an :class:`~.HttpClient`
-instance is created for Page Objects needing an ``http_client``, the framework 
+instance is created for Page Objects needing it, the framework 
 must create :class:`~.HttpClient` with a framework-specific **request 
 downloader implementation**, using the ``request_downloader`` argument.
 
@@ -957,11 +957,11 @@ like the ones above, then it would cause the code to look like:
 
     @attrs.define
     class SomePage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             try:
-                response = await self.http_client.get("...")
+                response = await self.http.get("...")
             except (aiohttp.ClientError, requests.RequestException, urllib.error.HTTPError):
                 # handle the error here
 
@@ -986,11 +986,11 @@ This makes the code simpler:
 
     @attrs.define
     class SomePage(web_poet.WebPage):
-        http_client: web_poet.HttpClient
+        http: web_poet.HttpClient
 
         async def to_item(self):
             try:
-                response = await self.http_client.get("...")
+                response = await self.http.get("...")
             except web_poet.exceptions.HttpError:
                 # handle the error here
 

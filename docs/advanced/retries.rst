@@ -66,12 +66,12 @@ times before giving up:
 
     @attrs.define
     class MyPage(WebPage):
-        http_client: HttpClient
+        http: HttpClient
 
         @retry(stop=stop_after_attempt(3))
         async def get_data(self):
             request = HttpRequest("https://toscrape.com/")
-            response = await self.http_client.execute(request)
+            response = await self.http.execute(request)
             if not response.css(".expected"):
                 raise ValueError
             return response.css(".data").get()
