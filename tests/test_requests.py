@@ -1,5 +1,5 @@
-from unittest import mock
 from typing import Callable, Union
+from unittest import mock
 
 import pytest
 

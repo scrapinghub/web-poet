@@ -2,8 +2,8 @@ import asyncio
 import inspect
 import random
 import warnings
-from unittest import mock
 from typing import Any
+from unittest import mock
 
 import pytest
 
@@ -221,7 +221,9 @@ def test_isinstance() -> None:
 def test_clsdict() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        Deprecated: Any = _create_deprecated_class("Deprecated", NewName, {"foo": "bar"})
+        Deprecated: Any = _create_deprecated_class(
+            "Deprecated", NewName, {"foo": "bar"}
+        )
 
     assert Deprecated.foo == "bar"
 
