@@ -11,7 +11,7 @@ from web_poet import OverrideRule, PageObjectRegistry, consume_modules, default_
 POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
 
 
-def test_override_rule_uniqueness():
+def test_override_rule_uniqueness() -> None:
     """The same instance of an OverrideRule with the same attribute values should
     have the same hash identity.
     """
@@ -34,7 +34,7 @@ def test_override_rule_uniqueness():
     assert hash(rule1) == hash(rule2)
 
 
-def test_list_page_objects_all():
+def test_list_page_objects_all() -> None:
     rules = default_registry.get_overrides()
     page_objects = {po.use for po in rules}
 
@@ -53,17 +53,17 @@ def test_list_page_objects_all():
     # registry's @handle_urls annotation was used.
     assert page_objects == POS.union({POLibSub})
     for rule in rules:
-        assert rule.instead_of == rule.use.expected_overrides, rule.use
-        assert rule.for_patterns == rule.use.expected_patterns, rule.use
-        assert rule.meta == rule.use.expected_meta, rule.use
+        assert rule.instead_of == rule.use.expected_overrides, rule.use  # type: ignore[attr-defined]
+        assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
+        assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
 
 
-def test_consume_module_not_existing():
+def test_consume_module_not_existing() -> None:
     with pytest.raises(ImportError):
         consume_modules("this_does_not_exist")
 
 
-def test_list_page_objects_all_consume():
+def test_list_page_objects_all_consume() -> None:
     """A test similar to the one above but calls ``consume_modules()`` to properly
     load the @handle_urls annotations from other modules/packages.
     """
@@ -73,7 +73,7 @@ def test_list_page_objects_all_consume():
     assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
 
-def test_registry_search_overrides():
+def test_registry_search_overrides() -> None:
     rules = default_registry.search_overrides(use=POTopLevel2)
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
@@ -87,7 +87,7 @@ def test_registry_search_overrides():
     assert len(rules) == 0
 
 
-def test_from_override_rules():
+def test_from_override_rules() -> None:
     rules = [
         OverrideRule(
             for_patterns=Patterns(include=["sample.com"]),

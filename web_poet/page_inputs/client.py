@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
-_Status = Union[str, int]
+_Status = Union[str, int, List[Union[str, int]]]
 
 
 class HttpClient:
@@ -47,7 +47,7 @@ class HttpClient:
         response: HttpResponse,
         request: HttpRequest,
         *,
-        allow_status: List[_Status] = None,
+        allow_status: _Status = None,
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
         allow_all_status = any(
@@ -73,7 +73,7 @@ class HttpClient:
         method: str = "GET",
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
-        allow_status: List[_Status] = None,
+        allow_status: _Status = None,
     ) -> HttpResponse:
         """This is a shortcut for creating an :class:`~.HttpRequest` instance and
         executing that request.
@@ -108,7 +108,7 @@ class HttpClient:
         url: Union[str, _Url],
         *,
         headers: Optional[_Headers] = None,
-        allow_status: List[_Status] = None,
+        allow_status: _Status = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
@@ -126,7 +126,7 @@ class HttpClient:
         *,
         headers: Optional[_Headers] = None,
         body: Optional[_Body] = None,
-        allow_status: List[_Status] = None,
+        allow_status: _Status = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
@@ -140,7 +140,7 @@ class HttpClient:
         )
 
     async def execute(
-        self, request: HttpRequest, *, allow_status: List[_Status] = None
+        self, request: HttpRequest, *, allow_status: _Status = None
     ) -> HttpResponse:
         """Execute the specified :class:`~.HttpRequest` instance using the
         request implementation configured in the :class:`~.HttpClient`
@@ -173,8 +173,8 @@ class HttpClient:
         self,
         *requests: HttpRequest,
         return_exceptions: bool = False,
-        allow_status: List[_Status] = None,
-    ) -> List[Union[HttpResponse, Exception]]:
+        allow_status: _Status = None,
+    ) -> List[Union[HttpResponse, HttpResponseError]]:
         """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
 

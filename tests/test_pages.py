@@ -20,7 +20,7 @@ class Item:
     name: str
 
 
-def test_page_object():
+def test_page_object() -> None:
     class MyItemPage(Injectable):
         def to_item(self) -> dict:
             return {
@@ -33,7 +33,7 @@ def test_page_object():
     }
 
 
-def test_web_page_object(book_list_html_response):
+def test_web_page_object(book_list_html_response) -> None:
     class MyWebPage(WebPage):
         def to_item(self) -> dict:  # type: ignore
             return {
@@ -48,7 +48,7 @@ def test_web_page_object(book_list_html_response):
     }
 
 
-def test_item_web_page_deprecated():
+def test_item_web_page_deprecated() -> None:
     with pytest.warns(
         DeprecationWarning, match="deprecated class web_poet.pages.ItemWebPage"
     ):
@@ -57,7 +57,7 @@ def test_item_web_page_deprecated():
             pass
 
 
-def test_is_injectable():
+def test_is_injectable() -> None:
     class MyClass:
         pass
 
@@ -77,7 +77,7 @@ def test_is_injectable():
 
 
 @pytest.mark.asyncio
-async def test_item_page_typed():
+async def test_item_page_typed() -> None:
     class MyPage(ItemPage[Item]):
         @field
         def name(self):
@@ -91,7 +91,7 @@ async def test_item_page_typed():
 
 
 @pytest.mark.asyncio
-async def test_web_page_fields():
+async def test_web_page_fields() -> None:
     class MyPage(WebPage[Item]):
         @field
         def name(self):
@@ -105,7 +105,7 @@ async def test_web_page_fields():
 
 
 @pytest.mark.asyncio
-async def test_item_page_typed_subclass():
+async def test_item_page_typed_subclass() -> None:
     class BasePage(ItemPage[ItemT]):
         @field
         def name(self):
@@ -114,17 +114,17 @@ async def test_item_page_typed_subclass():
     class Subclass(BasePage[Item]):
         pass
 
-    page = BasePage()
+    page: BasePage = BasePage()
     assert page.item_cls is dict
     assert (await page.to_item()) == {"name": "name"}
 
-    page2 = Subclass()
+    page2: Subclass = Subclass()
     assert page2.item_cls is Item
     assert (await page2.to_item()) == Item(name="name")
 
 
 @pytest.mark.asyncio
-async def test_item_page_fields_typo():
+async def test_item_page_fields_typo() -> None:
     class MyPage(ItemPage[Item]):
         @field
         def nane(self):
@@ -137,7 +137,7 @@ async def test_item_page_fields_typo():
 
 
 @pytest.mark.asyncio
-async def test_item_page_required_field_missing():
+async def test_item_page_required_field_missing() -> None:
     @attrs.define
     class MyItem:
         name: str

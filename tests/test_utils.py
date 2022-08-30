@@ -3,6 +3,7 @@ import inspect
 import random
 import warnings
 from unittest import mock
+from typing import Any
 
 import pytest
 
@@ -21,7 +22,7 @@ def _mywarnings(w):
     return [x for x in w if x.category is DeprecationWarning]
 
 
-def test_no_warning_on_definition():
+def test_no_warning_on_definition() -> None:
     with warnings.catch_warnings(record=True) as w:
         _create_deprecated_class("Deprecated", NewName)
 
@@ -29,8 +30,10 @@ def test_no_warning_on_definition():
     assert w == []
 
 
-def test_subclassing_warning_message():
-    Deprecated = _create_deprecated_class("Deprecated", NewName)
+def test_subclassing_warning_message() -> None:
+    # https://github.com/python/mypy/issues/2477#issuecomment-262734005
+    # Annotating it with Any helps prevent mypy issues for dynamic classes
+    Deprecated: Any = _create_deprecated_class("Deprecated", NewName)
 
     with warnings.catch_warnings(record=True) as w:
 
@@ -48,8 +51,8 @@ def test_subclassing_warning_message():
     assert w[0].lineno == inspect.getsourcelines(UserClass)[1]
 
 
-def test_custom_class_paths():
-    Deprecated = _create_deprecated_class(
+def test_custom_class_paths() -> None:
+    Deprecated: Any = _create_deprecated_class(
         "Deprecated",
         NewName,
         new_class_path="foo.NewClass",
@@ -71,8 +74,8 @@ def test_custom_class_paths():
     assert "bar.OldClass" in str(w[1].message)
 
 
-def test_subclassing_warns_only_on_direct_childs():
-    Deprecated = _create_deprecated_class("Deprecated", NewName, warn_once=False)
+def test_subclassing_warns_only_on_direct_childs() -> None:
+    Deprecated: Any = _create_deprecated_class("Deprecated", NewName, warn_once=False)
 
     with warnings.catch_warnings(record=True) as w:
 
@@ -87,8 +90,8 @@ def test_subclassing_warns_only_on_direct_childs():
     assert "UserClass" in str(w[0].message)
 
 
-def test_subclassing_warns_once_by_default():
-    Deprecated = _create_deprecated_class("Deprecated", NewName)
+def test_subclassing_warns_once_by_default() -> None:
+    Deprecated: Any = _create_deprecated_class("Deprecated", NewName)
 
     with warnings.catch_warnings(record=True) as w:
 
@@ -106,8 +109,8 @@ def test_subclassing_warns_once_by_default():
     assert "UserClass" in str(w[0].message)
 
 
-def test_warning_on_instance():
-    Deprecated = _create_deprecated_class("Deprecated", NewName)
+def test_warning_on_instance() -> None:
+    Deprecated: Any = _create_deprecated_class("Deprecated", NewName)
 
     # ignore subclassing warnings
     with warnings.catch_warnings():
@@ -117,7 +120,7 @@ def test_warning_on_instance():
             pass
 
     with warnings.catch_warnings(record=True) as w:
-        _, lineno = Deprecated(), inspect.getlineno(inspect.currentframe())
+        _, lineno = Deprecated(), inspect.getlineno(inspect.currentframe())  # type: ignore[arg-type]
         _ = UserClass()  # subclass instances don't warn
 
     w = _mywarnings(w)
@@ -130,9 +133,9 @@ def test_warning_on_instance():
     assert w[0].lineno == lineno
 
 
-def test_warning_auto_message():
+def test_warning_auto_message() -> None:
     with warnings.catch_warnings(record=True) as w:
-        Deprecated = _create_deprecated_class("Deprecated", NewName)
+        Deprecated: Any = _create_deprecated_class("Deprecated", NewName)
 
         class UserClass2(Deprecated):
             pass
@@ -142,10 +145,10 @@ def test_warning_auto_message():
     assert f"{__name__}.Deprecated" in msg
 
 
-def test_issubclass():
+def test_issubclass() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        DeprecatedName = _create_deprecated_class("DeprecatedName", NewName)
+        DeprecatedName: Any = _create_deprecated_class("DeprecatedName", NewName)
 
         class UpdatedUserClass1(NewName):
             pass
@@ -177,13 +180,13 @@ def test_issubclass():
     assert not issubclass(OutdatedUserClass1a, OutdatedUserClass1)
 
     with pytest.raises(TypeError):
-        issubclass(object(), DeprecatedName)
+        issubclass(object(), DeprecatedName)  # type: ignore[arg-type]
 
 
-def test_isinstance():
+def test_isinstance() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        DeprecatedName = _create_deprecated_class("DeprecatedName", NewName)
+        DeprecatedName: Any = _create_deprecated_class("DeprecatedName", NewName)
 
         class UpdatedUserClass2(NewName):
             pass
@@ -215,25 +218,25 @@ def test_isinstance():
     assert not isinstance(OldStyleClass(), DeprecatedName)
 
 
-def test_clsdict():
+def test_clsdict() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        Deprecated = _create_deprecated_class("Deprecated", NewName, {"foo": "bar"})
+        Deprecated: Any = _create_deprecated_class("Deprecated", NewName, {"foo": "bar"})
 
     assert Deprecated.foo == "bar"
 
 
-def test_deprecate_a_class_with_custom_metaclass():
+def test_deprecate_a_class_with_custom_metaclass() -> None:
     Meta1 = type("Meta1", (type,), {})
     New = Meta1("New", (), {})
     _create_deprecated_class("Deprecated", New)
 
 
-def test_deprecate_subclass_of_deprecated_class():
+def test_deprecate_subclass_of_deprecated_class() -> None:
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        Deprecated = _create_deprecated_class("Deprecated", NewName)
-        AlsoDeprecated = _create_deprecated_class(
+        Deprecated: Any = _create_deprecated_class("Deprecated", NewName)
+        AlsoDeprecated: Any = _create_deprecated_class(
             "AlsoDeprecated", Deprecated, new_class_path="foo.Bar"
         )
 
@@ -254,10 +257,10 @@ def test_deprecate_subclass_of_deprecated_class():
     assert "foo.Bar" in str(w[1].message)
 
 
-def test_inspect_stack():
+def test_inspect_stack() -> None:
     with mock.patch("inspect.stack", side_effect=IndexError):
         with warnings.catch_warnings(record=True) as w:
-            DeprecatedName = _create_deprecated_class("DeprecatedName", NewName)
+            DeprecatedName: Any = _create_deprecated_class("DeprecatedName", NewName)
 
             class SubClass(DeprecatedName):
                 pass
@@ -266,7 +269,7 @@ def test_inspect_stack():
 
 
 @pytest.mark.asyncio
-async def test_ensure_awaitable_sync():
+async def test_ensure_awaitable_sync() -> None:
     assert await ensure_awaitable(5) == 5
 
     def foo():
@@ -276,7 +279,7 @@ async def test_ensure_awaitable_sync():
 
 
 @pytest.mark.asyncio
-async def test_ensure_awaitable_async():
+async def test_ensure_awaitable_async() -> None:
     async def foo():
         return 42
 
@@ -289,7 +292,7 @@ async def test_ensure_awaitable_async():
     assert await ensure_awaitable(bar()) == 42
 
 
-def test_cached_method_basic():
+def test_cached_method_basic() -> None:
     class Foo:
         n_called = 0
 
@@ -311,7 +314,7 @@ def test_cached_method_basic():
 
 
 @pytest.mark.asyncio
-async def test_cached_method_async():
+async def test_cached_method_async() -> None:
     class Foo:
         n_called = 0
 
@@ -332,7 +335,7 @@ async def test_cached_method_async():
     assert await bar.meth() == (1, "second")
 
 
-def test_cached_method_argument():
+def test_cached_method_argument() -> None:
     class Foo:
         n_called = 0
 
@@ -352,7 +355,7 @@ def test_cached_method_argument():
 
 
 @pytest.mark.asyncio
-async def test_cached_method_argument_async():
+async def test_cached_method_argument_async() -> None:
     class Foo:
         n_called = 0
 
@@ -371,7 +374,7 @@ async def test_cached_method_argument_async():
     assert await foo.meth(6) == (2, "first", 6)
 
 
-def test_cached_method_unhashable():
+def test_cached_method_unhashable() -> None:
     class Foo(list):
         n_called = 0
 
@@ -386,7 +389,7 @@ def test_cached_method_unhashable():
 
 
 @pytest.mark.asyncio
-async def test_cached_method_unhashable_async():
+async def test_cached_method_unhashable_async() -> None:
     class Foo(list):
         n_called = 0
 
@@ -401,7 +404,7 @@ async def test_cached_method_unhashable_async():
 
 
 @pytest.mark.xfail
-def test_cached_method_exception():
+def test_cached_method_exception() -> None:
     class Error(Exception):
         pass
 
@@ -422,7 +425,7 @@ def test_cached_method_exception():
 
 
 @pytest.mark.asyncio
-async def test_cached_method_exception_async():
+async def test_cached_method_exception_async() -> None:
     class Error(Exception):
         pass
 
@@ -443,7 +446,7 @@ async def test_cached_method_exception_async():
 
 
 @pytest.mark.asyncio
-async def test_cached_method_async_race():
+async def test_cached_method_async_race() -> None:
     class Foo:
         _n_called = 0
 

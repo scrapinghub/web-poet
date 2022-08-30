@@ -1,4 +1,5 @@
 from unittest import mock
+from typing import Callable, Union
 
 import pytest
 
@@ -26,7 +27,7 @@ def async_mock():
 
 
 @pytest.mark.asyncio
-async def test_perform_request_from_httpclient(async_mock):
+async def test_perform_request_from_httpclient(async_mock) -> None:
 
     url = "http://example.com"
     client = HttpClient()
@@ -43,7 +44,7 @@ async def test_perform_request_from_httpclient(async_mock):
 
 
 @pytest.mark.asyncio
-async def test_http_client_single_requests(async_mock):
+async def test_http_client_single_requests(async_mock) -> None:
     client = HttpClient(async_mock)
 
     with mock.patch("web_poet.page_inputs.client.HttpRequest") as mock_request:
@@ -73,7 +74,7 @@ async def test_http_client_single_requests(async_mock):
 
 
 @pytest.fixture
-def client_with_status():
+def client_with_status() -> Callable:
     def _param_wrapper(status_code: int):
         async def stub_request_downloader(*args, **kwargs):
             async def stub(req):
@@ -88,7 +89,9 @@ def client_with_status():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method_name", ["request", "get", "post", "execute"])
-async def test_http_client_allow_status(async_mock, client_with_status, method_name):
+async def test_http_client_allow_status(
+    async_mock, client_with_status, method_name
+) -> None:
     client = HttpClient(async_mock)
 
     # Simulate 500 Internal Server Error responses
@@ -96,9 +99,11 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
 
     method = getattr(client, method_name)
 
-    url_or_request = "url"
+    url_or_request: Union[str, HttpRequest] = "url"
     if method_name == "execute":
-        url_or_request = HttpRequest(url_or_request)
+        # Similar mypy issue as noted in
+        # https://github.com/zytedata/zyte-common-items/blob/main/tests/test_mypy.py#L37-L44
+        url_or_request = HttpRequest(url_or_request)  # type: ignore[arg-type]
 
     # Should handle single and multiple values
     await method(url_or_request, allow_status=500)
@@ -135,23 +140,23 @@ async def test_http_client_allow_status(async_mock, client_with_status, method_n
 
 
 @pytest.mark.asyncio
-async def test_http_client_keyword_enforcing(async_mock):
+async def test_http_client_keyword_enforcing(async_mock) -> None:
     """Only keyword args are allowed after the url param."""
 
     client = HttpClient(async_mock)
 
     with pytest.raises(TypeError):
-        await client.request("url", "PATCH")
+        await client.request("url", "PATCH")  # type: ignore[misc]
 
     with pytest.raises(TypeError):
-        await client.get("url", {"Content-Encoding": "utf-8"})
+        await client.get("url", {"Content-Encoding": "utf-8"})  # type: ignore[misc]
 
     with pytest.raises(TypeError):
-        await client.post("url", {"X-Header": "value"}, b"body")
+        await client.post("url", {"X-Header": "value"}, b"body")  # type: ignore[misc]
 
 
 @pytest.mark.asyncio
-async def test_http_client_execute(async_mock):
+async def test_http_client_execute(async_mock) -> None:
     client = HttpClient(async_mock)
 
     request = HttpRequest("url-1")
@@ -162,7 +167,7 @@ async def test_http_client_execute(async_mock):
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_execute(async_mock):
+async def test_http_client_batch_execute(async_mock) -> None:
     client = HttpClient(async_mock)
 
     requests = [
@@ -176,7 +181,7 @@ async def test_http_client_batch_execute(async_mock):
 
 
 @pytest.fixture
-def client_that_errs(async_mock):
+def client_that_errs(async_mock) -> HttpClient:
     client = HttpClient(async_mock)
 
     # Simulate errors inside the request coroutines
@@ -192,7 +197,7 @@ def client_that_errs(async_mock):
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_execute_with_exception(client_that_errs):
+async def test_http_client_batch_execute_with_exception(client_that_errs) -> None:
 
     requests = [
         HttpRequest("url-1"),
@@ -208,7 +213,9 @@ async def test_http_client_batch_execute_with_exception(client_that_errs):
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_execute_with_exception_raised(client_that_errs):
+async def test_http_client_batch_execute_with_exception_raised(
+    client_that_errs,
+) -> None:
     requests = [
         HttpRequest("url-1"),
     ]
@@ -217,7 +224,9 @@ async def test_http_client_batch_execute_with_exception_raised(client_that_errs)
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_execute_allow_status(async_mock, client_with_status):
+async def test_http_client_batch_execute_allow_status(
+    async_mock, client_with_status
+) -> None:
     client = HttpClient(async_mock)
 
     # Simulate 400 Bad Request
@@ -230,8 +239,8 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     await client.batch_execute(*requests, allow_status="400")
     responses = await client.batch_execute(*requests, allow_status=["400", "403"])
 
-    assert all([isinstance(r, HttpResponse) for r in responses])
-    assert all([r.status == 400 for r in responses])
+    for r in responses:
+        assert isinstance(r, HttpResponse) and r.status == 400
 
     with pytest.raises(HttpResponseError) as excinfo:
         await client.batch_execute(*requests)
@@ -255,15 +264,33 @@ async def test_http_client_batch_execute_allow_status(async_mock, client_with_st
     )
 
     responses = await client.batch_execute(*requests, return_exceptions=True)
-    assert all([isinstance(r, HttpResponseError) for r in responses])
-    assert all([isinstance(r.request, HttpRequest) for r in responses])
-    assert all([isinstance(r.response, HttpResponse) for r in responses])
+    for r in responses:
+        assert (
+            isinstance(r, HttpResponseError)
+            and isinstance(r.request, HttpRequest)
+            and isinstance(r.response, HttpResponse)
+        )
     assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
 
     responses = await client.batch_execute(
         *requests, return_exceptions=True, allow_status=408
     )
-    assert all([isinstance(r, HttpResponseError) for r in responses])
-    assert all([isinstance(r.request, HttpRequest) for r in responses])
-    assert all([isinstance(r.response, HttpResponse) for r in responses])
+    for r in responses:
+        assert (
+            isinstance(r, HttpResponseError)
+            and isinstance(r.request, HttpRequest)
+            and isinstance(r.response, HttpResponse)
+        )
     assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
+
+    # These have no assertions since they're used to see if mypy raises an
+    # error against them.
+    for r in responses:
+        if isinstance(r, HttpResponseError):
+            r.request
+            r.response
+        else:
+            r.url
+            r.body
+            r.status
+            r.headers

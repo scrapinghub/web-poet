@@ -55,7 +55,7 @@ EXAMPLE_RESPONSE = HttpResponse(
 
 
 @pytest.mark.asyncio
-async def test_fields():
+async def test_fields() -> None:
     page = Page(response=EXAMPLE_RESPONSE)
 
     assert page.name == "Hello!"
@@ -68,7 +68,7 @@ async def test_fields():
 
 
 @pytest.mark.asyncio
-async def test_fields_invalid_page():
+async def test_fields_invalid_page() -> None:
     page = InvalidPage(response=EXAMPLE_RESPONSE)
     with pytest.raises(
         TypeError, match="unexpected keyword argument 'unknown_attribute'"
@@ -76,7 +76,7 @@ async def test_fields_invalid_page():
         await page.to_item()
 
 
-def test_item_from_fields_sync():
+def test_item_from_fields_sync() -> None:
     @attrs.define
     class Page(ItemPage):
         @field
@@ -90,12 +90,13 @@ def test_item_from_fields_sync():
     assert page.to_item() == dict(name="name")
 
 
-def test_field_non_callable():
+def test_field_non_callable() -> None:
     with pytest.raises(TypeError):
 
         @attrs.define
         class Page(ItemPage):
-            @field
+            # https://github.com/python/mypy/issues/1362#issuecomment-438246775
+            @field  # type: ignore
             @property
             def name(self):  # noqa: D102
                 return "name"
@@ -104,7 +105,7 @@ def test_field_non_callable():
                 return item_from_fields_sync(self, dict)
 
 
-def test_field_classmethod():
+def test_field_classmethod() -> None:
     with pytest.raises(TypeError):
 
         @attrs.define
@@ -119,7 +120,7 @@ def test_field_classmethod():
 
 
 @pytest.mark.asyncio
-async def test_field_order():
+async def test_field_order() -> None:
     class DictItemPage(Page):
         async def to_item(self):
             return await item_from_fields(self)
@@ -130,7 +131,7 @@ async def test_field_order():
     assert list(item.keys()) == ["name", "price"]
 
 
-def test_field_decorator_no_arguments():
+def test_field_decorator_no_arguments() -> None:
     class Page(ItemPage):
         @field()
         def name(self):
@@ -143,7 +144,7 @@ def test_field_decorator_no_arguments():
     assert page.to_item() == {"name": "Name"}
 
 
-def test_field_cache_sync():
+def test_field_cache_sync() -> None:
     class Page:
         _n_called_1 = 0
         _n_called_2 = 0
@@ -171,7 +172,7 @@ def test_field_cache_sync():
 
 
 @pytest.mark.asyncio
-async def test_field_cache_async():
+async def test_field_cache_async() -> None:
     class Page:
         _n_called_1 = 0
         _n_called_2 = 0
@@ -199,7 +200,7 @@ async def test_field_cache_async():
 
 
 @pytest.mark.asyncio
-async def test_field_cache_async_locked():
+async def test_field_cache_async_locked() -> None:
     class Page:
         _n_called = 0
 
@@ -221,7 +222,7 @@ async def test_field_cache_async_locked():
 
 
 @pytest.mark.asyncio
-async def test_skip_nonitem_fields_async():
+async def test_skip_nonitem_fields_async() -> None:
     class ExtendedPage(Page):
         @field
         def new_attribute(self):
@@ -240,7 +241,7 @@ async def test_skip_nonitem_fields_async():
     assert item == Item(name="Hello!", price="$123")
 
 
-def test_skip_nonitem_fields():
+def test_skip_nonitem_fields() -> None:
     @attrs.define
     class SyncPage(Injectable):
         response: HttpResponse
@@ -274,7 +275,7 @@ def test_skip_nonitem_fields():
     assert item == Item(name="Hello!", price="$123")
 
 
-def test_field_meta():
+def test_field_meta() -> None:
     class MyPage(ItemPage):
         @field(meta={"good": True})
         def field1(self):
@@ -297,7 +298,7 @@ def test_field_meta():
         assert fields["field2"].meta is None
 
 
-def test_field_subclassing():
+def test_field_subclassing() -> None:
     class Page(ItemPage):
         @field
         def field1(self):
