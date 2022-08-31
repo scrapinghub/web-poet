@@ -7,10 +7,11 @@ import warnings
 from collections import deque
 from dataclasses import dataclass, field
 from operator import attrgetter
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Optional, Type, TypeVar, Union
 
 from url_matcher import Patterns
 
+from web_poet.pages import ItemPage
 from web_poet.utils import as_list
 
 Strings = Union[str, Iterable[str]]
@@ -46,8 +47,8 @@ class OverrideRule:
     """
 
     for_patterns: Patterns
-    use: Callable
-    instead_of: Callable
+    use: Type[ItemPage]
+    instead_of: Type[ItemPage]
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def __hash__(self):
@@ -111,7 +112,7 @@ class PageObjectRegistry(dict):
         self,
         include: Strings,
         *,
-        overrides: Callable,
+        overrides: Type[ItemPage],
         exclude: Optional[Strings] = None,
         priority: int = 500,
         **kwargs,

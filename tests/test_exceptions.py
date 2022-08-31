@@ -6,7 +6,7 @@ from web_poet.page_inputs import HttpRequest, HttpResponse
 URL = "https://example.com"
 
 
-def test_http_error_init():
+def test_http_error_init() -> None:
     exc = HttpError()
     assert exc.request is None
     assert exc.args
@@ -16,7 +16,7 @@ def test_http_error_init():
     assert exc.request == request
 
 
-def test_http_request_error_init():
+def test_http_request_error_init() -> None:
     exc = HttpRequestError()
     assert exc.request is None
     assert exc.args
@@ -27,10 +27,10 @@ def test_http_request_error_init():
 
     response = HttpResponse(URL, b"")
     with pytest.raises(TypeError):
-        HttpRequestError(request=request, response=response)
+        HttpRequestError(request=request, response=response)  # type: ignore[call-arg]
 
 
-def test_http_response_error_init():
+def test_http_response_error_init() -> None:
     exc = HttpResponseError()
     assert exc.request is None
     assert exc.response is None

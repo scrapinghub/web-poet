@@ -18,7 +18,7 @@ from web_poet.page_inputs import (
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
-def test_http_body_hashable(body_cls):
+def test_http_body_hashable(body_cls) -> None:
     http_body = body_cls(b"content")
     assert http_body in {http_body}
     assert http_body in {b"content"}
@@ -26,19 +26,19 @@ def test_http_body_hashable(body_cls):
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
-def test_http_body_bytes_api(body_cls):
+def test_http_body_bytes_api(body_cls) -> None:
     http_body = body_cls(b"content")
     assert http_body == b"content"
     assert b"ent" in http_body
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
-def test_http_body_str_api(body_cls):
+def test_http_body_str_api(body_cls) -> None:
     with pytest.raises(TypeError):
         body_cls("string content")
 
 
-def test_http_response_body_declared_encoding():
+def test_http_response_body_declared_encoding() -> None:
     http_body = HttpResponseBody(b"content")
     assert http_body.declared_encoding() is None
 
@@ -52,7 +52,7 @@ def test_http_response_body_declared_encoding():
     assert http_body.declared_encoding() == "utf-8"
 
 
-def test_http_response_body_json():
+def test_http_response_body_json() -> None:
     http_body = HttpResponseBody(b"content")
     with pytest.raises(json.JSONDecodeError):
         http_body.json()
@@ -71,7 +71,7 @@ def test_http_response_body_json():
         (HttpResponse, HttpResponseBody),
     ],
 )
-def test_http_defaults(cls, body_cls):
+def test_http_defaults(cls, body_cls) -> None:
     http_body = body_cls(b"content")
 
     obj = cls("url", body=http_body)
@@ -94,7 +94,7 @@ def test_http_defaults(cls, body_cls):
         (HttpResponse, HttpResponseHeaders),
     ],
 )
-def test_http_with_headers_alt_constructor(cls, headers_cls):
+def test_http_with_headers_alt_constructor(cls, headers_cls) -> None:
     headers = headers_cls.from_name_value_pairs(
         [{"name": "User-Agent", "value": "test agent"}]
     )
@@ -110,39 +110,39 @@ def test_http_with_headers_alt_constructor(cls, headers_cls):
         (HttpResponse, HttpResponseBody),
     ],
 )
-def test_http_response_bytes_body(cls, body_cls):
+def test_http_response_bytes_body(cls, body_cls) -> None:
     obj = cls("http://example.com", body=b"content")
     assert isinstance(obj.body, body_cls)
     assert obj.body == body_cls(b"content")
 
 
 @pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
-def test_http_body_validation_str(cls):
+def test_http_body_validation_str(cls) -> None:
     with pytest.raises(TypeError):
         cls("http://example.com", body="content")
 
 
 @pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
-def test_http_body_validation_None(cls):
+def test_http_body_validation_None(cls) -> None:
     with pytest.raises(TypeError):
         cls("http://example.com", body=None)
 
 
 @pytest.mark.xfail(reason="not implemented")
 @pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
-def test_http_body_validation_other(cls):
+def test_http_body_validation_other(cls) -> None:
     with pytest.raises(TypeError):
         cls("http://example.com", body=123)
 
 
 @pytest.mark.parametrize("cls", [HttpRequest, HttpResponse])
-def test_http_request_headers_init_invalid(cls):
+def test_http_request_headers_init_invalid(cls) -> None:
     with pytest.raises(TypeError):
         cls("http://example.com", body=b"", headers=123)
 
 
 @pytest.mark.parametrize("headers_cls", [HttpRequestHeaders, HttpResponseHeaders])
-def test_http_response_headers(headers_cls):
+def test_http_response_headers(headers_cls) -> None:
     headers = headers_cls({"user-agent": "mozilla"})
     assert headers["user-agent"] == "mozilla"
     assert headers["User-Agent"] == "mozilla"
@@ -158,14 +158,14 @@ def test_http_response_headers(headers_cls):
         (HttpResponse, HttpResponseHeaders),
     ],
 )
-def test_http_headers_init_dict(cls, headers_cls):
+def test_http_headers_init_dict(cls, headers_cls) -> None:
     obj = cls("http://example.com", body=b"", headers={"user-agent": "chrome"})
     assert isinstance(obj.headers, headers_cls)
     assert obj.headers["user-agent"] == "chrome"
     assert obj.headers["User-Agent"] == "chrome"
 
 
-def test_http_request_init_minimal():
+def test_http_request_init_minimal() -> None:
     req = HttpRequest("url")
     assert str(req.url) == "url"
     assert isinstance(req.url, RequestUrl)
@@ -177,7 +177,7 @@ def test_http_request_init_minimal():
     assert isinstance(req.body, HttpRequestBody)
 
 
-def test_http_request_init_full():
+def test_http_request_init_full() -> None:
     req_1 = HttpRequest(
         "url", method="POST", headers={"User-Agent": "test agent"}, body=b"body"
     )
@@ -199,7 +199,7 @@ def test_http_request_init_full():
     assert req_1.body == req_2.body
 
 
-def test_http_request_init_with_response_url():
+def test_http_request_init_with_response_url() -> None:
     resp = HttpResponse("url", b"")
     assert isinstance(resp.url, ResponseUrl)
     req = HttpRequest(resp.url)
@@ -207,7 +207,7 @@ def test_http_request_init_with_response_url():
     assert str(req.url) == str(resp.url)
 
 
-def test_http_response_headers_from_bytes_dict():
+def test_http_response_headers_from_bytes_dict() -> None:
     raw_headers = {
         b"Content-Length": [b"316"],
         b"Content-Encoding": [b"gzip", b"br"],
@@ -228,7 +228,7 @@ def test_http_response_headers_from_bytes_dict():
     assert headers.getall("x-tuple") == ["x", "y"]
 
 
-def test_http_response_headers_from_bytes_dict_err():
+def test_http_response_headers_from_bytes_dict_err() -> None:
 
     with pytest.raises(ValueError):
         HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
@@ -237,7 +237,7 @@ def test_http_response_headers_from_bytes_dict_err():
         HttpResponseHeaders.from_bytes_dict({b"Content-Length": 316})
 
 
-def test_http_response_headers_init_requests():
+def test_http_response_headers_init_requests() -> None:
     requests_response = requests.Response()
     requests_response.headers["User-Agent"] = "mozilla"
 
@@ -249,7 +249,7 @@ def test_http_response_headers_init_requests():
     assert response.headers["User-Agent"] == "mozilla"
 
 
-def test_http_response_headers_init_aiohttp():
+def test_http_response_headers_init_aiohttp() -> None:
     aiohttp_response = aiohttp.web_response.Response()
     aiohttp_response.headers["User-Agent"] = "mozilla"
 
@@ -261,14 +261,14 @@ def test_http_response_headers_init_aiohttp():
     assert response.headers["User-Agent"] == "mozilla"
 
 
-def test_http_response_selectors(book_list_html_response):
+def test_http_response_selectors(book_list_html_response) -> None:
     title = "All products | Books to Scrape - Sandbox"
 
     assert title == book_list_html_response.css("title ::text").get("").strip()
     assert title == book_list_html_response.xpath("//title/text()").get("").strip()
 
 
-def test_http_response_json():
+def test_http_response_json() -> None:
     url = "http://example.com"
 
     with pytest.raises(json.JSONDecodeError):
@@ -282,7 +282,7 @@ def test_http_response_json():
     assert response.json() == {"ключ": "значение"}
 
 
-def test_http_response_text():
+def test_http_response_text() -> None:
     """This tests a character which raises a UnicodeDecodeError when decoded in
     'ascii'.
 
@@ -308,7 +308,7 @@ def test_http_response_text():
         ({"Content-type": "text/html; charset=UNKNOWN"}, None),
     ],
 )
-def test_http_headers_declared_encoding(headers, encoding):
+def test_http_headers_declared_encoding(headers, encoding) -> None:
     headers = HttpResponseHeaders(headers)
     assert headers.declared_encoding() == encoding
 
@@ -316,7 +316,7 @@ def test_http_headers_declared_encoding(headers, encoding):
     assert response.encoding == encoding or HttpResponse._DEFAULT_ENCODING
 
 
-def test_http_response_utf16():
+def test_http_response_utf16() -> None:
     """Test utf-16 because UnicodeDammit is known to have problems with"""
     r = HttpResponse(
         "http://www.example.com", body=b"\xff\xfeh\x00i\x00", encoding="utf-16"
@@ -325,7 +325,7 @@ def test_http_response_utf16():
     assert r.encoding == "utf-16"
 
 
-def test_explicit_encoding():
+def test_explicit_encoding() -> None:
     response = HttpResponse(
         "http://www.example.com", "£".encode("utf-8"), encoding="utf-8"
     )
@@ -333,7 +333,7 @@ def test_explicit_encoding():
     assert response.text == "£"
 
 
-def test_explicit_encoding_invalid():
+def test_explicit_encoding_invalid() -> None:
     response = HttpResponse(
         "http://www.example.com", body="£".encode("utf-8"), encoding="latin1"
     )
@@ -341,7 +341,7 @@ def test_explicit_encoding_invalid():
     assert response.text == "£".encode("utf-8").decode("latin1")
 
 
-def test_utf8_body_detection():
+def test_utf8_body_detection() -> None:
     response = HttpResponse(
         "http://www.example.com",
         b"\xc2\xa3",
@@ -357,7 +357,7 @@ def test_utf8_body_detection():
     assert response.encoding != "utf-8"
 
 
-def test_gb2312():
+def test_gb2312() -> None:
     response = HttpResponse(
         "http://www.example.com",
         body=b"\xa8D",
@@ -366,7 +366,7 @@ def test_gb2312():
     assert response.text == "\u2015"
 
 
-def test_invalid_utf8_encoded_body_with_valid_utf8_BOM():
+def test_invalid_utf8_encoded_body_with_valid_utf8_BOM() -> None:
     response = HttpResponse(
         "http://www.example.com",
         headers={"Content-type": "text/html; charset=utf-8"},
@@ -376,7 +376,7 @@ def test_invalid_utf8_encoded_body_with_valid_utf8_BOM():
     assert response.text == "WORD\ufffd"
 
 
-def test_bom_is_removed_from_body():
+def test_bom_is_removed_from_body() -> None:
     # Inferring encoding from body also cache decoded body as sideeffect,
     # this test tries to ensure that calling response.encoding and
     # response.text in indistint order doesn't affect final
@@ -404,7 +404,7 @@ def test_bom_is_removed_from_body():
     assert response.encoding == "utf-8"
 
 
-def test_replace_wrong_encoding():
+def test_replace_wrong_encoding() -> None:
     """Test invalid chars are replaced properly"""
     r = HttpResponse(
         "http://www.example.com", encoding="utf-8", body=b"PREFIX\xe3\xabSUFFIX"
@@ -422,7 +422,7 @@ def test_replace_wrong_encoding():
     assert "<span>value</span>" in r.text, repr(r.text)
 
 
-def test_html_encoding():
+def test_html_encoding() -> None:
     body = b"""<html><head><title>Some page</title><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     </head><body>Price: \xa3100</body></html>'
     """
@@ -439,7 +439,7 @@ def test_html_encoding():
     assert r2.text == body.decode("cp1252")
 
 
-def test_html_headers_encoding_precedence():
+def test_html_headers_encoding_precedence() -> None:
     # for conflicting declarations headers must take precedence
     body = b"""<html><head><title>Some page</title><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     </head><body>Price: \xa3100</body></html>'
@@ -453,14 +453,14 @@ def test_html_headers_encoding_precedence():
     assert response.text == body.decode("cp1252")
 
 
-def test_html5_meta_charset():
+def test_html5_meta_charset() -> None:
     body = b"""<html><head><meta charset="gb2312" /><title>Some page</title><body>bla bla</body>"""
     response = HttpResponse("http://www.example.com", body=body)
     assert response.encoding == "gb18030"
     assert response.text == body.decode("gb18030")
 
 
-def test_browser_html():
+def test_browser_html() -> None:
     src = "<html><body><p>Hello, </p><p>world!</p></body></html>"
     html = BrowserHtml(src)
     assert html == src
@@ -478,7 +478,7 @@ def test_browser_html():
         (HttpResponse,),
     ],
 )
-def test_urljoin_absolute(cls):
+def test_urljoin_absolute(cls) -> None:
     obj = cls("https://example.com", body=b"")
     new_url = obj.urljoin("https://toscrape.com/foo")
     assert isinstance(new_url, RequestUrl)
@@ -492,14 +492,14 @@ def test_urljoin_absolute(cls):
         (HttpResponse,),
     ],
 )
-def test_urljoin_relative(cls):
+def test_urljoin_relative(cls) -> None:
     obj = cls("https://example.com", body=b"")
     new_url = obj.urljoin("foo")
     assert isinstance(new_url, RequestUrl)
     assert str(new_url) == "https://example.com/foo"
 
 
-def test_urljoin_relative_html_base():
+def test_urljoin_relative_html_base() -> None:
     body = b"""
     <!DOCTYPE html>
     <html>
@@ -522,14 +522,14 @@ def test_urljoin_relative_html_base():
         (ResponseUrl,),
     ],
 )
-def test_urljoin_input_classes(cls):
+def test_urljoin_input_classes(cls) -> None:
     obj = HttpResponse("https://example.com", body=b"")
     new_url = obj.urljoin(cls("foo"))
     assert isinstance(new_url, RequestUrl)
     assert str(new_url) == "https://example.com/foo"
 
 
-def test_requesturl_move():
+def test_requesturl_move() -> None:
     from web_poet.page_inputs.http import RequestUrl
 
     with pytest.warns(
@@ -542,7 +542,7 @@ def test_requesturl_move():
         RequestUrl("https://example.com")
 
 
-def test_responseurl_move():
+def test_responseurl_move() -> None:
     from web_poet.page_inputs.http import ResponseUrl
 
     with pytest.warns(
