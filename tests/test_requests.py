@@ -101,8 +101,13 @@ async def test_http_client_allow_status(
 
     url_or_request: Union[str, HttpRequest] = "url"
     if method_name == "execute":
-        # Similar mypy issue as noted in
-        # https://github.com/zytedata/zyte-common-items/blob/main/tests/test_mypy.py#L37-L44
+        # NOTE: We're ignoring the type below due to the following mypy bugs:
+        #   - https://github.com/python/mypy/issues/10187
+        #   - https://github.com/python/mypy/issues/5313
+        #   - https://github.com/python-attrs/attrs/issues/889
+        # Currently, the said bugs causes mypy to raise the following error:
+        #   'Incompatible types in assignment (expression has type "ResponseUrl",
+        #   variable has type "Optional[str]")'
         url_or_request = HttpRequest(url_or_request)  # type: ignore[arg-type]
 
     # Should handle single and multiple values
