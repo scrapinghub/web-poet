@@ -53,6 +53,8 @@ def test_list_page_objects_all() -> None:
     # registry's @handle_urls annotation was used.
     assert page_objects == POS.union({POLibSub})
     for rule in rules:
+        # We're ignoring the types below since mypy expects ``Type[ItemPage]``
+        # which doesn't contain the ``expected_*`` fields in our tests.
         assert rule.instead_of == rule.use.expected_overrides, rule.use  # type: ignore[attr-defined]
         assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]

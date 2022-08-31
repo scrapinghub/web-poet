@@ -1,27 +1,27 @@
 """
 This package is just for overrides testing purposes.
 """
-from typing import Any, Callable, Dict
+from typing import Any, Dict, Type
 
 from url_matcher import Patterns
 
-from web_poet import handle_urls
+from web_poet import ItemPage, handle_urls
 
 # NOTE: this module contains a PO with @handle_rules
 from .. import po_lib_sub  # noqa: F401
 
 
-class POBase:
-    expected_overrides: Callable
+class POBase(ItemPage):
+    expected_overrides: Type[ItemPage]
     expected_patterns: Patterns
     expected_meta: Dict[str, Any]
 
 
-class POTopLevelOverriden1:
+class POTopLevelOverriden1(ItemPage):
     ...
 
 
-class POTopLevelOverriden2:
+class POTopLevelOverriden2(ItemPage):
     ...
 
 

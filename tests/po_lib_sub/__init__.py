@@ -1,20 +1,20 @@
 """This package is being used by tests/po_lib to validate some behaviors on
 external depedencies.
 """
-from typing import Any, Callable, Dict
+from typing import Any, Dict, Type
 
 from url_matcher import Patterns
 
-from web_poet import handle_urls
+from web_poet import ItemPage, handle_urls
 
 
-class POBase:
-    expected_overrides: Callable
+class POBase(ItemPage):
+    expected_overrides: Type[ItemPage]
     expected_patterns: Patterns
     expected_meta: Dict[str, Any]
 
 
-class POLibSubOverriden:
+class POLibSubOverriden(ItemPage):
     ...
 
 

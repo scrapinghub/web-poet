@@ -1,10 +1,10 @@
 from url_matcher import Patterns
 
 from tests.po_lib import POBase
-from web_poet import handle_urls
+from web_poet import ItemPage, handle_urls
 
 
-class POModuleOverriden:
+class POModuleOverriden(ItemPage):
     ...
 
 
