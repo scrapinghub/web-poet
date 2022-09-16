@@ -34,6 +34,7 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    intro/tutorial
    intro/from-ground-up
    intro/overrides
+   intro/pop
 
 .. toctree::
    :caption: Advanced
