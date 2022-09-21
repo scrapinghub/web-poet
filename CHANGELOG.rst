@@ -2,6 +2,48 @@
 Changelog
 =========
 
+0.5.0 (TBD)
+-----------
+
+Web-poet now includes a mini-framework for organizing extraction code
+as Page Object properties::
+
+    import attrs
+    from web_poet import field, ItemPage
+
+    @attrs.define
+    class MyItem:
+        foo: str
+        bar: list[str]
+
+
+    class MyPage(ItemPage[MyItem]):
+        @field
+        def foo(self):
+            return "..."
+
+        @field
+        def bar(self):
+            return ["...", "..."]
+
+**Backwards incompatible changes**:
+
+* ``web_poet.ItemPage`` is no longer an abstract base class which requires
+  ``to_item`` method to be implemented. Instead, it provides a default
+  ``async def to_item`` method implementation which uses fields marked as
+  ``web_poet.field`` to create an item. This change shouldn't affect the
+  user code in a backwards incompatible way, but it might affect typing.
+
+Deprecations:
+
+* ``web_poet.ItemWebPage`` is deprecated. Use ``web_poet.WebPage`` instead.
+
+Other changes:
+
+* web-poet is declared as PEP 561 package which provides typing information;
+  mypy is going to use it by default.
+* Documentation, test, typing and CI improvements.
+
 0.4.0 (2022-07-26)
 ------------------
 
