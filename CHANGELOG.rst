@@ -30,7 +30,7 @@ as Page Object properties::
 
 * ``web_poet.ItemPage`` is no longer an abstract base class which requires
   ``to_item`` method to be implemented. Instead, it provides a default
-  ``to_item`` method implementation which uses fields marked as
+  ``async def to_item`` method implementation which uses fields marked as
   ``web_poet.field`` to create an item. This change shouldn't affect the
   user code in a backwards incompatible way, but it might affect typing.
 
