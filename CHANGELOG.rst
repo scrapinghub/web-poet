@@ -41,7 +41,7 @@ Deprecations:
 Other changes:
 
 * web-poet is declared as PEP 561 package which provides typing information;
-  mypy is going to use it by default
+  mypy is going to use it by default.
 * Documentation, test, typing and CI improvements.
 
 0.4.0 (2022-07-26)
