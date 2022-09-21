@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.5.0 (TBD)
------------
+0.5.0 (2022-09-21)
+------------------
 
 Web-poet now includes a mini-framework for organizing extraction code
 as Page Object properties::
