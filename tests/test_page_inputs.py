@@ -1,3 +1,4 @@
+import codecs
 import json
 
 import aiohttp.web_response
@@ -364,6 +365,32 @@ def test_gb2312() -> None:
         headers={"Content-type": "text/html; charset=gb2312"},
     )
     assert response.text == "\u2015"
+
+
+def test_bom_encoding() -> None:
+    response = HttpResponse(
+        "http://www.example.com",
+        body=codecs.BOM_UTF8 + "🎉".encode("utf-8"),
+        headers={"Content-type": "text/html; charset=cp1251"},
+    )
+    assert response.encoding == "utf-8"
+    assert response.text == "🎉"
+
+
+def test_bom_encoding_mismatch() -> None:
+    text = "Привет"
+    body = codecs.BOM + text.encode("utf-8")
+    response = HttpResponse(
+        url="http://example.com",
+        headers={"Content-Type": "text/html; charset=cp1251"},
+        body=body,
+        status=200,
+    )
+
+    # The resulting text is different since BOM was the one that was followed.
+    assert response.encoding == "utf-16-le"
+    assert response.text != text
+    assert response.text == "鿐胑룐닐뗐苑"
 
 
 def test_invalid_utf8_encoded_body_with_valid_utf8_BOM() -> None:

@@ -204,9 +204,10 @@ Here are the key take aways from the example above:
     * The :class:`~.HttpResponse` class itself also have these convenient methods:
 
         * The :meth:`~.HttpResponse.encoding` property method returns the proper
-          encoding of the response based on the availability of this hierarchy:
+          encoding of the response based on this hierarchy:
 
             * user-specified encoding (`using the` ``_encoding`` `attribute`)
+            * BOM from the body
             * header encodings
             * body encodings
 

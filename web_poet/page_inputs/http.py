@@ -7,6 +7,7 @@ from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
     http_content_type_encoding,
+    read_bom,
     resolve_encoding,
 )
 from w3lib.html import get_base_url
@@ -237,6 +238,7 @@ class HttpResponse(SelectableMixin):
         """Encoding of the response"""
         return (
             self._encoding
+            or self._bom_encoding()
             or self._headers_declared_encoding()
             or self._body_declared_encoding()
             or self._body_inferred_encoding()
@@ -260,6 +262,10 @@ class HttpResponse(SelectableMixin):
         If *url* is relative, it is made absolute relative to the base URL of
         *self*."""
         return _RequestUrl(urljoin(self._base_url, str(url)))
+
+    @memoizemethod_noargs
+    def _bom_encoding(self):
+        return read_bom(self.body)[0]
 
     @memoizemethod_noargs
     def _headers_declared_encoding(self):
