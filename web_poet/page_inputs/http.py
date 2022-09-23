@@ -37,6 +37,10 @@ class HttpRequestBody(bytes):
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
+    def bom_encoding(self) -> Optional[str]:
+        """Returns the encoding from the byte order mark if present."""
+        return read_bom(self)[0]
+
     def declared_encoding(self) -> Optional[str]:
         """Return the encoding specified in meta tags in the html body,
         or ``None`` if no suitable encoding was found"""
@@ -238,7 +242,7 @@ class HttpResponse(SelectableMixin):
         """Encoding of the response"""
         return (
             self._encoding
-            or self._bom_encoding()
+            or self._body_bom_encoding()
             or self._headers_declared_encoding()
             or self._body_declared_encoding()
             or self._body_inferred_encoding()
@@ -264,8 +268,8 @@ class HttpResponse(SelectableMixin):
         return _RequestUrl(urljoin(self._base_url, str(url)))
 
     @memoizemethod_noargs
-    def _bom_encoding(self):
-        return read_bom(self.body)[0]
+    def _body_bom_encoding(self) -> Optional[str]:
+        return self.body.bom_encoding()
 
     @memoizemethod_noargs
     def _headers_declared_encoding(self):
