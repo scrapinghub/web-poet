@@ -46,7 +46,7 @@ class HttpResponseBody(bytes):
         or ``None`` if no suitable encoding was found"""
         return html_body_declared_encoding(self)
 
-    def json(self):
+    def json(self) -> Optional[str]:
         """
         Deserialize a JSON document to a Python object.
         """
@@ -238,7 +238,7 @@ class HttpResponse(SelectableMixin):
         return self.text
 
     @property
-    def encoding(self):
+    def encoding(self) -> Optional[str]:
         """Encoding of the response"""
         return (
             self._encoding
@@ -249,7 +249,7 @@ class HttpResponse(SelectableMixin):
         )
 
     @memoizemethod_noargs
-    def json(self):
+    def json(self) -> Optional[str]:
         """Deserialize a JSON document to a Python object."""
         return self.body.json()
 
@@ -272,20 +272,22 @@ class HttpResponse(SelectableMixin):
         return self.body.bom_encoding()
 
     @memoizemethod_noargs
-    def _headers_declared_encoding(self):
+    def _headers_declared_encoding(self) -> Optional[str]:
         return self.headers.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_declared_encoding(self):
+    def _body_declared_encoding(self) -> Optional[str]:
         return self.body.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_inferred_encoding(self):
+    def _body_inferred_encoding(self) -> Optional[str]:
         content_type = self.headers.get("Content-Type", "")
         body_encoding, text = html_to_unicode(
             content_type,
             self.body,
-            auto_detect_fun=self._auto_detect_fun,
+            # FIXME: type ignore can be removed when the following is released:
+            # https://github.com/scrapy/w3lib/pull/190
+            auto_detect_fun=self._auto_detect_fun,  # type: ignore[arg-type]
             default_encoding=self._DEFAULT_ENCODING,
         )
         self._cached_text = text
