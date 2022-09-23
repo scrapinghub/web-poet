@@ -2,8 +2,8 @@
 Changelog
 =========
 
-TBD
----
+0.5.1 (2022-09-23)
+------------------
 
 * The BOM encoding from the response body is now read before the response
   headers when deriving the response encoding.
