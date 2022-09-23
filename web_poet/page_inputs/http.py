@@ -1,5 +1,5 @@
 import json
-from typing import AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urljoin
 
 import attrs
@@ -7,6 +7,7 @@ from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
     http_content_type_encoding,
+    read_bom,
     resolve_encoding,
 )
 from w3lib.html import get_base_url
@@ -36,12 +37,16 @@ class HttpRequestBody(bytes):
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
+    def bom_encoding(self) -> Optional[str]:
+        """Returns the encoding from the byte order mark if present."""
+        return read_bom(self)[0]
+
     def declared_encoding(self) -> Optional[str]:
         """Return the encoding specified in meta tags in the html body,
         or ``None`` if no suitable encoding was found"""
         return html_body_declared_encoding(self)
 
-    def json(self):
+    def json(self) -> Any:
         """
         Deserialize a JSON document to a Python object.
         """
@@ -233,17 +238,18 @@ class HttpResponse(SelectableMixin):
         return self.text
 
     @property
-    def encoding(self):
+    def encoding(self) -> Optional[str]:
         """Encoding of the response"""
         return (
             self._encoding
+            or self._body_bom_encoding()
             or self._headers_declared_encoding()
             or self._body_declared_encoding()
             or self._body_inferred_encoding()
         )
 
     @memoizemethod_noargs
-    def json(self):
+    def json(self) -> Any:
         """Deserialize a JSON document to a Python object."""
         return self.body.json()
 
@@ -262,20 +268,26 @@ class HttpResponse(SelectableMixin):
         return _RequestUrl(urljoin(self._base_url, str(url)))
 
     @memoizemethod_noargs
-    def _headers_declared_encoding(self):
+    def _body_bom_encoding(self) -> Optional[str]:
+        return self.body.bom_encoding()
+
+    @memoizemethod_noargs
+    def _headers_declared_encoding(self) -> Optional[str]:
         return self.headers.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_declared_encoding(self):
+    def _body_declared_encoding(self) -> Optional[str]:
         return self.body.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_inferred_encoding(self):
+    def _body_inferred_encoding(self) -> Optional[str]:
         content_type = self.headers.get("Content-Type", "")
         body_encoding, text = html_to_unicode(
             content_type,
             self.body,
-            auto_detect_fun=self._auto_detect_fun,
+            # FIXME: type ignore can be removed when the following is released:
+            # https://github.com/scrapy/w3lib/pull/190
+            auto_detect_fun=self._auto_detect_fun,  # type: ignore[arg-type]
             default_encoding=self._DEFAULT_ENCODING,
         )
         self._cached_text = text
