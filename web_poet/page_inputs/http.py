@@ -1,5 +1,5 @@
 import json
-from typing import AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urljoin
 
 import attrs
@@ -46,7 +46,7 @@ class HttpResponseBody(bytes):
         or ``None`` if no suitable encoding was found"""
         return html_body_declared_encoding(self)
 
-    def json(self) -> Optional[str]:
+    def json(self) -> Optional[Any]:
         """
         Deserialize a JSON document to a Python object.
         """
@@ -249,7 +249,7 @@ class HttpResponse(SelectableMixin):
         )
 
     @memoizemethod_noargs
-    def json(self) -> Optional[str]:
+    def json(self) -> Optional[Any]:
         """Deserialize a JSON document to a Python object."""
         return self.body.json()
 
