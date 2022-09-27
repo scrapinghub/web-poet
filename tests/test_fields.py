@@ -339,3 +339,32 @@ def test_field_subclassing() -> None:
 
     assert get_fields_dict(Page2)["field3"].meta == {"foo": "bar"}
     assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
+
+
+def test_field_with_other_decorators() -> None:
+    def clean_str(method):
+        def wrapper(*args, **kwargs):
+            return method(*args, **kwargs).strip()
+
+        return wrapper
+
+    class MyPage(ItemPage):
+        @field
+        @clean_str
+        def field_foo(self):
+            return " foo  \n"
+
+        @field(meta={"good": True})
+        @clean_str
+        def field_foo_meta(self):
+            return " foo  \n"
+
+        @field(cached=True)
+        @clean_str
+        def field_foo_cached(self):
+            return " foo  \n"
+
+    page = MyPage()
+    assert page.field_foo == "foo"
+    assert page.field_foo_meta == "foo"
+    assert page.field_foo_cached == "foo"
