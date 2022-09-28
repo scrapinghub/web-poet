@@ -341,6 +341,36 @@ def test_field_subclassing() -> None:
     assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
 
 
+def test_field_subclassing_from_to_item() -> None:
+    class PageToItem(ItemPage):
+        def to_item(self):
+            return {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
+
+    class Page1(PageToItem):
+        @field
+        def field1(self):
+            return 0
+
+    # to_item() should be the same since it was not overridden from the
+    # subclass.
+    page_1 = Page1()
+    assert page_1.field1 == 0
+    assert page_1.to_item() == {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
+
+    class Page2(PageToItem):
+        @field
+        def field2(self):
+            return 0
+
+        def to_item(self):
+            return item_from_fields_sync(self)
+
+    # to_item() only reflects the field from its own class.
+    page_2 = Page2()
+    assert page_2.field2 == 0
+    assert page_2.to_item() == {"field2": 0}
+
+
 def test_field_with_other_decorators() -> None:
     def clean_str(method):
         def wrapper(*args, **kwargs):
