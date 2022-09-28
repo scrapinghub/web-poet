@@ -34,5 +34,7 @@ per-file-ignores =
     # imports are there to expose submodule functions so they can be imported
     # directly from that module
     # F403: Ignore * imports in these files
+    # D102: Missing docstring in public method
     web_poet/__init__.py:F401,F403
     web_poet/page_inputs/__init__.py:F401,F403
+    tests/po_lib_data_type/__init__.py:D102 
