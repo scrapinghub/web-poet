@@ -12,4 +12,5 @@ class POModuleOverriden(ItemPage):
 class POModule(POBase):
     expected_overrides = POModuleOverriden
     expected_patterns = Patterns(["example.com"])
+    expected_data_type = None
     expected_meta = {"extra_arg": "foo"}  # type: ignore

@@ -5,10 +5,36 @@ from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
 from tests.po_lib.a_module import POModule, POModuleOverriden
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import PONestedModule
+from tests.po_lib_data_type import (
+    CustomProductPage,
+    CustomProductPageDataTypeOnly,
+    CustomProductPageNoReturns,
+    ImprovedProductPage,
+    LessProductPage,
+    MoreProductPage,
+    Product,
+    ProductPage,
+    ProductSimilar,
+    SimilarProductPage,
+)
 from tests.po_lib_sub import POLibSub
 from web_poet import OverrideRule, PageObjectRegistry, consume_modules, default_registry
 
-POS = {POTopLevel1, POTopLevel2, POModule, PONestedPkg, PONestedModule}
+POS = {
+    POTopLevel1,
+    POTopLevel2,
+    POModule,
+    PONestedPkg,
+    PONestedModule,
+    ProductPage,
+    ImprovedProductPage,
+    SimilarProductPage,
+    MoreProductPage,
+    LessProductPage,
+    CustomProductPage,
+    CustomProductPageNoReturns,
+    CustomProductPageDataTypeOnly,
+}
 
 
 def test_override_rule_uniqueness() -> None:
@@ -30,8 +56,23 @@ def test_override_rule_uniqueness() -> None:
         instead_of=POTopLevelOverriden2,
         meta={"key_2": 2},
     )
-
+    # The ``meta`` parameter is ignored in the hash.
     assert hash(rule1) == hash(rule2)
+
+    rule1 = OverrideRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        data_type=Product,
+    )
+    rule2 = OverrideRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        data_type=ProductSimilar,
+    )
+    # A different data type class results in different hash.
+    assert hash(rule1) != hash(rule2)
 
 
 def test_list_page_objects_all() -> None:
@@ -57,6 +98,7 @@ def test_list_page_objects_all() -> None:
         # which doesn't contain the ``expected_*`` fields in our tests.
         assert rule.instead_of == rule.use.expected_overrides, rule.use  # type: ignore[attr-defined]
         assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
+        assert rule.data_type == rule.use.expected_data_type, rule.use  # type: ignore[attr-defined]
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
 
 
