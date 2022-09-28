@@ -342,6 +342,8 @@ def test_field_subclassing() -> None:
 
 
 def test_field_subclassing_from_to_item() -> None:
+    # to_item() should be the same since it was not overridden from the
+    # subclass.
     class PageToItem(ItemPage):
         def to_item(self):
             return {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
@@ -351,12 +353,11 @@ def test_field_subclassing_from_to_item() -> None:
         def field1(self):
             return 0
 
-    # to_item() should be the same since it was not overridden from the
-    # subclass.
     page_1 = Page1()
     assert page_1.field1 == 0
     assert page_1.to_item() == {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
 
+    # to_item() only reflects the field that was decorated.
     class Page2(PageToItem):
         @field
         def field2(self):
@@ -365,10 +366,31 @@ def test_field_subclassing_from_to_item() -> None:
         def to_item(self):
             return item_from_fields_sync(self)
 
-    # to_item() only reflects the field from its own class.
     page_2 = Page2()
     assert page_2.field2 == 0
     assert page_2.to_item() == {"field2": 0}
+
+    # to_item() raises an error if there are some required fields from the item_cls
+    # that doesn't have a corresponding field value.
+    @attrs.define
+    class SomeItem:
+        field1: int
+        field2: int
+        field3: int
+        field4: int
+
+    class Page3(PageToItem):
+        @field
+        def field3(self):
+            return 0
+
+        def to_item(self):
+            return item_from_fields_sync(self, item_cls=SomeItem)
+
+    page_3 = Page3()
+    assert page_3.field3 == 0
+    with pytest.raises(TypeError):
+        page_3.to_item()
 
 
 def test_field_with_other_decorators() -> None:
