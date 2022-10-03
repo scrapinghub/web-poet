@@ -22,6 +22,7 @@ from tests.po_lib_to_return import (
     SimilarProductPage,
 )
 from web_poet import (
+    ApplyRule,
     OverrideRule,
     PageObjectRegistry,
     consume_modules,
@@ -47,19 +48,19 @@ POS = {
 
 
 def test_override_rule_uniqueness() -> None:
-    """The same instance of an OverrideRule with the same attribute values should
+    """The same instance of an ApplyRule with the same attribute values should
     have the same hash identity.
     """
 
     patterns = Patterns(include=["example.com"], exclude=["example.com/blog"])
 
-    rule1 = OverrideRule(
+    rule1 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
         meta={"key_1": 1},
     )
-    rule2 = OverrideRule(
+    rule2 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
@@ -68,13 +69,13 @@ def test_override_rule_uniqueness() -> None:
     # The ``meta`` parameter is ignored in the hash.
     assert hash(rule1) == hash(rule2)
 
-    rule1 = OverrideRule(
+    rule1 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
         to_return=Product,
     )
-    rule2 = OverrideRule(
+    rule2 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
@@ -142,7 +143,7 @@ def test_registry_search_overrides() -> None:
 
 def test_from_override_rules() -> None:
     rules = [
-        OverrideRule(
+        ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
@@ -170,3 +171,12 @@ def test_handle_urls_deprecation() -> None:
         "'instead_of' parameter."
     )
     assert w[0].lineno == inspect.getsourcelines(PageWithDeprecatedOverrides)[1]
+
+
+def test_override_rule_deprecation() -> None:
+    msg = (
+        "web_poet.overrides.OverrideRule is deprecated, "
+        "instantiate web_poet.overrides.ApplyRule instead."
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        OverrideRule(for_patterns=None, use=None)

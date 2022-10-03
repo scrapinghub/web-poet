@@ -13,7 +13,7 @@ from url_matcher import Patterns
 
 from web_poet._typing import get_generic_parameter
 from web_poet.pages import ItemPage, ItemT
-from web_poet.utils import as_list
+from web_poet.utils import _create_deprecated_class, as_list
 
 Strings = Union[str, Iterable[str]]
 
@@ -21,12 +21,12 @@ PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry
 
 
 @dataclass(frozen=True)
-class OverrideRule:
+class ApplyRule:
     """A single override rule that specifies when a Page Object should be used
     in lieu of another.
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
-    It's also being returned as a ``List[OverrideRule]`` when calling the
+    It's also being returned as a ``List[ApplyRule]`` when calling the
     ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_overrides`
     method.
 
@@ -44,7 +44,7 @@ class OverrideRule:
 
     .. tip::
 
-        The :class:`~.OverrideRule` is also hashable. This makes it easy to store
+        The :class:`~.ApplyRule` is also hashable. This makes it easy to store
         unique rules and identify any duplicates.
     """
 
@@ -63,8 +63,8 @@ class PageObjectRegistry(dict):
     for a given URL matching rule.
 
     Note that it's simply a ``dict`` subclass with added functionalities on
-    storing, retrieving, and searching for the :class:`~.OverrideRule` instances.
-    The **value** represents the :class:`~.OverrideRule` instance from which the
+    storing, retrieving, and searching for the :class:`~.ApplyRule` instances.
+    The **value** represents the :class:`~.ApplyRule` instance from which the
     Page Object in the **key** is allowed to be used. Since it's essentially a
     ``dict``, you can use any ``dict`` operations with it.
 
@@ -101,10 +101,10 @@ class PageObjectRegistry(dict):
 
     @classmethod
     def from_override_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[OverrideRule]
+        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
     ) -> PageObjectRegistryTV:
         """An alternative constructor for creating a :class:`~.PageObjectRegistry`
-        instance by accepting a list of :class:`~.OverrideRule`.
+        instance by accepting a list of :class:`~.ApplyRule`.
 
         This is useful in cases wherein you need to store some selected rules
         from multiple external packages.
@@ -162,7 +162,7 @@ class PageObjectRegistry(dict):
                 )
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-            rule = OverrideRule(
+            rule = ApplyRule(
                 for_patterns=Patterns(
                     include=as_list(include),
                     exclude=as_list(exclude),
@@ -188,8 +188,8 @@ class PageObjectRegistry(dict):
 
         return wrapper
 
-    def get_overrides(self) -> List[OverrideRule]:
-        """Returns all of the :class:`~.OverrideRule` that were declared using
+    def get_overrides(self) -> List[ApplyRule]:
+        """Returns all of the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` annotation.
 
         .. warning::
@@ -200,8 +200,8 @@ class PageObjectRegistry(dict):
         """
         return list(self.values())
 
-    def search_overrides(self, **kwargs) -> List[OverrideRule]:
-        """Returns any :class:`OverrideRule` that has any of its attributes
+    def search_overrides(self, **kwargs) -> List[ApplyRule]:
+        """Returns any :class:`ApplyRule` that has any of its attributes
         match the rules inside the registry.
 
         Sample usage:
@@ -223,7 +223,7 @@ class PageObjectRegistry(dict):
 
         getter = attrgetter(*kwargs.keys())
 
-        def matcher(rule: OverrideRule):
+        def matcher(rule: ApplyRule):
             attribs = getter(rule)
             if not isinstance(attribs, tuple):
                 attribs = (attribs,)
@@ -276,7 +276,7 @@ def consume_modules(*modules: str) -> None:
         consume_modules("other_external_pkg.po", "another_pkg.lib")
         rules = default_registry.get_overrides()
 
-    For this case, the :class:`~.OverrideRule` are coming from:
+    For this case, the :class:`~.ApplyRule` are coming from:
 
         - ``my_page_obj_project`` `(since it's the same module as the file above)`
         - ``other_external_pkg.po``
@@ -286,7 +286,7 @@ def consume_modules(*modules: str) -> None:
 
     If the ``default_registry`` had other ``@handle_urls`` annotations outside
     of the packages/modules listed above, then the corresponding
-    :class:`~.OverrideRule` won't be returned. Unless, they were recursively
+    :class:`~.ApplyRule` won't be returned. Unless, they were recursively
     imported in some way similar to :func:`~.web_poet.overrides.consume_modules`.
     """
 
@@ -296,3 +296,6 @@ def consume_modules(*modules: str) -> None:
         # Inspired by itertools recipe: https://docs.python.org/3/library/itertools.html
         # Using a deque() results in a tiny bit performance improvement that list().
         deque(gen, maxlen=0)
+
+
+OverrideRule = _create_deprecated_class("OverrideRule", ApplyRule, warn_once=False)

@@ -109,21 +109,21 @@ Retrieving all available Overrides
 ----------------------------------
 
 The :meth:`~.PageObjectRegistry.get_overrides` method from the ``web_poet.default_registry``
-allows retrieval of  all :class:`~.OverrideRule` in the given registry.
+allows retrieval of  all :class:`~.ApplyRule` in the given registry.
 Following from our example above, using it would be:
 
 .. code-block:: python
 
     from web_poet import default_registry
 
-    # Retrieves all OverrideRules that were registered in the registry
+    # Retrieves all ApplyRules that were registered in the registry
     rules = default_registry.get_overrides()
 
     print(len(rules))  # 3
-    print(rules[0])    # OverrideRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, meta={})
+    print(rules[0])    # ApplyRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, to_return=None, meta={})
 
 Remember that using ``@handle_urls`` to annotate the Page Objects would result
-in the :class:`~.OverrideRule` to be written into ``web_poet.default_registry``.
+in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
 
 
 .. warning::
@@ -135,7 +135,7 @@ in the :class:`~.OverrideRule` to be written into ``web_poet.default_registry``.
     Thus, for cases like importing and using Page Objects from other external packages,
     the ``@handle_urls`` annotations from these external sources must be read and
     processed properly. This ensures that the external Page Objects have all of their
-    :class:`~.OverrideRule` present.
+    :class:`~.ApplyRule` present.
 
     This can be done via the function named :func:`~.web_poet.overrides.consume_modules`.
     Here's an example:
@@ -154,12 +154,12 @@ Using Overrides from External Packages
 --------------------------------------
 
 Developers have the option to import existing Page Objects alongside the
-:class:`~.OverrideRule` attached to them. This section aims to showcase different
+:class:`~.ApplyRule` attached to them. This section aims to showcase different
 scenarios that come up when using multiple Page Object Projects.
 
 .. _`intro-rule-all`:
 
-Using all available OverrideRules from multiple Page Object Projects
+Using all available ApplyRules from multiple Page Object Projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's suppose we have the following use case before us:
@@ -174,7 +174,7 @@ Let's suppose we have the following use case before us:
         - Thus, you'd want to use the already available packages above and
           perhaps improve on them or create new Page Objects for new websites.
 
-Remember that all of the :class:`~.OverrideRule` are declared by annotating
+Remember that all of the :class:`~.ApplyRule` are declared by annotating
 Page Objects using the :func:`web_poet.handle_urls` via ``@handle_urls``. Thus,
 they can easily be accessed using the :meth:`~.PageObjectRegistry.get_overrides`
 of ``web_poet.default_registry``.
@@ -197,10 +197,10 @@ This can be done something like:
 
     # The collected rules would then be as follows:
     print(rules)
-    # 1. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
-    # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 .. note::
 
@@ -211,11 +211,11 @@ This can be done something like:
 
 .. _`intro-rule-subset`:
 
-Using only a subset of the available OverrideRules
+Using only a subset of the available ApplyRules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Suppose that the use case from the previous section has changed wherein a
-subset of :class:`~.OverrideRule` would be used. This could be achieved by
+subset of :class:`~.ApplyRule` would be used. This could be achieved by
 using the :meth:`~.PageObjectRegistry.search_overrides` method which allows for
 convenient selection of a subset of rules from a given registry.
 
@@ -231,22 +231,22 @@ Here's an example of how you could manually select the rules using the
 
     ecom_rules = default_registry.search_overrides(instead_of=ecommerce_page_objects.EcomGenericPage)
     print(ecom_rules)
-    # OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
     gadget_rules = default_registry.search_overrides(use=gadget_sites_page_objects.site_3.GadgetSite3)
     print(gadget_rules)
-    # OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
     rules = ecom_rules + gadget_rules
     print(rules)
-    # OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 As you can see, using the :meth:`~.PageObjectRegistry.search_overrides` method allows you to
-conveniently select for :class:`~.OverrideRule` which conform to a specific criteria. This
-allows you to conveniently drill down to which :class:`~.OverrideRule` you're interested in
+conveniently select for :class:`~.ApplyRule` which conform to a specific criteria. This
+allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
 
 .. _`overrides-custom-registry`:
@@ -268,11 +268,11 @@ for this:
 Improving on external Page Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There would be cases wherein you're using Page Objects with :class:`~.OverrideRule`
+There would be cases wherein you're using Page Objects with :class:`~.ApplyRule`
 from external packages only to find out that a few of them lacks some of the
 fields or features that you need.
 
-Let's suppose that we wanted to use `all` of the :class:`~.OverrideRule` similar
+Let's suppose that we wanted to use `all` of the :class:`~.ApplyRule` similar
 to this section: :ref:`intro-rule-all`. However, the ``EcomSite1`` Page Object
 needs to properly handle some edge cases where some fields are not being extracted
 properly. One way to fix this is to subclass the said Page Object and improve its
@@ -289,10 +289,10 @@ have the first approach as an example:
 
     # The collected rules would then be as follows:
     print(rules)
-    # 1. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
-    # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
     @handle_urls("site_1.com", instead_of=ecommerce_page_objects.EcomGenericPage, priority=1000)
     class ImprovedEcomSite1(ecommerce_page_objects.site_1.EcomSite1):
@@ -301,13 +301,13 @@ have the first approach as an example:
 
     rules = default_registry.get_overrides()
     print(rules)
-    # 1. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
-    # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
-    # 5. OverrideRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=1000), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 5. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=1000), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
-Notice that we're adding a new :class:`~.OverrideRule` for the same URL pattern
+Notice that we're adding a new :class:`~.ApplyRule` for the same URL pattern
 for ``site_1.com``.
 
 When the time comes that a Page Object needs to be selected when parsing ``site_1.com``
@@ -324,7 +324,7 @@ Handling conflicts from using Multiple External Packages
 --------------------------------------------------------
 
 You might've observed from the previous section that retrieving the list of all
-:class:`~.OverrideRule` from two different external packages may result in a
+:class:`~.ApplyRule` from two different external packages may result in a
 conflict. 
 
 We can take a look at the rules for **#2** and **#3** when we were importing all
@@ -332,8 +332,8 @@ available rules:
 
 .. code-block:: python
 
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 However, it's technically **NOT** a `conflict`, **yet**, since:
 
@@ -346,14 +346,14 @@ However, it's technically **NOT** a `conflict`, **yet**, since:
 It would be only become a conflict if both rules for **site_2.com** `intend to
 replace the` **same** `Page Object`.
 
-However, let's suppose that there are some :class:`~.OverrideRule` which actually
+However, let's suppose that there are some :class:`~.ApplyRule` which actually
 result in a conflict. To give an example, let's suppose that rules **#2** and **#3**
 `intends to replace the` **same** `Page Object`. It would look something like:
 
 .. code-block:: python
 
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
 Notice that the ``instead_of`` param are the same and only the ``use`` param
 remained different.
@@ -364,7 +364,7 @@ There are two main ways we recommend in solving this.
 
 **1. Priority Resolution**
 
-If you notice, the ``for_patterns`` attribute of :class:`~.OverrideRule` is an
+If you notice, the ``for_patterns`` attribute of :class:`~.ApplyRule` is an
 instance of `url_matcher.Patterns
 <https://url-matcher.readthedocs.io/en/stable/api_reference.html#module-url-matcher>`_.
 This instance also has a ``priority`` param where a higher value will be chosen
@@ -378,15 +378,15 @@ in times of conflict.
 
 Unfortunately, updating the ``priority`` value directly isn't possible as the
 :class:`url_matcher.Patterns` is a **frozen** `dataclass`. The same is true for
-:class:`~.OverrideRule`. This is made by design so that they are hashable and could
+:class:`~.ApplyRule`. This is made by design so that they are hashable and could
 be deduplicated immediately without consequences of them changing in value.
 
 The only way that the ``priority`` value can be changed is by creating a new
-:class:`~.OverrideRule` with a different ``priority`` value (`higher if it needs
+:class:`~.ApplyRule` with a different ``priority`` value (`higher if it needs
 more priority`). You don't necessarily need to `delete` the **old**
-:class:`~.OverrideRule` since they will be resolved via ``priority`` anyways.
+:class:`~.ApplyRule` since they will be resolved via ``priority`` anyways.
 
-Creating a new :class:`~.OverrideRule` with a higher priority could be as easy as:
+Creating a new :class:`~.ApplyRule` with a higher priority could be as easy as:
 
     1. Subclassing the Page Object in question.
     2. Create a new :func:`web_poet.handle_urls` annotation with the same URL
@@ -405,14 +405,14 @@ Here's an example:
             return super().to_item()
 
 Now, the conflicting **#2** and **#3** rules would never be selected because of
-the new :class:`~.OverrideRule` having a much higher priority (see rule **#4**):
+the new :class:`~.ApplyRule` having a much higher priority (see rule **#4**):
 
 .. code-block:: python
 
-    # 2. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, meta={})
-    # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
-    # 4. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=1000), use=<class 'my_project.EcomSite2Copy'>, instead_of=<class 'common_items.ProductGenericPage'>, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=1000), use=<class 'my_project.EcomSite2Copy'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
 A similar idea was also discussed in the :ref:`intro-improve-po` section.
 
@@ -420,7 +420,7 @@ A similar idea was also discussed in the :ref:`intro-improve-po` section.
 **2. Specifically Selecting the Rules**
 
 When the last resort of ``priority``-resolution doesn't work, then you could always
-specifically select the list of :class:`~.OverrideRule` you want to use.
+specifically select the list of :class:`~.ApplyRule` you want to use.
 
 We **recommend** in creating an **inclusion**-list rather than an **exclusion**-list
 since the latter is quite brittle. For instance, an external package you're using
@@ -429,8 +429,8 @@ were recently added. This could lead to a `silent-error` of receiving a differen
 set of rules than expected.
 
 This **inclusion**-list approach can be done by importing the Page Objects directly
-and creating instances of :class:`~.OverrideRule` from it. You could also import
-all of the available :class:`~.OverrideRule` using :meth:`~.PageObjectRegistry.get_overrides`
+and creating instances of :class:`~.ApplyRule` from it. You could also import
+all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_overrides`
 to sift through the list of available rules and manually selecting the rules you need.
 
 Most of the time, the needed rules are the ones which uses the Page Objects we're
@@ -445,9 +445,9 @@ easily find the Page Object's rule using its `key`. Here's an example:
     consume_modules("package_A", "package_B", "package_C")
 
     rules = [
-        default_registry[package_A.PageObject1],  # OverrideRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, meta={})
-        default_registry[package_B.PageObject2],  # OverrideRule(for_patterns=Patterns(include=['site_B.com'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, meta={})
-        default_registry[package_C.PageObject3],  # OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, meta={})
+        default_registry[package_A.PageObject1],  # ApplyRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+        default_registry[package_B.PageObject2],  # ApplyRule(for_patterns=Patterns(include=['site_B.com'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+        default_registry[package_C.PageObject3],  # ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     ]
 
 Another approach would be using the :meth:`~.PageObjectRegistry.search_overrides`
@@ -468,7 +468,7 @@ Here's an example:
 
     rule_from_A = default_registry.search_overrides(use=package_A.PageObject1)
     print(rule_from_A)
-    # [OverrideRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, meta={})]
+    # [ApplyRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})]
 
     rule_from_B = default_registry.search_overrides(instead_of=GenericProductPage)
     print(rule_from_B)
@@ -477,8 +477,8 @@ Here's an example:
     rule_from_C = default_registry.search_overrides(for_patterns=Patterns(include=["site_C.com"]))
     print(rule_from_C)
     # [
-    #     OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, meta={}),
-    #     OverrideRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=1000), use=<class 'package_C.PageObject3_improved'>, instead_of=<class 'GenericPage'>, meta={})
+    #     ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={}),
+    #     ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=1000), use=<class 'package_C.PageObject3_improved'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     # ]
 
     rules = rule_from_A + rule_from_B + rule_from_C
