@@ -11,10 +11,10 @@ class PONestedModuleOverriden(ItemPage):
 @handle_urls(
     include=["example.com", "example.org"],
     exclude=["/*.jpg|"],
-    overrides=PONestedModuleOverriden,
+    instead_of=PONestedModuleOverriden,
 )
 class PONestedModule(POBase):
-    expected_overrides = PONestedModuleOverriden
+    expected_instead_of = PONestedModuleOverriden
     expected_patterns = Patterns(
         include=["example.com", "example.org"], exclude=["/*.jpg|"]
     )

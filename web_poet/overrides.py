@@ -75,7 +75,7 @@ class PageObjectRegistry(dict):
 
         from web_poet import handle_urls, default_registry, WebPage
 
-        @handle_urls("example.com", overrides=ProductPageObject)
+        @handle_urls("example.com", instead_of=ProductPageObject)
         class ExampleComProductPage(WebPage):
             ...
 
@@ -116,6 +116,7 @@ class PageObjectRegistry(dict):
         include: Strings,
         *,
         overrides: Optional[Type[ItemPage]] = None,
+        instead_of: Optional[Type[ItemPage]] = None,
         to_return: Optional[Type] = None,
         exclude: Optional[Strings] = None,
         priority: int = 500,
@@ -125,7 +126,7 @@ class PageObjectRegistry(dict):
         Class decorator that indicates that the decorated Page Object should be
         used instead of the overridden one for a particular set the URLs.
 
-        The Page Object that is **overridden** is declared using the ``overrides``
+        The Page Object that is **overridden** is declared using the ``instead_of``
         parameter.
 
         The **override** mechanism only works on certain URLs that match the
@@ -136,7 +137,7 @@ class PageObjectRegistry(dict):
         Any extra parameters are stored as meta information that can be later used.
 
         :param include: The URLs that should be handled by the decorated Page Object.
-        :param overrides: The Page Object that should be `replaced`.
+        :param instead_of: The Page Object that should be `replaced`.
         :param to_return: The Item Class holding the data returned by the Page Object.
             This parameter is ignored if the Page Object has declared a data type
             using :class:`~.Returns` or :class:`~.ItemPage`
@@ -154,6 +155,13 @@ class PageObjectRegistry(dict):
             if derived_type and derived_type != ItemT:
                 final_data_type = derived_type
 
+            if overrides is not None:
+                msg = (
+                    "The 'overrides' parameter in @handle_urls is deprecated. "
+                    "Use the 'instead_of' parameter."
+                )
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
             rule = OverrideRule(
                 for_patterns=Patterns(
                     include=as_list(include),
@@ -161,7 +169,7 @@ class PageObjectRegistry(dict):
                     priority=priority,
                 ),
                 use=cls,
-                instead_of=overrides,
+                instead_of=instead_of,
                 to_return=final_data_type,
                 meta=kwargs,
             )
@@ -170,7 +178,7 @@ class PageObjectRegistry(dict):
                 self[cls] = rule
             else:
                 warnings.warn(
-                    f"Multiple @handle_urls annotations with the same 'overrides' "
+                    f"Multiple @handle_urls annotations with the same 'instead_of' "
                     f"are ignored in the same Registry. The following rule is "
                     f"ignored:\n{rule}",
                     stacklevel=2,

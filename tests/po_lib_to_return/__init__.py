@@ -30,7 +30,7 @@ class ProductLessFields:
 class ProductPage(ItemPage[Product]):
     """A base PO to populate the Product item's fields."""
 
-    expected_overrides = None
+    expected_instead_of = None
     expected_patterns = Patterns(["example.com"])
     expected_to_return = Product
     expected_meta = {}
@@ -44,11 +44,11 @@ class ProductPage(ItemPage[Product]):
         return 12.99
 
 
-@handle_urls("example.com", overrides=ProductPage)
+@handle_urls("example.com", instead_of=ProductPage)
 class ImprovedProductPage(ProductPage):
     """A custom PO inheriting from a base PO which alters some field values."""
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = Product
     expected_meta = {}
@@ -58,25 +58,25 @@ class ImprovedProductPage(ProductPage):
         return "improved name"
 
 
-@handle_urls("example.com", overrides=ProductPage)
+@handle_urls("example.com", instead_of=ProductPage)
 class SimilarProductPage(ProductPage, Returns[ProductSimilar]):
     """A custom PO inheriting from a base PO returning the same fields but in
     a different item class.
     """
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = ProductSimilar
     expected_meta = {}
 
 
-@handle_urls("example.com", overrides=ProductPage)
+@handle_urls("example.com", instead_of=ProductPage)
 class MoreProductPage(ProductPage, Returns[ProductMoreFields]):
     """A custom PO inheriting from a base PO returning more items using a
     different item class.
     """
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = ProductMoreFields
     expected_meta = {}
@@ -86,7 +86,7 @@ class MoreProductPage(ProductPage, Returns[ProductMoreFields]):
         return "brand"
 
 
-@handle_urls("example.com", overrides=ProductPage)
+@handle_urls("example.com", instead_of=ProductPage)
 class LessProductPage(
     ProductPage, Returns[ProductLessFields], skip_nonitem_fields=True
 ):
@@ -94,7 +94,7 @@ class LessProductPage(
     different item class.
     """
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = ProductLessFields
     expected_meta = {}
@@ -104,7 +104,7 @@ class LessProductPage(
         return "brand"
 
 
-@handle_urls("example.com", overrides=ProductPage, to_return=ProductSimilar)
+@handle_urls("example.com", instead_of=ProductPage, to_return=ProductSimilar)
 class CustomProductPage(ProductPage, Returns[Product]):
     """A custom PO inheriting from a base PO returning the same fields but in
     a different item class.
@@ -116,19 +116,19 @@ class CustomProductPage(ProductPage, Returns[Product]):
     the ``to_return`` parameter from ``@handle_urls`` is ignored.
     """
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = Product
     expected_meta = {}
 
 
-@handle_urls("example.com", overrides=ProductPage, to_return=ProductSimilar)
+@handle_urls("example.com", instead_of=ProductPage, to_return=ProductSimilar)
 class CustomProductPageNoReturns(ProductPage):
     """Same case as with ``CustomProductPage`` but doesn't inherit from
     ``Returns[Product]``.
     """
 
-    expected_overrides = ProductPage
+    expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
     expected_to_return = Product
     expected_meta = {}
@@ -143,7 +143,7 @@ class CustomProductPageDataTypeOnly(Injectable):
     should properly use it in the rules.
     """
 
-    expected_overrides = None
+    expected_instead_of = None
     expected_patterns = Patterns(["example.com"])
     expected_to_return = Product
     expected_meta = {}

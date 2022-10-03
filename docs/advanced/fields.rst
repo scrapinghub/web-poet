@@ -319,7 +319,7 @@ inherit from the "base", "standard" Page Object, there could be a ``@field``
 from the base class which is not present in the ``CustomItem``.
 It'd be still passed to ``CustomItem.__init__``, causing an exception.
 
-One way to solve it is to make the orignal Page Object a dependency
+One way to solve it is to make the original Page Object a dependency
 instead of inheriting from it, as explained in the beginning.
 
 Alternatively, you can use ``skip_nonitem_fields=True`` class argument - it tells

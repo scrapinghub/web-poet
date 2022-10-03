@@ -62,19 +62,19 @@ Let's take a look at how the following code is structured:
             return {"product-title": self.css("title::text").get()}
 
 
-    @handle_urls("example.com", overrides=GenericProductPage)
+    @handle_urls("example.com", instead_of=GenericProductPage)
     class ExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
 
 
-    @handle_urls("anotherexample.com", overrides=GenericProductPage, exclude="/digital-goods/")
+    @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
     class AnotherExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
 
 
-    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], overrides=GenericProductPage)
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage):
         def to_item(self):
             ...  # more specific parsing
@@ -294,7 +294,7 @@ have the first approach as an example:
     # 3. OverrideRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
     # 4. OverrideRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, meta={})
 
-    @handle_urls("site_1.com", overrides=ecommerce_page_objects.EcomGenericPage, priority=1000)
+    @handle_urls("site_1.com", instead_of=ecommerce_page_objects.EcomGenericPage, priority=1000)
     class ImprovedEcomSite1(ecommerce_page_objects.site_1.EcomSite1):
         def to_item(self):
             ...  # call super().to_item() and improve on the item's shortcomings
@@ -399,7 +399,7 @@ Here's an example:
     from web_poet import default_registry, consume_modules, handle_urls
     import ecommerce_page_objects, gadget_sites_page_objects, common_items
 
-    @handle_urls("site_2.com", overrides=common_items.ProductGenericPage, priority=1000)
+    @handle_urls("site_2.com", instead_of=common_items.ProductGenericPage, priority=1000)
     class EcomSite2Copy(ecommerce_page_objects.site_1.EcomSite1):
         def to_item(self):
             return super().to_item()

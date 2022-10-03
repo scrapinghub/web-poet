@@ -1,3 +1,6 @@
+import inspect
+import warnings
+
 import pytest
 from url_matcher import Patterns
 
@@ -18,7 +21,13 @@ from tests.po_lib_to_return import (
     ProductSimilar,
     SimilarProductPage,
 )
-from web_poet import OverrideRule, PageObjectRegistry, consume_modules, default_registry
+from web_poet import (
+    OverrideRule,
+    PageObjectRegistry,
+    consume_modules,
+    default_registry,
+    handle_urls,
+)
 
 POS = {
     POTopLevel1,
@@ -96,7 +105,7 @@ def test_list_page_objects_all() -> None:
     for rule in rules:
         # We're ignoring the types below since mypy expects ``Type[ItemPage]``
         # which doesn't contain the ``expected_*`` fields in our tests.
-        assert rule.instead_of == rule.use.expected_overrides, rule.use  # type: ignore[attr-defined]
+        assert rule.instead_of == rule.use.expected_instead_of, rule.use  # type: ignore[attr-defined]
         assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
         assert rule.to_return == rule.use.expected_to_return, rule.use  # type: ignore[attr-defined]
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
@@ -144,3 +153,20 @@ def test_from_override_rules() -> None:
 
     assert registry.get_overrides() == rules
     assert default_registry.get_overrides() != rules
+
+
+def test_handle_urls_deprecation() -> None:
+
+    with warnings.catch_warnings(record=True) as w:
+
+        @handle_urls("example.com", overrides=CustomProductPage)
+        class PageWithDeprecatedOverrides:
+            ...
+
+    w = [x for x in w if x.category is DeprecationWarning]
+    assert len(w) == 1
+    assert str(w[0].message) == (
+        "The 'overrides' parameter in @handle_urls is deprecated. Use the "
+        "'instead_of' parameter."
+    )
+    assert w[0].lineno == inspect.getsourcelines(PageWithDeprecatedOverrides)[1]

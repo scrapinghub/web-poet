@@ -11,10 +11,10 @@ class PONestedPkgOverriden(ItemPage):
 @handle_urls(
     include=["example.com", "example.org"],
     exclude=["/*.jpg|"],
-    overrides=PONestedPkgOverriden,
+    instead_of=PONestedPkgOverriden,
 )
 class PONestedPkg(POBase):
-    expected_overrides = PONestedPkgOverriden
+    expected_instead_of = PONestedPkgOverriden
     expected_patterns = Patterns(["example.com", "example.org"], ["/*.jpg|"])
     expected_to_return = None
     expected_meta = {}  # type: ignore
