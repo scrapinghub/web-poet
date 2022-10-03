@@ -108,7 +108,7 @@ The code above declares that:
 Retrieving all available Overrides
 ----------------------------------
 
-The :meth:`~.PageObjectRegistry.get_overrides` method from the ``web_poet.default_registry``
+The :meth:`~.PageObjectRegistry.get_rules` method from the ``web_poet.default_registry``
 allows retrieval of  all :class:`~.ApplyRule` in the given registry.
 Following from our example above, using it would be:
 
@@ -117,7 +117,7 @@ Following from our example above, using it would be:
     from web_poet import default_registry
 
     # Retrieves all ApplyRules that were registered in the registry
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
 
     print(len(rules))  # 3
     print(rules[0])    # ApplyRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, to_return=None, meta={})
@@ -128,7 +128,7 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
 
 .. warning::
 
-    :meth:`~.PageObjectRegistry.get_overrides` relies on the fact that all essential
+    :meth:`~.PageObjectRegistry.get_rules` relies on the fact that all essential
     packages/modules which contains the :func:`web_poet.handle_urls`
     annotations are properly loaded `(i.e imported)`.
 
@@ -145,7 +145,7 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
         from web_poet import default_registry, consume_modules
 
         consume_modules("external_package_A.po", "another_ext_package.lib")
-        rules = default_registry.get_overrides()
+        rules = default_registry.get_rules()
 
     The next section explores this caveat further.
 
@@ -176,7 +176,7 @@ Let's suppose we have the following use case before us:
 
 Remember that all of the :class:`~.ApplyRule` are declared by annotating
 Page Objects using the :func:`web_poet.handle_urls` via ``@handle_urls``. Thus,
-they can easily be accessed using the :meth:`~.PageObjectRegistry.get_overrides`
+they can easily be accessed using the :meth:`~.PageObjectRegistry.get_rules`
 of ``web_poet.default_registry``.
 
 This can be done something like:
@@ -187,13 +187,13 @@ This can be done something like:
 
     # ❌ Remember that this wouldn't retrieve any rules at all since the
     # annotations are NOT properly imported.
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
     print(rules)  # []
 
     # ✅ Instead, you need to run the following so that all of the Page
     # Objects in the external packages are recursively imported.
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
 
     # The collected rules would then be as follows:
     print(rules)
@@ -216,11 +216,11 @@ Using only a subset of the available ApplyRules
 
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.ApplyRule` would be used. This could be achieved by
-using the :meth:`~.PageObjectRegistry.search_overrides` method which allows for
+using the :meth:`~.PageObjectRegistry.search_rules` method which allows for
 convenient selection of a subset of rules from a given registry.
 
 Here's an example of how you could manually select the rules using the
-:meth:`~.PageObjectRegistry.search_overrides` method instead:
+:meth:`~.PageObjectRegistry.search_rules` method instead:
 
 .. code-block:: python
 
@@ -229,12 +229,12 @@ Here's an example of how you could manually select the rules using the
 
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
 
-    ecom_rules = default_registry.search_overrides(instead_of=ecommerce_page_objects.EcomGenericPage)
+    ecom_rules = default_registry.search_rules(instead_of=ecommerce_page_objects.EcomGenericPage)
     print(ecom_rules)
     # ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
-    gadget_rules = default_registry.search_overrides(use=gadget_sites_page_objects.site_3.GadgetSite3)
+    gadget_rules = default_registry.search_rules(use=gadget_sites_page_objects.site_3.GadgetSite3)
     print(gadget_rules)
     # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
@@ -244,7 +244,7 @@ Here's an example of how you could manually select the rules using the
     # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
-As you can see, using the :meth:`~.PageObjectRegistry.search_overrides` method allows you to
+As you can see, using the :meth:`~.PageObjectRegistry.search_rules` method allows you to
 conveniently select for :class:`~.ApplyRule` which conform to a specific criteria. This
 allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
@@ -285,7 +285,7 @@ have the first approach as an example:
     import ecommerce_page_objects, gadget_sites_page_objects
 
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
 
     # The collected rules would then be as follows:
     print(rules)
@@ -299,7 +299,7 @@ have the first approach as an example:
         def to_item(self):
             ...  # call super().to_item() and improve on the item's shortcomings
 
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
     print(rules)
     # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
@@ -430,7 +430,7 @@ set of rules than expected.
 
 This **inclusion**-list approach can be done by importing the Page Objects directly
 and creating instances of :class:`~.ApplyRule` from it. You could also import
-all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_overrides`
+all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_rules`
 to sift through the list of available rules and manually selecting the rules you need.
 
 Most of the time, the needed rules are the ones which uses the Page Objects we're
@@ -450,9 +450,9 @@ easily find the Page Object's rule using its `key`. Here's an example:
         default_registry[package_C.PageObject3],  # ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     ]
 
-Another approach would be using the :meth:`~.PageObjectRegistry.search_overrides`
+Another approach would be using the :meth:`~.PageObjectRegistry.search_rules`
 functionality as described from this tutorial section: :ref:`intro-rule-subset`.
-The :meth:`~.PageObjectRegistry.search_overrides` is quite useful in cases wherein
+The :meth:`~.PageObjectRegistry.search_rules` is quite useful in cases wherein
 the **POP** contains a lot of rules as it presents a utility for programmatically
 searching for them.
 
@@ -466,15 +466,15 @@ Here's an example:
 
     consume_modules("package_A", "package_B", "package_C")
 
-    rule_from_A = default_registry.search_overrides(use=package_A.PageObject1)
+    rule_from_A = default_registry.search_rules(use=package_A.PageObject1)
     print(rule_from_A)
     # [ApplyRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})]
 
-    rule_from_B = default_registry.search_overrides(instead_of=GenericProductPage)
+    rule_from_B = default_registry.search_rules(instead_of=GenericProductPage)
     print(rule_from_B)
     # []
 
-    rule_from_C = default_registry.search_overrides(for_patterns=Patterns(include=["site_C.com"]))
+    rule_from_C = default_registry.search_rules(for_patterns=Patterns(include=["site_C.com"]))
     print(rule_from_C)
     # [
     #     ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={}),

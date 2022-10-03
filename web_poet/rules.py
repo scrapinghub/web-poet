@@ -27,7 +27,7 @@ class ApplyRule:
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
     It's also being returned as a ``List[ApplyRule]`` when calling the
-    ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_overrides`
+    ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_rules`
     method.
 
     You can access any of its attributes:
@@ -79,7 +79,7 @@ class PageObjectRegistry(dict):
         class ExampleComProductPage(WebPage):
             ...
 
-        override_rules = default_registry.get_overrides()
+        override_rules = default_registry.get_rules()
 
     Notice that the ``@handle_urls`` that we're using is a part of the
     ``default_registry``. This provides a shorter and quicker way to interact
@@ -200,7 +200,7 @@ class PageObjectRegistry(dict):
 
         return wrapper
 
-    def get_overrides(self) -> List[ApplyRule]:
+    def get_rules(self) -> List[ApplyRule]:
         """Returns all of the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` annotation.
 
@@ -212,7 +212,13 @@ class PageObjectRegistry(dict):
         """
         return list(self.values())
 
-    def search_overrides(self, **kwargs) -> List[ApplyRule]:
+    def get_overrides(self) -> List[ApplyRule]:
+        """Deprecated, use :meth:`~.PageObjectRegistry.get_rules` instead."""
+        msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return self.get_rules()
+
+    def search_rules(self, **kwargs) -> List[ApplyRule]:
         """Returns any :class:`ApplyRule` that has any of its attributes
         match the rules inside the registry.
 
@@ -220,7 +226,7 @@ class PageObjectRegistry(dict):
 
         .. code-block:: python
 
-            rules = registry.search_overrides(use=ProductPO, instead_of=GenericPO)
+            rules = registry.search_rules(use=ProductPO, instead_of=GenericPO)
             print(len(rules))  # 1
 
         """
@@ -244,10 +250,19 @@ class PageObjectRegistry(dict):
             return False
 
         results = []
-        for rule in self.get_overrides():
+        for rule in self.get_rules():
             if matcher(rule):
                 results.append(rule)
         return results
+
+    def search_overrides(self, **kwargs) -> List[ApplyRule]:
+        """Deprecated, use :meth:`~.PageObjectRegistry.search_rules` instead."""
+        msg = (
+            "The 'search_overrides' method is deprecated. "
+            "Use 'search_rules' instead."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return self.search_rules(**kwargs)
 
 
 def _walk_module(module: str) -> Iterable:
@@ -286,7 +301,7 @@ def consume_modules(*modules: str) -> None:
         from web_poet import default_registry, consume_modules
 
         consume_modules("other_external_pkg.po", "another_pkg.lib")
-        rules = default_registry.get_overrides()
+        rules = default_registry.get_rules()
 
     For this case, the :class:`~.ApplyRule` are coming from:
 

@@ -85,13 +85,13 @@ def test_apply_rule_uniqueness() -> None:
 
 
 def test_list_page_objects_all() -> None:
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
     page_objects = {po.use for po in rules}
 
     # Note that the 'tests_extra.po_lib_sub_not_imported.POLibSubNotImported'
     # Page Object is not included here since it was never imported anywhere in
     # our test package. It would only be included if we run any of the following
-    # below. (Note that they should run before `get_overrides` is called.)
+    # below. (Note that they should run before `get_rules` is called.)
     #   - from tests_extra import po_lib_sub_not_imported
     #   - import tests_extra.po_lib_sub_not_imported
     #   - web_poet.consume_modules("tests_extra")
@@ -111,6 +111,15 @@ def test_list_page_objects_all() -> None:
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
 
 
+def test_registry_get_overrides_deprecation() -> None:
+    msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
+    with pytest.warns(DeprecationWarning, match=msg):
+        rules = default_registry.get_overrides()
+
+    # It should still work as usual
+    assert len(rules) == 14
+
+
 def test_consume_module_not_existing() -> None:
     with pytest.raises(ImportError):
         consume_modules("this_does_not_exist")
@@ -121,23 +130,33 @@ def test_list_page_objects_all_consume() -> None:
     load the @handle_urls annotations from other modules/packages.
     """
     consume_modules("tests_extra")
-    rules = default_registry.get_overrides()
+    rules = default_registry.get_rules()
     page_objects = {po.use for po in rules}
     assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
 
-def test_registry_search_overrides() -> None:
-    rules = default_registry.search_overrides(use=POTopLevel2)
+def test_registry_search_rules() -> None:
+    rules = default_registry.search_rules(use=POTopLevel2)
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
 
-    rules = default_registry.search_overrides(instead_of=POTopLevelOverriden2)
+    rules = default_registry.search_rules(instead_of=POTopLevelOverriden2)
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
     # Such rules doesn't exist
-    rules = default_registry.search_overrides(use=POModuleOverriden)
+    rules = default_registry.search_rules(use=POModuleOverriden)
     assert len(rules) == 0
+
+
+def test_registry_search_overrides_deprecation() -> None:
+    msg = "The 'search_overrides' method is deprecated. Use 'search_rules' instead."
+    with pytest.warns(DeprecationWarning, match=msg):
+        rules = default_registry.search_overrides(use=POTopLevel2)
+
+    # It should still work as usual
+    assert len(rules) == 1
+    assert rules[0].use == POTopLevel2
 
 
 def test_from_apply_rules() -> None:
@@ -151,8 +170,8 @@ def test_from_apply_rules() -> None:
 
     registry = PageObjectRegistry.from_apply_rules(rules)
 
-    assert registry.get_overrides() == rules
-    assert default_registry.get_overrides() != rules
+    assert registry.get_rules() == rules
+    assert default_registry.get_rules() != rules
 
 
 def test_from_override_rules_deprecation() -> None:
@@ -171,8 +190,8 @@ def test_from_override_rules_deprecation() -> None:
     with pytest.warns(DeprecationWarning, match=msg):
         registry = PageObjectRegistry.from_override_rules(rules)
 
-    assert registry.get_overrides() == rules
-    assert default_registry.get_overrides() != rules
+    assert registry.get_rules() == rules
+    assert default_registry.get_rules() != rules
 
 
 def test_handle_urls_deprecation() -> None:
