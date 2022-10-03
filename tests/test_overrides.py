@@ -1,4 +1,3 @@
-import inspect
 import warnings
 
 import pytest
@@ -170,7 +169,6 @@ def test_handle_urls_deprecation() -> None:
         "The 'overrides' parameter in @handle_urls is deprecated. Use the "
         "'instead_of' parameter."
     )
-    assert w[0].lineno == inspect.getsourcelines(PageWithDeprecatedOverrides)[1]
 
 
 def test_override_rule_deprecation() -> None:
