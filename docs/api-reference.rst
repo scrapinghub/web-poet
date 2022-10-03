@@ -91,7 +91,7 @@ use cases and some examples.
 
 .. autofunction:: web_poet.handle_urls
 
-.. automodule:: web_poet.overrides
+.. automodule:: web_poet.rules
    :members:
    :exclude-members: handle_urls
 

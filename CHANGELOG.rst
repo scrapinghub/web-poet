@@ -27,6 +27,7 @@ Deprecations:
 * ``OverrideRule`` is now deprecated. Use ``ApplyRule`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
+* The ``web_poet.overrides`` is deprecated. Use ``web_poet.rules`` instead.
 
 0.5.1 (2022-09-23)
 ------------------

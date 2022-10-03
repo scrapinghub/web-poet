@@ -193,8 +193,8 @@ def test_handle_urls_deprecation() -> None:
 
 def test_override_rule_deprecation() -> None:
     msg = (
-        "web_poet.overrides.OverrideRule is deprecated, "
-        "instantiate web_poet.overrides.ApplyRule instead."
+        "web_poet.rules.OverrideRule is deprecated, "
+        "instantiate web_poet.rules.ApplyRule instead."
     )
     with pytest.warns(DeprecationWarning, match=msg):
         OverrideRule(for_patterns=None, use=None)
