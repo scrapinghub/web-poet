@@ -8,5 +8,5 @@ ignore_missing_imports = true
 no_warn_no_return = true
 
 [[tool.mypy.overrides]]
-module = "tests.po_lib_data_type.*"
+module = "tests.po_lib_to_return.*"
 ignore_errors = true

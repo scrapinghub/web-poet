@@ -5,7 +5,8 @@ from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
 from tests.po_lib.a_module import POModule, POModuleOverriden
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import PONestedModule
-from tests.po_lib_data_type import (
+from tests.po_lib_sub import POLibSub
+from tests.po_lib_to_return import (
     CustomProductPage,
     CustomProductPageDataTypeOnly,
     CustomProductPageNoReturns,
@@ -17,7 +18,6 @@ from tests.po_lib_data_type import (
     ProductSimilar,
     SimilarProductPage,
 )
-from tests.po_lib_sub import POLibSub
 from web_poet import OverrideRule, PageObjectRegistry, consume_modules, default_registry
 
 POS = {
@@ -63,13 +63,13 @@ def test_override_rule_uniqueness() -> None:
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
-        data_type=Product,
+        to_return=Product,
     )
     rule2 = OverrideRule(
         for_patterns=patterns,
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
-        data_type=ProductSimilar,
+        to_return=ProductSimilar,
     )
     # A different data type class results in different hash.
     assert hash(rule1) != hash(rule2)
@@ -98,7 +98,7 @@ def test_list_page_objects_all() -> None:
         # which doesn't contain the ``expected_*`` fields in our tests.
         assert rule.instead_of == rule.use.expected_overrides, rule.use  # type: ignore[attr-defined]
         assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
-        assert rule.data_type == rule.use.expected_data_type, rule.use  # type: ignore[attr-defined]
+        assert rule.to_return == rule.use.expected_to_return, rule.use  # type: ignore[attr-defined]
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
 
 

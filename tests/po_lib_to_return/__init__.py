@@ -32,7 +32,7 @@ class ProductPage(ItemPage[Product]):
 
     expected_overrides = None
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = Product
+    expected_to_return = Product
     expected_meta = {}
 
     @field
@@ -50,7 +50,7 @@ class ImprovedProductPage(ProductPage):
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = Product
+    expected_to_return = Product
     expected_meta = {}
 
     @field
@@ -66,7 +66,7 @@ class SimilarProductPage(ProductPage, Returns[ProductSimilar]):
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = ProductSimilar
+    expected_to_return = ProductSimilar
     expected_meta = {}
 
 
@@ -78,7 +78,7 @@ class MoreProductPage(ProductPage, Returns[ProductMoreFields]):
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = ProductMoreFields
+    expected_to_return = ProductMoreFields
     expected_meta = {}
 
     @field
@@ -96,7 +96,7 @@ class LessProductPage(
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = ProductLessFields
+    expected_to_return = ProductLessFields
     expected_meta = {}
 
     @field
@@ -104,25 +104,25 @@ class LessProductPage(
         return "brand"
 
 
-@handle_urls("example.com", overrides=ProductPage, data_type=ProductSimilar)
+@handle_urls("example.com", overrides=ProductPage, to_return=ProductSimilar)
 class CustomProductPage(ProductPage, Returns[Product]):
     """A custom PO inheriting from a base PO returning the same fields but in
     a different item class.
 
-    This PO is the same with ``SimilarProductPage`` but passes a ``data_type``
+    This PO is the same with ``SimilarProductPage`` but passes a ``to_return``
     in the ``@handle_urls`` decorator.
 
     This tests the case that the type inside ``Returns`` should be followed and
-    the ``data_type`` parameter from ``@handle_urls`` is ignored.
+    the ``to_return`` parameter from ``@handle_urls`` is ignored.
     """
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = Product
+    expected_to_return = Product
     expected_meta = {}
 
 
-@handle_urls("example.com", overrides=ProductPage, data_type=ProductSimilar)
+@handle_urls("example.com", overrides=ProductPage, to_return=ProductSimilar)
 class CustomProductPageNoReturns(ProductPage):
     """Same case as with ``CustomProductPage`` but doesn't inherit from
     ``Returns[Product]``.
@@ -130,22 +130,22 @@ class CustomProductPageNoReturns(ProductPage):
 
     expected_overrides = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = Product
+    expected_to_return = Product
     expected_meta = {}
 
 
-@handle_urls("example.com", data_type=Product)
+@handle_urls("example.com", to_return=Product)
 class CustomProductPageDataTypeOnly(Injectable):
     """A PO that doesn't inherit from ``ItemPage`` and ``WebPage`` which means
     it doesn't inherit from the ``Returns`` class.
 
-    This tests the case that the ``data_Type`` parameter in ``@handle_urls``
+    This tests the case that the ``to_return`` parameter in ``@handle_urls``
     should properly use it in the rules.
     """
 
     expected_overrides = None
     expected_patterns = Patterns(["example.com"])
-    expected_data_type = Product
+    expected_to_return = Product
     expected_meta = {}
 
     @field

@@ -4,7 +4,7 @@ import random
 import attrs
 import pytest
 
-from tests.po_lib_data_type import (
+from tests.po_lib_to_return import (
     CustomProductPage,
     CustomProductPageDataTypeOnly,
     CustomProductPageNoReturns,

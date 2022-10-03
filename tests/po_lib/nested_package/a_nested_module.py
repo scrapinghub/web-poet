@@ -18,5 +18,5 @@ class PONestedModule(POBase):
     expected_patterns = Patterns(
         include=["example.com", "example.org"], exclude=["/*.jpg|"]
     )
-    expected_data_type = None
+    expected_to_return = None
     expected_meta = {}  # type: ignore

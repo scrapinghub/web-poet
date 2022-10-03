@@ -38,7 +38,7 @@ class OverrideRule:
           about the patterns.
         * ``use`` - The Page Object that will be **used**.
         * ``instead_of`` - The Page Object that will be **replaced**.
-        * ``data_type`` - The data container class that the Page Object returns.
+        * ``to_return`` - The data container class that the Page Object returns.
         * ``meta`` - Any other information you may want to store. This doesn't
           do anything for now but may be useful for future API updates.
 
@@ -51,11 +51,11 @@ class OverrideRule:
     for_patterns: Patterns
     use: Type[ItemPage]
     instead_of: Optional[Type[ItemPage]] = None
-    data_type: Optional[Type[Any]] = None
+    to_return: Optional[Type[Any]] = None
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def __hash__(self):
-        return hash((self.for_patterns, self.use, self.instead_of, self.data_type))
+        return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
 
 
 class PageObjectRegistry(dict):
@@ -116,7 +116,7 @@ class PageObjectRegistry(dict):
         include: Strings,
         *,
         overrides: Optional[Type[ItemPage]] = None,
-        data_type: Optional[Type] = None,
+        to_return: Optional[Type] = None,
         exclude: Optional[Strings] = None,
         priority: int = 500,
         **kwargs,
@@ -137,7 +137,7 @@ class PageObjectRegistry(dict):
 
         :param include: The URLs that should be handled by the decorated Page Object.
         :param overrides: The Page Object that should be `replaced`.
-        :param data_type: The Item Class holding the data returned by the Page Object.
+        :param to_return: The Item Class holding the data returned by the Page Object.
             This parameter is ignored if the Page Object has declared a data type
             using :class:`~.Returns` or :class:`~.ItemPage`
             (e.g. ``class ProductPageObject(ItemPage[ProductItem])``).
@@ -149,7 +149,7 @@ class PageObjectRegistry(dict):
         """
 
         def wrapper(cls):
-            final_data_type = data_type
+            final_data_type = to_return
             derived_type = get_generic_parameter(cls)
             if derived_type and derived_type != ItemT:
                 final_data_type = derived_type
@@ -162,7 +162,7 @@ class PageObjectRegistry(dict):
                 ),
                 use=cls,
                 instead_of=overrides,
-                data_type=final_data_type,
+                to_return=final_data_type,
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it

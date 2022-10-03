@@ -25,5 +25,5 @@ class POLibSubOverridenNotImported:
 class POLibSubNotImported(POBase):
     expected_overrides = POLibSubOverridenNotImported
     expected_patterns = Patterns(["sub_example_not_imported.com"])
-    expected_data_type = None
+    expected_to_return = None
     expected_meta = {}  # type: ignore
