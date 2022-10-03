@@ -112,13 +112,13 @@ class CustomProductPage(ProductPage, Returns[Product]):
     This PO is the same with ``SimilarProductPage`` but passes a ``to_return``
     in the ``@handle_urls`` decorator.
 
-    This tests the case that the type inside ``Returns`` should be followed and
-    the ``to_return`` parameter from ``@handle_urls`` is ignored.
+    This tests the case that the type passed via the ``to_return`` parameter
+    from ``@handle_urls`` takes priority.
     """
 
     expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = Product
+    expected_to_return = ProductSimilar
     expected_meta = {}
 
 
@@ -130,7 +130,7 @@ class CustomProductPageNoReturns(ProductPage):
 
     expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = Product
+    expected_to_return = ProductSimilar
     expected_meta = {}
 
 

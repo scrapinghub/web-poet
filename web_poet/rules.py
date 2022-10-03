@@ -11,8 +11,8 @@ from typing import Any, Dict, Iterable, List, Optional, Type, TypeVar, Union
 
 from url_matcher import Patterns
 
-from web_poet._typing import get_generic_parameter
-from web_poet.pages import ItemPage, ItemT
+from web_poet._typing import get_item_cls
+from web_poet.pages import ItemPage
 from web_poet.utils import _create_deprecated_class, as_list
 
 Strings = Union[str, Iterable[str]]
@@ -162,10 +162,6 @@ class PageObjectRegistry(dict):
         """
 
         def wrapper(cls):
-            final_data_type = to_return
-            derived_type = get_generic_parameter(cls)
-            if derived_type and derived_type != ItemT:
-                final_data_type = derived_type
 
             if overrides is not None:
                 msg = (
@@ -182,7 +178,7 @@ class PageObjectRegistry(dict):
                 ),
                 use=cls,
                 instead_of=instead_of,
-                to_return=final_data_type,
+                to_return=get_item_cls(cls, preferred=to_return),
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
