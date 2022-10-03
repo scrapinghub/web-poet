@@ -100,7 +100,7 @@ class PageObjectRegistry(dict):
     """
 
     @classmethod
-    def from_override_rules(
+    def from_apply_rules(
         cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
     ) -> PageObjectRegistryTV:
         """An alternative constructor for creating a :class:`~.PageObjectRegistry`
@@ -110,6 +110,18 @@ class PageObjectRegistry(dict):
         from multiple external packages.
         """
         return cls({rule.use: rule for rule in rules})
+
+    @classmethod
+    def from_override_rules(
+        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
+    ) -> PageObjectRegistryTV:
+        """Deprecated. Use :meth:`~.PageObjectRegistry.from_apply_rules` instead."""
+        msg = (
+            "The 'from_override_rules' method is deprecated. "
+            "Use 'from_apply_rules' instead."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return cls.from_apply_rules(rules)
 
     def handle_urls(
         self,

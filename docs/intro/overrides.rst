@@ -253,14 +253,14 @@ using.
 
 After gathering all the pre-selected rules, we can then store it in a new instance
 of :class:`~.PageObjectRegistry` in order to separate it from the ``default_registry``
-which contains all of the rules. We can use the :meth:`~.PageObjectRegistry.from_override_rules`
+which contains all of the rules. We can use the :meth:`~.PageObjectRegistry.from_apply_rules`
 for this:
 
 .. code-block:: python
 
     from web_poet import PageObjectRegistry
 
-    my_new_registry = PageObjectRegistry.from_override_rules(rules)
+    my_new_registry = PageObjectRegistry.from_apply_rules(rules)
 
 
 .. _`intro-improve-po`:

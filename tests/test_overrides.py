@@ -46,7 +46,7 @@ POS = {
 }
 
 
-def test_override_rule_uniqueness() -> None:
+def test_apply_rule_uniqueness() -> None:
     """The same instance of an ApplyRule with the same attribute values should
     have the same hash identity.
     """
@@ -140,7 +140,7 @@ def test_registry_search_overrides() -> None:
     assert len(rules) == 0
 
 
-def test_from_override_rules() -> None:
+def test_from_apply_rules() -> None:
     rules = [
         ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
@@ -149,7 +149,27 @@ def test_from_override_rules() -> None:
         )
     ]
 
-    registry = PageObjectRegistry.from_override_rules(rules)
+    registry = PageObjectRegistry.from_apply_rules(rules)
+
+    assert registry.get_overrides() == rules
+    assert default_registry.get_overrides() != rules
+
+
+def test_from_override_rules_deprecation() -> None:
+    rules = [
+        ApplyRule(
+            for_patterns=Patterns(include=["sample.com"]),
+            use=POTopLevel1,
+            instead_of=POTopLevelOverriden2,
+        )
+    ]
+
+    msg = (
+        "The 'from_override_rules' method is deprecated. "
+        "Use 'from_apply_rules' instead."
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        registry = PageObjectRegistry.from_override_rules(rules)
 
     assert registry.get_overrides() == rules
     assert default_registry.get_overrides() != rules
