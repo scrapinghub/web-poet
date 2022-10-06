@@ -1,5 +1,6 @@
 import warnings
 
+import attrs
 import pytest
 from url_matcher import Patterns
 
@@ -82,6 +83,37 @@ def test_apply_rule_uniqueness() -> None:
     )
     # A different data type class results in different hash.
     assert hash(rule1) != hash(rule2)
+
+
+def test_apply_rule_immutability() -> None:
+    patterns = Patterns(include=["example.com"], exclude=["example.com/blog"])
+
+    rule = ApplyRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+    )
+
+    with pytest.raises(attrs.exceptions.FrozenInstanceError):
+        rule.use = POModule  # type: ignore[misc]
+
+
+def test_apply_rule_converter_on_pattern() -> None:
+    # passing strings should auto-converter into Patterns
+    rule = ApplyRule("example.com", use=POTopLevel1, instead_of=POTopLevelOverriden2)
+    assert rule.for_patterns == Patterns(
+        include=("example.com",), exclude=(), priority=500
+    )
+
+    # Passing Patterns should still work
+    rule = ApplyRule(
+        for_patterns=Patterns(["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+    )
+    assert rule.for_patterns == Patterns(
+        include=("example.com",), exclude=(), priority=500
+    )
 
 
 def test_list_page_objects_all() -> None:

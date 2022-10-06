@@ -5,22 +5,22 @@ import importlib.util
 import pkgutil
 import warnings
 from collections import deque
-from dataclasses import dataclass, field
 from operator import attrgetter
 from typing import Any, Dict, Iterable, List, Optional, Type, TypeVar, Union
 
+import attrs
 from url_matcher import Patterns
 
 from web_poet._typing import get_item_cls
 from web_poet.pages import ItemPage
-from web_poet.utils import _create_deprecated_class, as_list
+from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]
 
 PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry")
 
 
-@dataclass(frozen=True)
+@attrs.define(frozen=True)
 class ApplyRule:
     """A single override rule that specifies when a Page Object should be used
     in lieu of another.
@@ -48,11 +48,11 @@ class ApplyRule:
         unique rules and identify any duplicates.
     """
 
-    for_patterns: Patterns
+    for_patterns: Patterns = attrs.field(converter=str_to_pattern)
     use: Type[ItemPage]
     instead_of: Optional[Type[ItemPage]] = None
     to_return: Optional[Type[Any]] = None
-    meta: Dict[str, Any] = field(default_factory=dict)
+    meta: Dict[str, Any] = attrs.field(factory=dict)
 
     def __hash__(self):
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))

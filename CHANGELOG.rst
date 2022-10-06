@@ -5,16 +5,19 @@ Changelog
 TBD
 ---
 
-* New ``ApplyRule`` class created by the ``@handle_urls`` decorator.
-  This is nearly identical with ``OverrideRule`` except that it's accepting
-  a ``to_return`` parameter which signifies the data container class that
-  the Page Object returns.
+* New ``ApplyRule`` class created by the ``@handle_urls`` decorator:
+
+  * This is nearly identical with ``OverrideRule`` except that it's accepting
+    a ``to_return`` parameter which signifies the data container class that
+    the Page Object returns.
+  * Passing a string to ``for_patterns`` would auto-convert it into
+    ``url_matcher.Patterns``.
 
 * Modify the call signature of ``handle_urls``:
 
     * New ``to_return`` parameter which signifies the data container class that
       the Page Object returns. This behaves exactly the same with ``overrides``
-      but it's more consistent with  the attribute names of ``ApplyRules`` that
+      but it's more consistent with the attribute names of ``ApplyRules`` that
       it creates.
     * New ``instead_of`` parameter which does the same thing with ``overrides``.
     * The old ``overrides`` parameter is not required anymore as it's set for
