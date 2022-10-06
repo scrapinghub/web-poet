@@ -177,7 +177,7 @@ class PageObjectRegistry(dict):
                     priority=priority,
                 ),
                 use=cls,
-                instead_of=instead_of,
+                instead_of=instead_of or overrides,
                 to_return=get_item_cls(cls, preferred=to_return),
                 meta=kwargs,
             )
