@@ -116,6 +116,26 @@ def test_apply_rule_converter_on_pattern() -> None:
     )
 
 
+def test_apply_rule_kwargs_only() -> None:
+
+    params = {
+        "use": POTopLevel1,
+        "instead_of": POTopLevelOverriden2,
+        "to_return": Product,
+        "meta": {"key_2": 2},
+    }
+    remove = set()
+
+    for param_name in params:
+        remove.add(param_name)
+        with pytest.raises(TypeError):
+            ApplyRule(
+                "example.com",
+                *[params[r] for r in remove],
+                **{k: v for k, v in params.items() if k not in remove}
+            )
+
+
 def test_list_page_objects_all() -> None:
     rules = default_registry.get_rules()
     page_objects = {po.use for po in rules}

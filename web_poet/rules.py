@@ -49,10 +49,10 @@ class ApplyRule:
     """
 
     for_patterns: Patterns = attrs.field(converter=str_to_pattern)
-    use: Type[ItemPage]
-    instead_of: Optional[Type[ItemPage]] = None
-    to_return: Optional[Type[Any]] = None
-    meta: Dict[str, Any] = attrs.field(factory=dict)
+    use: Type[ItemPage] = attrs.field(kw_only=True)
+    instead_of: Optional[Type[ItemPage]] = attrs.field(default=None, kw_only=True)
+    to_return: Optional[Type[Any]] = attrs.field(default=None, kw_only=True)
+    meta: Dict[str, Any] = attrs.field(factory=dict, kw_only=True)
 
     def __hash__(self):
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
