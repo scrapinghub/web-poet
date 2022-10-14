@@ -488,3 +488,27 @@ returns a dictionary, where keys are field names, and values are
 
     print(field_names)  # dict_keys(['my_field'])
     print(my_field_meta)  # {'expensive': True}
+
+Field processors
+----------------
+
+It's often needed to clean or process field values using reusable functions.
+``@field`` takes an optional ``out`` argument with a list of such functions.
+They will be applied to the field value before returning it:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, field
+
+    def clean_tabs(s):
+        return s.replace('\t', ' ')
+
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        @field(out=[clean_tabs, str.strip])
+        def name(self):
+            return self.response.css(".name ::text").get()
+
+Note that while processors can be applied to async fields, they need to be
+normal functions themselves.
