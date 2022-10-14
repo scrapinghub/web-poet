@@ -368,3 +368,32 @@ def test_field_with_other_decorators() -> None:
     assert page.field_foo == "foo"
     assert page.field_foo_meta == "foo"
     assert page.field_foo_cached == "foo"
+
+
+def test_field_processors_sync() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[str.strip, proc1])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert page.name == "namex"
+
+
+@pytest.mark.asyncio
+async def test_field_processors_async() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[str.strip, proc1])
+        async def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert await page.name == "namex"

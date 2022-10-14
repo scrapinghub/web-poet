@@ -2,8 +2,9 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
-from functools import update_wrapper
-from typing import Dict, List, Optional, Type, TypeVar
+import inspect
+from functools import update_wrapper, wraps
+from typing import Callable, Dict, List, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -43,7 +44,13 @@ class FieldsMixin:
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
 
-def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
+def field(
+    method=None,
+    *,
+    cached: bool = False,
+    meta: Optional[dict] = None,
+    out: Optional[List[Callable]] = None,
+):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
     which is then used by :class:`~.ItemPage`'s to_item() method to populate
@@ -55,6 +62,9 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     The ``meta`` parameter allows to store arbitrary information for the field,
     e.g. ``@field(meta={"expensive": True})``. This information can be later
     retrieved for all fields using the :func:`get_fields_dict` function.
+
+    The ``out`` parameter is an optional list of field processors, which are
+    functions applied to the value of the field before returning it.
     """
 
     class _field:
@@ -63,6 +73,28 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
                 raise TypeError(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
+            if out:
+                orig_method = method
+                if inspect.iscoroutinefunction(method):
+
+                    @wraps(method)
+                    async def processed(*args, **kwargs):
+                        result = await orig_method(*args, **kwargs)
+                        for processor in out:
+                            result = processor(result)
+                        return result
+
+                else:
+
+                    @wraps(method)
+                    def processed(*args, **kwargs):
+                        result = orig_method(*args, **kwargs)
+                        for processor in out:
+                            result = processor(result)
+                        return result
+
+                method = processed
+
             if cached:
                 self.unbound_method = cached_method(method)
             else:
