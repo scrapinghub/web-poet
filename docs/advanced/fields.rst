@@ -151,6 +151,34 @@ function when accessing the fields:
 Now any field can be converted from sync to async, or the other way around,
 and the code would keep working.
 
+Field processors
+----------------
+
+It's often needed to clean or process field values using reusable functions.
+``@field`` takes an optional ``out`` argument with a list of such functions.
+They will be applied to the field value before returning it:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, field
+
+    def clean_tabs(s):
+        return s.replace('\t', ' ')
+
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        @field(out=[clean_tabs, str.strip])
+        def name(self):
+            return self.response.css(".name ::text").get()
+
+Note that while processors can be applied to async fields, they need to be
+normal functions themselves.
+
+It's also possible to implement field cleaning and processing in ``to_item``
+but in that case accessing a field directly will return the value without
+processing, so it's preferable to use field processors instead.
+
 Item classes
 ------------
 
@@ -197,9 +225,6 @@ but item classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
 * if you want to define the schema upfront.
-
-Item classes can also be used to hold common attribute
-pre-processing and validation logic.
 
 Error prevention
 ~~~~~~~~~~~~~~~~
@@ -488,27 +513,3 @@ returns a dictionary, where keys are field names, and values are
 
     print(field_names)  # dict_keys(['my_field'])
     print(my_field_meta)  # {'expensive': True}
-
-Field processors
-----------------
-
-It's often needed to clean or process field values using reusable functions.
-``@field`` takes an optional ``out`` argument with a list of such functions.
-They will be applied to the field value before returning it:
-
-.. code-block:: python
-
-    from web_poet import ItemPage, HttpResponse, field
-
-    def clean_tabs(s):
-        return s.replace('\t', ' ')
-
-    class MyPage(ItemPage):
-        response: HttpResponse
-
-        @field(out=[clean_tabs, str.strip])
-        def name(self):
-            return self.response.css(".name ::text").get()
-
-Note that while processors can be applied to async fields, they need to be
-normal functions themselves.
