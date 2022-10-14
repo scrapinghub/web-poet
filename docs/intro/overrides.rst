@@ -9,11 +9,12 @@ matching rules is handled by another library called
 `url-matcher <https://url-matcher.readthedocs.io>`_.
 
 Using such rules establishes the core concept of Overrides wherein a developer
-could declare that for a given set of URL patterns a specific Page Object must
-be used:
+could declare that for a given set of URL patterns, a specific Page Object must
+be used instead of another Page Object.
 
-    * instead of another Page Object, or 
-    * which returns an Item Class instead of some other Item Class.
+The :class:`~.ApplyRule` also supports pointing to the item returned by a specific
+Page Object if it both matches the URL pattern and the item class specified in the
+rule.
 
 This enables **web-poet** to be used effectively by other frameworks like 
 `scrapy-poet <https://scrapy-poet.readthedocs.io>`_.
@@ -143,36 +144,41 @@ the following:
 
 .. code-block:: python
 
-    from web_poet import handle_urls, WebPage, Returns
+    from web_poet import handle_urls, WebPage
 
 
-    class GenericProductPage(WebPage, Returns[Product]):
+    class GenericProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             return Product(product_title=self.css("title::text").get())
 
 
-    @handle_urls("example.com", to_return=Product)
-    class ExampleProductPage(WebPage):
+    @handle_urls("example.com")
+    class ExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls("anotherexample.com", to_return=Product, exclude="/digital-goods/")
-    class AnotherExampleProductPage(WebPage):
+    @handle_urls("anotherexample.com", exclude="/digital-goods/")
+    class AnotherExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], to_return=Product)
-    class DualExampleProductPage(WebPage):
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"])
+    class DualExampleProductPage(WebPage[Product]):
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
 
 Let's break this example down:
 
     - The URL patterns are exactly the same as with the previous code example.
-    - The ``instead_of`` parameter has been replaced with ``to_return`` which
-      accepts an Item Class. This means that:
+    - The ``@handle_urls`` is able to derive the returned Item Class (i.e.
+      ``Product``) from the respective Page Object. For advanced use cases, you
+      can pass the ``to_return`` parameter directly to the ``@handle_urls``
+      decorator where it replaces any derived values.
+    - The ``instead_of`` parameter has been removed in lieu of the derived Item
+      Class from the Page Object which is passed as a ``to_return`` parameter
+      when creating the :class:`~.ApplyRule`. This means that:
 
         - If a ``Product`` Item Class is requested for URLs matching with the
           "example.com" pattern, then the ``Product`` Item Class would come from
@@ -208,10 +214,10 @@ either contexts of Page Objects and Item Classes.
 
 .. code-block:: python
 
-    from web_poet import handle_urls, WebPage, Returns
+    from web_poet import handle_urls, WebPage
 
 
-    class GenericProductPage(WebPage, Returns[Product]):
+    class GenericProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             return Product(product_title=self.css("title::text").get())
 
@@ -223,20 +229,15 @@ either contexts of Page Objects and Item Classes.
 
 
     @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
-    class AnotherExampleProductPage(WebPage, Returns[Product]):
+    class AnotherExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
     @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
-    class DualExampleProductPage(WebPage, Returns[SimilarProduct]):
+    class DualExampleProductPage(WebPage[SimilarProduct]):
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
-
-Notice that the ``@handle_urls`` decorator for ``AnotherExampleProductPage`` and
-``DualExampleProductPage`` doesn't specify the ``to_return`` parameter at all.
-This is because it's able to directly derive the returned Item Class from the
-respective ``Returns[Product]`` and ``Returns[SimilarProduct]`` declarations.
 
 See the next :ref:`retrieving-overrides` section observe what are the actual
 :class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
