@@ -76,9 +76,7 @@ def field(
                 raise TypeError(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
-            if out:
-                method = self._processed(method)
-
+            method = self._processed(method)
             if cached:
                 self.unbound_method = cached_method(method)
             else:
@@ -102,6 +100,8 @@ def field(
 
         def _processed(self, method):
             """Returns a wrapper for method that calls processors on its result"""
+            if not out:
+                return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
