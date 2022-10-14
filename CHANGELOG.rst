@@ -6,32 +6,34 @@ TBD
 ---
 
 * New ``ApplyRule`` class created by the ``@handle_urls`` decorator. This is
-  nearly identical with ``OverrideRule`` except that:
+  nearly identical with ``OverrideRule`` except:
 
-  * It's now accepting a ``to_return`` parameter which signifies the data
-    container class that the Page Object returns.
-  * Passing a string to ``for_patterns`` would auto-convert it into
-    ``url_matcher.Patterns``.
-  * All arguments are now keyword-only except for ``for_patterns``.
+    * It's now accepting a ``to_return`` parameter which signifies the data
+      container class that the Page Object returns.
+    * Passing a string to ``for_patterns`` would auto-convert it into
+      ``url_matcher.Patterns``.
+    * All arguments are now keyword-only except for ``for_patterns``.
 
 * Modify the call signature of ``handle_urls``:
 
     * New ``to_return`` parameter which signifies the data container class that
-      the Page Object returns. This behaves exactly the same with ``overrides``
-      but it's more consistent with the attribute names of ``ApplyRules`` that
-      it creates.
+      the Page Object returns. This behaves exactly the same with the existing
+      ``overrides`` parameter but it's more consistent with the attribute names
+      of ``ApplyRule``.
     * New ``instead_of`` parameter which does the same thing with ``overrides``.
     * The old ``overrides`` parameter is not required anymore as it's set for
       deprecation.
+
+* Documentation, test, and warning message improvements.
 
 Deprecations:
 
 * The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
   Use the ``instead_of`` parameter instead.
-* ``OverrideRule`` is now deprecated. Use ``ApplyRule`` instead.
+* The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
-* The ``web_poet.overrides`` is deprecated. Use ``web_poet.rules`` instead.
+* The ``web_poet.overrides`` module is deprecated. Use ``web_poet.rules`` instead.
 * The ``PageObjectRegistry.get_overrides`` is deprecated.
   Use ``PageObjectRegistry.get_rules`` instead.
 * The ``PageObjectRegistry.search_overrides`` is deprecated.
