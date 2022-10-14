@@ -1,5 +1,3 @@
-import warnings
-
 import attrs
 import pytest
 from url_matcher import Patterns
@@ -190,13 +188,26 @@ def test_list_page_objects_all_consume() -> None:
 
 
 def test_registry_search_rules() -> None:
+    # param: use
     rules = default_registry.search_rules(use=POTopLevel2)
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
 
+    # param: instead_of
     rules = default_registry.search_rules(instead_of=POTopLevelOverriden2)
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
+
+    # param: to_return
+    rules = default_registry.search_rules(to_return=Product)
+    assert len(rules) == 3
+    assert all([r for r in rules if r.use == Product])
+
+    # params: to_return and use
+    rules = default_registry.search_rules(to_return=Product, use=ImprovedProductPage)
+    assert len(rules) == 1
+    assert rules[0].to_return == Product
+    assert rules[0].use == ImprovedProductPage
 
     # Such rules doesn't exist
     rules = default_registry.search_rules(use=POModuleOverriden)
@@ -249,19 +260,15 @@ def test_from_override_rules_deprecation() -> None:
 
 
 def test_handle_urls_deprecation() -> None:
-
-    with warnings.catch_warnings(record=True) as w:
+    msg = (
+        "The 'overrides' parameter in @handle_urls is deprecated. Use the "
+        "'instead_of' parameter."
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
 
         @handle_urls("example.com", overrides=CustomProductPage)
         class PageWithDeprecatedOverrides:
             ...
-
-    w = [x for x in w if x.category is DeprecationWarning]
-    assert len(w) == 1
-    assert str(w[0].message) == (
-        "The 'overrides' parameter in @handle_urls is deprecated. Use the "
-        "'instead_of' parameter."
-    )
 
 
 def test_override_rule_deprecation() -> None:

@@ -22,7 +22,7 @@ class ProductMoreFields(Product):
 
 
 @attrs.define
-class ProductLessFields:
+class ProductFewerFields:
     name: str
 
 
@@ -102,7 +102,7 @@ class MoreProductPage(ProductPage, Returns[ProductMoreFields]):
 
 @handle_urls("example.com", instead_of=ProductPage)
 class LessProductPage(
-    ProductPage, Returns[ProductLessFields], skip_nonitem_fields=True
+    ProductPage, Returns[ProductFewerFields], skip_nonitem_fields=True
 ):
     """A custom PO inheriting from a base PO returning less items using a
     different item class.
@@ -110,7 +110,7 @@ class LessProductPage(
 
     expected_instead_of = ProductPage
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = ProductLessFields
+    expected_to_return = ProductFewerFields
     expected_meta = {}
 
     @field

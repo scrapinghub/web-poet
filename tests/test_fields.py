@@ -12,7 +12,7 @@ from tests.po_lib_to_return import (
     LessProductPage,
     MoreProductPage,
     Product,
-    ProductLessFields,
+    ProductFewerFields,
     ProductMoreFields,
     ProductPage,
     ProductSimilar,
@@ -412,7 +412,7 @@ async def test_field_with_handle_urls() -> None:
 
     page = LessProductPage()
     assert page.name == "name"
-    assert await page.to_item() == ProductLessFields(name="name")
+    assert await page.to_item() == ProductFewerFields(name="name")
 
     for page in [  # type: ignore[assignment]
         CustomProductPage(),
