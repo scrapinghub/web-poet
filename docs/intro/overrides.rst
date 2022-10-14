@@ -134,6 +134,8 @@ The code above declares that:
     further customized. You can read some of the specific parameters in the
     :ref:`API section <api-overrides>` of :func:`web_poet.handle_urls`.
 
+.. _item-class-example:
+
 Item Class
 ~~~~~~~~~~
 

@@ -145,19 +145,25 @@ class PageObjectRegistry(dict):
         **kwargs,
     ):
         """
-        Class decorator that indicates that the decorated Page Object should be
-        used instead of the overridden one for a particular set the URLs.
+        Class decorator that indicates that the decorated Page Object should work
+        for the given URL patterns.
 
-        The Page Object that is **overridden** is declared using the ``instead_of``
-        parameter.
+        The URL patterns are matched using the ``include`` and ``exclude``
+        parameters while ``priority`` breaks any ties. See the documentation
+        of the `url-matcher <https://url-matcher.readthedocs.io/>`_ package for
+        more information about them.
 
-        The Item Class could also be **overridden** using the ``to_return``
-        parameter.
+        This decorator is able to derive the item class returned by the Page
+        Object (see :ref:`item-class-example` section for some examples). This is
+        important since it marks what type of item the Page Object is capable of
+        returning for the given URL patterns. For certain advanced cases, you can
+        pass a ``to_return`` parameter which replaces any derived values (though
+        this isn't generally recommended).
 
-        The **override** mechanism only works on certain URLs that match the
-        ``include`` and ``exclude`` parameters. See the documentation of the
-        `url-matcher <https://url-matcher.readthedocs.io/>`_ package for more
-        information about them.
+        Passing another Page Object into the ``instead_of`` parameter indicates
+        that the decorated Page Object will be used instead of that for the given
+        set of URL patterns. This is the concept of **overrides** (see the
+        :ref:`intro-overrides` section for more info`).
 
         Any extra parameters are stored as meta information that can be later used.
 
