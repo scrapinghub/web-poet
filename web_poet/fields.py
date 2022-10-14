@@ -77,26 +77,7 @@ def field(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
             if out:
-                orig_method = method
-
-                def _process(result):
-                    for processor in out:
-                        result = processor(result)
-                    return result
-
-                if inspect.iscoroutinefunction(method):
-
-                    @wraps(method)
-                    async def processed(*args, **kwargs):
-                        return _process(await orig_method(*args, **kwargs))
-
-                else:
-
-                    @wraps(method)
-                    def processed(*args, **kwargs):
-                        return _process(orig_method(*args, **kwargs))
-
-                method = processed
+                method = self._processed(method)
 
             if cached:
                 self.unbound_method = cached_method(method)
@@ -112,6 +93,26 @@ def field(
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
+
+        @staticmethod
+        def _process(value):
+            for processor in out:
+                value = processor(value)
+            return value
+
+        def _processed(self, method):
+            """Returns a wrapper for method that calls processors on its result"""
+            if inspect.iscoroutinefunction(method):
+
+                async def processed(*args, **kwargs):
+                    return self._process(await method(*args, **kwargs))
+
+            else:
+
+                def processed(*args, **kwargs):
+                    return self._process(method(*args, **kwargs))
+
+            return wraps(method)(processed)
 
     if method is not None:
         # @field syntax
