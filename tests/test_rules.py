@@ -171,7 +171,7 @@ def test_registry_get_overrides_deprecation() -> None:
         rules = default_registry.get_overrides()
 
     # It should still work as usual
-    assert len(rules) == 15
+    assert len(rules) == len(default_registry.get_rules())
 
 
 def test_consume_module_not_existing() -> None:

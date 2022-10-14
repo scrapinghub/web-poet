@@ -151,7 +151,7 @@ function when accessing the fields:
 Now any field can be converted from sync to async, or the other way around,
 and the code would keep working.
 
-.. _`item-classes`:
+.. _item-classes:
 
 Item classes
 ------------

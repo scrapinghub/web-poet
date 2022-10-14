@@ -33,9 +33,9 @@ Deprecations:
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
 * The ``web_poet.overrides`` module is deprecated. Use ``web_poet.rules`` instead.
-* The ``PageObjectRegistry.get_overrides`` is deprecated.
+* The ``PageObjectRegistry.get_overrides`` method is deprecated.
   Use ``PageObjectRegistry.get_rules`` instead.
-* The ``PageObjectRegistry.search_overrides`` is deprecated.
+* The ``PageObjectRegistry.search_overrides`` method is deprecated.
   Use ``PageObjectRegistry.search_rules`` instead.
 
 0.5.1 (2022-09-23)

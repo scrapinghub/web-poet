@@ -3,7 +3,7 @@
 Overrides
 =========
 
-Overrides are simply rules represented by a list of :class:`~.ApplyRule` which
+Overrides are rules represented by a list of :class:`~.ApplyRule` which
 associates which URL patterns a particular Page Object would be used. The URL
 matching rules is handled by another library called
 `url-matcher <https://url-matcher.readthedocs.io>`_.
@@ -56,7 +56,7 @@ Creating Overrides
 ------------------
 
 To simplify the code examples in the next few subsections, let's consider that
-these Item Classes has been predefined.
+these Item Classes has been predefined:
 
 .. code-block:: python
 
@@ -108,7 +108,7 @@ Let's take a look at how the following code is structured:
 
 The code above declares that:
 
-    - Page Objects return ``Product`` and ``SimilarProduct`` item class. Returning
+    - Page Objects return ``Product`` and ``SimilarProduct`` item classes. Returning
       item classes is a preferred approach as explained in the :ref:`web-poet-fields`
       section.
     - For sites that match the ``example.com`` pattern, ``ExampleProductPage``
@@ -239,7 +239,7 @@ either contexts of Page Objects and Item Classes.
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
 
-See the next :ref:`retrieving-overrides` section observe what are the actual
+See the next :ref:`retrieving-overrides` section to observe what are the actual
 :class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
 
 
@@ -356,7 +356,7 @@ This can be done something like:
 .. _`intro-rule-subset`:
 
 Using only a subset of the available ApplyRules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.ApplyRule` would be used. This could be achieved by

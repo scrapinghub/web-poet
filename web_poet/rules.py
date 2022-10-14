@@ -72,7 +72,7 @@ class PageObjectRegistry(dict):
     """This contains the :class:`~.ApplyRule` that associates the Page Objects
     alongside its Items for a given URL matching rule.
 
-    Note that it's simply a ``dict`` subclass with added functionalities on
+    PageObjectRegistry is a ``dict`` subclass with added functionalities on
     storing, retrieving, and searching for the :class:`~.ApplyRule` instances.
     The **value** represents the :class:`~.ApplyRule` instance from which the
     Page Object in the **key** is allowed to be used. Since it's essentially a
@@ -214,7 +214,7 @@ class PageObjectRegistry(dict):
         """Returns all the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` decorator.
 
-        .. warning::
+        .. note::
 
             Remember to consider calling :func:`~.web_poet.rules.consume_modules`
             beforehand to recursively import all submodules which contains the
@@ -229,7 +229,7 @@ class PageObjectRegistry(dict):
         return self.get_rules()
 
     def search_rules(self, **kwargs) -> List[ApplyRule]:
-        """Returns any :class:`ApplyRule` that has any of its attributes
+        """Return any :class:`ApplyRule` that has any of its attributes
         match the rules inside the registry.
 
         Sample usage:
