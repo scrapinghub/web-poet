@@ -14,15 +14,14 @@ TBD
       ``url_matcher.Patterns``.
     * All arguments are now keyword-only except for ``for_patterns``.
 
-* Modify the call signature of ``handle_urls``:
+* Modify the call signature and behavior of ``handle_urls``:
 
-    * New ``to_return`` parameter which signifies the data container class that
-      the Page Object returns. This behaves exactly the same with the existing
-      ``overrides`` parameter but it's more consistent with the attribute names
-      of ``ApplyRule``.
     * New ``instead_of`` parameter which does the same thing with ``overrides``.
     * The old ``overrides`` parameter is not required anymore as it's set for
       deprecation.
+    * It sets a ``to_return`` parameter when creating ``ApplyRule`` based on the
+      declared item class in subclasses of ``web_poet.ItemPage``. It's also
+      possible to pass a ``to_return`` parameter on more advanced use cases.
 
 * Documentation, test, and warning message improvements.
 
