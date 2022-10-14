@@ -75,23 +75,23 @@ def field(
                 )
             if out:
                 orig_method = method
+
+                def _process(result):
+                    for processor in out:
+                        result = processor(result)
+                    return result
+
                 if inspect.iscoroutinefunction(method):
 
                     @wraps(method)
                     async def processed(*args, **kwargs):
-                        result = await orig_method(*args, **kwargs)
-                        for processor in out:
-                            result = processor(result)
-                        return result
+                        return _process(await orig_method(*args, **kwargs))
 
                 else:
 
                     @wraps(method)
                     def processed(*args, **kwargs):
-                        result = orig_method(*args, **kwargs)
-                        for processor in out:
-                            result = processor(result)
-                        return result
+                        return _process(orig_method(*args, **kwargs))
 
                 method = processed
 
