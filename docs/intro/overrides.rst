@@ -1,4 +1,4 @@
-.. _`intro-overrides`:
+.. _intro-overrides:
 
 Overrides
 =========
@@ -206,7 +206,7 @@ Object. Aside from the item extracted by the Page Object, there might be some
 other convenience methods or other data from it that you want to access.
 
 
-.. _`combination`:
+.. _combination:
 
 Combination
 ~~~~~~~~~~~
@@ -245,7 +245,7 @@ See the next :ref:`retrieving-overrides` section to observe what are the actual
 :class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
 
 
-.. _`retrieving-overrides`:
+.. _retrieving-overrides:
 
 Retrieving all available Overrides
 ----------------------------------
@@ -303,7 +303,7 @@ Developers have the option to import existing Page Objects alongside the
 :class:`~.ApplyRule` attached to them. This section aims to showcase different
 scenarios that come up when using multiple Page Object Projects.
 
-.. _`intro-rule-all`:
+.. _intro-rule-all:
 
 Using all available ApplyRules from multiple Page Object Projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -355,7 +355,7 @@ This can be done something like:
     runtime duration. Calling :func:`~.web_poet.overrides.consume_modules` again
     makes no difference unless a new set of modules are provided.
 
-.. _`intro-rule-subset`:
+.. _intro-rule-subset:
 
 Using only a subset of the available ApplyRules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,7 +395,7 @@ conveniently select for :class:`~.ApplyRule` which conform to a specific criteri
 allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
 
-.. _`overrides-custom-registry`:
+.. _overrides-custom-registry:
 
 After gathering all the pre-selected rules, we can then store it in a new instance
 of :class:`~.PageObjectRegistry` in order to separate it from the ``default_registry``
@@ -409,7 +409,7 @@ for this:
     my_new_registry = PageObjectRegistry.from_apply_rules(rules)
 
 
-.. _`intro-improve-po`:
+.. _intro-improve-po:
 
 Improving on external Page Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -506,7 +506,7 @@ remained different.
 
 There are two main ways we recommend in solving this.
 
-.. _`priority-resolution`:
+.. _priority-resolution:
 
 **1. Priority Resolution**
 

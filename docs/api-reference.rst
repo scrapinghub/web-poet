@@ -1,4 +1,4 @@
-.. _`api-reference`:
+.. _api-reference:
 
 =============
 API Reference
@@ -81,7 +81,7 @@ Exceptions
     :show-inheritance:
     :members:
 
-.. _`api-overrides`:
+.. _api-overrides:
 
 Overrides
 =========

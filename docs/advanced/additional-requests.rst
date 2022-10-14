@@ -1,4 +1,4 @@
-.. _`advanced-requests`:
+.. _advanced-requests:
 
 ===================
 Additional Requests
@@ -27,7 +27,7 @@ The key words "MUST”, "MUST NOT”, "REQUIRED”, "SHALL”, "SHALL NOT”, "S
 "SHOULD NOT”, "RECOMMENDED”, "MAY”, and "OPTIONAL” in this document are to be
 interpreted as described in RFC `2119 <https://www.ietf.org/rfc/rfc2119.txt>`_.
 
-.. _`httprequest-example`:
+.. _httprequest-example:
 
 HttpRequest
 ===========
@@ -271,7 +271,7 @@ The key take aways for this example are:
           available.
 
 
-.. _`httpclient`:
+.. _httpclient:
 
 HttpClient
 ==========
@@ -337,7 +337,7 @@ additional requests using the :meth:`~.HttpClient.request`, :meth:`~.HttpClient.
 and :meth:`~.HttpClient.post` methods of :class:`~.HttpClient`. These already
 define the :class:`~.HttpRequest` and executes it as well.
 
-.. _`httpclient-get-example`:
+.. _httpclient-get-example:
 
 A simple ``GET`` request
 ------------------------
@@ -376,7 +376,7 @@ There are a few things to take note in this example:
     * There is no need create an instance of :class:`~.HttpRequest` when
       :meth:`~.HttpClient.get` is used.
 
-.. _`request-post-example`:
+.. _request-post-example:
 
 A ``POST`` request with `header` and `body`
 -------------------------------------------
@@ -459,7 +459,7 @@ quick shortcuts for :meth:`~.HttpClient.request`:
 Thus, apart from the common ``GET`` and ``POST`` HTTP methods, you can use 
 :meth:`~.HttpClient.request` for them (`e.g.` ``HEAD``, ``PUT``, ``DELETE``, etc).
 
-.. _`http-batch-request-example`:
+.. _http-batch-request-example:
 
 Batch requests
 --------------
@@ -567,7 +567,7 @@ The key takeaways for this example are:
     first response from a group of requests as early as possible. However, the
     order could be shuffled.
 
-.. _`exception-handling`:
+.. _exception-handling:
 
 Handling Exceptions in Page Objects
 ===================================
