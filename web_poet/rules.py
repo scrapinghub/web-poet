@@ -22,8 +22,8 @@ PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry
 
 @attrs.define(frozen=True)
 class ApplyRule:
-    """A single override rule that specifies when a Page Object should be used
-    in lieu of another.
+    """A rule that primarily applies Page Object and Item overrides for a given
+    URL pattern.
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
     It's also being returned as a ``List[ApplyRule]`` when calling the
@@ -36,11 +36,21 @@ class ApplyRule:
           this rule. You can read the API documentation of the `url-matcher
           <https://url-matcher.readthedocs.io/>`_ package for more information
           about the patterns.
-        * ``use`` - The Page Object that will be **used**.
-        * ``instead_of`` - The Page Object that will be **replaced**.
-        * ``to_return`` - The data container class that the Page Object returns.
-        * ``meta`` - Any other information you may want to store. This doesn't
-          do anything for now but may be useful for future API updates.
+        * ``use`` - The Page Object that will be **used** in cases where the URL
+          pattern represented by the ``for_patterns`` attribute is matched.
+        * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
+          with the Page Object specified via the ``use`` parameter.
+        * ``to_return`` - *(optional)* The data container class that will be
+          **replaced** by the item returned by the Page Object specified via the
+          ``use`` parameter.
+        * ``meta`` - *(optional)* Any other information you may want to store.
+          This doesn't do anything for now but may be useful for future API updates.
+
+    The main functionality of this class lies in the ``instead_of`` and ``to_return``
+    parameter. Should both of these be omitted, then :class:`~.ApplyRule` simply
+    tags which URL patterns the given Page Object is expected to be used.
+
+    More information regarding its usage in :ref:`intro-overrides`.
 
     .. tip::
 
@@ -59,8 +69,8 @@ class ApplyRule:
 
 
 class PageObjectRegistry(dict):
-    """This contains the mapping rules that associates the Page Objects available
-    for a given URL matching rule.
+    """This contains the :class:`~.ApplyRule` that associates the Page Objects
+    alongside its Items for a given URL matching rule.
 
     Note that it's simply a ``dict`` subclass with added functionalities on
     storing, retrieving, and searching for the :class:`~.ApplyRule` instances.
@@ -81,7 +91,7 @@ class PageObjectRegistry(dict):
 
         override_rules = default_registry.get_rules()
 
-    Notice that the ``@handle_urls`` that we're using is a part of the
+    Notice that the ``@handle_urls`` decorator that we're using is a part of the
     ``default_registry``. This provides a shorter and quicker way to interact
     with the built-in default :class:`~.PageObjectRegistry` instead of writing
     the longer ``@default_registry.handle_urls``.
@@ -107,7 +117,8 @@ class PageObjectRegistry(dict):
         instance by accepting a list of :class:`~.ApplyRule`.
 
         This is useful in cases wherein you need to store some selected rules
-        from multiple external packages.
+        from multiple external packages. See this :ref:`example
+        <overrides-custom-registry>`.
         """
         return cls({rule.use: rule for rule in rules})
 
@@ -141,6 +152,9 @@ class PageObjectRegistry(dict):
         The Page Object that is **overridden** is declared using the ``instead_of``
         parameter.
 
+        The Item Class could also be **overridden** using the ``to_return``
+        parameter.
+
         The **override** mechanism only works on certain URLs that match the
         ``include`` and ``exclude`` parameters. See the documentation of the
         `url-matcher <https://url-matcher.readthedocs.io/>`_ package for more
@@ -151,9 +165,9 @@ class PageObjectRegistry(dict):
         :param include: The URLs that should be handled by the decorated Page Object.
         :param instead_of: The Page Object that should be `replaced`.
         :param to_return: The Item Class holding the data returned by the Page Object.
-            This parameter is ignored if the Page Object has declared a data type
-            using :class:`~.Returns` or :class:`~.ItemPage`
-            (e.g. ``class ProductPageObject(ItemPage[ProductItem])``).
+            This could be omitted as it could be derived from the ``Returns[ItemClass]``
+            or ``ItemPage[ItemClass]`` declaration of the Page Object. See
+            :ref:`item-classes` section. Code example in :ref:`combination` subsection.
         :param exclude: The URLs over which the override should **not** happen.
         :param priority: The resolution priority in case of `conflicting` rules.
             A conflict happens when the ``include``, ``override``, and ``exclude``
@@ -186,7 +200,7 @@ class PageObjectRegistry(dict):
                 self[cls] = rule
             else:
                 warnings.warn(
-                    f"Multiple @handle_urls annotations with the same 'instead_of' "
+                    f"Multiple @handle_urls decorators for the same Page Object "
                     f"are ignored in the same Registry. The following rule is "
                     f"ignored:\n{rule}",
                     stacklevel=2,
@@ -197,14 +211,14 @@ class PageObjectRegistry(dict):
         return wrapper
 
     def get_rules(self) -> List[ApplyRule]:
-        """Returns all of the :class:`~.ApplyRule` that were declared using
-        the ``@handle_urls`` annotation.
+        """Returns all the :class:`~.ApplyRule` that were declared using
+        the ``@handle_urls`` decorator.
 
         .. warning::
 
             Remember to consider calling :func:`~.web_poet.rules.consume_modules`
             beforehand to recursively import all submodules which contains the
-            ``@handle_urls`` annotations from external Page Objects.
+            ``@handle_urls`` decorators from external Page Objects.
         """
         return list(self.values())
 
@@ -286,7 +300,7 @@ def _walk_module(module: str) -> Iterable:
 
 def consume_modules(*modules: str) -> None:
     """This recursively imports all packages/modules so that the ``@handle_urls``
-    annotation are properly discovered and imported.
+    decorators are properly discovered and imported.
 
     Let's take a look at an example:
 
@@ -307,10 +321,10 @@ def consume_modules(*modules: str) -> None:
         - any other modules that was imported in the same process inside the
           packages/modules above.
 
-    If the ``default_registry`` had other ``@handle_urls`` annotations outside
-    of the packages/modules listed above, then the corresponding
-    :class:`~.ApplyRule` won't be returned. Unless, they were recursively
-    imported in some way similar to :func:`~.web_poet.rules.consume_modules`.
+    If the ``default_registry`` had other ``@handle_urls`` decorators outside of
+    the packages/modules listed above, then the corresponding :class:`~.ApplyRule`
+    won't be returned. Unless, they were recursively imported in some way similar
+    to :func:`~.web_poet.rules.consume_modules`.
     """
 
     for module in modules:

@@ -3,13 +3,17 @@
 Overrides
 =========
 
-Overrides contains mapping rules to associate which URLs a particular
-Page Object would be used. The URL matching rules is handled by another library
-called `url-matcher <https://url-matcher.readthedocs.io>`_.
+Overrides are simply rules represented by a list of :class:`~.ApplyRule` which
+associates which URL patterns a particular Page Object would be used. The URL
+matching rules is handled by another library called
+`url-matcher <https://url-matcher.readthedocs.io>`_.
 
 Using such rules establishes the core concept of Overrides wherein a developer
-could declare that a specific Page Object must be used *(instead of another)*
-for a given set of URL patterns.
+could declare that for a given set of URL patterns a specific Page Object must
+be used:
+
+    * instead of another Page Object, or 
+    * which returns an Item Class instead of some other Item Class.
 
 This enables **web-poet** to be used effectively by other frameworks like 
 `scrapy-poet <https://scrapy-poet.readthedocs.io>`_.
@@ -27,7 +31,7 @@ going to crawl beforehand.
 However, we could at least create a generic Page Object to support parsing of
 some fields in well-known locations of product information like ``<title>``.
 This enables our broadcrawler to at least parse some useful information. Let's
-call such Page Object to be ``GenericProductPage``.
+call such a Page Object to be ``GenericProductPage``.
 
 Assuming that one of our project requirements is to fully support parsing of the
 `top 3 eCommerce websites`, then we'd need to create a Page Object for each one
@@ -50,6 +54,28 @@ Let's see this in action by declaring the Overrides in the Page Objects below.
 Creating Overrides
 ------------------
 
+To simplify the code examples in the next few subsections, let's consider that
+these Item Classes has been predefined.
+
+.. code-block:: python
+
+    import attrs
+
+
+    @attrs.define
+    class Product:
+        product_title: str
+        regular_price: float
+
+
+    @attrs.define
+    class SimilarProduct:
+        product_title: str
+        regular_price: float
+
+Page Object
+~~~~~~~~~~~
+
 Let's take a look at how the following code is structured:
 
 .. code-block:: python
@@ -58,29 +84,32 @@ Let's take a look at how the following code is structured:
 
 
     class GenericProductPage(WebPage):
-        def to_item(self):
-            return {"product-title": self.css("title::text").get()}
+        def to_item(self) -> Product:
+            return Product(product_title=self.css("title::text").get())
 
 
     @handle_urls("example.com", instead_of=GenericProductPage)
     class ExampleProductPage(WebPage):
-        def to_item(self):
+        def to_item(self) -> Product:
             ...  # more specific parsing
 
 
     @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
     class AnotherExampleProductPage(WebPage):
-        def to_item(self):
+        def to_item(self) -> Product:
             ...  # more specific parsing
 
 
     @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage):
-        def to_item(self):
+        def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
 
 The code above declares that:
 
+    - Page Objects return ``Product`` and ``SimilarProduct`` item class. Returning
+      item classes is a preferred approach as explained in the :ref:`web-poet-fields`
+      section.
     - For sites that match the ``example.com`` pattern, ``ExampleProductPage``
       would be used instead of ``GenericProductPage``.
     - The same is true for ``DualExampleProductPage`` where it is used
@@ -100,17 +129,128 @@ The code above declares that:
 
 .. tip::
 
-    The URL patterns declared in the ``@handle_urls`` annotation can still be
+    The URL patterns declared in the ``@handle_urls`` decorator can still be
     further customized. You can read some of the specific parameters in the
     :ref:`API section <api-overrides>` of :func:`web_poet.handle_urls`.
 
+Item Class
+~~~~~~~~~~
+
+An alternative approach for the Page Object Overrides example above is to specify
+the returned Item Class. For example, we could change the previous example into
+the following:
+
+
+.. code-block:: python
+
+    from web_poet import handle_urls, WebPage, Returns
+
+
+    class GenericProductPage(WebPage, Returns[Product]):
+        def to_item(self) -> Product:
+            return Product(product_title=self.css("title::text").get())
+
+
+    @handle_urls("example.com", to_return=Product)
+    class ExampleProductPage(WebPage):
+        def to_item(self) -> Product:
+            ...  # more specific parsing
+
+
+    @handle_urls("anotherexample.com", to_return=Product, exclude="/digital-goods/")
+    class AnotherExampleProductPage(WebPage):
+        def to_item(self) -> Product:
+            ...  # more specific parsing
+
+
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], to_return=Product)
+    class DualExampleProductPage(WebPage):
+        def to_item(self) -> SimilarProduct:
+            ...  # more specific parsing
+
+Let's break this example down:
+
+    - The URL patterns are exactly the same as with the previous code example.
+    - The ``instead_of`` parameter has been replaced with ``to_return`` which
+      accepts an Item Class. This means that:
+
+        - If a ``Product`` Item Class is requested for URLs matching with the
+          "example.com" pattern, then the ``Product`` Item Class would come from
+          the ``to_item()`` method of ``ExampleProductPage``.
+        - Similarly, if the URL matches with "anotherexample.com" without the
+          "/digital-goods/" path, then the ``Product`` Item Class comes from the 
+          ``AnotherExampleProductPage`` Page Object.
+        - However, if a ``Product`` Item Class is requested matching with the URL
+          pattern of "dualexample.com/shop/?product=*", a ``SimilarProduct``
+          Item Class is returned by the ``DualExampleProductPage``'s ``to_item()``
+          method instead.
+
+This has the same concept as with the Page Object Overrides but the context changes
+from the Page Object into the Item Classes returned by the ``to_item()`` method
+instead.
+
+The upside here is that you're able to directly access the item extracted by the
+Page Object for the given site. There's no need to directly call the ``to_item()``
+method to receive it.
+
+However, one downside to this approach is that you lose access to the actual Page
+Object. Aside from the item extracted by the Page Object, there might be some
+other convenience methods or other data from it that you want to access.
+
+
+.. _`combination`:
+
+Combination
+~~~~~~~~~~~
+
+Of course, you can use the combination of both which enables you to specify in
+either contexts of Page Objects and Item Classes.
+
+.. code-block:: python
+
+    from web_poet import handle_urls, WebPage, Returns
+
+
+    class GenericProductPage(WebPage, Returns[Product]):
+        def to_item(self) -> Product:
+            return Product(product_title=self.css("title::text").get())
+
+
+    @handle_urls("example.com", instead_of=GenericProductPage, to_return=Product)
+    class ExampleProductPage(WebPage):
+        def to_item(self) -> Product:
+            ...  # more specific parsing
+
+
+    @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
+    class AnotherExampleProductPage(WebPage, Returns[Product]):
+        def to_item(self) -> Product:
+            ...  # more specific parsing
+
+
+    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
+    class DualExampleProductPage(WebPage, Returns[SimilarProduct]):
+        def to_item(self) -> SimilarProduct:
+            ...  # more specific parsing
+
+Notice that the ``@handle_urls`` decorator for ``AnotherExampleProductPage`` and
+``DualExampleProductPage`` doesn't specify the ``to_return`` parameter at all.
+This is because it's able to directly derive the returned Item Class from the
+respective ``Returns[Product]`` and ``Returns[SimilarProduct]`` declarations.
+
+See the next :ref:`retrieving-overrides` section observe what are the actual
+:class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
+
+
+.. _`retrieving-overrides`:
 
 Retrieving all available Overrides
 ----------------------------------
 
 The :meth:`~.PageObjectRegistry.get_rules` method from the ``web_poet.default_registry``
-allows retrieval of  all :class:`~.ApplyRule` in the given registry.
-Following from our example above, using it would be:
+allows retrieval of all :class:`~.ApplyRule` in the given registry.
+Following from our example above in the :ref:`combination` section, using it
+would be:
 
 .. code-block:: python
 
@@ -119,8 +259,11 @@ Following from our example above, using it would be:
     # Retrieves all ApplyRules that were registered in the registry
     rules = default_registry.get_rules()
 
-    print(len(rules))  # 3
-    print(rules[0])    # ApplyRule(for_patterns=Patterns(include=['example.com'], exclude=[], priority=500), use=<class 'my_project.page_objects.ExampleProductPage'>, instead_of=<class 'my_project.page_objects.GenericProductPage'>, to_return=None, meta={})
+    for r in rules:
+        print(r)
+    # ApplyRule(for_patterns=Patterns(include=('example.com',), exclude=(), priority=500), use=<class 'ExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=('anotherexample.com',), exclude=('/digital-goods/',), priority=500), use=<class 'AnotherExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=('dualexample.com/shop/?product=*', 'dualexample.net/store/?pid=*'), exclude=(), priority=500), use=<class 'DualExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'SimilarProduct'>, meta={})
 
 Remember that using ``@handle_urls`` to annotate the Page Objects would result
 in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
@@ -130,10 +273,10 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
 
     :meth:`~.PageObjectRegistry.get_rules` relies on the fact that all essential
     packages/modules which contains the :func:`web_poet.handle_urls`
-    annotations are properly loaded `(i.e imported)`.
+    decorators are properly loaded `(i.e imported)`.
 
     Thus, for cases like importing and using Page Objects from other external packages,
-    the ``@handle_urls`` annotations from these external sources must be read and
+    the ``@handle_urls`` decorators from these external sources must be read and
     processed properly. This ensures that the external Page Objects have all of their
     :class:`~.ApplyRule` present.
 
@@ -186,7 +329,7 @@ This can be done something like:
     from web_poet import default_registry, consume_modules
 
     # ❌ Remember that this wouldn't retrieve any rules at all since the
-    # annotations are NOT properly imported.
+    # ``@handle_urls`` decorators are NOT properly loaded.
     rules = default_registry.get_rules()
     print(rules)  # []
 
@@ -389,7 +532,7 @@ more priority`). You don't necessarily need to `delete` the **old**
 Creating a new :class:`~.ApplyRule` with a higher priority could be as easy as:
 
     1. Subclassing the Page Object in question.
-    2. Create a new :func:`web_poet.handle_urls` annotation with the same URL
+    2. Declare a new :func:`web_poet.handle_urls` decorator with the same URL
        pattern and Page Object to override but with a much higher priority.
 
 Here's an example:
