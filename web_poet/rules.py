@@ -192,7 +192,7 @@ class PageObjectRegistry(dict):
                 ),
                 use=cls,
                 instead_of=instead_of or overrides,
-                to_return=get_item_cls(cls, preferred=to_return),
+                to_return=to_return or get_item_cls(cls),
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
