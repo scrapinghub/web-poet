@@ -26,7 +26,8 @@ class POTopLevelOverriden2(ItemPage):
     ...
 
 
-# This first annotation is ignored. A single annotation per registry is allowed
+# This first decorator is ignored. A single ``ApplyRule`` with the same Page
+# Object to be used per registry is allowed.
 @handle_urls("example.com", instead_of=POTopLevelOverriden1)
 @handle_urls(
     "example.com", instead_of=POTopLevelOverriden1, exclude="/*.jpg|", priority=300

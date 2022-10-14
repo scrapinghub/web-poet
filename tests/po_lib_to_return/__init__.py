@@ -27,6 +27,20 @@ class ProductLessFields:
 
 
 @handle_urls("example.com")
+class SomePage(ItemPage):
+    """A PO which is only marked by the URL pattern."""
+
+    expected_instead_of = None
+    expected_patterns = Patterns(["example.com"])
+    expected_to_return = None
+    expected_meta = {}
+
+    @field
+    def name(self) -> str:
+        return "some name"
+
+
+@handle_urls("example.com")
 class ProductPage(ItemPage[Product]):
     """A base PO to populate the Product item's fields."""
 

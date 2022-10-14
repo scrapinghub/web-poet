@@ -20,6 +20,7 @@ from tests.po_lib_to_return import (
     ProductPage,
     ProductSimilar,
     SimilarProductPage,
+    SomePage,
 )
 from web_poet import (
     ApplyRule,
@@ -31,19 +32,20 @@ from web_poet import (
 )
 
 POS = {
+    CustomProductPage,
+    CustomProductPageNoReturns,
+    CustomProductPageDataTypeOnly,
+    ImprovedProductPage,
+    LessProductPage,
+    MoreProductPage,
     POTopLevel1,
     POTopLevel2,
     POModule,
     PONestedPkg,
     PONestedModule,
     ProductPage,
-    ImprovedProductPage,
     SimilarProductPage,
-    MoreProductPage,
-    LessProductPage,
-    CustomProductPage,
-    CustomProductPageNoReturns,
-    CustomProductPageDataTypeOnly,
+    SomePage,
 }
 
 
@@ -81,7 +83,7 @@ def test_apply_rule_uniqueness() -> None:
         instead_of=POTopLevelOverriden2,
         to_return=ProductSimilar,
     )
-    # A different data type class results in different hash.
+    # A different item class results in different hash.
     assert hash(rule1) != hash(rule2)
 
 
@@ -152,7 +154,7 @@ def test_list_page_objects_all() -> None:
     assert all(["po_lib_sub_not_imported" not in po.__module__ for po in page_objects])
 
     # Ensure that ALL Override Rules are returned as long as the given
-    # registry's @handle_urls annotation was used.
+    # registry's @handle_urls decorator was used.
     assert page_objects == POS.union({POLibSub})
     for rule in rules:
         # We're ignoring the types below since mypy expects ``Type[ItemPage]``
@@ -169,7 +171,7 @@ def test_registry_get_overrides_deprecation() -> None:
         rules = default_registry.get_overrides()
 
     # It should still work as usual
-    assert len(rules) == 14
+    assert len(rules) == 15
 
 
 def test_consume_module_not_existing() -> None:
@@ -179,7 +181,7 @@ def test_consume_module_not_existing() -> None:
 
 def test_list_page_objects_all_consume() -> None:
     """A test similar to the one above but calls ``consume_modules()`` to properly
-    load the @handle_urls annotations from other modules/packages.
+    load the ``@handle_urls`` decorators from other modules/packages.
     """
     consume_modules("tests_extra")
     rules = default_registry.get_rules()
