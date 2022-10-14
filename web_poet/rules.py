@@ -40,9 +40,8 @@ class ApplyRule:
           pattern represented by the ``for_patterns`` attribute is matched.
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
-        * ``to_return`` - *(optional)* The data container class that will be
-          **replaced** by the item returned by the Page Object specified via the
-          ``use`` parameter.
+        * ``to_return`` - *(optional)* The Item class that marks the Page Object
+          to be **used** which is capable of returning that Item Class.
         * ``meta`` - *(optional)* Any other information you may want to store.
           This doesn't do anything for now but may be useful for future API updates.
 

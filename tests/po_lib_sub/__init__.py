@@ -22,5 +22,5 @@ class POLibSubOverriden(ItemPage):
 class POLibSub(POBase):
     expected_instead_of = POLibSubOverriden
     expected_patterns = Patterns(["sub_example.com"])
-    expected_to_return = None
+    expected_to_return = dict
     expected_meta = {}  # type: ignore

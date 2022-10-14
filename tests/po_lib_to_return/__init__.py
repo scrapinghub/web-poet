@@ -32,7 +32,7 @@ class SomePage(ItemPage):
 
     expected_instead_of = None
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = None
+    expected_to_return = dict
     expected_meta = {}
 
     @field

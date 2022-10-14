@@ -14,7 +14,7 @@ from .. import po_lib_sub  # noqa: F401
 class POBase(ItemPage):
     expected_instead_of: Type[ItemPage]
     expected_patterns: Patterns
-    expected_to_return = None
+    expected_to_return: Any = None
     expected_meta: Dict[str, Any]
 
 
@@ -35,7 +35,7 @@ class POTopLevelOverriden2(ItemPage):
 class POTopLevel1(POBase):
     expected_instead_of = POTopLevelOverriden1
     expected_patterns = Patterns(["example.com"], ["/*.jpg|"], priority=300)
-    expected_to_return = None
+    expected_to_return = dict
     expected_meta = {}  # type: ignore
 
 
@@ -43,5 +43,5 @@ class POTopLevel1(POBase):
 class POTopLevel2(POBase):
     expected_instead_of = POTopLevelOverriden2
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = None
+    expected_to_return = dict
     expected_meta = {}  # type: ignore
