@@ -25,6 +25,9 @@ class FieldInfo:
     #: field metadata
     meta: Optional[dict] = None
 
+    #: field processors
+    out: Optional[List[Callable]] = None
+
 
 class FieldsMixin:
     """A mixin which is required for a class to support fields"""
@@ -104,7 +107,7 @@ def field(
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
-            field_info = FieldInfo(name=name, meta=meta)
+            field_info = FieldInfo(name=name, meta=meta, out=out)
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
