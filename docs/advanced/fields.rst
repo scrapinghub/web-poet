@@ -173,7 +173,7 @@ They will be applied to the field value before returning it:
             return self.response.css(".name ::text").get()
 
 Note that while processors can be applied to async fields, they need to be
-normal functions themselves.
+sync functions themselves.
 
 It's also possible to implement field cleaning and processing in ``to_item``
 but in that case accessing a field directly will return the value without
