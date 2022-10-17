@@ -15,9 +15,48 @@ class Page(ItemPage):
         return "hello"
 
 
+def process_price(value: float) -> float:
+    return max([0, value])
+
+
+class TypedPage(ItemPage):
+    @field
+    def description(self) -> str:
+        return "hello"
+
+    @field(out=[str.strip])
+    def name(self) -> str:
+        return "hello"
+
+    @field(out=[process_price, str])
+    def price(self) -> float:
+        return 123.0
+
+
 @attrs.define
 class Item:
     name: str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type() -> None:
+    page = TypedPage()
+    reveal_type(page.description)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_out() -> None:
+    page = TypedPage()
+    reveal_type(page.name)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_changed_type() -> None:
+    page = TypedPage()
+    reveal_type(page.price)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
