@@ -2,8 +2,9 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
-from functools import update_wrapper
-from typing import Dict, List, Optional, Type, TypeVar
+import inspect
+from functools import update_wrapper, wraps
+from typing import Callable, Dict, List, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -24,6 +25,9 @@ class FieldInfo:
     #: field metadata
     meta: Optional[dict] = None
 
+    #: field processors
+    out: Optional[List[Callable]] = None
+
 
 class FieldsMixin:
     """A mixin which is required for a class to support fields"""
@@ -43,7 +47,13 @@ class FieldsMixin:
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
 
-def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
+def field(
+    method=None,
+    *,
+    cached: bool = False,
+    meta: Optional[dict] = None,
+    out: Optional[List[Callable]] = None,
+):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
     which is then used by :class:`~.ItemPage`'s to_item() method to populate
@@ -55,6 +65,9 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
     The ``meta`` parameter allows to store arbitrary information for the field,
     e.g. ``@field(meta={"expensive": True})``. This information can be later
     retrieved for all fields using the :func:`get_fields_dict` function.
+
+    The ``out`` parameter is an optional list of field processors, which are
+    functions applied to the value of the field before returning it.
     """
 
     class _field:
@@ -63,6 +76,7 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
                 raise TypeError(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
+            method = self._processed(method)
             if cached:
                 self.unbound_method = cached_method(method)
             else:
@@ -72,11 +86,33 @@ def field(method=None, *, cached: bool = False, meta: Optional[dict] = None):
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
-            field_info = FieldInfo(name=name, meta=meta)
+            field_info = FieldInfo(name=name, meta=meta, out=out)
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
+
+        @staticmethod
+        def _process(value):
+            for processor in out:
+                value = processor(value)
+            return value
+
+        def _processed(self, method):
+            """Returns a wrapper for method that calls processors on its result"""
+            if not out:
+                return method
+            if inspect.iscoroutinefunction(method):
+
+                async def processed(*args, **kwargs):
+                    return self._process(await method(*args, **kwargs))
+
+            else:
+
+                def processed(*args, **kwargs):
+                    return self._process(method(*args, **kwargs))
+
+            return wraps(method)(processed)
 
     if method is not None:
         # @field syntax

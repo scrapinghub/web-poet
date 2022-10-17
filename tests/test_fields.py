@@ -422,3 +422,32 @@ async def test_field_with_handle_urls() -> None:
         assert page.name == "name"
         assert page.price == 12.99
         assert await page.to_item() == Product(name="name", price=12.99)
+
+
+def test_field_processors_sync() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[str.strip, proc1])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert page.name == "namex"
+
+
+@pytest.mark.asyncio
+async def test_field_processors_async() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[str.strip, proc1])
+        async def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert await page.name == "namex"
