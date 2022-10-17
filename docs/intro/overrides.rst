@@ -89,19 +89,19 @@ Let's take a look at how the following code is structured:
             return Product(product_title=self.css("title::text").get())
 
 
-    @handle_urls("example.com", instead_of=GenericProductPage)
+    @handle_urls("some.example", instead_of=GenericProductPage)
     class ExampleProductPage(WebPage):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
+    @handle_urls("another.example", instead_of=GenericProductPage, exclude="/digital-goods/")
     class AnotherExampleProductPage(WebPage):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
+    @handle_urls(["dual.example/shop/?product=*", "uk.dual.example/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage):
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
@@ -111,21 +111,21 @@ The code above declares that:
     - Page Objects return ``Product`` and ``SimilarProduct`` item classes. Returning
       item classes is a preferred approach as explained in the :ref:`web-poet-fields`
       section.
-    - For sites that match the ``example.com`` pattern, ``ExampleProductPage``
+    - For sites that match the ``some.example`` pattern, ``ExampleProductPage``
       would be used instead of ``GenericProductPage``.
     - The same is true for ``DualExampleProductPage`` where it is used
       instead of ``GenericProductPage`` for two URL patterns which works as
       something like:
 
-      - :sub:`(match) https://www.dualexample.com/shop/electronics/?product=123`
-      - :sub:`(match) https://www.dualexample.com/shop/books/paperback/?product=849`
-      - :sub:`(NO match) https://www.dualexample.com/on-sale/books/?product=923`
-      - :sub:`(match) https://www.dualexample.net/store/kitchen/?pid=776`
-      - :sub:`(match) https://www.dualexample.net/store/?pid=892`
-      - :sub:`(NO match) https://www.dualexample.net/new-offers/fitness/?pid=892`
+      - :sub:`(match) https://www.dual.example/shop/electronics/?product=123`
+      - :sub:`(match) https://www.dual.example/shop/books/paperback/?product=849`
+      - :sub:`(NO match) https://www.dual.example/on-sale/books/?product=923`
+      - :sub:`(match) https://www.uk.dual.example/store/kitchen/?pid=776`
+      - :sub:`(match) https://www.uk.dual.example/store/?pid=892`
+      - :sub:`(NO match) https://www.uk.dual.example/new-offers/fitness/?pid=892`
 
     - On the other hand, ``AnotherExampleProductPage`` is only used instead of
-      ``GenericProductPage`` when we're handling pages from ``anotherexample.com``
+      ``GenericProductPage`` when we're handling pages from ``another.example``
       that doesn't contain ``/digital-goods/`` in its URL path.
 
 .. tip::
@@ -154,19 +154,19 @@ the following:
             return Product(product_title=self.css("title::text").get())
 
 
-    @handle_urls("example.com")
+    @handle_urls("some.example")
     class ExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls("anotherexample.com", exclude="/digital-goods/")
+    @handle_urls("another.example", exclude="/digital-goods/")
     class AnotherExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"])
+    @handle_urls(["dual.example/shop/?product=*", "uk.dual.example/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage[Product]):
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
@@ -183,13 +183,13 @@ Let's break this example down:
       when creating the :class:`~.ApplyRule`. This means that:
 
         - If a ``Product`` Item Class is requested for URLs matching with the
-          "example.com" pattern, then the ``Product`` Item Class would come from
+          "some.example" pattern, then the ``Product`` Item Class would come from
           the ``to_item()`` method of ``ExampleProductPage``.
-        - Similarly, if the URL matches with "anotherexample.com" without the
+        - Similarly, if the URL matches with "another.example" without the
           "/digital-goods/" path, then the ``Product`` Item Class comes from the 
           ``AnotherExampleProductPage`` Page Object.
         - However, if a ``Product`` Item Class is requested matching with the URL
-          pattern of "dualexample.com/shop/?product=*", a ``SimilarProduct``
+          pattern of "dual.example/shop/?product=*", a ``SimilarProduct``
           Item Class is returned by the ``DualExampleProductPage``'s ``to_item()``
           method instead.
 
@@ -224,19 +224,19 @@ either contexts of Page Objects and Item Classes.
             return Product(product_title=self.css("title::text").get())
 
 
-    @handle_urls("example.com", instead_of=GenericProductPage, to_return=Product)
+    @handle_urls("some.example", instead_of=GenericProductPage, to_return=Product)
     class ExampleProductPage(WebPage):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls("anotherexample.com", instead_of=GenericProductPage, exclude="/digital-goods/")
+    @handle_urls("another.example", instead_of=GenericProductPage, exclude="/digital-goods/")
     class AnotherExampleProductPage(WebPage[Product]):
         def to_item(self) -> Product:
             ...  # more specific parsing
 
 
-    @handle_urls(["dualexample.com/shop/?product=*", "dualexample.net/store/?pid=*"], instead_of=GenericProductPage)
+    @handle_urls(["dual.example/shop/?product=*", "uk.dual.example/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage[SimilarProduct]):
         def to_item(self) -> SimilarProduct:
             ...  # more specific parsing
@@ -264,9 +264,9 @@ would be:
 
     for r in rules:
         print(r)
-    # ApplyRule(for_patterns=Patterns(include=('example.com',), exclude=(), priority=500), use=<class 'ExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
-    # ApplyRule(for_patterns=Patterns(include=('anotherexample.com',), exclude=('/digital-goods/',), priority=500), use=<class 'AnotherExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
-    # ApplyRule(for_patterns=Patterns(include=('dualexample.com/shop/?product=*', 'dualexample.net/store/?pid=*'), exclude=(), priority=500), use=<class 'DualExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'SimilarProduct'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=('some.example',), exclude=(), priority=500), use=<class 'ExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=('another.example',), exclude=('/digital-goods/',), priority=500), use=<class 'AnotherExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'Product'>, meta={})
+    # ApplyRule(for_patterns=Patterns(include=('dual.example/shop/?product=*', 'uk.dual.example/store/?pid=*'), exclude=(), priority=500), use=<class 'DualExampleProductPage'>, instead_of=<class 'GenericProductPage'>, to_return=<class 'SimilarProduct'>, meta={})
 
 Remember that using ``@handle_urls`` to annotate the Page Objects would result
 in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
@@ -343,10 +343,10 @@ This can be done something like:
 
     # The collected rules would then be as follows:
     print(rules)
-    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
-    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 .. note::
 
@@ -377,18 +377,18 @@ Here's an example of how you could manually select the rules using the
 
     ecom_rules = default_registry.search_rules(instead_of=ecommerce_page_objects.EcomGenericPage)
     print(ecom_rules)
-    # ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
     gadget_rules = default_registry.search_rules(use=gadget_sites_page_objects.site_3.GadgetSite3)
     print(gadget_rules)
-    # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
     rules = ecom_rules + gadget_rules
     print(rules)
-    # ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 As you can see, using the :meth:`~.PageObjectRegistry.search_rules` method allows you to
 conveniently select for :class:`~.ApplyRule` which conform to a specific criteria. This
@@ -435,28 +435,28 @@ have the first approach as an example:
 
     # The collected rules would then be as follows:
     print(rules)
-    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
-    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
-    @handle_urls("site_1.com", instead_of=ecommerce_page_objects.EcomGenericPage, priority=1000)
+    @handle_urls("site_1.example", instead_of=ecommerce_page_objects.EcomGenericPage, priority=1000)
     class ImprovedEcomSite1(ecommerce_page_objects.site_1.EcomSite1):
         def to_item(self):
             ...  # call super().to_item() and improve on the item's shortcomings
 
     rules = default_registry.get_rules()
     print(rules)
-    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
-    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
-    # 5. ApplyRule(for_patterns=Patterns(include=['site_1.com'], exclude=[], priority=1000), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 1. ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 5. ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=1000), use=<class 'my_project.ImprovedEcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
 Notice that we're adding a new :class:`~.ApplyRule` for the same URL pattern
-for ``site_1.com``.
+for ``site_1.example``.
 
-When the time comes that a Page Object needs to be selected when parsing ``site_1.com``
+When the time comes that a Page Object needs to be selected when parsing ``site_1.example``
 and it needs to replace ``ecommerce_page_objects.EcomGenericPage``, rules **#1**
 and **#5** will be the choices. However, since we've assigned a much **higher priority**
 for the new rule in **#5** than the default ``500`` value,  rule **#5** will be
@@ -478,18 +478,18 @@ available rules:
 
 .. code-block:: python
 
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
 However, it's technically **NOT** a `conflict`, **yet**, since:
 
-    - ``ecommerce_page_objects.site_2.EcomSite2`` would only be used in **site_2.com**
+    - ``ecommerce_page_objects.site_2.EcomSite2`` would only be used in **site_2.example**
       if ``ecommerce_page_objects.EcomGenericPage`` is to be replaced.
     - The same case with ``gadget_sites_page_objects.site_2.GadgetSite2`` wherein
-      it's only going to be utilized for **site_2.com** if the following is to be
+      it's only going to be utilized for **site_2.example** if the following is to be
       replaced: ``gadget_sites_page_objects.GadgetGenericPage``.
 
-It would be only become a conflict if both rules for **site_2.com** `intend to
+It would be only become a conflict if both rules for **site_2.example** `intend to
 replace the` **same** `Page Object`.
 
 However, let's suppose that there are some :class:`~.ApplyRule` which actually
@@ -498,8 +498,8 @@ result in a conflict. To give an example, let's suppose that rules **#2** and **
 
 .. code-block:: python
 
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
 Notice that the ``instead_of`` param are the same and only the ``use`` param
 remained different.
@@ -545,7 +545,7 @@ Here's an example:
     from web_poet import default_registry, consume_modules, handle_urls
     import ecommerce_page_objects, gadget_sites_page_objects, common_items
 
-    @handle_urls("site_2.com", instead_of=common_items.ProductGenericPage, priority=1000)
+    @handle_urls("site_2.example", instead_of=common_items.ProductGenericPage, priority=1000)
     class EcomSite2Copy(ecommerce_page_objects.site_1.EcomSite1):
         def to_item(self):
             return super().to_item()
@@ -555,10 +555,10 @@ the new :class:`~.ApplyRule` having a much higher priority (see rule **#4**):
 
 .. code-block:: python
 
-    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
-    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 2. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 3. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_2.GadgetSite2'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
-    # 4. ApplyRule(for_patterns=Patterns(include=['site_2.com'], exclude=[], priority=1000), use=<class 'my_project.EcomSite2Copy'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
+    # 4. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=1000), use=<class 'my_project.EcomSite2Copy'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
 A similar idea was also discussed in the :ref:`intro-improve-po` section.
 
@@ -591,9 +591,9 @@ easily find the Page Object's rule using its `key`. Here's an example:
     consume_modules("package_A", "package_B", "package_C")
 
     rules = [
-        default_registry[package_A.PageObject1],  # ApplyRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
-        default_registry[package_B.PageObject2],  # ApplyRule(for_patterns=Patterns(include=['site_B.com'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
-        default_registry[package_C.PageObject3],  # ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+        default_registry[package_A.PageObject1],  # ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+        default_registry[package_B.PageObject2],  # ApplyRule(for_patterns=Patterns(include=['site_B.example'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+        default_registry[package_C.PageObject3],  # ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     ]
 
 Another approach would be using the :meth:`~.PageObjectRegistry.search_rules`
@@ -614,17 +614,17 @@ Here's an example:
 
     rule_from_A = default_registry.search_rules(use=package_A.PageObject1)
     print(rule_from_A)
-    # [ApplyRule(for_patterns=Patterns(include=['site_A.com'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})]
+    # [ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})]
 
     rule_from_B = default_registry.search_rules(instead_of=GenericProductPage)
     print(rule_from_B)
     # []
 
-    rule_from_C = default_registry.search_rules(for_patterns=Patterns(include=["site_C.com"]))
+    rule_from_C = default_registry.search_rules(for_patterns=Patterns(include=["site_C.example"]))
     print(rule_from_C)
     # [
-    #     ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={}),
-    #     ApplyRule(for_patterns=Patterns(include=['site_C.com'], exclude=[], priority=1000), use=<class 'package_C.PageObject3_improved'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+    #     ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={}),
+    #     ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=1000), use=<class 'package_C.PageObject3_improved'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     # ]
 
     rules = rule_from_A + rule_from_B + rule_from_C

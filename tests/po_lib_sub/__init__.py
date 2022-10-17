@@ -18,9 +18,9 @@ class POLibSubOverriden(ItemPage):
     ...
 
 
-@handle_urls("sub_example.com", instead_of=POLibSubOverriden)
+@handle_urls("sub.example", instead_of=POLibSubOverriden)
 class POLibSub(POBase):
     expected_instead_of = POLibSubOverriden
-    expected_patterns = Patterns(["sub_example.com"])
+    expected_patterns = Patterns(["sub.example"])
     expected_to_return = dict
     expected_meta = {}  # type: ignore
