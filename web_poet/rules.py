@@ -40,7 +40,7 @@ class ApplyRule:
           pattern represented by the ``for_patterns`` attribute is matched.
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
-        * ``to_return`` - *(optional)* The Item class that marks the Page Object
+        * ``to_return`` - *(optional)* The Item Class that marks the Page Object
           to be **used** which is capable of returning that Item Class.
         * ``meta`` - *(optional)* Any other information you may want to store.
           This doesn't do anything for now but may be useful for future API updates.
@@ -92,7 +92,7 @@ class PageObjectRegistry(dict):
         from web_poet import handle_urls, default_registry, WebPage
 
         @handle_urls("example.com", instead_of=ProductPageObject)
-        class ExampleComProductPage(WebPage):
+        class ExampleComProductPage(WebPage[ProductItem]):
             ...
 
         override_rules = default_registry.get_rules()
@@ -160,7 +160,7 @@ class PageObjectRegistry(dict):
         of the `url-matcher <https://url-matcher.readthedocs.io/>`_ package for
         more information about them.
 
-        This decorator is able to derive the item class returned by the Page
+        This decorator is able to derive the Item Class returned by the Page
         Object (see :ref:`item-class-example` section for some examples). This is
         important since it marks what type of item the Page Object is capable of
         returning for the given URL patterns. For certain advanced cases, you can

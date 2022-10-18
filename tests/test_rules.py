@@ -81,7 +81,7 @@ def test_apply_rule_uniqueness() -> None:
         instead_of=POTopLevelOverriden2,
         to_return=ProductSimilar,
     )
-    # A different item class results in different hash.
+    # A different Item Class results in different hash.
     assert hash(rule1) != hash(rule2)
 
 

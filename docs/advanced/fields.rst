@@ -185,7 +185,7 @@ Item classes
 ------------
 
 In all previous examples, ``to_item`` methods are returning ``dict``
-instances. It is common to use item classes (e.g. dataclasses or
+instances. It is common to use Item Classes (e.g. dataclasses or
 attrs instances) instead of unstructured dicts to hold the data:
 
 .. code-block:: python
@@ -209,7 +209,7 @@ attrs instances) instead of unstructured dicts to hold the data:
             )
 
 :mod:`web_poet.fields` supports it, by allowing to parametrize
-:class:`~.ItemPage` with an item class:
+:class:`~.ItemPage` with an Item Class:
 
 .. code-block:: python
 
@@ -217,13 +217,13 @@ attrs instances) instead of unstructured dicts to hold the data:
     class ProductPage(ItemPage[Product]):
         # ...
 
-When :class:`~.ItemPage` is parametrized with an item class,
+When :class:`~.ItemPage` is parametrized with an Item Class,
 its ``to_item()`` method starts to return item instances, instead
 of ``dict`` instances. In the example above ``ProductPage.to_item`` method
 returns ``Product`` instances.
 
-Defining an Item class may be an overkill if you only have a single Page Object,
-but item classes are of a great help when
+Defining an Item Class may be an overkill if you only have a single Page Object,
+but Item Classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
 * if you want to define the schema upfront.
@@ -231,7 +231,7 @@ but item classes are of a great help when
 Error prevention
 ~~~~~~~~~~~~~~~~
 
-Item classes play particularly well with the
+Item Classes play particularly well with the
 :func:`@field <web_poet.fields.field>` decorator, preventing some of the errors,
 which may happen if results are plain "dicts".
 
@@ -256,7 +256,7 @@ Consider the following badly written page object:
         def nane(self):
             return self.response.css(".name").get()
 
-Because the ``Product`` item class is used, a typo ("nane" instead of "name") 
+Because the ``Product`` Item Class is used, a typo ("nane" instead of "name") 
 is detected at runtime: the creation of a ``Product`` instance would fail with 
 a ``TypeError``, because of the unexpected keyword argument "nane".
 
@@ -265,7 +265,7 @@ detected: the ``price`` argument is required, but there is no extraction method 
 this attribute, so ``Product.__init__`` will raise another ``TypeError``,
 indicating that a required argument is missing.
 
-Without an item class, none of these errors are detected.
+Without an Item Class, none of these errors are detected.
 
 Changing Item Class
 ~~~~~~~~~~~~~~~~~~~
@@ -335,7 +335,7 @@ to the item:
             # ...
 
 Note how :class:`~.Returns` is used as one of the base classes of
-``CustomFooPage``; it allows to change the item class returned by a page object.
+``CustomFooPage``; it allows to change the Item Class returned by a page object.
 
 Removing fields (as well as renaming) is a bit more tricky.
 
@@ -370,13 +370,13 @@ is passed, and ``name`` is the only field ``CustomItem`` supports.
 
 To recap:
 
-* Use ``Returns[NewItemType]`` to change the item class in a subclass.
+* Use ``Returns[NewItemType]`` to change the Item Class in a subclass.
 * Don't use ``skip_nonitem_fields=True`` when your Page Object corresponds
   to an item exactly, or when you're only adding fields. This is a safe
   approach, which allows to detect typos in field names, even for optional
   fields.
 * Use ``skip_nonitem_fields=True`` when it's possible for the Page Object
-  to contain more ``@fields`` than defined in the item class, e.g. because
+  to contain more ``@fields`` than defined in the Item Class, e.g. because
   Page Object is inherited from some other base Page Object.
 
 Caching
