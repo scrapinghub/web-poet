@@ -16,5 +16,5 @@ class PONestedPkgOverriden(ItemPage):
 class PONestedPkg(POBase):
     expected_instead_of = PONestedPkgOverriden
     expected_patterns = Patterns(["example.com", "example.org"], ["/*.jpg|"])
-    expected_to_return = dict
+    expected_to_return = None
     expected_meta = {}  # type: ignore

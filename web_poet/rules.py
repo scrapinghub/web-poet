@@ -46,8 +46,15 @@ class ApplyRule:
           This doesn't do anything for now but may be useful for future API updates.
 
     The main functionality of this class lies in the ``instead_of`` and ``to_return``
-    parameter. Should both of these be omitted, then :class:`~.ApplyRule` simply
+    parameters. Should both of these be omitted, then :class:`~.ApplyRule` simply
     tags which URL patterns the given Page Object is expected to be used.
+
+    As much as possible, the ``to_return`` parameter should capture the Item Class
+    that the Page Object is capable of returning. Before passing it to :class:`~.ApplyRule`,
+    the ``to_return`` value is primarily derived from the return class specified
+    from Page Objects that are subclasses of :class:`~.ItemPage`. However, a
+    special case exists when a Page Object returns a ``dict`` as an item but then
+    the rule should have ``to_return=None`` and **NOT** ``to_return=dict``.
 
     More information regarding its usage in :ref:`intro-overrides`.
 

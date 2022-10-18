@@ -24,7 +24,7 @@ def get_generic_parameter(cls):
             return args[0]
 
 
-def get_item_cls(cls, default=dict):
+def get_item_cls(cls, default=None):
     param = get_generic_parameter(cls)
     if param is None or isinstance(param, typing.TypeVar):  # class is not parametrized
         return default

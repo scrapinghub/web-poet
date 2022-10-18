@@ -12,5 +12,5 @@ class POModuleOverriden(ItemPage):
 class POModule(POBase):
     expected_instead_of = POModuleOverriden
     expected_patterns = Patterns(["example.com"])
-    expected_to_return = dict
+    expected_to_return = None
     expected_meta = {"extra_arg": "foo"}  # type: ignore

@@ -47,7 +47,7 @@ class Returns(typing.Generic[ItemT]):
     @property
     def item_cls(self) -> typing.Type[ItemT]:
         """Item class"""
-        return get_item_cls(self.__class__)
+        return get_item_cls(self.__class__, default=dict)
 
 
 class ItemPage(Injectable, Returns[ItemT]):
