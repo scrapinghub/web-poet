@@ -241,15 +241,17 @@ class PageObjectRegistry(dict):
         return self.get_rules()
 
     def search_rules(self, **kwargs) -> List[ApplyRule]:
-        """Return any :class:`ApplyRule` that has any of its attributes
-        match the rules inside the registry.
+        """Return any :class:`ApplyRule` from the registry that matches with all
+        of the provided attributes.
 
         Sample usage:
 
         .. code-block:: python
 
             rules = registry.search_rules(use=ProductPO, instead_of=GenericPO)
-            print(len(rules))  # 1
+            print(len(rules))           # 1
+            print(rules[0].use)         # ProductPO
+            print(rules[0].instead_of)  # GenericPO
 
         """
 
