@@ -937,7 +937,7 @@ having additional requests using :class:`~.HttpClient` are able to work with
 any type of HTTP downloader implementation.
 
 For example, in Python, the common HTTP libraries have different types of base
-exceptions when something has ocurred:
+exceptions when something has occurred:
 
     * `aiohttp.ClientError <https://docs.aiohttp.org/en/v3.8.1/client_reference.html?highlight=exceptions#aiohttp.ClientError>`_
     * `requests.RequestException <https://2.python-requests.org/en/master/api/#requests.RequestException>`_
@@ -1002,7 +1002,7 @@ All exceptions that the HTTP Downloader Implementation (see :ref:`advanced-downl
 doc section) explicitly raises when implementing it for **web-poet** MUST be
 :class:`web_poet.exceptions.http.HttpError` *(or a subclass from it)*. 
 
-For frameworks that implement and use **web-poet**, exceptions that ocurred when
+For frameworks that implement and use **web-poet**, exceptions that occurred when
 handling the additional requests like `connection errors`, `TLS errors`, etc MUST
 be replaced by :class:`web_poet.exceptions.http.HttpRequestError` by raising it
 explicitly.
