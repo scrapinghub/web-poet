@@ -122,9 +122,9 @@ The code above declares that:
       - :sub:`(NO match) https://www.uk.dual.example/new-offers/fitness/?pid=892`
 
     - On the other hand, ``AnotherExampleProductPage`` is used instead of
-      ``GenericProductPage`` when we're handling pages that match with the
-      ``another.example`` URL Pattern which doesn't contain ``/digital-goods/``
-      in its URL path.
+      ``GenericProductPage`` when we're handling pages that match the
+      ``another.example`` URL Pattern, which doesn't contain 
+      ``/digital-goods/`` in its URL path.
 
 .. tip::
 
@@ -169,10 +169,8 @@ the following:
 Let's break this example down:
 
     - The URL patterns are exactly the same as with the previous code example.
-    - The ``@handle_urls`` is able to derive the returned Item Class (i.e.
-      ``Product``) from the respective Page Object. For advanced use cases, you
-      can pass the ``to_return`` parameter directly to the ``@handle_urls``
-      decorator where it replaces any derived values.
+    - The ``@handle_urls`` decorator determines the Item Class to return (i.e. 
+      ``Product``) from the decorated Page Object.
     - The ``instead_of`` parameter can be omitted in lieu of the derived Item
       Class from the Page Object which becomes the ``to_return`` attribute in
       :class:`~.ApplyRule` instances. This means that:
@@ -188,17 +186,23 @@ Let's break this example down:
           Item Class is returned by the ``DualExampleProductPage``'s ``to_item()``
           method instead.
 
-This has the same concept as with the Page Object Overrides but the context changes
-from using a Page Object into Item Classes instead (returned by the ``to_item()``
-method).
+Specifying the Item Class that a Page Object returns makes it possible for 
+web-poet frameworks to make Page Object usage transparent to end users.
 
-The upside here is that you're able to directly access the item extracted by the
-Page Object for the given site. There's no need to directly call the ``to_item()``
-method to receive it.
+For example, a web-poet framework could implement a function like:
 
-However, one downside to this approach is that you lose access to the actual Page
-Object. Aside from the item extracted by the Page Object, there might be some
-other convenience methods or other data from it that you want to access.
+.. code-block:: python
+
+    item = get_item(url, item_class=Product)
+
+Here there is no reference to the Page Object being used underneath, you only 
+need to indicate the desired Item Class, and the web-poet framework 
+automatically determines the Page Object to use based on the specified URL and 
+the specified Item Class.
+
+Note, however, that web-poet frameworks are encouraged to also allow getting a
+Page Object instead of an Item Class instance, for scenarios where end users 
+wish access to Page Object attributes and methods.
 
 
 .. _combination:

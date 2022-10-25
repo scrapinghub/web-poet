@@ -16,7 +16,7 @@ TBD
 
 * Modify the call signature and behavior of ``handle_urls``:
 
-    * New ``instead_of`` parameter which does the same thing with ``overrides``.
+    * New ``instead_of`` parameter which does the same thing as ``overrides``.
     * The old ``overrides`` parameter is not required anymore as it's set for
       deprecation.
     * It sets a ``to_return`` parameter when creating ``ApplyRule`` based on the

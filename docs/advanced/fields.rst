@@ -181,7 +181,7 @@ processing, so it's preferable to use field processors instead.
 
 .. _item-classes:
 
-Item classes
+Item Classes
 ------------
 
 In all previous examples, ``to_item`` methods are returning ``dict``
