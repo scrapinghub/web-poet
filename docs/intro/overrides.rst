@@ -4,9 +4,9 @@ Overrides
 =========
 
 Overrides are rules represented by a list of :class:`~.ApplyRule` which
-associates which URL patterns a particular Page Object would be used. The URL
-matching rules is handled by another library called
-`url-matcher <https://url-matcher.readthedocs.io>`_.
+associates which URL patterns a particular Page Object (see :ref:`Page Objects
+introduced here <from-ground-up>`) would be used. The URL matching rules is
+handled by another library called `url-matcher <https://url-matcher.readthedocs.io>`_.
 
 Using such rules establishes the core concept of Overrides wherein a developer
 could declare that for a given set of URL patterns, a specific Page Object must
