@@ -13,7 +13,7 @@ could declare that for a given set of URL patterns, a specific Page Object must
 be used instead of another Page Object.
 
 The :class:`~.ApplyRule` also supports pointing to the item returned by a specific
-Page Object if it both matches the URL pattern and the Item Class specified in the
+Page Object if it both matches the URL pattern and the item class specified in the
 rule.
 
 This enables **web-poet** to be used effectively by other frameworks like 
@@ -56,7 +56,7 @@ Creating Overrides
 ------------------
 
 To simplify the code examples in the next few subsections, let's assume that
-these Item Classes have been predefined:
+these item classes have been predefined:
 
 .. code-block:: python
 
@@ -105,8 +105,8 @@ Let's take a look at how the following code is structured:
 
 The code above declares that:
 
-    - The Page Objects return ``Product`` and ``SimilarProduct`` Item Classes.
-      Returning Item Classes is a preferred approach as explained in the
+    - The Page Objects return ``Product`` and ``SimilarProduct`` item classes.
+      Returning item classes is a preferred approach as explained in the
       :ref:`web-poet-fields` section.
     - For sites that match the ``some.example`` pattern, ``ExampleProductPage``
       would be used instead of ``GenericProductPage``.
@@ -138,7 +138,7 @@ Item Class
 ~~~~~~~~~~
 
 An alternative approach for the Page Object Overrides example above is to specify
-the returned Item Class. For example, we could change the previous example into
+the returned item class. For example, we could change the previous example into
 the following:
 
 
@@ -169,24 +169,24 @@ the following:
 Let's break this example down:
 
     - The URL patterns are exactly the same as with the previous code example.
-    - The ``@handle_urls`` decorator determines the Item Class to return (i.e. 
+    - The ``@handle_urls`` decorator determines the item class to return (i.e. 
       ``Product``) from the decorated Page Object.
     - The ``instead_of`` parameter can be omitted in lieu of the derived Item
       Class from the Page Object which becomes the ``to_return`` attribute in
       :class:`~.ApplyRule` instances. This means that:
 
-        - If a ``Product`` Item Class is requested for URLs matching with the
-          "some.example" pattern, then the ``Product`` Item Class would come from
+        - If a ``Product`` item class is requested for URLs matching with the
+          "some.example" pattern, then the ``Product`` item class would come from
           the ``to_item()`` method of ``ExampleProductPage``.
         - Similarly, if a page with a URL matches with "another.example" without
-          the "/digital-goods/" path, then the ``Product`` Item Class comes from
+          the "/digital-goods/" path, then the ``Product`` item class comes from
           the ``AnotherExampleProductPage`` Page Object.
-        - However, if a ``Product`` Item Class is requested matching with the URL
+        - However, if a ``Product`` item class is requested matching with the URL
           pattern of "dual.example/shop/?product=*", a ``SimilarProduct``
-          Item Class is returned by the ``DualExampleProductPage``'s ``to_item()``
+          item class is returned by the ``DualExampleProductPage``'s ``to_item()``
           method instead.
 
-Specifying the Item Class that a Page Object returns makes it possible for 
+Specifying the item class that a Page Object returns makes it possible for 
 web-poet frameworks to make Page Object usage transparent to end users.
 
 For example, a web-poet framework could implement a function like:
@@ -196,12 +196,12 @@ For example, a web-poet framework could implement a function like:
     item = get_item(url, item_class=Product)
 
 Here there is no reference to the Page Object being used underneath, you only 
-need to indicate the desired Item Class, and the web-poet framework 
+need to indicate the desired item class, and the web-poet framework 
 automatically determines the Page Object to use based on the specified URL and 
-the specified Item Class.
+the specified item class.
 
 Note, however, that web-poet frameworks are encouraged to also allow getting a
-Page Object instead of an Item Class instance, for scenarios where end users 
+Page Object instead of an item class instance, for scenarios where end users 
 wish access to Page Object attributes and methods.
 
 
@@ -211,7 +211,7 @@ Combination
 ~~~~~~~~~~~
 
 Of course, you can use the combination of both which enables you to specify in
-either contexts of Page Objects and Item Classes.
+either contexts of Page Objects and item classes.
 
 .. code-block:: python
 

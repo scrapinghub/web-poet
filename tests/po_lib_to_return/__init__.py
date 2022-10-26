@@ -97,7 +97,7 @@ class SeparateProductPage(ItemPage[ProductSeparate]):
 @handle_urls("example.com", instead_of=ProductPage)
 class SimilarProductPage(ProductPage, Returns[ProductSimilar]):
     """A custom PO inheriting from a base PO returning the same fields but in
-    a different Item Class.
+    a different item class.
     """
 
     expected_instead_of = ProductPage
@@ -109,7 +109,7 @@ class SimilarProductPage(ProductPage, Returns[ProductSimilar]):
 @handle_urls("example.com", instead_of=ProductPage)
 class MoreProductPage(ProductPage, Returns[ProductMoreFields]):
     """A custom PO inheriting from a base PO returning more items using a
-    different Item Class.
+    different item class.
     """
 
     expected_instead_of = ProductPage
@@ -127,7 +127,7 @@ class LessProductPage(
     ProductPage, Returns[ProductFewerFields], skip_nonitem_fields=True
 ):
     """A custom PO inheriting from a base PO returning less items using a
-    different Item Class.
+    different item class.
     """
 
     expected_instead_of = ProductPage
@@ -143,7 +143,7 @@ class LessProductPage(
 @handle_urls("example.com", instead_of=ProductPage, to_return=ProductSimilar)
 class CustomProductPage(ProductPage, Returns[Product]):
     """A custom PO inheriting from a base PO returning the same fields but in
-    a different Item Class.
+    a different item class.
 
     This PO is the same with ``SimilarProductPage`` but passes a ``to_return``
     in the ``@handle_urls`` decorator.

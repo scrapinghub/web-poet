@@ -41,7 +41,7 @@ ItemT = typing.TypeVar("ItemT")
 
 
 class Returns(typing.Generic[ItemT]):
-    """Inherit from this generic mixin to change the Item Class used by
+    """Inherit from this generic mixin to change the item class used by
     :class:`~.ItemPage`"""
 
     @property

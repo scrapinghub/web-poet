@@ -40,8 +40,8 @@ class ApplyRule:
           pattern represented by the ``for_patterns`` attribute is matched.
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
-        * ``to_return`` - *(optional)* The Item Class that marks the Page Object
-          to be **used** which is capable of returning that Item Class.
+        * ``to_return`` - *(optional)* The item class that marks the Page Object
+          to be **used** which is capable of returning that item class.
         * ``meta`` - *(optional)* Any other information you may want to store.
           This doesn't do anything for now but may be useful for future API updates.
 
@@ -74,7 +74,7 @@ class ApplyRule:
            the Page Object declared in ``use`` should be used instead of
            ``ReplacedPageObject``.
 
-    The ``to_return`` parameter should capture the Item Class that the Page Object
+    The ``to_return`` parameter should capture the item class that the Page Object
     is capable of returning. Before passing it to :class:`~.ApplyRule`, the
     ``to_return`` value is primarily derived from the return class specified
     from Page Objects that are subclasses of :class:`~.ItemPage` (see this
@@ -85,14 +85,14 @@ class ApplyRule:
     The ``to_return`` parameter is used as a shortcut to directly retrieve the
     item from the Page Object to be used for a given URL. It works as:
 
-        1. Given a URL and and Item Class that we want, match it respectively
+        1. Given a URL and and item class that we want, match it respectively
            against ``for_patterns`` and ``to_return`` from the registry rules.
         2. This could give us a collection of rules. We need to select one based
            on the highest priority set by `url-matcher`_.
         3. When a single rule has been selected, create an instance of the Page
            Object specified in its ``use`` parameter.
         4. Finally, call the ``.to_item()`` method of the Page Object to retrieve
-           an instance of the Item Class.
+           an instance of the item class.
 
     Using the ``to_return`` parameter basically adds the convenient step #4 above.
 
@@ -200,7 +200,7 @@ class PageObjectRegistry(dict):
         of the `url-matcher <https://url-matcher.readthedocs.io/>`_ package for
         more information about them.
 
-        This decorator is able to derive the Item Class returned by the Page
+        This decorator is able to derive the item class returned by the Page
         Object (see :ref:`item-class-example` section for some examples). This is
         important since it marks what type of item the Page Object is capable of
         returning for the given URL patterns. For certain advanced cases, you can
@@ -216,7 +216,7 @@ class PageObjectRegistry(dict):
 
         :param include: The URLs that should be handled by the decorated Page Object.
         :param instead_of: The Page Object that should be `replaced`.
-        :param to_return: The Item Class holding the data returned by the Page Object.
+        :param to_return: The item class holding the data returned by the Page Object.
             This could be omitted as it could be derived from the ``Returns[ItemClass]``
             or ``ItemPage[ItemClass]`` declaration of the Page Object. See
             :ref:`item-classes` section. Code example in :ref:`combination` subsection.
