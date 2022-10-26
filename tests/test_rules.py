@@ -118,13 +118,13 @@ def test_apply_rule_immutability() -> None:
     )
 
     with pytest.raises(attrs.exceptions.FrozenInstanceError):
-        rule.use = Patterns(include=["example.com/"])  # type: ignore[misc]
+        rule.for_patterns = Patterns(include=["example.com/"])  # type: ignore[misc]
 
     with pytest.raises(attrs.exceptions.FrozenInstanceError):
         rule.use = POTopLevel2  # type: ignore[misc]
 
     with pytest.raises(attrs.exceptions.FrozenInstanceError):
-        rule.use = POTopLevelOverriden2  # type: ignore[misc]
+        rule.instead_of = POTopLevelOverriden2  # type: ignore[misc]
 
 
 def test_apply_rule_converter_on_pattern() -> None:
