@@ -3,7 +3,7 @@ import weakref
 from collections.abc import Iterable
 from functools import lru_cache, wraps
 from types import MethodType
-from typing import Any, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar
 from warnings import warn
 
 from async_lru import alru_cache
@@ -117,7 +117,7 @@ def _create_deprecated_class(
     return deprecated_cls
 
 
-CallableT = TypeVar("CallableT")
+CallableT = TypeVar("CallableT", bound=Callable)
 
 
 def memoizemethod_noargs(method: CallableT) -> CallableT:
@@ -127,7 +127,7 @@ def memoizemethod_noargs(method: CallableT) -> CallableT:
     It is faster than :func:`cached_method`, and doesn't add new attributes
     to the instance, but it doesn't work if objects are unhashable.
     """
-    cache = weakref.WeakKeyDictionary()
+    cache: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -135,7 +135,7 @@ def memoizemethod_noargs(method: CallableT) -> CallableT:
             cache[self] = method(self, *args, **kwargs)
         return cache[self]
 
-    return new_method
+    return new_method  # type: ignore[return-value]
 
 
 def cached_method(method: CallableT) -> CallableT:
@@ -166,7 +166,7 @@ def cached_method(method: CallableT) -> CallableT:
     return meth
 
 
-def _cached_method_sync(method: CallableT, cached_method_name: str) -> CallableT:
+def _cached_method_sync(method, cached_method_name: str):
     @wraps(method)
     def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
@@ -182,7 +182,7 @@ def _cached_method_sync(method: CallableT, cached_method_name: str) -> CallableT
     return inner
 
 
-def _cached_method_async(method: CallableT, cached_method_name: str) -> CallableT:
+def _cached_method_async(method, cached_method_name: str):
     @wraps(method)
     async def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
