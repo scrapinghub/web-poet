@@ -77,35 +77,28 @@ def test_apply_rule_uniqueness() -> None:
     # The ``meta`` parameter is ignored in the hash.
     assert hash(rule1) == hash(rule2)
 
-    rule1 = ApplyRule(
-        for_patterns=patterns,
-        use=POTopLevel1,
-        instead_of=POTopLevelOverriden1,
-        to_return=Product,
-    )
-    rule2 = ApplyRule(
-        for_patterns=patterns,
-        use=POTopLevel1,
-        instead_of=POTopLevelOverriden1,
-        to_return=ProductSimilar,
-    )
-    # A different Item Class results in different hash.
-    assert hash(rule1) != hash(rule2)
+    params = [
+        {
+            "for_patterns": patterns,
+            "use": POTopLevel1,
+            "instead_of": POTopLevelOverriden1,
+            "to_return": Product,
+        },
+        {
+            "for_patterns": patterns_b,
+            "use": POTopLevel2,
+            "instead_of": POTopLevelOverriden2,
+            "to_return": ProductSimilar,
+        },
+    ]
 
-    rule1 = ApplyRule(
-        for_patterns=patterns,
-        use=POTopLevel1,
-        instead_of=POTopLevelOverriden1,
-        to_return=Product,
-    )
-    rule2 = ApplyRule(
-        for_patterns=patterns_b,
-        use=POTopLevel2,
-        instead_of=POTopLevelOverriden2,
-        to_return=ProductSimilar,
-    )
-    # Totally different params affect the hash completely
-    assert hash(rule1) != hash(rule2)
+    for change in params[0].keys():
+        # Changing any one of the params should result in a hash mismatch
+        rule1 = ApplyRule(**params[0])
+        kwargs = params[0].copy()
+        kwargs.update({change: params[1][change]})
+        rule2 = ApplyRule(**kwargs)
+        assert hash(rule1) != hash(rule2)
 
 
 def test_apply_rule_immutability() -> None:
