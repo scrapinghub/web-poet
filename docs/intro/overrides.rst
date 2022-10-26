@@ -1,23 +1,116 @@
 .. _intro-overrides:
 
+Apply Rules
+===========
+
+Overview
+--------
+
+@handle_urls
+~~~~~~~~~~~~
+
+web-poet provides a :func:`~.handle_urls` decorator, which allows to
+declare how the page objects can be used (applied):
+
+* for which websites / URL patterns they work,
+* which data type (item classes) they can return,
+* which page objects can they replace (override; more on this later).
+
+.. code-block:: python
+
+    from web_poet import ItemPage, handle_urls
+    from my_items import MyItem
+
+    @handle_urls("example.com")
+    class MyPage(ItemPage[MyItem]):
+        # ...
+
+
+``handle_urls("example.com")`` can serve as a documentation, but it also enables
+getting the information about page objects programmatically.
+The information about all page objects decorated with
+:func:`~.handle_urls` is stored in ``web_poet.default_registry``, which is
+an instance of :class:`~.PageObjectRegistry`. In the example above the
+following :class:`~.ApplyRule` is added to the registry:
+
+.. code-block::
+
+    ApplyRule(
+        for_patterns=Patterns(include=('example.com',), exclude=(), priority=500),
+        use=<class 'MyPage'>,
+        instead_of=None,
+        to_return=<class 'MyItem'>,
+        meta={}
+    )
+
+Note how ``rule.to_return`` is set to ``MyItem`` automatically.
+This can be used by libraries like `scrapy-poet`_. For example,
+if a spider needs to extract ``MyItem`` from some page on the ``example.com``
+website, `scrapy-poet`_ now knows that ``MyPage`` page object can be used.
+
+.. _scrapy-poet: https://scrapy-poet.readthedocs.io
+
+Specifying the URL patterns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`~handle_urls` decorator uses url-matcher_ library to define the
+URL rules. Some examples:
+
+.. code-block:: python
+
+    # page object can be applied on any URL from the example.com domain,
+    # or from any of its subdomains
+    @handle_urls("example.com")
+
+    # page object can be applied on example.com pages under /products/ path
+    @handle_urls("example.com/products/")
+
+    # page object can be applied on any URL from example.com, but only if
+    # it contains "productId=..." in the query string
+    @handle_urls("example.com?productId=*")
+
+Please consult with the url-matcher_ documentation for more; it is pretty
+flexible. It is possible to exclude patterns, use wildcards, require certain
+query parameters to be present and ignore others, etc.;
+unlike regexes, this mini-language "understands" the URL structure.
+
+.. _url-matcher: https://url-matcher.readthedocs.io
+
 Overrides
-=========
+~~~~~~~~~
 
-Overrides are rules represented by a list of :class:`~.ApplyRule` which
-associates which URL patterns a particular Page Object (see :ref:`Page Objects
-introduced here <from-ground-up>`) would be used. The URL matching rules is
-handled by another library called `url-matcher <https://url-matcher.readthedocs.io>`_.
+:func:`~.handle_urls` can be used to declare that a particular Page Object
+could (and should) be used *instead of* some other Page Object on
+certain URL patterns:
 
-Using such rules establishes the core concept of Overrides wherein a developer
-could declare that for a given set of URL patterns, a specific Page Object must
-be used instead of another Page Object.
+.. code-block:: python
 
-The :class:`~.ApplyRule` also supports pointing to the item returned by a specific
-Page Object if it both matches the URL pattern and the item class specified in the
-rule.
+    from web_poet import ItemPage, handle_urls
+    from my_items import Product
+    from my_pages import DefaultProductPage
 
-This enables **web-poet** to be used effectively by other frameworks like 
-`scrapy-poet <https://scrapy-poet.readthedocs.io>`_.
+    @handle_urls("site1.example.com", instead_of=DefaultProductPage)
+    class Site1ProductPage(ItemPage[Product]):
+        # ...
+
+    @handle_urls("site2.example.com", instead_of=DefaultProductPage)
+    class Site2ProductPage(ItemPage[Product]):
+        # ...
+
+This concept is a bit more advanced than the basic ``handle_urls`` usage
+("this Page Object can return MyItem on example.com website").
+
+A common use case is a "generic", or a "template" spider, which uses some
+default implementation of the extraction, and allows to replace it
+("override") on specific websites or URL patterns.
+
+This default (``DefaultProductPage`` in the example) can be based on
+semantic markup, Machine Learning, heuristics, or just be empty. Page Objects which
+can be used instead of the default (``Site1ProductPage``, ``Site2ProductPage``)
+are commonly written using XPath or CSS selectors, with website-specific rules.
+
+Libraries like scrapy-poet_ allows to create such "generic" spiders by
+using the information declared via ``handle_urls(..., instead_of=...)``.
 
 Example Use Case
 ----------------
