@@ -11,6 +11,12 @@ class Product:
 
 
 @attrs.define
+class ProductSeparate:
+    name: str
+    price: float
+
+
+@attrs.define
 class ProductSimilar:
     name: str
     price: float
@@ -70,6 +76,22 @@ class ImprovedProductPage(ProductPage):
     @field
     def name(self) -> str:
         return "improved name"
+
+
+@handle_urls("example.com", instead_of=ProductPage)
+class SeparateProductPage(ItemPage[ProductSeparate]):
+    """Same case as with ``ImprovedProductPage`` but it doesn't inherit from
+    ``ProductPage``.
+    """
+
+    expected_instead_of = ProductPage
+    expected_patterns = Patterns(["example.com"])
+    expected_to_return = ProductSeparate
+    expected_meta = {}
+
+    @field
+    def name(self) -> str:
+        return "separate name"
 
 
 @handle_urls("example.com", instead_of=ProductPage)

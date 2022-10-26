@@ -2,7 +2,12 @@ import attrs
 import pytest
 from url_matcher import Patterns
 
-from tests.po_lib import POTopLevel1, POTopLevel2, POTopLevelOverriden2
+from tests.po_lib import (
+    POTopLevel1,
+    POTopLevel2,
+    POTopLevelOverriden1,
+    POTopLevelOverriden2,
+)
 from tests.po_lib.a_module import POModule, POModuleOverriden
 from tests.po_lib.nested_package import PONestedPkg
 from tests.po_lib.nested_package.a_nested_module import PONestedModule
@@ -17,6 +22,7 @@ from tests.po_lib_to_return import (
     Product,
     ProductPage,
     ProductSimilar,
+    SeparateProductPage,
     SimilarProductPage,
     SomePage,
 )
@@ -42,6 +48,7 @@ POS = {
     PONestedPkg,
     PONestedModule,
     ProductPage,
+    SeparateProductPage,
     SimilarProductPage,
     SomePage,
 }
@@ -53,17 +60,18 @@ def test_apply_rule_uniqueness() -> None:
     """
 
     patterns = Patterns(include=["example.com"], exclude=["example.com/blog"])
+    patterns_b = Patterns(include=["example.com/b"])
 
     rule1 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
-        instead_of=POTopLevelOverriden2,
+        instead_of=POTopLevelOverriden1,
         meta={"key_1": 1},
     )
     rule2 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
-        instead_of=POTopLevelOverriden2,
+        instead_of=POTopLevelOverriden1,
         meta={"key_2": 2},
     )
     # The ``meta`` parameter is ignored in the hash.
@@ -72,16 +80,31 @@ def test_apply_rule_uniqueness() -> None:
     rule1 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
-        instead_of=POTopLevelOverriden2,
+        instead_of=POTopLevelOverriden1,
         to_return=Product,
     )
     rule2 = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
-        instead_of=POTopLevelOverriden2,
+        instead_of=POTopLevelOverriden1,
         to_return=ProductSimilar,
     )
     # A different Item Class results in different hash.
+    assert hash(rule1) != hash(rule2)
+
+    rule1 = ApplyRule(
+        for_patterns=patterns,
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden1,
+        to_return=Product,
+    )
+    rule2 = ApplyRule(
+        for_patterns=patterns_b,
+        use=POTopLevel2,
+        instead_of=POTopLevelOverriden2,
+        to_return=ProductSimilar,
+    )
+    # Totally different params affect the hash completely
     assert hash(rule1) != hash(rule2)
 
 
@@ -91,11 +114,17 @@ def test_apply_rule_immutability() -> None:
     rule = ApplyRule(
         for_patterns=patterns,
         use=POTopLevel1,
-        instead_of=POTopLevelOverriden2,
+        instead_of=POTopLevelOverriden1,
     )
 
     with pytest.raises(attrs.exceptions.FrozenInstanceError):
-        rule.use = POModule  # type: ignore[misc]
+        rule.use = Patterns(include=["example.com/"])  # type: ignore[misc]
+
+    with pytest.raises(attrs.exceptions.FrozenInstanceError):
+        rule.use = POTopLevel2  # type: ignore[misc]
+
+    with pytest.raises(attrs.exceptions.FrozenInstanceError):
+        rule.use = POTopLevelOverriden2  # type: ignore[misc]
 
 
 def test_apply_rule_converter_on_pattern() -> None:
@@ -171,6 +200,10 @@ def test_registry_get_overrides_deprecation() -> None:
     # It should still work as usual
     assert len(rules) == len(default_registry.get_rules())
 
+    # but the rules from ``.get_overrides()`` should return ``ApplyRule`` and
+    # not the old ``OverrideRule``.
+    assert all([r for r in rules if isinstance(r, ApplyRule)])
+
 
 def test_consume_module_not_existing() -> None:
     with pytest.raises(ImportError):
@@ -200,8 +233,22 @@ def test_registry_search_rules() -> None:
 
     # param: to_return
     rules = default_registry.search_rules(to_return=Product)
-    assert len(rules) == 3
-    assert all([r for r in rules if r.use == Product])
+    assert rules == [
+        ApplyRule("example.com", use=ProductPage, to_return=Product),
+        ApplyRule(
+            "example.com",
+            use=ImprovedProductPage,
+            instead_of=ProductPage,
+            to_return=Product,
+        ),
+        ApplyRule(
+            "example.com",
+            # mypy complains here since it's expecting a container class when
+            # declared, i.e, ``ItemPage[SomeItem]``
+            use=CustomProductPageDataTypeOnly,  # type: ignore[arg-type]
+            to_return=Product,
+        ),
+    ]
 
     # params: to_return and use
     rules = default_registry.search_rules(to_return=Product, use=ImprovedProductPage)
@@ -223,6 +270,10 @@ def test_registry_search_overrides_deprecation() -> None:
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
 
+    # The rules from ``.get_overrides()`` should return ``ApplyRule`` and
+    # not the old ``OverrideRule``.
+    assert isinstance(rules[0], ApplyRule)
+
 
 def test_from_apply_rules() -> None:
     rules = [
@@ -239,7 +290,7 @@ def test_from_apply_rules() -> None:
     assert default_registry.get_rules() != rules
 
 
-def test_from_override_rules_deprecation() -> None:
+def test_from_override_rules_deprecation_using_ApplyRule() -> None:
     rules = [
         ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
@@ -259,7 +310,29 @@ def test_from_override_rules_deprecation() -> None:
     assert default_registry.get_rules() != rules
 
 
+def test_from_override_rules_deprecation_using_OverrideRule() -> None:
+    rules = [
+        OverrideRule(
+            for_patterns=Patterns(include=["sample.com"]),
+            use=POTopLevel1,
+            instead_of=POTopLevelOverriden2,
+        )
+    ]
+
+    msg = (
+        "The 'from_override_rules' method is deprecated. "
+        "Use 'from_apply_rules' instead."
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        registry = PageObjectRegistry.from_override_rules(rules)
+
+    assert registry.get_rules() == rules
+    assert default_registry.get_rules() != rules
+
+
 def test_handle_urls_deprecation() -> None:
+    before_count = len(default_registry.get_rules())
+
     msg = (
         "The 'overrides' parameter in @handle_urls is deprecated. Use the "
         "'instead_of' parameter."
@@ -269,6 +342,26 @@ def test_handle_urls_deprecation() -> None:
         @handle_urls("example.com", overrides=CustomProductPage)
         class PageWithDeprecatedOverrides:
             ...
+
+    # Despite the deprecation, it should still properly add the rule in the
+    # registry.
+    after_count = len(default_registry.get_rules())
+    assert after_count == before_count + 1
+
+    # The added rule should have its deprecated 'overrides' parameter converted
+    # into the new 'instead_of' parameter.
+    rules = default_registry.search_rules(
+        instead_of=CustomProductPage, use=PageWithDeprecatedOverrides
+    )
+    assert rules == [
+        ApplyRule(
+            "example.com",
+            instead_of=CustomProductPage,
+            # mypy complains here since it's expecting a container class when
+            # declared, i.e, ``ItemPage[SomeItem]``
+            use=PageWithDeprecatedOverrides,  # type: ignore[arg-type]
+        )
+    ]
 
 
 def test_override_rule_deprecation() -> None:
