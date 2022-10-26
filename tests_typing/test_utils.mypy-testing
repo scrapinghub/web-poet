@@ -1,0 +1,36 @@
+import pytest
+
+from web_poet.utils import memoizemethod_noargs, cached_method
+
+
+@pytest.mark.mypy_testing
+def test_memoizemethod_noargs():
+    class Foo:
+        @memoizemethod_noargs
+        def meth(self) -> str:
+            ...
+
+    foo = Foo()
+    reveal_type(foo.meth())  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+def test_cached_method_sync():
+    class Foo:
+        @cached_method
+        def meth(self) -> str:
+            ...
+
+    foo = Foo()
+    reveal_type(foo.meth())  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+async def test_cached_method_async():
+    class Foo:
+        @cached_method
+        async def meth(self) -> str:
+            ...
+
+    foo = Foo()
+    reveal_type(await foo.meth())  # R: builtins.str

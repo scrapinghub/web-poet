@@ -3,7 +3,7 @@ import weakref
 from collections.abc import Iterable
 from functools import lru_cache, wraps
 from types import MethodType
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TypeVar
 from warnings import warn
 
 from async_lru import alru_cache
@@ -117,7 +117,10 @@ def _create_deprecated_class(
     return deprecated_cls
 
 
-def memoizemethod_noargs(method):
+CallableT = TypeVar("CallableT")
+
+
+def memoizemethod_noargs(method: CallableT) -> CallableT:
     """Decorator to cache the result of a method (without arguments) using a
     weak reference to its object.
 
@@ -135,7 +138,7 @@ def memoizemethod_noargs(method):
     return new_method
 
 
-def cached_method(method):
+def cached_method(method: CallableT) -> CallableT:
     """A decorator to cache method or coroutine method results,
     so that if it's called multiple times for the same instance,
     computation is only done once.
@@ -163,7 +166,7 @@ def cached_method(method):
     return meth
 
 
-def _cached_method_sync(method, cached_method_name):
+def _cached_method_sync(method: CallableT, cached_method_name: str) -> CallableT:
     @wraps(method)
     def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
@@ -179,7 +182,7 @@ def _cached_method_sync(method, cached_method_name):
     return inner
 
 
-def _cached_method_async(method, cached_method_name):
+def _cached_method_async(method: CallableT, cached_method_name: str) -> CallableT:
     @wraps(method)
     async def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
