@@ -40,61 +40,27 @@ class ApplyRule:
           pattern represented by the ``for_patterns`` attribute is matched.
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
-        * ``to_return`` - *(optional)* The item class that marks the Page Object
-          to be **used** which is capable of returning that item class.
+        * ``to_return`` - *(optional)* The item class which the **used**
+          Page Object is capable of returning.
         * ``meta`` - *(optional)* Any other information you may want to store.
           This doesn't do anything for now but may be useful for future API updates.
 
     The main functionality of this class lies in the ``instead_of`` and ``to_return``
     parameters. Should both of these be omitted, then :class:`~.ApplyRule` simply
     tags which URL patterns the given Page Object defined in ``use`` is expected
-    to be used. It works as:
+    to be used on.
 
-        1. Given a URL, match it against the ``for_patterns`` from the registry
-           rules.
-        2. This could give us a collection of rules. We need to select one based
-           on the highest priority set by `url-matcher`_.
-        3. When a single rule has been selected, use the the Page Object specified
-           in its ``use`` parameter.
+    When ``to_return`` is not None (e.g. ``to_return=MyItem``),
+    the Page Object in ``use`` is declared as capable of returning a certain
+    item class (``MyItem``).
 
-    If ``instead_of=None``, this simply means that the Page Object assigned in
-    the ``use`` parameter will be utilized for all URLs matching the URL pattern
-    in ``for_patterns``. However, if ``instead_of=ReplacedPageObject``, then it
-    adds the expectation that the ``ReplacedPageObject`` wouldn't be used for
-    the given URLs matching ``for_patterns`` since the Page Object in ``use``
-    will replace it. It works as:
+    When ``instead_of`` is not None (e.g. ``instead_of=ReplacedPageObject``),
+    the rule adds an expectation that the ``ReplacedPageObject`` wouldn't
+    be used for the URLs matching ``for_patterns``, since the Page Object
+    in ``use`` will replace it.
 
-        1. Suppose that we have a rule that has ``use=ReplacedPageObject`` which
-           we want to use against a URL that matches against ``for_patterns``.
-        2. Before using it, all of the rules from the registry must be checked if
-           other rules has ``instead_of=ReplacedPageObject`` and matches the
-           URL patterns in ``for_patterns``.
-        3. If there are, these rules supersedes the original rule from #1.
-        4. After selecting one based on the highest priority set by `url-matcher`_,
-           the Page Object declared in ``use`` should be used instead of
-           ``ReplacedPageObject``.
-
-    The ``to_return`` parameter should capture the item class that the Page Object
-    is capable of returning. Before passing it to :class:`~.ApplyRule`, the
-    ``to_return`` value is primarily derived from the return class specified
-    from Page Objects that are subclasses of :class:`~.ItemPage` (see this
-    :ref:`example <item-class-example>`). However, a special case exists when a
-    Page Object returns a ``dict`` as an item but then the rule should have
-    ``to_return=None`` and **NOT** ``to_return=dict``.
-
-    The ``to_return`` parameter is used as a shortcut to directly retrieve the
-    item from the Page Object to be used for a given URL. It works as:
-
-        1. Given a URL and and item class that we want, match it respectively
-           against ``for_patterns`` and ``to_return`` from the registry rules.
-        2. This could give us a collection of rules. We need to select one based
-           on the highest priority set by `url-matcher`_.
-        3. When a single rule has been selected, create an instance of the Page
-           Object specified in its ``use`` parameter.
-        4. Finally, call the ``.to_item()`` method of the Page Object to retrieve
-           an instance of the item class.
-
-    Using the ``to_return`` parameter basically adds the convenient step #4 above.
+    If there are multuple rules which match a certain URL, the rule
+    to apply is picked based on the priorities set in ``for_patterns``.
 
     More information regarding its usage in :ref:`intro-overrides`.
 
