@@ -223,8 +223,8 @@ either contexts of Page Objects and Item Classes.
             return Product(product_title=self.css("title::text").get())
 
 
-    @handle_urls("some.example", instead_of=GenericProductPage, to_return=Product)
-    class ExampleProductPage(WebPage):
+    @handle_urls("some.example", instead_of=GenericProductPage)
+    class ExampleProductPage(WebPage[Product]):
         ...  # more specific parsing
 
 
@@ -236,34 +236,6 @@ either contexts of Page Objects and Item Classes.
     @handle_urls(["dual.example/shop/?product=*", "uk.dual.example/store/?pid=*"], instead_of=GenericProductPage)
     class DualExampleProductPage(WebPage[SimilarProduct]):
         ...  # more specific parsing
-
-To recap some previously mentioned behaviors:
-
-    - In the ``@handle_urls`` decorator for ``ExampleProductPage``, we needed to
-      pass the ``to_return`` parameter since the Page Object didn't specify the
-      Item Class that it returns (i.e. ``class ExampleProductPage(WebPage[Product])``).
-      If it did, we could omit the ``to_return`` parameter entirely since it's
-      able to automatically derive the Item Class.
-    - The recommended way is to avoid using the ``to_return`` parameter in
-      ``@handle_urls`` entirely (similar to how ``AnotherExampleProductPage``
-      and ``DualExampleProductPage`` does it).
-
-.. warning::
-
-    Only use the ``to_return`` parameter in the ``@handle_urls`` decorator for
-    more advanced use cases since it presents the risk of having the Item Class
-    returned by the Page Object diverge with the actual ``to_return`` value in
-    the :class:`~.ApplyRule`. For example:
-
-    .. code-block:: python
-
-        @handle_urls("some.example", to_return=DifferentProduct)
-        class ProductPage(WebPage[Product])
-            ... # more specific parsing
-
-    The Page Object returns a ``Product`` item but the created :class:`~.ApplyRule`
-    has ``to_return=DifferentProduct``.
-
 
 See the next :ref:`retrieving-overrides` section to observe what are the actual
 :class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
