@@ -109,7 +109,7 @@ semantic markup, Machine Learning, heuristics, or just be empty. Page Objects wh
 can be used instead of the default (``Site1ProductPage``, ``Site2ProductPage``)
 are commonly written using XPath or CSS selectors, with website-specific rules.
 
-Libraries like scrapy-poet_ allows to create such "generic" spiders by
+Libraries like scrapy-poet_ allow to create such "generic" spiders by
 using the information declared via ``handle_urls(..., instead_of=...)``.
 
 Example Use Case
