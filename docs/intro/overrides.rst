@@ -69,10 +69,12 @@ URL rules. Some examples:
     # it contains "productId=..." in the query string
     @handle_urls("example.com?productId=*")
 
-Please consult with the url-matcher_ documentation for more; it is pretty
-flexible. It is possible to exclude patterns, use wildcards, require certain
-query parameters to be present and ignore others, etc.;
-unlike regexes, this mini-language "understands" the URL structure.
+The string passed to :func:`~.handle_urls` is converted to
+a :class:`url_matcher.matcher.Patterns` instance. Please consult
+with the url-matcher_ documentation to learn more about the possible rules;
+it is pretty flexible. You can exclude patterns, use wildcards,
+require certain query parameters to be present and ignore others, etc.
+Unlike regexes, this mini-language "understands" the URL structure.
 
 .. _url-matcher: https://url-matcher.readthedocs.io
 
