@@ -3,7 +3,7 @@ import weakref
 from collections.abc import Iterable
 from functools import lru_cache, wraps
 from types import MethodType
-from typing import Any, List, Optional, Union
+from typing import Any, Callable, List, Optional, TypeVar, Union
 from warnings import warn
 
 from async_lru import alru_cache
@@ -118,14 +118,17 @@ def _create_deprecated_class(
     return deprecated_cls
 
 
-def memoizemethod_noargs(method):
+CallableT = TypeVar("CallableT", bound=Callable)
+
+
+def memoizemethod_noargs(method: CallableT) -> CallableT:
     """Decorator to cache the result of a method (without arguments) using a
     weak reference to its object.
 
     It is faster than :func:`cached_method`, and doesn't add new attributes
     to the instance, but it doesn't work if objects are unhashable.
     """
-    cache = weakref.WeakKeyDictionary()
+    cache: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -133,10 +136,10 @@ def memoizemethod_noargs(method):
             cache[self] = method(self, *args, **kwargs)
         return cache[self]
 
-    return new_method
+    return new_method  # type: ignore[return-value]
 
 
-def cached_method(method):
+def cached_method(method: CallableT) -> CallableT:
     """A decorator to cache method or coroutine method results,
     so that if it's called multiple times for the same instance,
     computation is only done once.
@@ -164,7 +167,7 @@ def cached_method(method):
     return meth
 
 
-def _cached_method_sync(method, cached_method_name):
+def _cached_method_sync(method, cached_method_name: str):
     @wraps(method)
     def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
@@ -180,7 +183,7 @@ def _cached_method_sync(method, cached_method_name):
     return inner
 
 
-def _cached_method_async(method, cached_method_name):
+def _cached_method_async(method, cached_method_name: str):
     @wraps(method)
     async def inner(self, *args, **kwargs):
         if not hasattr(self, cached_method_name):
