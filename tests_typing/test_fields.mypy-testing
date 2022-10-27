@@ -32,6 +32,26 @@ class TypedPage(ItemPage):
     def price(self) -> float:
         return 123.0
 
+    @field()
+    def currency(self) -> str:
+        return "$"
+
+    @field
+    async def adescription(self) -> str:
+        return "hello"
+
+    @field(out=[str.strip])
+    async def aname(self) -> str:
+        return "hello"
+
+    @field(out=[process_price, str])
+    async def aprice(self) -> float:
+        return 123.0
+
+    @field()
+    async def acurrency(self) -> str:
+        return "$"
+
 
 @attrs.define
 class Item:
@@ -40,23 +60,58 @@ class Item:
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-async def test_field_type() -> None:
+def test_field_type_no_params() -> None:
     page = TypedPage()
     reveal_type(page.description)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-async def test_field_type_out() -> None:
+def test_field_type() -> None:
+    page = TypedPage()
+    reveal_type(page.currency)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_field_type_out() -> None:
     page = TypedPage()
     reveal_type(page.name)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-async def test_field_type_changed_type() -> None:
+def test_field_type_changed_type() -> None:
     page = TypedPage()
     reveal_type(page.price)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_no_params_async() -> None:
+    page = TypedPage()
+    reveal_type(await page.adescription)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_async() -> None:
+    page = TypedPage()
+    reveal_type(await page.acurrency)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_out_async() -> None:
+    page = TypedPage()
+    reveal_type(await page.name)  # R: builtins.str
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+async def test_field_type_changed_type_async() -> None:
+    page = TypedPage()
+    reveal_type(await page.price)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
