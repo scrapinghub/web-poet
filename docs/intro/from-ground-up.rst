@@ -1,4 +1,4 @@
-.. _`from-ground-up`:
+.. _from-ground-up:
 
 ===========================
 web-poet from the ground up

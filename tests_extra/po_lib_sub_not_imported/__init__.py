@@ -12,7 +12,7 @@ from web_poet import ItemPage, handle_urls
 
 
 class POBase:
-    expected_overrides: Type[ItemPage]
+    expected_instead_of: Type[ItemPage]
     expected_patterns: Patterns
     expected_meta: Dict[str, Any]
 
@@ -21,8 +21,9 @@ class POLibSubOverridenNotImported:
     ...
 
 
-@handle_urls("sub_example_not_imported.com", overrides=POLibSubOverridenNotImported)
+@handle_urls("sub_not_imported.example", instead_of=POLibSubOverridenNotImported)
 class POLibSubNotImported(POBase):
-    expected_overrides = POLibSubOverridenNotImported
-    expected_patterns = Patterns(["sub_example_not_imported.com"])
+    expected_instead_of = POLibSubOverridenNotImported
+    expected_patterns = Patterns(["sub_not_imported.example"])
+    expected_to_return = None
     expected_meta = {}  # type: ignore

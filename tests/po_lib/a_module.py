@@ -8,8 +8,9 @@ class POModuleOverriden(ItemPage):
     ...
 
 
-@handle_urls("example.com", overrides=POModuleOverriden, extra_arg="foo")
+@handle_urls("example.com", instead_of=POModuleOverriden, extra_arg="foo")
 class POModule(POBase):
-    expected_overrides = POModuleOverriden
+    expected_instead_of = POModuleOverriden
     expected_patterns = Patterns(["example.com"])
+    expected_to_return = None
     expected_meta = {"extra_arg": "foo"}  # type: ignore

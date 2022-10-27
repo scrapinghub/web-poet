@@ -53,7 +53,7 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    changelog
    license
 
-.. _`web-poet`: https://github.com/scrapinghub/web-poet
+.. _web-poet: https://github.com/scrapinghub/web-poet
 .. _Scrapy: https://scrapy.org/
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 

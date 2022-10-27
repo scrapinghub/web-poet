@@ -1,4 +1,4 @@
-.. _`intro-tutorial`:
+.. _intro-tutorial:
 
 =====================
 web-poet on a surface
