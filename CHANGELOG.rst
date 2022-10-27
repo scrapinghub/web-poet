@@ -24,6 +24,7 @@ TBD
       possible to pass a ``to_return`` parameter on more advanced use cases.
 
 * Documentation, test, and warning message improvements.
+* Official support for Python 3.11.
 
 Deprecations:
 
