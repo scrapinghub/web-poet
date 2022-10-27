@@ -3,10 +3,11 @@ import weakref
 from collections.abc import Iterable
 from functools import lru_cache, wraps
 from types import MethodType
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 from warnings import warn
 
 from async_lru import alru_cache
+from url_matcher import Patterns
 
 
 def _clspath(cls, forced=None):
@@ -230,3 +231,9 @@ async def ensure_awaitable(obj):
     if inspect.isawaitable(obj):
         return await obj
     return obj
+
+
+def str_to_pattern(url_pattern: Union[str, Patterns]) -> Patterns:
+    if isinstance(url_pattern, Patterns):
+        return url_pattern
+    return Patterns([url_pattern])

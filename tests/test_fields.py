@@ -4,6 +4,20 @@ import random
 import attrs
 import pytest
 
+from tests.po_lib_to_return import (
+    CustomProductPage,
+    CustomProductPageDataTypeOnly,
+    CustomProductPageNoReturns,
+    ImprovedProductPage,
+    LessProductPage,
+    MoreProductPage,
+    Product,
+    ProductFewerFields,
+    ProductMoreFields,
+    ProductPage,
+    ProductSimilar,
+    SimilarProductPage,
+)
 from web_poet import (
     HttpResponse,
     Injectable,
@@ -368,6 +382,46 @@ def test_field_with_other_decorators() -> None:
     assert page.field_foo == "foo"
     assert page.field_foo_meta == "foo"
     assert page.field_foo_cached == "foo"
+
+
+@pytest.mark.asyncio
+async def test_field_with_handle_urls() -> None:
+
+    page = ProductPage()
+    assert page.name == "name"
+    assert page.price == 12.99
+    assert await page.to_item() == Product(name="name", price=12.99)
+
+    page = ImprovedProductPage()
+    assert page.name == "improved name"
+    assert page.price == 12.99
+    assert await page.to_item() == Product(name="improved name", price=12.99)
+
+    page = SimilarProductPage()
+    assert page.name == "name"
+    assert page.price == 12.99
+    assert await page.to_item() == ProductSimilar(name="name", price=12.99)
+
+    page = MoreProductPage()
+    assert page.name == "name"
+    assert page.price == 12.99
+    assert page.brand == "brand"
+    assert await page.to_item() == ProductMoreFields(
+        name="name", price=12.99, brand="brand"
+    )
+
+    page = LessProductPage()
+    assert page.name == "name"
+    assert await page.to_item() == ProductFewerFields(name="name")
+
+    for page in [  # type: ignore[assignment]
+        CustomProductPage(),
+        CustomProductPageNoReturns(),
+        CustomProductPageDataTypeOnly(),
+    ]:
+        assert page.name == "name"
+        assert page.price == 12.99
+        assert await page.to_item() == Product(name="name", price=12.99)
 
 
 def test_field_processors_sync() -> None:

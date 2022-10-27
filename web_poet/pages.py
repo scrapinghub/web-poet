@@ -3,7 +3,7 @@ import typing
 
 import attr
 
-from web_poet._typing import get_generic_parameter
+from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
@@ -41,16 +41,13 @@ ItemT = typing.TypeVar("ItemT")
 
 
 class Returns(typing.Generic[ItemT]):
-    """Inherit from this generic mixin to change the item type used by
+    """Inherit from this generic mixin to change the item class used by
     :class:`~.ItemPage`"""
 
     @property
     def item_cls(self) -> typing.Type[ItemT]:
         """Item class"""
-        param = get_generic_parameter(self.__class__)
-        if isinstance(param, typing.TypeVar):  # class is not parametrized
-            return dict  # type: ignore[return-value]
-        return param
+        return get_item_cls(self.__class__, default=dict)
 
 
 class ItemPage(Injectable, Returns[ItemT]):

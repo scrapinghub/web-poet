@@ -1,4 +1,4 @@
-.. _`api-reference`:
+.. _api-reference:
 
 =============
 API Reference
@@ -81,7 +81,7 @@ Exceptions
     :show-inheritance:
     :members:
 
-.. _`api-overrides`:
+.. _api-overrides:
 
 Overrides
 =========
@@ -91,7 +91,7 @@ use cases and some examples.
 
 .. autofunction:: web_poet.handle_urls
 
-.. automodule:: web_poet.overrides
+.. automodule:: web_poet.rules
    :members:
    :exclude-members: handle_urls
 

@@ -179,7 +179,9 @@ It's also possible to implement field cleaning and processing in ``to_item``
 but in that case accessing a field directly will return the value without
 processing, so it's preferable to use field processors instead.
 
-Item classes
+.. _item-classes:
+
+Item Classes
 ------------
 
 In all previous examples, ``to_item`` methods are returning ``dict``
@@ -220,7 +222,7 @@ its ``to_item()`` method starts to return item instances, instead
 of ``dict`` instances. In the example above ``ProductPage.to_item`` method
 returns ``Product`` instances.
 
-Defining an Item class may be an overkill if you only have a single Page Object,
+Defining an item class may be an overkill if you only have a single Page Object,
 but item classes are of a great help when
 
 * you need to extract data in the same format from multiple websites, or
@@ -265,8 +267,8 @@ indicating that a required argument is missing.
 
 Without an item class, none of these errors are detected.
 
-Changing Item type
-~~~~~~~~~~~~~~~~~~
+Changing Item Class
+~~~~~~~~~~~~~~~~~~~
 
 Let's say there is a Page Object implemented, which outputs some standard
 item. Maybe there is a library of such Page Objects available. But for a
@@ -333,7 +335,7 @@ to the item:
             # ...
 
 Note how :class:`~.Returns` is used as one of the base classes of
-``CustomFooPage``; it allows to change the item type returned by a page object.
+``CustomFooPage``; it allows to change the item class returned by a page object.
 
 Removing fields (as well as renaming) is a bit more tricky.
 
@@ -368,7 +370,7 @@ is passed, and ``name`` is the only field ``CustomItem`` supports.
 
 To recap:
 
-* Use ``Returns[NewItemType]`` to change the item type in a subclass.
+* Use ``Returns[NewItemType]`` to change the item class in a subclass.
 * Don't use ``skip_nonitem_fields=True`` when your Page Object corresponds
   to an item exactly, or when you're only adding fields. This is a safe
   approach, which allows to detect typos in field names, even for optional

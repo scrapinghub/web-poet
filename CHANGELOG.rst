@@ -2,6 +2,42 @@
 Changelog
 =========
 
+TBD
+---
+
+* New ``ApplyRule`` class created by the ``@handle_urls`` decorator. This is
+  nearly identical with ``OverrideRule`` except:
+
+    * It's now accepting a ``to_return`` parameter which signifies the data
+      container class that the Page Object returns.
+    * Passing a string to ``for_patterns`` would auto-convert it into
+      ``url_matcher.Patterns``.
+    * All arguments are now keyword-only except for ``for_patterns``.
+
+* Modify the call signature and behavior of ``handle_urls``:
+
+    * New ``instead_of`` parameter which does the same thing as ``overrides``.
+    * The old ``overrides`` parameter is not required anymore as it's set for
+      deprecation.
+    * It sets a ``to_return`` parameter when creating ``ApplyRule`` based on the
+      declared item class in subclasses of ``web_poet.ItemPage``. It's also
+      possible to pass a ``to_return`` parameter on more advanced use cases.
+
+* Documentation, test, and warning message improvements.
+
+Deprecations:
+
+* The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
+  Use the ``instead_of`` parameter instead.
+* The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
+* The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
+  Use ``from_apply_rules`` instead.
+* The ``web_poet.overrides`` module is deprecated. Use ``web_poet.rules`` instead.
+* The ``PageObjectRegistry.get_overrides`` method is deprecated.
+  Use ``PageObjectRegistry.get_rules`` instead.
+* The ``PageObjectRegistry.search_overrides`` method is deprecated.
+  Use ``PageObjectRegistry.search_rules`` instead.
+
 0.5.1 (2022-09-23)
 ------------------
 

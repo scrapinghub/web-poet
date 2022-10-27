@@ -1,5 +1,4 @@
 from .fields import field, item_from_fields, item_from_fields_sync
-from .overrides import OverrideRule, PageObjectRegistry, consume_modules
 from .page_inputs import (
     BrowserHtml,
     HttpClient,
@@ -15,6 +14,7 @@ from .page_inputs import (
 )
 from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage
 from .requests import request_downloader_var
+from .rules import ApplyRule, OverrideRule, PageObjectRegistry, consume_modules
 from .utils import cached_method
 
 default_registry = PageObjectRegistry()
