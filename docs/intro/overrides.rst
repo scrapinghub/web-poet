@@ -30,7 +30,7 @@ declare how the page objects can be used (applied):
 getting the information about page objects programmatically.
 The information about all page objects decorated with
 :func:`~.handle_urls` is stored in ``web_poet.default_registry``, which is
-an instance of :class:`~.PageObjectRegistry`. In the example above the
+an instance of :class:`~.PageObjectRegistry`. In the example above, the
 following :class:`~.ApplyRule` is added to the registry:
 
 .. code-block::
@@ -39,7 +39,7 @@ following :class:`~.ApplyRule` is added to the registry:
         for_patterns=Patterns(include=('example.com',), exclude=(), priority=500),
         use=<class 'MyPage'>,
         instead_of=None,
-        to_return=<class 'MyItem'>,
+        to_return=<class 'my_items.MyItem'>,
         meta={}
     )
 
@@ -98,13 +98,13 @@ certain URL patterns:
         # ...
 
 This concept is a bit more advanced than the basic ``handle_urls`` usage
-("this Page Object can return MyItem on example.com website").
+("this Page Object can return ``MyItem`` on example.com website").
 
 A common use case is a "generic", or a "template" spider, which uses some
 default implementation of the extraction, and allows to replace it
 ("override") on specific websites or URL patterns.
 
-This default (``DefaultProductPage`` in the example) can be based on
+This default page extraction (``DefaultProductPage`` in the example) can be based on
 semantic markup, Machine Learning, heuristics, or just be empty. Page Objects which
 can be used instead of the default (``Site1ProductPage``, ``Site2ProductPage``)
 are commonly written using XPath or CSS selectors, with website-specific rules.

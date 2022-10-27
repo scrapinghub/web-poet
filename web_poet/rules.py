@@ -41,7 +41,8 @@ class ApplyRule:
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
         * ``to_return`` - *(optional)* The item class which the **used**
-          Page Object is capable of returning.
+        * ``to_return`` - *(optional)* The item class that the Page Object specified
+          in ``use`` is capable of returning.
         * ``meta`` - *(optional)* Any other information you may want to store.
           This doesn't do anything for now but may be useful for future API updates.
 
@@ -52,14 +53,14 @@ class ApplyRule:
 
     When ``to_return`` is not None (e.g. ``to_return=MyItem``),
     the Page Object in ``use`` is declared as capable of returning a certain
-    item class (``MyItem``).
+    item class (i.e. ``MyItem``).
 
     When ``instead_of`` is not None (e.g. ``instead_of=ReplacedPageObject``),
     the rule adds an expectation that the ``ReplacedPageObject`` wouldn't
     be used for the URLs matching ``for_patterns``, since the Page Object
     in ``use`` will replace it.
 
-    If there are multuple rules which match a certain URL, the rule
+    If there are multiple rules which match a certain URL, the rule
     to apply is picked based on the priorities set in ``for_patterns``.
 
     More information regarding its usage in :ref:`intro-overrides`.
