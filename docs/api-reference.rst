@@ -81,12 +81,12 @@ Exceptions
     :show-inheritance:
     :members:
 
-.. _api-overrides:
+.. _api-rules:
 
-Overrides
-=========
+Apply Rules
+===========
 
-See the tutorial section on :ref:`intro-overrides` for more context about its
+See the tutorial section on :ref:`rules-intro` for more context about its
 use cases and some examples.
 
 .. autofunction:: web_poet.handle_urls
