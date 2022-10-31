@@ -213,19 +213,19 @@ def test_list_page_objects_all_consume() -> None:
     assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
 
-def test_registry_search_rules() -> None:
+def test_registry_search() -> None:
     # param: use
-    rules = default_registry.search_rules(use=POTopLevel2)
+    rules = default_registry.search(use=POTopLevel2)
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
 
     # param: instead_of
-    rules = default_registry.search_rules(instead_of=POTopLevelOverriden2)
+    rules = default_registry.search(instead_of=POTopLevelOverriden2)
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
     # param: to_return
-    rules = default_registry.search_rules(to_return=Product)
+    rules = default_registry.search(to_return=Product)
     assert rules == [
         ApplyRule("example.com", use=ProductPage, to_return=Product),
         ApplyRule(
@@ -244,18 +244,18 @@ def test_registry_search_rules() -> None:
     ]
 
     # params: to_return and use
-    rules = default_registry.search_rules(to_return=Product, use=ImprovedProductPage)
+    rules = default_registry.search(to_return=Product, use=ImprovedProductPage)
     assert len(rules) == 1
     assert rules[0].to_return == Product
     assert rules[0].use == ImprovedProductPage
 
     # Such rules doesn't exist
-    rules = default_registry.search_rules(use=POModuleOverriden)
+    rules = default_registry.search(use=POModuleOverriden)
     assert len(rules) == 0
 
 
 def test_registry_search_overrides_deprecation() -> None:
-    msg = "The 'search_overrides' method is deprecated. Use 'search_rules' instead."
+    msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
     with pytest.warns(DeprecationWarning, match=msg):
         rules = default_registry.search_overrides(use=POTopLevel2)
 
@@ -343,7 +343,7 @@ def test_handle_urls_deprecation() -> None:
 
     # The added rule should have its deprecated 'overrides' parameter converted
     # into the new 'instead_of' parameter.
-    rules = default_registry.search_rules(
+    rules = default_registry.search(
         instead_of=CustomProductPage, use=PageWithDeprecatedOverrides
     )
     assert rules == [

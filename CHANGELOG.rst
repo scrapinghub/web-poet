@@ -54,7 +54,7 @@ Deprecations:
 * The ``PageObjectRegistry.get_overrides`` method is deprecated.
   Use ``PageObjectRegistry.get_rules`` instead.
 * The ``PageObjectRegistry.search_overrides`` method is deprecated.
-  Use ``PageObjectRegistry.search_rules`` instead.
+  Use ``PageObjectRegistry.search`` instead.
 
 0.5.1 (2022-09-23)
 ------------------

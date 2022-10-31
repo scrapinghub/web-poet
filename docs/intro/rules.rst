@@ -457,11 +457,11 @@ Using only a subset of the available ApplyRules
 
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.ApplyRule` would be used. This could be achieved by
-using the :meth:`~.PageObjectRegistry.search_rules` method which allows for
+using the :meth:`~.PageObjectRegistry.search` method which allows for
 convenient selection of a subset of rules from a given registry.
 
 Here's an example of how you could manually select the rules using the
-:meth:`~.PageObjectRegistry.search_rules` method instead:
+:meth:`~.PageObjectRegistry.search` method instead:
 
 .. code-block:: python
 
@@ -470,12 +470,12 @@ Here's an example of how you could manually select the rules using the
 
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
 
-    ecom_rules = default_registry.search_rules(instead_of=ecommerce_page_objects.EcomGenericPage)
+    ecom_rules = default_registry.search(instead_of=ecommerce_page_objects.EcomGenericPage)
     print(ecom_rules)
     # ApplyRule(for_patterns=Patterns(include=['site_1.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_1.EcomSite1'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
 
-    gadget_rules = default_registry.search_rules(use=gadget_sites_page_objects.site_3.GadgetSite3)
+    gadget_rules = default_registry.search(use=gadget_sites_page_objects.site_3.GadgetSite3)
     print(gadget_rules)
     # ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
@@ -485,7 +485,7 @@ Here's an example of how you could manually select the rules using the
     # ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
-As you can see, using the :meth:`~.PageObjectRegistry.search_rules` method allows you to
+As you can see, using the :meth:`~.PageObjectRegistry.search` method allows you to
 conveniently select for :class:`~.ApplyRule` which conform to a specific criteria. This
 allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
@@ -675,7 +675,7 @@ all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_
 to sift through the list of available rules and manually selecting the rules you need.
 
 Most of the time, the needed rules are the ones which uses the Page Objects we're
-interested in. You can use :meth:`~.PageObjectRegistry.search_rules` to get
+interested in. You can use :meth:`~.PageObjectRegistry.search` to get
 them (see :ref:`rules-using-subset`):
 
 .. code-block:: python
@@ -685,9 +685,9 @@ them (see :ref:`rules-using-subset`):
 
     consume_modules("package_A", "package_B", "package_C")
 
-    rules = default_registry.search_rules(use=package_A.PageObject1) + \
-            default_registry.search_rules(use=package_B.PageObject2) + \
-            default_registry.search_rules(use=package_C.PageObject3)
+    rules = default_registry.search(use=package_A.PageObject1) + \
+            default_registry.search(use=package_B.PageObject2) + \
+            default_registry.search(use=package_C.PageObject3)
 
     # ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_B.example'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
@@ -704,15 +704,15 @@ Another example:
 
     consume_modules("package_A", "package_B", "package_C")
 
-    rule_from_A = default_registry.search_rules(use=package_A.PageObject1)
+    rule_from_A = default_registry.search(use=package_A.PageObject1)
     print(rule_from_A)
     # [ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})]
 
-    rule_from_B = default_registry.search_rules(instead_of=GenericProductPage)
+    rule_from_B = default_registry.search(instead_of=GenericProductPage)
     print(rule_from_B)
     # []
 
-    rule_from_C = default_registry.search_rules(for_patterns=Patterns(include=["site_C.example"]))
+    rule_from_C = default_registry.search(for_patterns=Patterns(include=["site_C.example"]))
     print(rule_from_C)
     # [
     #     ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={}),

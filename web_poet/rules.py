@@ -241,7 +241,7 @@ class PageObjectRegistry(dict):
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.get_rules()
 
-    def search_rules(self, **kwargs) -> List[ApplyRule]:
+    def search(self, **kwargs) -> List[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
         of the provided attributes.
 
@@ -249,7 +249,7 @@ class PageObjectRegistry(dict):
 
         .. code-block:: python
 
-            rules = registry.search_rules(use=ProductPO, instead_of=GenericPO)
+            rules = registry.search(use=ProductPO, instead_of=GenericPO)
             print(len(rules))           # 1
             print(rules[0].use)         # ProductPO
             print(rules[0].instead_of)  # GenericPO
@@ -281,13 +281,10 @@ class PageObjectRegistry(dict):
         return results
 
     def search_overrides(self, **kwargs) -> List[ApplyRule]:
-        """Deprecated, use :meth:`~.PageObjectRegistry.search_rules` instead."""
-        msg = (
-            "The 'search_overrides' method is deprecated. "
-            "Use 'search_rules' instead."
-        )
+        """Deprecated, use :meth:`~.PageObjectRegistry.search` instead."""
+        msg = "The 'search_overrides' method is deprecated. " "Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self.search_rules(**kwargs)
+        return self.search(**kwargs)
 
 
 def _walk_module(module: str) -> Iterable:
