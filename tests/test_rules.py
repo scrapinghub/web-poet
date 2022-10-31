@@ -29,7 +29,7 @@ from tests.po_lib_to_return import (
 from web_poet import (
     ApplyRule,
     OverrideRule,
-    PageObjectRegistry,
+    RulesRegistry,
     consume_modules,
     default_registry,
     handle_urls,
@@ -277,7 +277,7 @@ def test_from_apply_rules() -> None:
         )
     ]
 
-    registry = PageObjectRegistry.from_apply_rules(rules)
+    registry = RulesRegistry.from_apply_rules(rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -297,7 +297,7 @@ def test_from_override_rules_deprecation_using_ApplyRule() -> None:
         "Use 'from_apply_rules' instead."
     )
     with pytest.warns(DeprecationWarning, match=msg):
-        registry = PageObjectRegistry.from_override_rules(rules)
+        registry = RulesRegistry.from_override_rules(rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -317,7 +317,7 @@ def test_from_override_rules_deprecation_using_OverrideRule() -> None:
         "Use 'from_apply_rules' instead."
     )
     with pytest.warns(DeprecationWarning, match=msg):
-        registry = PageObjectRegistry.from_override_rules(rules)
+        registry = RulesRegistry.from_override_rules(rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules

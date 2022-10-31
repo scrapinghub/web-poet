@@ -30,7 +30,7 @@ declare how a page object can be used (applied):
 getting the information about page objects programmatically.
 The information about all page objects decorated with
 :func:`~.handle_urls` is stored in ``web_poet.default_registry``, which is
-an instance of :class:`~.PageObjectRegistry`. In the example above, the
+an instance of :class:`~.RulesRegistry`. In the example above, the
 following :class:`~.ApplyRule` is added to the registry:
 
 .. code-block::
@@ -345,7 +345,7 @@ Working with rules
 Retrieving all available rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :meth:`~.PageObjectRegistry.get_rules` method from the ``web_poet.default_registry``
+The :meth:`~.RulesRegistry.get_rules` method from the ``web_poet.default_registry``
 allows retrieval of all :class:`~.ApplyRule` in the given registry.
 Following from our example above in the :ref:`rules-combination` section, using it
 would be:
@@ -369,7 +369,7 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
 
 .. warning::
 
-    :meth:`~.PageObjectRegistry.get_rules` relies on the fact that all essential
+    :meth:`~.RulesRegistry.get_rules` relies on the fact that all essential
     packages/modules which contains the :func:`web_poet.handle_urls`
     decorators are properly loaded `(i.e imported)`.
 
@@ -417,7 +417,7 @@ Let's suppose we have the following use case before us:
 
 Remember that all of the :class:`~.ApplyRule` are declared by annotating
 Page Objects using the :func:`web_poet.handle_urls` via ``@handle_urls``. Thus,
-they can easily be accessed using the :meth:`~.PageObjectRegistry.get_rules`
+they can easily be accessed using the :meth:`~.RulesRegistry.get_rules`
 of ``web_poet.default_registry``.
 
 This can be done something like:
@@ -457,11 +457,11 @@ Using only a subset of the available ApplyRules
 
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.ApplyRule` would be used. This could be achieved by
-using the :meth:`~.PageObjectRegistry.search` method which allows for
+using the :meth:`~.RulesRegistry.search` method which allows for
 convenient selection of a subset of rules from a given registry.
 
 Here's an example of how you could manually select the rules using the
-:meth:`~.PageObjectRegistry.search` method instead:
+:meth:`~.RulesRegistry.search` method instead:
 
 .. code-block:: python
 
@@ -485,7 +485,7 @@ Here's an example of how you could manually select the rules using the
     # ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=500), use=<class 'ecommerce_page_objects.site_2.EcomSite2'>, instead_of=<class 'ecommerce_page_objects.EcomGenericPage'>, to_return=None, meta={})
     # ApplyRule(for_patterns=Patterns(include=['site_3.example'], exclude=[], priority=500), use=<class 'gadget_sites_page_objects.site_3.GadgetSite3'>, instead_of=<class 'gadget_sites_page_objects.GadgetGenericPage'>, to_return=None, meta={})
 
-As you can see, using the :meth:`~.PageObjectRegistry.search` method allows you to
+As you can see, using the :meth:`~.RulesRegistry.search` method allows you to
 conveniently select for :class:`~.ApplyRule` which conform to a specific criteria. This
 allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
@@ -493,15 +493,15 @@ using.
 .. _rules-custom-registry:
 
 After gathering all the pre-selected rules, we can then store it in a new instance
-of :class:`~.PageObjectRegistry` in order to separate it from the ``default_registry``
-which contains all of the rules. We can use the :meth:`~.PageObjectRegistry.from_apply_rules`
+of :class:`~.RulesRegistry` in order to separate it from the ``default_registry``
+which contains all of the rules. We can use the :meth:`~.RulesRegistry.from_apply_rules`
 for this:
 
 .. code-block:: python
 
-    from web_poet import PageObjectRegistry
+    from web_poet import RulesRegistry
 
-    my_new_registry = PageObjectRegistry.from_apply_rules(rules)
+    my_new_registry = RulesRegistry.from_apply_rules(rules)
 
 
 .. _rules-improve-po:
@@ -671,11 +671,11 @@ set of rules than expected.
 
 This **inclusion**-list approach can be done by importing the Page Objects directly
 and creating instances of :class:`~.ApplyRule` from it. You could also import
-all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_rules`
+all of the available :class:`~.ApplyRule` using :meth:`~.RulesRegistry.get_rules`
 to sift through the list of available rules and manually selecting the rules you need.
 
 Most of the time, the needed rules are the ones which uses the Page Objects we're
-interested in. You can use :meth:`~.PageObjectRegistry.search` to get
+interested in. You can use :meth:`~.RulesRegistry.search` to get
 them (see :ref:`rules-using-subset`):
 
 .. code-block:: python

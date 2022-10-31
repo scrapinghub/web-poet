@@ -17,7 +17,7 @@ from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]
 
-PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry")
+RulesRegistryTV = TypeVar("RulesRegistryTV", bound="RulesRegistry")
 
 
 @attrs.define(frozen=True)
@@ -27,7 +27,7 @@ class ApplyRule:
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
     It's also being returned as a ``List[ApplyRule]`` when calling the
-    ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_rules`
+    ``web_poet.default_registry``'s :meth:`~.RulesRegistry.get_rules`
     method.
 
     You can access any of its attributes:
@@ -81,9 +81,9 @@ class ApplyRule:
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
 
 
-class PageObjectRegistry(dict):
+class RulesRegistry(dict):
     """
-    PageObjectRegistry provides features for storing, retrieving,
+    RulesRegistry provides features for storing, retrieving,
     and searching for the :class:`~.ApplyRule` instances.
 
     ``web-poet`` provides a default Registry named ``default_registry``
@@ -106,7 +106,7 @@ class PageObjectRegistry(dict):
     .. note::
 
         It is encouraged to use the ``web_poet.default_registry`` instead of
-        creating your own :class:`~.PageObjectRegistry` instance. Using multiple
+        creating your own :class:`~.RulesRegistry` instance. Using multiple
         registries would be unwieldy in most cases.
 
         However, it might be applicable in certain scenarios like storing custom
@@ -117,9 +117,9 @@ class PageObjectRegistry(dict):
 
     @classmethod
     def from_apply_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
-    ) -> PageObjectRegistryTV:
-        """An alternative constructor for creating a :class:`~.PageObjectRegistry`
+        cls: Type[RulesRegistryTV], rules: List[ApplyRule]
+    ) -> RulesRegistryTV:
+        """An alternative constructor for creating a :class:`~.RulesRegistry`
         instance by accepting a list of :class:`~.ApplyRule`.
 
         This is useful in cases wherein you need to store some selected rules
@@ -130,9 +130,9 @@ class PageObjectRegistry(dict):
 
     @classmethod
     def from_override_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
-    ) -> PageObjectRegistryTV:
-        """Deprecated. Use :meth:`~.PageObjectRegistry.from_apply_rules` instead."""
+        cls: Type[RulesRegistryTV], rules: List[ApplyRule]
+    ) -> RulesRegistryTV:
+        """Deprecated. Use :meth:`~.RulesRegistry.from_apply_rules` instead."""
         msg = (
             "The 'from_override_rules' method is deprecated. "
             "Use 'from_apply_rules' instead."
@@ -236,7 +236,7 @@ class PageObjectRegistry(dict):
         return list(self.values())
 
     def get_overrides(self) -> List[ApplyRule]:
-        """Deprecated, use :meth:`~.PageObjectRegistry.get_rules` instead."""
+        """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
         msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.get_rules()
@@ -281,7 +281,7 @@ class PageObjectRegistry(dict):
         return results
 
     def search_overrides(self, **kwargs) -> List[ApplyRule]:
-        """Deprecated, use :meth:`~.PageObjectRegistry.search` instead."""
+        """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
         msg = "The 'search_overrides' method is deprecated. " "Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
@@ -348,3 +348,6 @@ def consume_modules(*modules: str) -> None:
 
 
 OverrideRule = _create_deprecated_class("OverrideRule", ApplyRule, warn_once=False)
+PageObjectRegistry = _create_deprecated_class(
+    "PageObjectRegistry", RulesRegistry, warn_once=True
+)
