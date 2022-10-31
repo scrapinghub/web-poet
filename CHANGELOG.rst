@@ -5,11 +5,12 @@ Changelog
 0.6.0 (TBD)
 -----------
 
-In this release, ``@handle_urls`` decorator gets an overhaul; it's not required
-anymore to pass another Page Object class to ``@handle_urls("...", overrides=...)``.
+In this release, the ``@handle_urls`` decorator gets an overhaul; it's not
+required anymore to pass another Page Object class to
+``@handle_urls("...", overrides=...)``.
 
-Also, ``@web_poet.field`` decorator gets support for output processing
-functions, via ``out`` argument.
+Also, the ``@web_poet.field`` decorator gets support for output processing
+functions, via the ``out`` argument.
 
 Full list of changes:
 
@@ -18,10 +19,10 @@ Full list of changes:
 * New ``@web_poet.field(out=[...])`` argument which allows to set output
   processing functions for web-poet fields.
 
-* ``web_poet.overrides`` module is deprecated and replaced with
+* The ``web_poet.overrides`` module is deprecated and replaced with
   ``web_poet.rules``.
 
-* ``@handle_urls`` decorator is now creating ``ApplyRule`` instances
+* The ``@handle_urls`` decorator is now creating ``ApplyRule`` instances
   instead of ``OverrideRule`` instances; ``OverrideRule`` is deprecated.
   ``ApplyRule`` is similar to ``OverrideRule``, but has the following differences:
 
@@ -33,11 +34,12 @@ Full list of changes:
 
 * New signature and behavior of ``handle_urls``:
 
-    * ``overrides`` parameter is made optional and renamed to ``instead_of``.
-    * By default, item class declared in a subclass of ``web_poet.ItemPage``
-      is used as ``to_return`` parameter of ``ApplyRule``.
-      It is also possible to pass a ``to_return`` parameter to ``handle_urls``
-      explicitly, in more advanced use cases.
+    * The ``overrides`` parameter is made optional and renamed to
+      ``instead_of``.
+    * By default, the item class declared in a subclass of
+      ``web_poet.ItemPage`` is used as the ``to_return`` parameter of
+      ``ApplyRule``. It is also possible to pass a ``to_return`` parameter to
+      ``handle_urls`` explicitly, in more advanced use cases.
 
 * Typing improvements.
 * Documentation, test, and warning message improvements.
