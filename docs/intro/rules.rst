@@ -675,8 +675,8 @@ all of the available :class:`~.ApplyRule` using :meth:`~.PageObjectRegistry.get_
 to sift through the list of available rules and manually selecting the rules you need.
 
 Most of the time, the needed rules are the ones which uses the Page Objects we're
-interested in. Since :class:`~.PageObjectRegistry` is a ``dict`` subclass, you can
-easily find the Page Object's rule using its `key`. Here's an example:
+interested in. You can use :meth:`~.PageObjectRegistry.search_rules` to get
+them (see :ref:`rules-using-subset`):
 
 .. code-block:: python
 
@@ -685,19 +685,16 @@ easily find the Page Object's rule using its `key`. Here's an example:
 
     consume_modules("package_A", "package_B", "package_C")
 
-    rules = [
-        default_registry[package_A.PageObject1],  # ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
-        default_registry[package_B.PageObject2],  # ApplyRule(for_patterns=Patterns(include=['site_B.example'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
-        default_registry[package_C.PageObject3],  # ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
-    ]
+    rules = default_registry.search_rules(use=package_A.PageObject1) + \
+            default_registry.search_rules(use=package_B.PageObject2) + \
+            default_registry.search_rules(use=package_C.PageObject3)
 
-Another approach would be using the :meth:`~.PageObjectRegistry.search_rules`
-functionality as described from this tutorial section: :ref:`rules-using-subset`.
-The :meth:`~.PageObjectRegistry.search_rules` is quite useful in cases wherein
-the **POP** contains a lot of rules as it presents a utility for programmatically
-searching for them.
+    # ApplyRule(for_patterns=Patterns(include=['site_A.example'], exclude=[], priority=500), use=<class 'package_A.PageObject1'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_B.example'], exclude=[], priority=500), use=<class 'package_B.PageObject2'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
+    # ApplyRule(for_patterns=Patterns(include=['site_C.example'], exclude=[], priority=500), use=<class 'package_C.PageObject3'>, instead_of=<class 'GenericPage'>, to_return=None, meta={})
 
-Here's an example:
+
+Another example:
 
 .. code-block:: python
 

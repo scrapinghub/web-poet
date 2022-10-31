@@ -82,39 +82,32 @@ class ApplyRule:
 
 
 class PageObjectRegistry(dict):
-    """This contains the :class:`~.ApplyRule` that associates the Page Objects
-    alongside its Items for a given URL matching rule.
+    """
+    PageObjectRegistry provides features for storing, retrieving,
+    and searching for the :class:`~.ApplyRule` instances.
 
-    PageObjectRegistry is a ``dict`` subclass with added functionalities on
-    storing, retrieving, and searching for the :class:`~.ApplyRule` instances.
-    The **value** represents the :class:`~.ApplyRule` instance from which the
-    Page Object in the **key** is allowed to be used. Since it's essentially a
-    ``dict``, you can use any ``dict`` operations with it.
-
-    ``web-poet`` already provides a default Registry named ``default_registry``
-    for convenience. It can be directly accessed via:
+    ``web-poet`` provides a default Registry named ``default_registry``
+    for convenience. It can be accessed this way:
 
     .. code-block:: python
 
         from web_poet import handle_urls, default_registry, WebPage
+        from my_items import Product
 
-        @handle_urls("example.com", instead_of=ProductPageObject)
-        class ExampleComProductPage(WebPage[ProductItem]):
+        @handle_urls("example.com")
+        class ExampleComProductPage(WebPage[Product]):
             ...
 
         rules = default_registry.get_rules()
 
-    Notice that the ``@handle_urls`` decorator that we're using is a part of the
-    ``default_registry``. This provides a shorter and quicker way to interact
-    with the built-in default :class:`~.PageObjectRegistry` instead of writing
-    the longer ``@default_registry.handle_urls``.
+    The ``@handle_urls`` decorator exposed as ``web_poet.handle_urls`` is a
+    shortcut for ``default_registry.handle_urls``.
 
     .. note::
 
-        It is encouraged to simply use and import the already existing registry
-        via ``from web_poet import default_registry`` instead of creating your
-        own :class:`~.PageObjectRegistry` instance. Using multiple registries
-        would be unwieldy in most cases.
+        It is encouraged to use the ``web_poet.default_registry`` instead of
+        creating your own :class:`~.PageObjectRegistry` instance. Using multiple
+        registries would be unwieldy in most cases.
 
         However, it might be applicable in certain scenarios like storing custom
         rules to separate it from the ``default_registry``. This :ref:`example
