@@ -55,7 +55,7 @@ Deprecations:
 * The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
   Use the ``instead_of`` parameter instead.
 * The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
-* ``PageObjectRegistry`` is now deprecated. Use ``Rulesregistry`` instead.
+* ``PageObjectRegistry`` is now deprecated. Use ``RulesRegistry`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
 * The ``PageObjectRegistry.get_overrides`` method is deprecated.
