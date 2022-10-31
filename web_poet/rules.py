@@ -63,7 +63,7 @@ class ApplyRule:
     If there are multiple rules which match a certain URL, the rule
     to apply is picked based on the priorities set in ``for_patterns``.
 
-    More information regarding its usage in :ref:`intro-overrides`.
+    More information regarding its usage in :ref:`rules-intro`.
 
     .. tip::
 
@@ -102,7 +102,7 @@ class PageObjectRegistry(dict):
         class ExampleComProductPage(WebPage[ProductItem]):
             ...
 
-        override_rules = default_registry.get_rules()
+        rules = default_registry.get_rules()
 
     Notice that the ``@handle_urls`` decorator that we're using is a part of the
     ``default_registry``. This provides a shorter and quicker way to interact
@@ -118,7 +118,7 @@ class PageObjectRegistry(dict):
 
         However, it might be applicable in certain scenarios like storing custom
         rules to separate it from the ``default_registry``. This :ref:`example
-        <overrides-custom-registry>` from the tutorial section may provide some
+        <rules-custom-registry>` from the tutorial section may provide some
         context.
     """
 
@@ -131,7 +131,7 @@ class PageObjectRegistry(dict):
 
         This is useful in cases wherein you need to store some selected rules
         from multiple external packages. See this :ref:`example
-        <overrides-custom-registry>`.
+        <rules-custom-registry>`.
         """
         return cls({rule.use: rule for rule in rules})
 
@@ -168,7 +168,7 @@ class PageObjectRegistry(dict):
         more information about them.
 
         This decorator is able to derive the item class returned by the Page
-        Object (see :ref:`item-class-example` section for some examples). This is
+        Object (see :ref:`rules-item-class-example` section for some examples). This is
         important since it marks what type of item the Page Object is capable of
         returning for the given URL patterns. For certain advanced cases, you can
         pass a ``to_return`` parameter which replaces any derived values (though
@@ -177,7 +177,7 @@ class PageObjectRegistry(dict):
         Passing another Page Object into the ``instead_of`` parameter indicates
         that the decorated Page Object will be used instead of that for the given
         set of URL patterns. This is the concept of **overrides** (see the
-        :ref:`intro-overrides` section for more info`).
+        :ref:`rules-intro-overrides` section for more info`).
 
         Any extra parameters are stored as meta information that can be later used.
 
@@ -186,8 +186,8 @@ class PageObjectRegistry(dict):
         :param to_return: The item class holding the data returned by the Page Object.
             This could be omitted as it could be derived from the ``Returns[ItemClass]``
             or ``ItemPage[ItemClass]`` declaration of the Page Object. See
-            :ref:`item-classes` section. Code example in :ref:`combination` subsection.
-        :param exclude: The URLs over which the override should **not** happen.
+            :ref:`item-classes` section. Code example in :ref:`rules-combination` subsection.
+        :param exclude: The URLs for which the Page Object should **not** be applied.
         :param priority: The resolution priority in case of `conflicting` rules.
             A conflict happens when the ``include``, ``override``, and ``exclude``
             parameters are the same. If so, the `highest priority` will be

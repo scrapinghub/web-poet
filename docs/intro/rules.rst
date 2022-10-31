@@ -1,20 +1,20 @@
-.. _intro-overrides:
+.. _rules-intro:
 
 Apply Rules
 ===========
 
-Overview
---------
+Basic Usage
+-----------
 
 @handle_urls
 ~~~~~~~~~~~~
 
 web-poet provides a :func:`~.handle_urls` decorator, which allows to
-declare how the page objects can be used (applied):
+declare how a page object can be used (applied):
 
-* for which websites / URL patterns they work,
-* which data type (item classes) they can return,
-* which page objects can they replace (override; more on this later).
+* for which websites / URL patterns it works,
+* which data type (item classes) it can return,
+* which page objects it can replace (override; more on this later).
 
 .. code-block:: python
 
@@ -26,7 +26,7 @@ declare how the page objects can be used (applied):
         # ...
 
 
-``handle_urls("example.com")`` can serve as a documentation, but it also enables
+``handle_urls("example.com")`` can serve as documentation, but it also enables
 getting the information about page objects programmatically.
 The information about all page objects decorated with
 :func:`~.handle_urls` is stored in ``web_poet.default_registry``, which is
@@ -44,7 +44,7 @@ following :class:`~.ApplyRule` is added to the registry:
     )
 
 Note how ``rule.to_return`` is set to ``MyItem`` automatically.
-This can be used by libraries like `scrapy-poet`_. For example,
+Such rules can be used by libraries like `scrapy-poet`_. For example,
 if a spider needs to extract ``MyItem`` from some page on the ``example.com``
 website, `scrapy-poet`_ now knows that ``MyPage`` page object can be used.
 
@@ -78,8 +78,10 @@ Unlike regexes, this mini-language "understands" the URL structure.
 
 .. _url-matcher: https://url-matcher.readthedocs.io
 
+.. _rules-intro-overrides:
+
 Overrides
-~~~~~~~~~
+---------
 
 :func:`~.handle_urls` can be used to declare that a particular Page Object
 could (and should) be used *instead of* some other Page Object on
@@ -115,7 +117,7 @@ Libraries like scrapy-poet_ allow to create such "generic" spiders by
 using the information declared via ``handle_urls(..., instead_of=...)``.
 
 Example Use Case
-----------------
+~~~~~~~~~~~~~~~~
 
 Let's explore an example use case for the Overrides concept.
 
@@ -148,7 +150,7 @@ Let's see this in action by declaring the Overrides in the Page Objects below.
 
 
 Creating Overrides
-------------------
+~~~~~~~~~~~~~~~~~~
 
 To simplify the code examples in the next few subsections, let's assume that
 these item classes have been predefined:
@@ -170,7 +172,7 @@ these item classes have been predefined:
         regular_price: float
 
 Page Object
-~~~~~~~~~~~
+"""""""""""
 
 Let's take a look at how the following code is structured:
 
@@ -225,12 +227,12 @@ The code above declares that:
 
     The URL patterns declared in the ``@handle_urls`` decorator can still be
     further customized. You can read some of the specific parameters in the
-    :ref:`API section <api-overrides>` of :func:`web_poet.handle_urls`.
+    :ref:`API section <api-rules>` of :func:`web_poet.handle_urls`.
 
-.. _item-class-example:
+.. _rules-item-class-example:
 
 Item Class
-~~~~~~~~~~
+""""""""""
 
 An alternative approach for the Page Object Overrides example above is to specify
 the returned item class. For example, we could change the previous example into
@@ -300,10 +302,10 @@ Page Object instead of an item class instance, for scenarios where end users
 wish access to Page Object attributes and methods.
 
 
-.. _combination:
+.. _rules-combination:
 
 Combination
-~~~~~~~~~~~
+"""""""""""
 
 Of course, you can use the combination of both which enables you to specify in
 either contexts of Page Objects and item classes.
@@ -332,18 +334,20 @@ either contexts of Page Objects and item classes.
     class DualExampleProductPage(WebPage[SimilarProduct]):
         ...  # more specific parsing
 
-See the next :ref:`retrieving-overrides` section to observe what are the actual
+See the next :ref:`rules-retrieving` section to observe what are the actual
 :class:`~.ApplyRule` that were created by the ``@handle_urls`` decorators.
 
+Working with rules
+------------------
 
-.. _retrieving-overrides:
+.. _rules-retrieving:
 
-Retrieving all available Overrides
-----------------------------------
+Retrieving all available rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :meth:`~.PageObjectRegistry.get_rules` method from the ``web_poet.default_registry``
 allows retrieval of all :class:`~.ApplyRule` in the given registry.
-Following from our example above in the :ref:`combination` section, using it
+Following from our example above in the :ref:`rules-combination` section, using it
 would be:
 
 .. code-block:: python
@@ -374,7 +378,7 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
     processed properly. This ensures that the external Page Objects have all of their
     :class:`~.ApplyRule` present.
 
-    This can be done via the function named :func:`~.web_poet.overrides.consume_modules`.
+    This can be done via the function named :func:`~.web_poet.rules.consume_modules`.
     Here's an example:
 
     .. code-block:: python
@@ -387,17 +391,17 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
     The next section explores this caveat further.
 
 
-Using Overrides from External Packages
---------------------------------------
+Using rules from External Packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Developers have the option to import existing Page Objects alongside the
 :class:`~.ApplyRule` attached to them. This section aims to showcase different
 scenarios that come up when using multiple Page Object Projects.
 
-.. _intro-rule-all:
+.. _rules-using-all:
 
 Using all available ApplyRules from multiple Page Object Projects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Let's suppose we have the following use case before us:
 
@@ -441,15 +445,15 @@ This can be done something like:
 
 .. note::
 
-    Once :func:`~.web_poet.overrides.consume_modules` is called, then all
+    Once :func:`~.web_poet.rules.consume_modules` is called, then all
     external Page Objects are recursively imported and available for the entire
-    runtime duration. Calling :func:`~.web_poet.overrides.consume_modules` again
+    runtime duration. Calling :func:`~.web_poet.rules.consume_modules` again
     makes no difference unless a new set of modules are provided.
 
-.. _intro-rule-subset:
+.. _rules-using-subset:
 
 Using only a subset of the available ApplyRules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""""""""""""""""
 
 Suppose that the use case from the previous section has changed wherein a
 subset of :class:`~.ApplyRule` would be used. This could be achieved by
@@ -486,7 +490,7 @@ conveniently select for :class:`~.ApplyRule` which conform to a specific criteri
 allows you to conveniently drill down to which :class:`~.ApplyRule` you're interested in
 using.
 
-.. _overrides-custom-registry:
+.. _rules-custom-registry:
 
 After gathering all the pre-selected rules, we can then store it in a new instance
 of :class:`~.PageObjectRegistry` in order to separate it from the ``default_registry``
@@ -500,17 +504,17 @@ for this:
     my_new_registry = PageObjectRegistry.from_apply_rules(rules)
 
 
-.. _intro-improve-po:
+.. _rules-improve-po:
 
 Improving on external Page Objects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""""""
 
 There would be cases wherein you're using Page Objects with :class:`~.ApplyRule`
 from external packages only to find out that a few of them lacks some of the
 fields or features that you need.
 
 Let's suppose that we wanted to use `all` of the :class:`~.ApplyRule` similar
-to this section: :ref:`intro-rule-all`. However, the ``EcomSite1`` Page Object
+to this section: :ref:`rules-using-all`. However, the ``EcomSite1`` Page Object
 needs to properly handle some edge cases where some fields are not being extracted
 properly. One way to fix this is to subclass the said Page Object and improve its
 ``to_item()`` method, or even creating a new class entirely. For simplicity, let's
@@ -553,12 +557,12 @@ and **#5** will be the choices. However, since we've assigned a much **higher pr
 for the new rule in **#5** than the default ``500`` value,  rule **#5** will be
 chosen because of its higher priority value.
 
-More details on this in the :ref:`Priority Resolution <priority-resolution>`
+More details on this in the :ref:`Priority Resolution <rules-priority-resolution>`
 subsection.
 
 
-Handling conflicts from using Multiple External Packages
---------------------------------------------------------
+Handling conflicts when using Multiple External Packages
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 You might've observed from the previous section that retrieving the list of all
 :class:`~.ApplyRule` from two different external packages may result in a
@@ -597,7 +601,7 @@ remained different.
 
 There are two main ways we recommend in solving this.
 
-.. _priority-resolution:
+.. _rules-priority-resolution:
 
 **1. Priority Resolution**
 
@@ -651,7 +655,7 @@ the new :class:`~.ApplyRule` having a much higher priority (see rule **#4**):
 
     # 4. ApplyRule(for_patterns=Patterns(include=['site_2.example'], exclude=[], priority=1000), use=<class 'my_project.EcomSite2Copy'>, instead_of=<class 'common_items.ProductGenericPage'>, to_return=None, meta={})
 
-A similar idea was also discussed in the :ref:`intro-improve-po` section.
+A similar idea was also discussed in the :ref:`rules-improve-po` section.
 
 
 **2. Specifically Selecting the Rules**
@@ -688,7 +692,7 @@ easily find the Page Object's rule using its `key`. Here's an example:
     ]
 
 Another approach would be using the :meth:`~.PageObjectRegistry.search_rules`
-functionality as described from this tutorial section: :ref:`intro-rule-subset`.
+functionality as described from this tutorial section: :ref:`rules-using-subset`.
 The :meth:`~.PageObjectRegistry.search_rules` is quite useful in cases wherein
 the **POP** contains a lot of rules as it presents a utility for programmatically
 searching for them.
