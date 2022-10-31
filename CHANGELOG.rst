@@ -2,38 +2,54 @@
 Changelog
 =========
 
-TBD
----
+0.6.0 (TBD)
+-----------
 
-* New ``ApplyRule`` class created by the ``@handle_urls`` decorator. This is
-  nearly identical with ``OverrideRule`` except:
+In this release, ``@handle_urls`` decorator gets an overhaul; it's not required
+anymore to pass another Page Object class to ``@handle_urls("...", overrides=...)``.
 
-    * It's now accepting a ``to_return`` parameter which signifies the data
-      container class that the Page Object returns.
+Also, ``@web_poet.field`` decorator gets support for output processing
+functions, via ``out`` argument.
+
+Full list of changes:
+
+* Official support for Python 3.11.
+
+* New ``@web_poet.field(out=[...])`` argument which allows to set output
+  processing functions for web-poet fields.
+
+* ``web_poet.overrides`` module is deprecated and replaced with
+  ``web_poet.rules``.
+
+* ``@handle_urls`` decorator is now creating ``ApplyRule`` instances
+  instead of ``OverrideRule`` instances; ``OverrideRule`` is deprecated.
+  ``ApplyRule`` is similar to ``OverrideRule``, but has the following differences:
+
+    * ``ApplyRule`` accepts a ``to_return`` parameter, which should be the data
+      container (item) class that the Page Object returns.
     * Passing a string to ``for_patterns`` would auto-convert it into
       ``url_matcher.Patterns``.
     * All arguments are now keyword-only except for ``for_patterns``.
 
-* Modify the call signature and behavior of ``handle_urls``:
+* New signature and behavior of ``handle_urls``:
 
-    * New ``instead_of`` parameter which does the same thing as ``overrides``.
-    * The old ``overrides`` parameter is not required anymore as it's set for
-      deprecation.
-    * It sets a ``to_return`` parameter when creating ``ApplyRule`` based on the
-      declared item class in subclasses of ``web_poet.ItemPage``. It's also
-      possible to pass a ``to_return`` parameter on more advanced use cases.
+    * ``overrides`` parameter is made optional and renamed to ``instead_of``.
+    * By default, item class declared in a subclass of ``web_poet.ItemPage``
+      is used as ``to_return`` parameter of ``ApplyRule``.
+      It is also possible to pass a ``to_return`` parameter to ``handle_urls``
+      explicitly, in more advanced use cases.
 
+* Typing improvements.
 * Documentation, test, and warning message improvements.
-* Official support for Python 3.11.
 
 Deprecations:
 
+* The ``web_poet.overrides`` module is deprecated. Use ``web_poet.rules`` instead.
 * The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
   Use the ``instead_of`` parameter instead.
 * The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
-* The ``web_poet.overrides`` module is deprecated. Use ``web_poet.rules`` instead.
 * The ``PageObjectRegistry.get_overrides`` method is deprecated.
   Use ``PageObjectRegistry.get_rules`` instead.
 * The ``PageObjectRegistry.search_overrides`` method is deprecated.
