@@ -36,10 +36,9 @@ Full list of changes:
 
     * The ``overrides`` parameter is made optional and renamed to
       ``instead_of``.
-    * By default, the item class declared in a subclass of
+    * If defined, the item class declared in a subclass of
       ``web_poet.ItemPage`` is used as the ``to_return`` parameter of
-      ``ApplyRule``. It is also possible to pass a ``to_return`` parameter to
-      ``handle_urls`` explicitly, in more advanced use cases.
+      ``ApplyRule``.
 
 * Typing improvements.
 * Documentation, test, and warning message improvements.
