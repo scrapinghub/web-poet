@@ -40,6 +40,12 @@ Full list of changes:
       ``web_poet.ItemPage`` is used as the ``to_return`` parameter of
       ``ApplyRule``.
 
+* ``PageObjectRegistry`` is replaced with ``RulesRegistry``; its API is changed:
+
+    * ``search_overrides`` method is renamed to ``search``;
+    * ``get_overrides`` method is renamed to ``get_rules``;
+    * ``from_override_rules`` method is renamed to ``from_apply_rules``.
+
 * Typing improvements.
 * Documentation, test, and warning message improvements.
 
@@ -49,6 +55,7 @@ Deprecations:
 * The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
   Use the ``instead_of`` parameter instead.
 * The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
+* ``PageObjectRegistry`` is now deprecated. Use ``Rulesregistry`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
   Use ``from_apply_rules`` instead.
 * The ``PageObjectRegistry.get_overrides`` method is deprecated.

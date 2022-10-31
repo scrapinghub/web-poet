@@ -224,7 +224,7 @@ class RulesRegistry(dict):
         return wrapper
 
     def get_rules(self) -> List[ApplyRule]:
-        """Returns all the :class:`~.ApplyRule` that were declared using
+        """Return all the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` decorator.
 
         .. note::
@@ -243,7 +243,7 @@ class RulesRegistry(dict):
 
     def search(self, **kwargs) -> List[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
-        of the provided attributes.
+        the provided attributes.
 
         Sample usage:
 
