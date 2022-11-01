@@ -107,7 +107,7 @@ class RulesRegistry(dict):
 
         It is encouraged to use the ``web_poet.default_registry`` instead of
         creating your own :class:`~.RulesRegistry` instance. Using multiple
-        registries would be unwieldy in most cases.
+        registries would be unwieldy in most cases (see :ref:`rules-custom-registry`).
 
         However, it might be applicable in certain scenarios like storing custom
         rules to separate it from the ``default_registry``. This :ref:`example
@@ -288,7 +288,7 @@ class RulesRegistry(dict):
 
     def search_overrides(self, **kwargs) -> List[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
-        msg = "The 'search_overrides' method is deprecated. " "Use 'search' instead."
+        msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
 
