@@ -492,6 +492,9 @@ using.
 
 .. _rules-custom-registry:
 
+Creating a new registry
+"""""""""""""""""""""""
+
 After gathering all the pre-selected rules, we can then store it in a new instance
 of :class:`~.RulesRegistry` in order to separate it from the ``default_registry``
 which contains all of the rules. We can use the :meth:`~.RulesRegistry.from_apply_rules`
