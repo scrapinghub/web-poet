@@ -113,6 +113,12 @@ class RulesRegistry(dict):
         rules to separate it from the ``default_registry``. This :ref:`example
         <rules-custom-registry>` from the tutorial section may provide some
         context.
+
+    .. warning::
+
+        Currently :class:`~.RulesRegistry` is a subclass of dict, but consider
+        it an implementation detail. Dict-like API for :class:`~.RulesRegistry`
+        is deprecated, and could be removed in the future.
     """
 
     @classmethod

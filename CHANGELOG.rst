@@ -42,6 +42,7 @@ Full list of changes:
 
 * ``PageObjectRegistry`` is replaced with ``RulesRegistry``; its API is changed:
 
+    * dict-like API is deprecated, and can be dropped in the future;
     * ``search_overrides`` method is renamed to ``search``;
     * ``get_overrides`` method is renamed to ``get_rules``;
     * ``from_override_rules`` method is renamed to ``from_apply_rules``.
