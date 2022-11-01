@@ -38,7 +38,7 @@ def test_web_page_object(book_list_html_response) -> None:
         def to_item(self) -> dict:  # type: ignore
             return {
                 "url": self.url,
-                "title": self.css("title::text").get().strip(),
+                "title": self.css("title::text").get("").strip(),
             }
 
     page_object = MyWebPage(book_list_html_response)
