@@ -81,7 +81,7 @@ class ApplyRule:
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
 
 
-class RulesRegistry(dict):
+class RulesRegistry:
     """
     RulesRegistry provides features for storing, retrieving,
     and searching for the :class:`~.ApplyRule` instances.
@@ -113,38 +113,24 @@ class RulesRegistry(dict):
         rules to separate it from the ``default_registry``. This :ref:`example
         <rules-custom-registry>` from the tutorial section may provide some
         context.
-
-    .. warning::
-
-        Currently :class:`~.RulesRegistry` is a subclass of dict, but consider
-        it an implementation detail. Dict-like API for :class:`~.RulesRegistry`
-        is deprecated, and could be removed in the future.
     """
 
-    @classmethod
-    def from_apply_rules(
-        cls: Type[RulesRegistryTV], rules: List[ApplyRule]
-    ) -> RulesRegistryTV:
-        """An alternative constructor for creating a :class:`~.RulesRegistry`
-        instance by accepting a list of :class:`~.ApplyRule`.
-
-        This is useful in cases wherein you need to store some selected rules
-        from multiple external packages. See this :ref:`example
-        <rules-custom-registry>`.
-        """
-        return cls({rule.use: rule for rule in rules})
+    def __init__(self, *, rules: Optional[List[ApplyRule]] = None):
+        self._page_object_rules: dict[Type[ItemPage], ApplyRule] = {}
+        if rules is not None:
+            self._page_object_rules = {rule.use: rule for rule in rules}
 
     @classmethod
     def from_override_rules(
         cls: Type[RulesRegistryTV], rules: List[ApplyRule]
     ) -> RulesRegistryTV:
-        """Deprecated. Use :meth:`~.RulesRegistry.from_apply_rules` instead."""
+        """Deprecated. Use ``RulesRegistry(rules=...)`` instead."""
         msg = (
             "The 'from_override_rules' method is deprecated. "
-            "Use 'from_apply_rules' instead."
+            "Use 'RulesRegistry(rules=...)' instead."
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return cls.from_apply_rules(rules)
+        return cls(rules=rules)
 
     def handle_urls(
         self,
@@ -215,8 +201,8 @@ class RulesRegistry(dict):
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
-            if cls not in self:
-                self[cls] = rule
+            if cls not in self._page_object_rules:
+                self._page_object_rules[cls] = rule
             else:
                 warnings.warn(
                     f"Multiple @handle_urls decorators for the same Page Object "
@@ -239,7 +225,7 @@ class RulesRegistry(dict):
             beforehand to recursively import all submodules which contains the
             ``@handle_urls`` decorators from external Page Objects.
         """
-        return list(self.values())
+        return list(self._page_object_rules.values())
 
     def get_overrides(self) -> List[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
@@ -265,7 +251,7 @@ class RulesRegistry(dict):
         # Short-circuit operation if "use" is the only search param used, since
         # we know that it's being used as the dict key.
         if {"use"} == kwargs.keys():
-            rule = self.get(kwargs["use"])
+            rule = self._page_object_rules.get(kwargs["use"])
             if rule:
                 return [rule]
             return []

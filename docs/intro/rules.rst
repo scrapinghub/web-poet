@@ -497,14 +497,14 @@ Creating a new registry
 
 After gathering all the pre-selected rules, we can then store it in a new instance
 of :class:`~.RulesRegistry` in order to separate it from the ``default_registry``
-which contains all of the rules. We can use the :meth:`~.RulesRegistry.from_apply_rules`
+which contains all of the rules. We can use the ``RulesRegistry(rules=...)``
 for this:
 
 .. code-block:: python
 
     from web_poet import RulesRegistry
 
-    my_new_registry = RulesRegistry.from_apply_rules(rules)
+    my_new_registry = RulesRegistry(rules=rules)
 
 
 .. _rules-improve-po:

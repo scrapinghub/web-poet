@@ -268,7 +268,7 @@ def test_registry_search_overrides_deprecation() -> None:
     assert isinstance(rules[0], ApplyRule)
 
 
-def test_from_apply_rules() -> None:
+def test_init_rules() -> None:
     rules = [
         ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
@@ -277,7 +277,7 @@ def test_from_apply_rules() -> None:
         )
     ]
 
-    registry = RulesRegistry.from_apply_rules(rules)
+    registry = RulesRegistry(rules=rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -292,10 +292,7 @@ def test_from_override_rules_deprecation_using_ApplyRule() -> None:
         )
     ]
 
-    msg = (
-        "The 'from_override_rules' method is deprecated. "
-        "Use 'from_apply_rules' instead."
-    )
+    msg = "The 'from_override_rules' method is deprecated."
     with pytest.warns(DeprecationWarning, match=msg):
         registry = RulesRegistry.from_override_rules(rules)
 
@@ -312,10 +309,7 @@ def test_from_override_rules_deprecation_using_OverrideRule() -> None:
         )
     ]
 
-    msg = (
-        "The 'from_override_rules' method is deprecated. "
-        "Use 'from_apply_rules' instead."
-    )
+    msg = "The 'from_override_rules' method is deprecated."
     with pytest.warns(DeprecationWarning, match=msg):
         registry = RulesRegistry.from_override_rules(rules)
 
