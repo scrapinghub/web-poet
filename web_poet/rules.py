@@ -115,8 +115,8 @@ class RulesRegistry:
         context.
     """
 
-    def __init__(self, *, rules: Optional[List[ApplyRule]] = None):
-        self._page_object_rules: dict[Type[ItemPage], ApplyRule] = {}
+    def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
+        self._page_object_rules: Dict[Type[ItemPage], ApplyRule] = {}
         if rules is not None:
             self._page_object_rules = {rule.use: rule for rule in rules}
 
