@@ -14,6 +14,9 @@ functions, via the ``out`` argument.
 
 Full list of changes:
 
+* **Backwards incompatible** ``PageObjectRegistry`` is no longer supporting
+  dict-like access.
+
 * Official support for Python 3.11.
 
 * New ``@web_poet.field(out=[...])`` argument which allows to set output
@@ -40,6 +43,14 @@ Full list of changes:
       ``web_poet.ItemPage`` is used as the ``to_return`` parameter of
       ``ApplyRule``.
 
+* ``PageObjectRegistry`` is replaced with ``RulesRegistry``; its API is changed:
+
+    * **backwards incompatible** dict-like API is removed;
+    * ``search_overrides`` method is renamed to ``search``;
+    * ``get_overrides`` method is renamed to ``get_rules``;
+    * ``from_override_rules`` method is deprecated;
+      use ``RulesRegistry(rules=...)`` instead.
+
 * Typing improvements.
 * Documentation, test, and warning message improvements.
 
@@ -49,12 +60,13 @@ Deprecations:
 * The ``overrides`` parameter from ``@handle_urls`` is now deprecated.
   Use the ``instead_of`` parameter instead.
 * The ``OverrideRule`` class is now deprecated. Use ``ApplyRule`` instead.
+* ``PageObjectRegistry`` is now deprecated. Use ``RulesRegistry`` instead.
 * The ``from_override_rules`` method of ``PageObjectRegistry`` is now deprecated.
-  Use ``from_apply_rules`` instead.
+  Use ``RulesRegistry(rules=...)`` instead.
 * The ``PageObjectRegistry.get_overrides`` method is deprecated.
   Use ``PageObjectRegistry.get_rules`` instead.
 * The ``PageObjectRegistry.search_overrides`` method is deprecated.
-  Use ``PageObjectRegistry.search_rules`` instead.
+  Use ``PageObjectRegistry.search`` instead.
 
 0.5.1 (2022-09-23)
 ------------------

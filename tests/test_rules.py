@@ -29,7 +29,7 @@ from tests.po_lib_to_return import (
 from web_poet import (
     ApplyRule,
     OverrideRule,
-    PageObjectRegistry,
+    RulesRegistry,
     consume_modules,
     default_registry,
     handle_urls,
@@ -213,19 +213,19 @@ def test_list_page_objects_all_consume() -> None:
     assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
 
 
-def test_registry_search_rules() -> None:
+def test_registry_search() -> None:
     # param: use
-    rules = default_registry.search_rules(use=POTopLevel2)
+    rules = default_registry.search(use=POTopLevel2)
     assert len(rules) == 1
     assert rules[0].use == POTopLevel2
 
     # param: instead_of
-    rules = default_registry.search_rules(instead_of=POTopLevelOverriden2)
+    rules = default_registry.search(instead_of=POTopLevelOverriden2)
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
     # param: to_return
-    rules = default_registry.search_rules(to_return=Product)
+    rules = default_registry.search(to_return=Product)
     assert rules == [
         ApplyRule("example.com", use=ProductPage, to_return=Product),
         ApplyRule(
@@ -244,18 +244,18 @@ def test_registry_search_rules() -> None:
     ]
 
     # params: to_return and use
-    rules = default_registry.search_rules(to_return=Product, use=ImprovedProductPage)
+    rules = default_registry.search(to_return=Product, use=ImprovedProductPage)
     assert len(rules) == 1
     assert rules[0].to_return == Product
     assert rules[0].use == ImprovedProductPage
 
     # Such rules doesn't exist
-    rules = default_registry.search_rules(use=POModuleOverriden)
+    rules = default_registry.search(use=POModuleOverriden)
     assert len(rules) == 0
 
 
 def test_registry_search_overrides_deprecation() -> None:
-    msg = "The 'search_overrides' method is deprecated. Use 'search_rules' instead."
+    msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
     with pytest.warns(DeprecationWarning, match=msg):
         rules = default_registry.search_overrides(use=POTopLevel2)
 
@@ -268,7 +268,7 @@ def test_registry_search_overrides_deprecation() -> None:
     assert isinstance(rules[0], ApplyRule)
 
 
-def test_from_apply_rules() -> None:
+def test_init_rules() -> None:
     rules = [
         ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
@@ -277,7 +277,7 @@ def test_from_apply_rules() -> None:
         )
     ]
 
-    registry = PageObjectRegistry.from_apply_rules(rules)
+    registry = RulesRegistry(rules=rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -292,12 +292,9 @@ def test_from_override_rules_deprecation_using_ApplyRule() -> None:
         )
     ]
 
-    msg = (
-        "The 'from_override_rules' method is deprecated. "
-        "Use 'from_apply_rules' instead."
-    )
+    msg = "The 'from_override_rules' method is deprecated."
     with pytest.warns(DeprecationWarning, match=msg):
-        registry = PageObjectRegistry.from_override_rules(rules)
+        registry = RulesRegistry.from_override_rules(rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -312,12 +309,9 @@ def test_from_override_rules_deprecation_using_OverrideRule() -> None:
         )
     ]
 
-    msg = (
-        "The 'from_override_rules' method is deprecated. "
-        "Use 'from_apply_rules' instead."
-    )
+    msg = "The 'from_override_rules' method is deprecated."
     with pytest.warns(DeprecationWarning, match=msg):
-        registry = PageObjectRegistry.from_override_rules(rules)
+        registry = RulesRegistry.from_override_rules(rules)
 
     assert registry.get_rules() == rules
     assert default_registry.get_rules() != rules
@@ -343,7 +337,7 @@ def test_handle_urls_deprecation() -> None:
 
     # The added rule should have its deprecated 'overrides' parameter converted
     # into the new 'instead_of' parameter.
-    rules = default_registry.search_rules(
+    rules = default_registry.search(
         instead_of=CustomProductPage, use=PageWithDeprecatedOverrides
     )
     assert rules == [

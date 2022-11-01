@@ -14,8 +14,14 @@ from .page_inputs import (
 )
 from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage
 from .requests import request_downloader_var
-from .rules import ApplyRule, OverrideRule, PageObjectRegistry, consume_modules
+from .rules import (
+    ApplyRule,
+    OverrideRule,
+    PageObjectRegistry,
+    RulesRegistry,
+    consume_modules,
+)
 from .utils import cached_method
 
-default_registry = PageObjectRegistry()
+default_registry = RulesRegistry()
 handle_urls = default_registry.handle_urls

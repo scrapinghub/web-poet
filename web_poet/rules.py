@@ -17,7 +17,7 @@ from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]
 
-PageObjectRegistryTV = TypeVar("PageObjectRegistryTV", bound="PageObjectRegistry")
+RulesRegistryTV = TypeVar("RulesRegistryTV", bound="RulesRegistry")
 
 
 @attrs.define(frozen=True)
@@ -27,7 +27,7 @@ class ApplyRule:
 
     This is instantiated when using the :func:`web_poet.handle_urls` decorator.
     It's also being returned as a ``List[ApplyRule]`` when calling the
-    ``web_poet.default_registry``'s :meth:`~.PageObjectRegistry.get_rules`
+    ``web_poet.default_registry``'s :meth:`~.RulesRegistry.get_rules`
     method.
 
     You can access any of its attributes:
@@ -81,40 +81,33 @@ class ApplyRule:
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
 
 
-class PageObjectRegistry(dict):
-    """This contains the :class:`~.ApplyRule` that associates the Page Objects
-    alongside its Items for a given URL matching rule.
+class RulesRegistry:
+    """
+    RulesRegistry provides features for storing, retrieving,
+    and searching for the :class:`~.ApplyRule` instances.
 
-    PageObjectRegistry is a ``dict`` subclass with added functionalities on
-    storing, retrieving, and searching for the :class:`~.ApplyRule` instances.
-    The **value** represents the :class:`~.ApplyRule` instance from which the
-    Page Object in the **key** is allowed to be used. Since it's essentially a
-    ``dict``, you can use any ``dict`` operations with it.
-
-    ``web-poet`` already provides a default Registry named ``default_registry``
-    for convenience. It can be directly accessed via:
+    ``web-poet`` provides a default Registry named ``default_registry``
+    for convenience. It can be accessed this way:
 
     .. code-block:: python
 
         from web_poet import handle_urls, default_registry, WebPage
+        from my_items import Product
 
-        @handle_urls("example.com", instead_of=ProductPageObject)
-        class ExampleComProductPage(WebPage[ProductItem]):
+        @handle_urls("example.com")
+        class ExampleComProductPage(WebPage[Product]):
             ...
 
         rules = default_registry.get_rules()
 
-    Notice that the ``@handle_urls`` decorator that we're using is a part of the
-    ``default_registry``. This provides a shorter and quicker way to interact
-    with the built-in default :class:`~.PageObjectRegistry` instead of writing
-    the longer ``@default_registry.handle_urls``.
+    The ``@handle_urls`` decorator exposed as ``web_poet.handle_urls`` is a
+    shortcut for ``default_registry.handle_urls``.
 
     .. note::
 
-        It is encouraged to simply use and import the already existing registry
-        via ``from web_poet import default_registry`` instead of creating your
-        own :class:`~.PageObjectRegistry` instance. Using multiple registries
-        would be unwieldy in most cases.
+        It is encouraged to use the ``web_poet.default_registry`` instead of
+        creating your own :class:`~.RulesRegistry` instance. Using multiple
+        registries would be unwieldy in most cases (see :ref:`rules-custom-registry`).
 
         However, it might be applicable in certain scenarios like storing custom
         rules to separate it from the ``default_registry``. This :ref:`example
@@ -122,30 +115,22 @@ class PageObjectRegistry(dict):
         context.
     """
 
-    @classmethod
-    def from_apply_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
-    ) -> PageObjectRegistryTV:
-        """An alternative constructor for creating a :class:`~.PageObjectRegistry`
-        instance by accepting a list of :class:`~.ApplyRule`.
-
-        This is useful in cases wherein you need to store some selected rules
-        from multiple external packages. See this :ref:`example
-        <rules-custom-registry>`.
-        """
-        return cls({rule.use: rule for rule in rules})
+    def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
+        self._page_object_rules: Dict[Type[ItemPage], ApplyRule] = {}
+        if rules is not None:
+            self._page_object_rules = {rule.use: rule for rule in rules}
 
     @classmethod
     def from_override_rules(
-        cls: Type[PageObjectRegistryTV], rules: List[ApplyRule]
-    ) -> PageObjectRegistryTV:
-        """Deprecated. Use :meth:`~.PageObjectRegistry.from_apply_rules` instead."""
+        cls: Type[RulesRegistryTV], rules: List[ApplyRule]
+    ) -> RulesRegistryTV:
+        """Deprecated. Use ``RulesRegistry(rules=...)`` instead."""
         msg = (
             "The 'from_override_rules' method is deprecated. "
-            "Use 'from_apply_rules' instead."
+            "Use 'RulesRegistry(rules=...)' instead."
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return cls.from_apply_rules(rules)
+        return cls(rules=rules)
 
     def handle_urls(
         self,
@@ -216,8 +201,8 @@ class PageObjectRegistry(dict):
                 meta=kwargs,
             )
             # If it was already defined, we don't want to override it
-            if cls not in self:
-                self[cls] = rule
+            if cls not in self._page_object_rules:
+                self._page_object_rules[cls] = rule
             else:
                 warnings.warn(
                     f"Multiple @handle_urls decorators for the same Page Object "
@@ -231,7 +216,7 @@ class PageObjectRegistry(dict):
         return wrapper
 
     def get_rules(self) -> List[ApplyRule]:
-        """Returns all the :class:`~.ApplyRule` that were declared using
+        """Return all the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` decorator.
 
         .. note::
@@ -240,23 +225,23 @@ class PageObjectRegistry(dict):
             beforehand to recursively import all submodules which contains the
             ``@handle_urls`` decorators from external Page Objects.
         """
-        return list(self.values())
+        return list(self._page_object_rules.values())
 
     def get_overrides(self) -> List[ApplyRule]:
-        """Deprecated, use :meth:`~.PageObjectRegistry.get_rules` instead."""
+        """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
         msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.get_rules()
 
-    def search_rules(self, **kwargs) -> List[ApplyRule]:
+    def search(self, **kwargs) -> List[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
-        of the provided attributes.
+        the provided attributes.
 
         Sample usage:
 
         .. code-block:: python
 
-            rules = registry.search_rules(use=ProductPO, instead_of=GenericPO)
+            rules = registry.search(use=ProductPO, instead_of=GenericPO)
             print(len(rules))           # 1
             print(rules[0].use)         # ProductPO
             print(rules[0].instead_of)  # GenericPO
@@ -266,7 +251,7 @@ class PageObjectRegistry(dict):
         # Short-circuit operation if "use" is the only search param used, since
         # we know that it's being used as the dict key.
         if {"use"} == kwargs.keys():
-            rule = self.get(kwargs["use"])
+            rule = self._page_object_rules.get(kwargs["use"])
             if rule:
                 return [rule]
             return []
@@ -288,13 +273,10 @@ class PageObjectRegistry(dict):
         return results
 
     def search_overrides(self, **kwargs) -> List[ApplyRule]:
-        """Deprecated, use :meth:`~.PageObjectRegistry.search_rules` instead."""
-        msg = (
-            "The 'search_overrides' method is deprecated. "
-            "Use 'search_rules' instead."
-        )
+        """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
+        msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self.search_rules(**kwargs)
+        return self.search(**kwargs)
 
 
 def _walk_module(module: str) -> Iterable:
@@ -358,3 +340,6 @@ def consume_modules(*modules: str) -> None:
 
 
 OverrideRule = _create_deprecated_class("OverrideRule", ApplyRule, warn_once=False)
+PageObjectRegistry = _create_deprecated_class(
+    "PageObjectRegistry", RulesRegistry, warn_once=True
+)
