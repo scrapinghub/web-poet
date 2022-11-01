@@ -36,12 +36,9 @@ def test_page_object() -> None:
 def test_web_page_object(book_list_html_response) -> None:
     class MyWebPage(WebPage):
         def to_item(self) -> dict:  # type: ignore
-            title = self.css("title::text").get()
-            if title is not None:
-                title = title.strip()
             return {
                 "url": self.url,
-                "title": title,
+                "title": self.css("title::text").get("").strip(),
             }
 
     page_object = MyWebPage(book_list_html_response)
