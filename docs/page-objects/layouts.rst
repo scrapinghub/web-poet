@@ -74,6 +74,8 @@ When that is the case, you can :ref:`associate your page object class to the
 corresponding URL pattern <rules-intro>`.
 
 
+.. _switch:
+
 Switch page object classes
 --------------------------
 
