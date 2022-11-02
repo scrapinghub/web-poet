@@ -10,6 +10,7 @@ from web_poet.pages import (
     ItemT,
     ItemWebPage,
     Returns,
+    SwitchPage,
     WebPage,
     is_injectable,
 )
@@ -31,6 +32,74 @@ def test_page_object() -> None:
     assert page_object.to_item() == {
         "foo": "bar",
     }
+
+
+@pytest.mark.asyncio
+async def test_switch_page_object():
+
+    @attrs.define
+    class Header:
+        text: str
+
+
+    @attrs.define
+    class H1Page(ItemPage[Header]):
+        response: HttpResponse
+
+        @field
+        def text(self) -> str:
+            return self.response.css("h1::text").get()
+
+
+    @attrs.define
+    class H2Page(ItemPage[Header]):
+        response: HttpResponse
+
+        @field
+        def text(self) -> str:
+            return self.response.css("h2::text").get()
+
+
+    @attrs.define
+    class HeaderSwitchPage(SwitchPage[Header]):
+        response: HttpResponse
+
+        async def switch(self) -> Injectable:
+            if self.response.css("h1::text"):
+                return H1Page
+            return H2Page
+
+    html_h1 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h1</title>
+        </head>
+        <body>
+            <h1>a</h1>
+        </body>
+    </html>
+    """
+    html_h2 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h2</title>
+        </head>
+        <body>
+            <h2>b</h2>
+        </body>
+    </html>
+    """
+
+    response1 = HttpResponse("https://example.com", body=html_h1)
+    response2 = HttpResponse("https://example.com", body=html_h2)
+
+    item1 = await HeaderSwitchPage(response=response1).to_item()
+    item2 = await HeaderSwitchPage(response=response2).to_item()
+
+    assert item1.text == "a"
+    assert item2.text == "b"
 
 
 def test_web_page_object(book_list_html_response) -> None:

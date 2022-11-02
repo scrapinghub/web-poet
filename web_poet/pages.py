@@ -68,6 +68,28 @@ class ItemPage(Injectable, Returns[ItemT]):
         )
 
 
+class SwitchPage(Injectable, Returns[ItemT]):
+    """Base class for :ref:`switch page object classes <switch>`.
+
+    Subclasses must reimplement the :meth:`switch` method.
+    """
+
+    @abc.abstractmethod
+    async def switch(self) ->  Injectable:
+        """Return the right :ref:`page object class <page-objects>` based on
+        the received input."""
+        raise NotImplementedError
+
+    async def to_item(self) -> ItemT:
+        """Create an instance of the class that :meth:`switch` returns with the
+        required input, and return the output of its
+        :meth:`~web_poet.pages.ItemPage.to_item` method."""
+        page_object_class = await self.switch()
+        # page_object = page_object_class(...)  # TODO: pass the right inputs
+        page_object = page_object_class(response=self.response)
+        return await page_object.to_item()
+
+
 @attr.s(auto_attribs=True)
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`
