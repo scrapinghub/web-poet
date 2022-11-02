@@ -1,4 +1,5 @@
 .. _intro-tutorial:
+.. _page-objects:
 
 =====================
 web-poet on a surface
