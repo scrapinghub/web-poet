@@ -176,13 +176,34 @@ def test_list_page_objects_all() -> None:
     # Ensure that ALL Override Rules are returned as long as the given
     # registry's @handle_urls decorator was used.
     assert page_objects == POS.union({POLibSub})
+
     for rule in rules:
         # We're ignoring the types below since mypy expects ``Type[ItemPage]``
         # which doesn't contain the ``expected_*`` fields in our tests.
+
+        # Special case since this PO has 2 ``@handle_urls`` decorators.
+        # See ``test_multiple_handle_urls()`` test case below.
+        if rule.use == POTopLevel1:
+            continue
+
         assert rule.instead_of == rule.use.expected_instead_of, rule.use  # type: ignore[attr-defined]
         assert rule.for_patterns == rule.use.expected_patterns, rule.use  # type: ignore[attr-defined]
         assert rule.to_return == rule.use.expected_to_return, rule.use  # type: ignore[attr-defined]
         assert rule.meta == rule.use.expected_meta, rule.use  # type: ignore[attr-defined]
+
+
+def test_multiple_handle_urls_annotations() -> None:
+    """Using multiple ``@handle_urls`` annotations on a single Page Object
+    should work.
+    """
+    rules = default_registry.search(use=POTopLevel1)
+    assert len(rules) == 2
+
+    for i, rule in enumerate(rules):
+        assert rule.instead_of == rule.use.expected_instead_of[i], rule.use  # type: ignore[attr-defined]
+        assert rule.for_patterns == rule.use.expected_patterns[i], rule.use  # type: ignore[attr-defined]
+        assert rule.to_return == rule.use.expected_to_return[i], rule.use  # type: ignore[attr-defined]
+        assert rule.meta == rule.use.expected_meta[i], rule.use  # type: ignore[attr-defined]
 
 
 def test_registry_get_overrides_deprecation() -> None:
@@ -269,17 +290,18 @@ def test_registry_search_overrides_deprecation() -> None:
 
 
 def test_init_rules() -> None:
-    rules = [
+    rules = (
         ApplyRule(
             for_patterns=Patterns(include=["sample.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
-        )
-    ]
+        ),
+    )
 
     registry = RulesRegistry(rules=rules)
 
-    assert registry.get_rules() == rules
+    # Any type of iterable input should convert it to a list.
+    assert registry.get_rules() == list(rules)
     assert default_registry.get_rules() != rules
 
 
