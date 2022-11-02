@@ -2,26 +2,36 @@
 web-poet
 ========
 
-.. warning::
+.. warning:: web-poet is in early stages of development; backward-incompatible
+             changes are possible.
 
-    web-poet is in early stages of development; backwards incompatible
-    changes are possible.
+.. include:: ../README.rst
+   :start-after: intro starts
+   :end-before: intro ends
 
-``web-poet`` implements Page Object pattern for web scraping.
-It defines a standard for writing web data extraction code, which allows
-the code to be portable & reusable.
+web-poet provides :ref:`an API and best practices to write web data extraction
+code <page-objects>`, and :ref:`a specification to write implementations for
+that API <frameworks>`, like scrapy-poet_.
+
+.. _scrapy-poet: https://scrapy-poet.readthedocs.io
 
 The main idea is to separate the extraction logic from all other concerns.
 ``web-poet`` Page Objects `don't do I/O <https://sans-io.readthedocs.io>`_,
 and they're not dependent on any particular framework like Scrapy_.
 
-This allows the code written using ``web-poet`` to be testable and reusable.
-For example, one can write a web-poet Page Object in an IPython notebook,
-plug it into a Scrapy spider, write tests for them using unittest or pytest,
-and then reuse in a simple script which uses ``requests`` library.
+If web scraping code is written as web-poet Page Objects, it can be reused
+in different contexts. For example, such code can be developed in an
+`IPython notebook`_, then tested in isolation, and then plugged
+into a Scrapy_ spider, or used as a part of some custom aiohttp_-based
+web scraping framework.
 
-To install it, run ``pip install web-poet``. It requires Python 3.7+.
-:ref:`license` is BSD 3-clause.
+.. _aiohttp: https://github.com/aio-libs/aiohttp
+.. _IPython notebook: https://jupyter.org/
+.. _Scrapy: https://scrapy.org/
+
+.. include:: ../README.rst
+   :start-after: install starts
+   :end-before: install ends
 
 If you want to quickly learn how to write web-poet Page Objects,
 see :ref:`intro-tutorial`. To understand better all the ``web-poet`` concepts
@@ -59,8 +69,3 @@ and the motivation behind ``web-poet``, start with :ref:`from-ground-up`.
    contributing
    changelog
    license
-
-.. _web-poet: https://github.com/scrapinghub/web-poet
-.. _Scrapy: https://scrapy.org/
-.. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
-
