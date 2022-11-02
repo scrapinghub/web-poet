@@ -215,7 +215,7 @@ class RulesRegistry:
             beforehand to recursively import all submodules which contains the
             ``@handle_urls`` decorators from external Page Objects.
         """
-        return self._rules
+        return self._rules[:]
 
     def get_overrides(self) -> List[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
