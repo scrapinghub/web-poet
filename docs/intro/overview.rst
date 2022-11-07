@@ -2,7 +2,7 @@
 Overview
 ========
 
-A good web scraping framework helps you keep your code maintainable by, among
+A good web scraping framework helps to keep your code maintainable by, among
 other things, enabling and encouraging `separation of concerns`_.
 
 .. _separation of concerns: https://en.wikipedia.org/wiki/Separation_of_concerns
