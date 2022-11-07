@@ -35,20 +35,6 @@ See the documentation_.
 
 .. _documentation: https://web-poet.readthedocs.io
 
-Installation
-============
-
-.. install starts
-
-To install web-poet, run:
-
-.. code-block:: bash
-
-    pip install web-poet
-
-.. install ends
-
-
 Developing
 ==========
 
