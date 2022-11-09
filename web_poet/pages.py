@@ -78,7 +78,6 @@ class MultiLayoutPage(ItemPage[ItemT]):
     async def layout(self) -> ItemPage[ItemT]:
         """Return the :ref:`page object <page-objects>` to use based on the
         received input."""
-        raise NotImplementedError
 
     async def to_item(self) -> ItemT:
         """Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
