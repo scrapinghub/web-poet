@@ -98,8 +98,11 @@ Your multi-layout page object class should:
     For example, declare an :class:`HttpResponse` attribute to select a page
     object class based on the response content.
 
-#.  Declare an attribute for every page object class that you may depending on
-    which webpage layout you get from the target website.
+#.  Declare an attribute for every page object class that you may use depending
+    on which webpage layout you get from the target website.
+
+    They all should return the same type of :ref:`item <item-classes>` as your
+    multi-layout page object class.
 
     Note that all inputs of all those page object classes will be resolved and
     requested along with the input of your multi-layout page object class. For
@@ -163,5 +166,5 @@ page object to use. For example:
 
 .. note:: If you use :func:`~web_poet.handle_urls` both for your multi-layout
           page object class and for any of the page object classes that it
-          uses, you may need to :ref:`grant your multi-layour page object class
+          uses, you may need to :ref:`grant your multi-layout page object class
           a higher priority <rules-priority-resolution>`.
