@@ -55,6 +55,10 @@ Pages
    :show-inheritance:
    :members:
 
+.. autoclass:: MultiLayoutPage
+   :show-inheritance:
+   :members: layout
+
 Mixins
 ======
 
