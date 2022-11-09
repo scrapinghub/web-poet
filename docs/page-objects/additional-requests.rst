@@ -1,5 +1,4 @@
 .. _advanced-requests:
-.. _page-objects:
 
 ===================
 Additional Requests

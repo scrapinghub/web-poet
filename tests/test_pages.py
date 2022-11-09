@@ -9,8 +9,8 @@ from web_poet.pages import (
     ItemPage,
     ItemT,
     ItemWebPage,
+    MultiLayoutPage,
     Returns,
-    SwitchPage,
     WebPage,
     is_injectable,
 )
@@ -36,38 +36,36 @@ def test_page_object() -> None:
 
 @pytest.mark.asyncio
 async def test_switch_page_object():
-
     @attrs.define
     class Header:
         text: str
-
 
     @attrs.define
     class H1Page(ItemPage[Header]):
         response: HttpResponse
 
         @field
-        def text(self) -> str:
+        def text(self) -> Optional[str]:
             return self.response.css("h1::text").get()
-
 
     @attrs.define
     class H2Page(ItemPage[Header]):
         response: HttpResponse
 
         @field
-        def text(self) -> str:
+        def text(self) -> Optional[str]:
             return self.response.css("h2::text").get()
 
-
     @attrs.define
-    class HeaderSwitchPage(SwitchPage[Header]):
+    class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
         response: HttpResponse
+        h1: H1Page
+        h2: H2Page
 
-        async def switch(self) -> Injectable:
+        async def switch(self) -> ItemPage[Header]:
             if self.response.css("h1::text"):
-                return H1Page
-            return H2Page
+                return self.h1
+            return self.h2
 
     html_h1 = b"""
     <!DOCTYPE html>
@@ -93,10 +91,14 @@ async def test_switch_page_object():
     """
 
     response1 = HttpResponse("https://example.com", body=html_h1)
+    h1_1 = H1Page(response=response1)
+    h2_1 = H2Page(response=response1)
     response2 = HttpResponse("https://example.com", body=html_h2)
+    h1_2 = H1Page(response=response2)
+    h2_2 = H2Page(response=response2)
 
-    item1 = await HeaderSwitchPage(response=response1).to_item()
-    item2 = await HeaderSwitchPage(response=response2).to_item()
+    item1 = await HeaderMultiLayoutPage(response=response1, h1=h1_1, h2=h2_1).to_item()
+    item2 = await HeaderMultiLayoutPage(response=response2, h1=h1_2, h2=h2_2).to_item()
 
     assert item1.text == "a"
     assert item2.text == "b"
