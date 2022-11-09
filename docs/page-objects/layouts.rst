@@ -160,3 +160,8 @@ page object to use. For example:
             if self.response.css("h1::text"):
                 return self.h1
             return self.h2
+
+.. note:: If you use :func:`~web_poet.handle_urls` both for your multi-layout
+          page object class and for any of the page object classes that it
+          uses, you may need to :ref:`grant your multi-layour page object class
+          a higher priority <rules-priority-resolution>`.
