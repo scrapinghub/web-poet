@@ -40,7 +40,6 @@ class ApplyRule:
           pattern represented by the ``for_patterns`` attribute is matched.
         * ``instead_of`` - *(optional)* The Page Object that will be **replaced**
           with the Page Object specified via the ``use`` parameter.
-        * ``to_return`` - *(optional)* The item class which the **used**
         * ``to_return`` - *(optional)* The item class that the Page Object specified
           in ``use`` is capable of returning.
         * ``meta`` - *(optional)* Any other information you may want to store.
@@ -116,9 +115,9 @@ class RulesRegistry:
     """
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
-        self._page_object_rules: Dict[Type[ItemPage], ApplyRule] = {}
+        self._rules: List[ApplyRule] = []
         if rules is not None:
-            self._page_object_rules = {rule.use: rule for rule in rules}
+            self._rules = list(rules)
 
     @classmethod
     def from_override_rules(
@@ -200,17 +199,7 @@ class RulesRegistry:
                 to_return=to_return or get_item_cls(cls),
                 meta=kwargs,
             )
-            # If it was already defined, we don't want to override it
-            if cls not in self._page_object_rules:
-                self._page_object_rules[cls] = rule
-            else:
-                warnings.warn(
-                    f"Multiple @handle_urls decorators for the same Page Object "
-                    f"are ignored in the same Registry. The following rule is "
-                    f"ignored:\n{rule}",
-                    stacklevel=2,
-                )
-
+            self._rules.append(rule)
             return cls
 
         return wrapper
@@ -225,7 +214,7 @@ class RulesRegistry:
             beforehand to recursively import all submodules which contains the
             ``@handle_urls`` decorators from external Page Objects.
         """
-        return list(self._page_object_rules.values())
+        return self._rules[:]
 
     def get_overrides(self) -> List[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
@@ -247,14 +236,6 @@ class RulesRegistry:
             print(rules[0].instead_of)  # GenericPO
 
         """
-
-        # Short-circuit operation if "use" is the only search param used, since
-        # we know that it's being used as the dict key.
-        if {"use"} == kwargs.keys():
-            rule = self._page_object_rules.get(kwargs["use"])
-            if rule:
-                return [rule]
-            return []
 
         getter = attrgetter(*kwargs.keys())
 

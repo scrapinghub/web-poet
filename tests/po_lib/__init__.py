@@ -1,7 +1,7 @@
 """
 This package is just for overrides testing purposes.
 """
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Type, Union
 
 from url_matcher import Patterns
 
@@ -12,7 +12,7 @@ from .. import po_lib_sub  # noqa: F401
 
 
 class POBase(ItemPage):
-    expected_instead_of: Type[ItemPage]
+    expected_instead_of: Union[Type[ItemPage], List[Type[ItemPage]]]
     expected_patterns: Patterns
     expected_to_return: Any = None
     expected_meta: Dict[str, Any]
@@ -26,17 +26,18 @@ class POTopLevelOverriden2(ItemPage):
     ...
 
 
-# This first decorator is ignored. A single ``ApplyRule`` with the same Page
-# Object to be used per registry is allowed.
 @handle_urls("example.com", instead_of=POTopLevelOverriden1)
 @handle_urls(
     "example.com", instead_of=POTopLevelOverriden1, exclude="/*.jpg|", priority=300
 )
 class POTopLevel1(POBase):
-    expected_instead_of = POTopLevelOverriden1
-    expected_patterns = Patterns(["example.com"], ["/*.jpg|"], priority=300)
-    expected_to_return = None
-    expected_meta = {}  # type: ignore
+    expected_instead_of = [POTopLevelOverriden1, POTopLevelOverriden1]
+    expected_patterns = [
+        Patterns(["example.com"], ["/*.jpg|"], priority=300),
+        Patterns(["example.com"]),
+    ]
+    expected_to_return = [None, None]
+    expected_meta = [{}, {}]  # type: ignore
 
 
 @handle_urls("example.com", instead_of=POTopLevelOverriden2)

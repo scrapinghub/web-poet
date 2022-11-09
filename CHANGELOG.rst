@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.6.0 (TBD)
------------
+0.6.0 (2022-11-08)
+------------------
 
 In this release, the ``@handle_urls`` decorator gets an overhaul; it's not
 required anymore to pass another Page Object class to
@@ -42,10 +42,13 @@ Full list of changes:
     * If defined, the item class declared in a subclass of
       ``web_poet.ItemPage`` is used as the ``to_return`` parameter of
       ``ApplyRule``.
+    * Multiple ``handle_urls`` annotations are allowed.
 
 * ``PageObjectRegistry`` is replaced with ``RulesRegistry``; its API is changed:
 
     * **backwards incompatible** dict-like API is removed;
+    * **backwards incompatible** *O(1)* lookups using
+      ``.search(use=PagObject)`` has become *O(N)*;
     * ``search_overrides`` method is renamed to ``search``;
     * ``get_overrides`` method is renamed to ``get_rules``;
     * ``from_override_rules`` method is deprecated;
