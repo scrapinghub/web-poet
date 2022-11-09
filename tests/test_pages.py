@@ -35,26 +35,22 @@ def test_page_object() -> None:
 
 
 @pytest.mark.asyncio
-async def test_switch_page_object():
+async def test_multi_layout_page_object():
     @attrs.define
     class Header:
         text: str
 
     @attrs.define
-    class H1Page(ItemPage[Header]):
-        response: HttpResponse
-
+    class H1Page(WebPage[Header]):
         @field
         def text(self) -> Optional[str]:
-            return self.response.css("h1::text").get()
+            return self.css("h1::text").get()
 
     @attrs.define
-    class H2Page(ItemPage[Header]):
-        response: HttpResponse
-
+    class H2Page(WebPage[Header]):
         @field
         def text(self) -> Optional[str]:
-            return self.response.css("h2::text").get()
+            return self.css("h2::text").get()
 
     @attrs.define
     class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
@@ -62,7 +58,7 @@ async def test_switch_page_object():
         h1: H1Page
         h2: H2Page
 
-        async def switch(self) -> ItemPage[Header]:
+        async def layout(self) -> ItemPage[Header]:
             if self.response.css("h1::text"):
                 return self.h1
             return self.h2

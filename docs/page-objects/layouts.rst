@@ -49,11 +49,11 @@ there are at least 2 different webpage layouts.
 
 However, whether you continue to work as if everything uses the same webpage
 layout, or you split your page object class into 2 page object classes, each
-targetting one of the webpage layouts you have found, it is entirely up to you.
+targeting one of the webpage layouts you have found, it is entirely up to you.
 
 Ask yourself: Is supporting all webpage layout differences making your page
 object class implementation only a few lines of code longer, or is it making it
-an unmaintainable bowl of spagetti code?
+an unmaintainable bowl of spaghetti code?
 
 
 Mapping webpage layouts
@@ -74,10 +74,10 @@ When that is the case, you can :ref:`associate your page object class to the
 corresponding URL pattern <rules-intro>`.
 
 
-.. _switch:
+.. _multi-layout:
 
-Switch page object classes
---------------------------
+Multi-layout page object classes
+--------------------------------
 
 Sometimes it is impossible to know, based on the target URL, which webpage
 layout you are getting. For example, during `A/B testing`_, you could get a
@@ -85,39 +85,47 @@ random webpage layout on every request.
 
 .. _A/B testing: https://en.wikipedia.org/wiki/A/B_testing
 
-For these scenarios, we recommend that you create a special “switch” page
-object class, and use it to switch to the right page object class at run time
-based on the input you receive.
+For these scenarios, we recommend that you create different page object classes
+for the different layouts that you may get, and then write a special
+“multi-layout” page object class, and use it to select the right page object
+class at run time based on the input you receive.
 
-Your switch page object class should:
+Your multi-layout page object class should:
 
-#.  Request all the inputs that the candidate page object classes may need.
+#.  Declare attributes for the input that you will need to determine which page
+    object class to use.
 
-    For example, if there are 2 candidate page object classes, and 1 of them
-    requires browser HTML as input, while the other one requires an HTTP
-    response, your switch page object class must request both.
+    For example, declare an :class:`HttpResponse` attribute to select a page
+    object class based on the response content.
 
-    If combining different inputs is a problem, consider refactoring the
-    candidate page object classes to require similar inputs.
+#.  Declare an attribute for every page object class that you may depending on
+    which webpage layout you get from the target website.
+
+    Note that all inputs of all those page object classes will be resolved and
+    requested along with the input of your multi-layout page object class. For
+    example, if one page object class requires browser HTML as input, while
+    another requires an HTTP response, your multi-layout page object class asks
+    for both inputs.
+
+    If combining different inputs is a problem, consider refactoring your page
+    object classes to require similar inputs.
 
 #.  On its :meth:`~web_poet.pages.ItemPage.to_item` method:
 
-    #.  Determine, based on the inputs, which candidate page object class to
-        use.
+    #.  Determine, based on inputs, which page object to use.
 
-    #.  Create an instance of the selected candidade page object class with the
-        necessary input, call its :meth:`~web_poet.pages.ItemPage.to_item`
-        method, and return its result.
+    #.  Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
+        method of that page object.
 
-You may use :class:`~web_poet.pages.SwitchPage` as a base class for your switch
-page object class, so you only need to implement the
-:class:`~web_poet.pages.SwitchPage.switch` method that determines which
-candidate page object class to use. For example:
+You may use :class:`~web_poet.pages.MultiLayoutPage` as a base class for your
+multi-layout page object class, so you only need to implement the
+:class:`~web_poet.pages.MultiLayoutPage.layout` method that determines which
+page object to use. For example:
 
 .. code-block:: python
 
     import attrs
-    from web_poet import handle_urls, HttpResponse, Injectable, ItemPage, SwitchPage
+    from web_poet import handle_urls, HttpResponse, ItemPage, MultiLayoutPage, WebPage
 
 
     @attrs.define
@@ -126,29 +134,29 @@ candidate page object class to use. For example:
 
 
     @attrs.define
-    class H1Page(ItemPage[Header]):
-        response: HttpResponse
+    class H1Page(WebPage[Header]):
 
         @field
         def text(self) -> str:
-            return self.response.css("h1::text").get()
+            return self.css("h1::text").get()
 
 
     @attrs.define
-    class H2Page(ItemPage[Header]):
-        response: HttpResponse
+    class H2Page(WebPage[Header]):
 
         @field
         def text(self) -> str:
-            return self.response.css("h2::text").get()
+            return self.css("h2::text").get()
 
 
     @handle_urls("example.com")
     @attrs.define
-    class HeaderSwitchPage(SwitchPage[Header]):
+    class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
         response: HttpResponse
+        h1: H1Page
+        h2: H2Page
 
-        async def switch(self) -> Injectable:
+        async def layout(self) -> ItemPage[Header]:
             if self.response.css("h1::text"):
-                return H1Page
-            return H2Page
+                return self.h1
+            return self.h2

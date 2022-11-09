@@ -69,22 +69,22 @@ class ItemPage(Injectable, Returns[ItemT]):
 
 
 class MultiLayoutPage(ItemPage[ItemT]):
-    """Base class for :ref:`switch page object classes <switch>`.
+    """Base class for :ref:`multi-layout page object classes <multi-layout>`.
 
-    Subclasses must reimplement the :meth:`switch` method.
+    Subclasses must reimplement the :meth:`layout` method.
     """
 
     @abc.abstractmethod
-    async def switch(self) -> ItemPage[ItemT]:
-        """Return the right :ref:`page object class <page-objects>` based on
-        the received input."""
+    async def layout(self) -> ItemPage[ItemT]:
+        """Return the :ref:`page object <page-objects>` to use based on the
+        received input."""
         raise NotImplementedError
 
     async def to_item(self) -> ItemT:
-        """Create an instance of the class that :meth:`switch` returns with the
-        required input, and return the output of its
-        :meth:`~web_poet.pages.ItemPage.to_item` method."""
-        page_object = await self.switch()
+        """Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
+        method of the :ref:`page object <page-objects>` that :meth:`layout`
+        returns."""
+        page_object = await self.layout()
         return await page_object.to_item()
 
 
