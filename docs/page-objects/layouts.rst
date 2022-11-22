@@ -185,8 +185,8 @@ Your multi-layout page object class should:
 
 You may use :class:`~web_poet.pages.MultiLayoutPage` as a base class for your
 multi-layout page object class, so you only need to implement the
-:class:`~web_poet.pages.MultiLayoutPage.layout` method that determines which
-page object to use. For example:
+:class:`~web_poet.pages.MultiLayoutPage.get_layout` method that determines
+which page object to use. For example:
 
 .. code-block:: python
 
@@ -222,7 +222,7 @@ page object to use. For example:
        h1: H1Page
        h2: H2Page
 
-       async def layout(self) -> ItemPage[Header]:
+       async def get_layout(self) -> ItemPage[Header]:
            if self.response.css("h1::text"):
                return self.h1
            return self.h2

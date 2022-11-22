@@ -56,7 +56,7 @@ async def test_multi_layout_page_object():
         h1: H1Page
         h2: H2Page
 
-        async def layout(self) -> ItemPage[Header]:
+        async def get_layout(self) -> ItemPage[Header]:
             if self.response.css("h1::text"):
                 return self.h1
             return self.h2
@@ -133,7 +133,7 @@ async def test_multi_layout_page_object_shared_partial_layout():
         page1: FullPage1
         page2: FullPage2
 
-        async def layout(self) -> ItemPage[FullItem]:
+        async def get_layout(self) -> ItemPage[FullItem]:
             if self.response.css("h1::text"):
                 return self.page1  # type: ignore[return-value]
             return self.page2  # type: ignore[return-value]
@@ -178,10 +178,10 @@ async def test_multi_layout_page_object_shared_partial_layout():
 
     # To access page object fields, you must first get the underlying page
     # object, and then access its fields:
-    layout1 = await multilayoutpage1.layout()
+    layout1 = await multilayoutpage1.get_layout()
     assert await layout1.url == url
     assert await layout1.text == "a"
-    layout2 = await multilayoutpage2.layout()
+    layout2 = await multilayoutpage2.get_layout()
     assert await layout2.url == url
     assert await layout2.text == "b"
 

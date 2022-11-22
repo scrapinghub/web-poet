@@ -75,7 +75,7 @@ class MultiLayoutPage(ItemPage[ItemT]):
     """
 
     @abc.abstractmethod
-    async def layout(self) -> ItemPage[ItemT]:
+    async def get_layout(self) -> ItemPage[ItemT]:
         """Return the :ref:`page object <page-objects>` to use based on the
         received input (e.g. :class:`~.HttpResponse`)."""
 
@@ -83,7 +83,7 @@ class MultiLayoutPage(ItemPage[ItemT]):
         """Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
         method of the :ref:`page object <page-objects>` that :meth:`layout`
         returns."""
-        page_object = await self.layout()
+        page_object = await self.get_layout()
         return await page_object.to_item()
 
 
