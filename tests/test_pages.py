@@ -40,13 +40,11 @@ async def test_multi_layout_page_object():
     class Header:
         text: str
 
-    @attrs.define
     class H1Page(WebPage[Header]):
         @field
         def text(self) -> Optional[str]:
             return self.css("h1::text").get()
 
-    @attrs.define
     class H2Page(WebPage[Header]):
         @field
         def text(self) -> Optional[str]:

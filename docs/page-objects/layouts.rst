@@ -96,7 +96,13 @@ Your multi-layout page object class should:
     object class to use.
 
     For example, declare an :class:`HttpResponse` attribute to select a page
-    object class based on the response content.
+    object class based on the response content:
+
+    .. code-block:: python
+
+       class MyMultiLayoutPage(ItemPage):
+           response: HttpResponse
+           ...
 
 #.  Declare an attribute for every page object class that you may use depending
     on which webpage layout you get from the target website.
@@ -104,11 +110,51 @@ Your multi-layout page object class should:
     They all should return the same type of :ref:`item <item-classes>` as your
     multi-layout page object class.
 
+    For example:
+
+    .. code-block:: python
+
+       class MyItem:
+           ...
+
+       @attrs.define
+       class MyPage1(ItemPage[MyItem]):
+           ...
+
+       @attrs.define
+       class MyPage2(ItemPage[MyItem]):
+           ...
+
+       @attrs.define
+       class MyMultiLayoutPage(ItemPage[MyItem]):
+           ...
+           page1: MyPage1
+           page2: MyPage2
+
     Note that all inputs of all those page object classes will be resolved and
-    requested along with the input of your multi-layout page object class. For
-    example, if one page object class requires browser HTML as input, while
-    another requires an HTTP response, your multi-layout page object class asks
-    for both inputs.
+    requested along with the input of your multi-layout page object class.
+
+    For example, given:
+
+    .. code-block:: python
+
+       @attrs.define
+       class MyPage1(ItemPage):
+           response: HttpResponse
+
+       @attrs.define
+       class MyPage2(ItemPage):
+           response: BrowserHtml
+
+       @attrs.define
+       class MyMultiLayoutPage(ItemPage):
+           response: HttpResponse
+           page1: MyPage1
+           page2: MyPage2
+
+    Using ``MyMultiLayoutPage`` causes the use of both ``HttpResponse`` and
+    ``BrowserHtml``, because ``MyMultiLayoutPage`` requires ``MyPage2``, and
+    ``MyPage2`` requires ``BrowserHtml``.
 
     If combining different inputs is a problem, consider refactoring your page
     object classes to require similar inputs.
@@ -120,6 +166,23 @@ Your multi-layout page object class should:
     #.  Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
         method of that page object.
 
+    For example:
+
+    .. code-block:: python
+
+       @attrs.define
+       class MyMultiLayoutPage(ItemPage[MyItem]):
+           response: HttpResponse
+           page1: MyPage1
+           page2: MyPage2
+
+           async def to_item(self) -> MyItem:
+               if self.response.css(".foo"):
+                   page_object = self.page1
+               else:
+                   page_object = self.page2
+               return await page_object.to_item()
+
 You may use :class:`~web_poet.pages.MultiLayoutPage` as a base class for your
 multi-layout page object class, so you only need to implement the
 :class:`~web_poet.pages.MultiLayoutPage.layout` method that determines which
@@ -127,41 +190,42 @@ page object to use. For example:
 
 .. code-block:: python
 
-    import attrs
-    from web_poet import handle_urls, HttpResponse, ItemPage, MultiLayoutPage, WebPage
+   from typing import Optional
+
+   import attrs
+   from web_poet import handle_urls, HttpResponse, ItemPage, MultiLayoutPage, WebPage
 
 
-    class Header:
-        text: str
+   @attrs.define
+   class Header:
+       text: str
 
 
-    @attrs.define
-    class H1Page(WebPage[Header]):
+   class H1Page(WebPage[Header]):
 
-        @field
-        def text(self) -> str:
-            return self.css("h1::text").get()
-
-
-    @attrs.define
-    class H2Page(WebPage[Header]):
-
-        @field
-        def text(self) -> str:
-            return self.css("h2::text").get()
+       @field
+       def text(self) -> Optional[str]:
+           return self.css("h1::text").get()
 
 
-    @handle_urls("example.com")
-    @attrs.define
-    class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
-        response: HttpResponse
-        h1: H1Page
-        h2: H2Page
+   class H2Page(WebPage[Header]):
 
-        async def layout(self) -> ItemPage[Header]:
-            if self.response.css("h1::text"):
-                return self.h1
-            return self.h2
+       @field
+       def text(self) -> Optional[str]:
+           return self.css("h2::text").get()
+
+
+   @handle_urls("example.com")
+   @attrs.define
+   class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
+       response: HttpResponse
+       h1: H1Page
+       h2: H2Page
+
+       async def layout(self) -> ItemPage[Header]:
+           if self.response.css("h1::text"):
+               return self.h1
+           return self.h2
 
 .. note:: If you use :func:`~web_poet.handle_urls` both for your multi-layout
           page object class and for any of the page object classes that it
