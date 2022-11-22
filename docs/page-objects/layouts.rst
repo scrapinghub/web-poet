@@ -131,7 +131,6 @@ page object to use. For example:
     from web_poet import handle_urls, HttpResponse, ItemPage, MultiLayoutPage, WebPage
 
 
-    @attrs.define
     class Header:
         text: str
 
