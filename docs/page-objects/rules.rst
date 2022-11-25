@@ -204,7 +204,7 @@ The code above declares that:
 
     - The Page Objects return ``Product`` and ``SimilarProduct`` item classes.
       Returning item classes is a preferred approach as explained in the
-      :ref:`web-poet-fields` section.
+      :ref:`fields` section.
     - For sites that match the ``some.example`` pattern, ``ExampleProductPage``
       would be used instead of ``GenericProductPage``.
     - The same is true for ``DualExampleProductPage`` where it is used
@@ -220,7 +220,7 @@ The code above declares that:
 
     - On the other hand, ``AnotherExampleProductPage`` is used instead of
       ``GenericProductPage`` when we're handling pages that match the
-      ``another.example`` URL Pattern, which doesn't contain 
+      ``another.example`` URL Pattern, which doesn't contain
       ``/digital-goods/`` in its URL path.
 
 .. tip::
@@ -266,7 +266,7 @@ the following:
 Let's break this example down:
 
     - The URL patterns are exactly the same as with the previous code example.
-    - The ``@handle_urls`` decorator determines the item class to return (i.e. 
+    - The ``@handle_urls`` decorator determines the item class to return (i.e.
       ``Product``) from the decorated Page Object.
     - The ``instead_of`` parameter can be omitted in lieu of the derived Item
       Class from the Page Object which becomes the ``to_return`` attribute in
@@ -283,7 +283,7 @@ Let's break this example down:
           item class is returned by the ``DualExampleProductPage``'s ``to_item()``
           method instead.
 
-Specifying the item class that a Page Object returns makes it possible for 
+Specifying the item class that a Page Object returns makes it possible for
 web-poet frameworks to make Page Object usage transparent to end users.
 
 For example, a web-poet framework could implement a function like:
@@ -292,13 +292,13 @@ For example, a web-poet framework could implement a function like:
 
     item = get_item(url, item_class=Product)
 
-Here there is no reference to the Page Object being used underneath, you only 
-need to indicate the desired item class, and the web-poet framework 
-automatically determines the Page Object to use based on the specified URL and 
+Here there is no reference to the Page Object being used underneath, you only
+need to indicate the desired item class, and the web-poet framework
+automatically determines the Page Object to use based on the specified URL and
 the specified item class.
 
 Note, however, that web-poet frameworks are encouraged to also allow getting a
-Page Object instead of an item class instance, for scenarios where end users 
+Page Object instead of an item class instance, for scenarios where end users
 wish access to Page Object attributes and methods.
 
 
@@ -569,7 +569,7 @@ Handling conflicts when using Multiple External Packages
 
 You might've observed from the previous section that retrieving the list of all
 :class:`~.ApplyRule` from two different external packages may result in a
-conflict. 
+conflict.
 
 We can take a look at the rules for **#2** and **#3** when we were importing all
 available rules:

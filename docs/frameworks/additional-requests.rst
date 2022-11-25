@@ -5,7 +5,7 @@
 Supporting Additional Requests
 ==============================
 
-To support :ref:`additional requests <advanced-requests>`, your framework must
+To support :ref:`additional requests <additional-requests>`, your framework must
 provide the request download implementation of :class:`~.HttpClient`.
 
 .. _advanced-downloader-impl:

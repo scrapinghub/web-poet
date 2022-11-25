@@ -25,7 +25,7 @@ _StatusList = Union[str, int, List[Union[str, int]]]
 class HttpClient:
     """Async HTTP client to be used in Page Objects.
 
-    See :ref:`advanced-requests` for the usage information.
+    See :ref:`additional-requests` for the usage information.
 
     HttpClient doesn't make HTTP requests on itself. It uses either the
     request function assigned to the ``web_poet.request_downloader_var``

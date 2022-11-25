@@ -294,7 +294,7 @@ allows to extract only some of the attributes - if you don't need
 the complete to_item() output, you still can access individual properties.
 
 web-poet provides a small framework to simplify writing Page Objects
-in this style; see :ref:`web-poet-fields`. The example above can be simplified
+in this style; see :ref:`fields`. The example above can be simplified
 using web-poet fields - there is no need to write ``to_item`` boilerplate:
 
 .. code-block:: python
@@ -321,7 +321,7 @@ using web-poet fields - there is no need to write ``to_item`` boilerplate:
 
 .. note::
     The ``BookPage.to_item()`` method is ``async`` in the example above.
-    Make sure to check :ref:`web-poet-fields` if you want to use web-poet fields.
+    Make sure to check :ref:`fields` if you want to use web-poet fields.
 
 Another reason to consider classes for the extraction code is that sometimes
 there is no a single "main" method, but you still want to group the related code.
