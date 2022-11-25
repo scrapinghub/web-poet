@@ -1,5 +1,4 @@
 import json
-from types import NoneType
 from typing import Any, Dict, Generic, Type, Union
 
 import attrs
@@ -48,7 +47,11 @@ def _deserialize_Injectable(t: Type[Injectable], data: SerializedData) -> Inject
             )
             get_origin = lambda t: getattr(t, "__origin__", None)  # noqa: E731
         args = get_args(t)
-        if get_origin(t) is Union and len(args) == 2 and args[1] == NoneType:
+        if (
+            get_origin(t) is Union
+            and len(args) == 2
+            and args[1] == type(None)  # noqa: E721
+        ):
             return args[0]
         return t
 
