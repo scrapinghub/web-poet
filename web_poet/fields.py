@@ -44,9 +44,8 @@ class FieldsMixin:
         if base_class_fields or this_class_fields:
             fields = {**base_class_fields, **this_class_fields}
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
-            if hasattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE):
-                with suppress(AttributeError):
-                    delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
+            with suppress(AttributeError):
+                delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
 
 def field(
