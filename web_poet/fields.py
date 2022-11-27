@@ -3,6 +3,7 @@
 into separate Page Object methods / properties.
 """
 import inspect
+from contextlib import suppress
 from functools import update_wrapper, wraps
 from typing import Callable, Dict, List, Optional, Type, TypeVar
 
@@ -44,7 +45,8 @@ class FieldsMixin:
             fields = {**base_class_fields, **this_class_fields}
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
             if hasattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE):
-                delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
+                with suppress(AttributeError):
+                    delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
 
 def field(
