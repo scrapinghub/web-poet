@@ -95,7 +95,7 @@ This code defines a ``Book`` item class, with a single, required, string
 ``title`` attribute to store the book title.
 
 ``Book`` is a minimal class designed specifically for this tutorial. In real
-web-poet projects, you will often define item classes with many more
+web-poet projects, you will usually define item classes with many more
 attributes.
 
 Also mind that, while in this tutorial you use ``Book`` only for data from 1
