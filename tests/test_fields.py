@@ -451,3 +451,15 @@ async def test_field_processors_async() -> None:
 
     page = Page()
     assert await page.name == "namex"
+
+
+def test_field_mixin() -> None:
+    class Mixin:
+        @field
+        def a(self):
+            return "a"
+
+    class A(ItemPage, Mixin):
+        pass
+
+    assert list(get_fields_dict(A)) == ["a"]
