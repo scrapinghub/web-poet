@@ -19,7 +19,7 @@ def _serialize_dict(o: dict) -> SerializedData:
 
 
 def _deserialize_dict(t: Type[dict], data: SerializedData) -> dict:
-    return t(json.loads(data["json"].decode()))
+    return t(json.loads(data["json"]))
 
 
 register_serialization(_serialize_dict, _deserialize_dict)
