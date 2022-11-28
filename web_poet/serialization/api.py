@@ -61,3 +61,12 @@ def register_serialization(
 def deserialize(t: Type[T], data: SerializedData) -> T:
     f_ser: SerializeFunction = serialize.dispatch(t)
     return f_ser.f_deserialize(t, data)
+
+
+def get_bytes(d: dict, key: str) -> bytes:
+    if key not in d:
+        raise ValueError(f"Expected key {key} not found")
+    value = d[key]
+    if not isinstance(value, bytes):
+        raise ValueError(f"Expected key {key} contains {type(value)} instead of bytes.")
+    return value
