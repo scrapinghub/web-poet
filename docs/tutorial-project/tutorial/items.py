@@ -1,7 +1,7 @@
 from attrs import define
 
 
-@define(kw_only=True)
+@define
 class Book:
     title: str
 
@@ -9,7 +9,7 @@ class Book:
 from typing import Optional
 
 
-@define(kw_only=True)
+@define
 class CategorizedBook(Book):
     category: str
     category_rank: Optional[int] = None
