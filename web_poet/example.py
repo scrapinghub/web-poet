@@ -1,12 +1,13 @@
 from asyncio import run
 from typing import Any, Dict, Optional, Type
 
+import andi  # TODO: Document the need to install it for the tutorial.
 from requests import get
 from url_matcher import URLMatcher
 
 from . import default_registry
-from .page_inputs import HttpResponse, PageParams
-from .pages import ItemPage
+from .page_inputs import HttpClient, HttpResponse, PageParams
+from .pages import ItemPage, is_injectable
 
 
 class _HttpClient:
@@ -40,19 +41,26 @@ def _get_page(
     *,
     page_params: Optional[Dict[Any, Any]] = None,
 ) -> ItemPage:
-    # We make quite a few assumptions here that prevent this function from
-    # working in scenarios where those assumptions are wrong. These shortcuts
-    # have been taken to save development time, providing the minimum
-    # implementation that works well enough for the tutorial.
-    http_response = _get_http_response(url)
-    kwargs: Dict[str, Any] = {}
-    if "http" in page_class.__annotations__:
-        kwargs["http"] = _HttpClient()
-    if "page_params" in page_class.__annotations__:
-        if page_params is None:
-            page_params = {}
-        kwargs["page_params"] = PageParams(page_params)
-    return page_class(response=http_response, **kwargs)  # type: ignore
+    plan = andi.plan(
+        page_class,
+        is_injectable=is_injectable,
+        externally_provided={
+            HttpClient,
+            HttpResponse,
+            PageParams,
+        },
+    )
+    instances: Dict[Any, Any] = {}
+    for fn_or_cls, kwargs_spec in plan:
+        if fn_or_cls is HttpResponse:
+            instances[fn_or_cls] = _get_http_response(url)
+        elif fn_or_cls is HttpClient:
+            instances[fn_or_cls] = _HttpClient()
+        elif fn_or_cls is PageParams:
+            instances[fn_or_cls] = PageParams(page_params or {})
+        else:
+            instances[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(instances))
+    return instances[page_class]
 
 
 def get_item(

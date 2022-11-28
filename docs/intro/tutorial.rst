@@ -183,8 +183,9 @@ Use your page object class
 
 Now that you have a page object class defined, it is time to use it.
 
-First, install requests_, which is required by ``web_poet.example``.
+First, install andi_ and requests_, which are required by ``web_poet.example``.
 
+.. _andi: https://github.com/scrapinghub/andi
 .. _requests: https://requests.readthedocs.io/en/latest/user/install/
 
 Then copy the following code into ``tutorial-project/run.py``:
