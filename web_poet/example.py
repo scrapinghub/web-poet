@@ -1,7 +1,7 @@
 from asyncio import run
 from typing import Any, Dict, Optional, Type
 
-import andi  # TODO: Document the need to install it for the tutorial.
+import andi
 from requests import get
 from url_matcher import URLMatcher
 
