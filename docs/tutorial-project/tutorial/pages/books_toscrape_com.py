@@ -3,10 +3,7 @@ from web_poet import field, handle_urls, WebPage
 from ..items import Book
 
 
-@handle_urls(
-    "books.toscrape.com/catalogue/*/index.html",
-    exclude="*/category/*",
-)
+@handle_urls("books.toscrape.com")
 class BookPage(WebPage[Book]):
 
     @field
@@ -23,11 +20,7 @@ from web_poet import HttpClient, PageParams, Returns
 from ..items import CategorizedBook
 
 
-@handle_urls(
-    "books.toscrape.com/catalogue/*/index.html",
-    exclude="*/category/*",
-    priority=1000,
-)
+@handle_urls("books.toscrape.com")
 @define
 class CategorizedBookPage(BookPage, Returns[CategorizedBook]):
     http: HttpClient

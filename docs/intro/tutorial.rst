@@ -122,7 +122,7 @@ Copy the following code into
 
 .. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
-   :lines: 1-14
+   :lines: 1-11
 
 In the code above:
 
@@ -154,14 +154,20 @@ In the code above:
     the item class that is used to store the data that fields return.
 
 -   ``BookPage`` is decorated with :meth:`~web_poet.overrides.handle_urls`,
-    which indicates for which URLs ``BookPage`` is intended to work.
+    which indicates for which domain ``BookPage`` is intended to work.
+
+    It is possible to specify more specific URL patterns, instead of only the
+    target URL domain. However, the URL domain and the output type (``Book``)
+    are usually all the data needed to determine which page object class to
+    use, which is the goal of the :meth:`~web_poet.overrides.handle_urls`
+    decorator.
 
 -   ``BookPage`` defines a field named ``title``.
 
     :ref:`Fields <fields>` are methods of page object classes, preferably async
-    methods, decorated with the :meth:`~web_poet.fields.field` decorator.
-    Fields define the logic to extract a specific piece of information from the
-    input of your page object class.
+    methods, decorated with :meth:`~web_poet.fields.field`. Fields define the
+    logic to extract a specific piece of information from the input of your
+    page object class.
 
     ``BookPage.title`` extracts the title of a book from a book details
     webpage. Specifically, it extracts the text from the first ``h1`` element
@@ -181,12 +187,11 @@ First, install requests_, which is required by ``web_poet.example``.
 
 .. _requests: https://requests.readthedocs.io/en/latest/user/install/
 
-Then copy the following code into
-``tutorial-project/run.py``:
+Then copy the following code into ``tutorial-project/run.py``:
 
 .. literalinclude:: /tutorial-project/run.py
    :language: python
-   :lines: 1-5, 7-8
+   :lines: 1-4, 6-12, 18
 
 Execute that code:
 
@@ -205,15 +210,26 @@ incomplete implementation of the web-poet standard, built specifically for this
 tutorial, for demonstration purposes. In real projects, use instead an actual
 web-poet framework, like `scrapy-poet`_.
 
-``web_poet.example.get_item`` serves to illustrate the power of web-poet. Once
+``web_poet.example.get_item`` serves to illustrate the power of web-poet: once
 you have defined your page object class, a web-poet framework only needs 2
-inputs from you: the URL from which you want to extract data, and the import
-path of the Python modules where you define your page object classes.
+inputs from you: the URL from which you want to extract data, and the desired
+output item class.
+
+Notice that you must also call :func:`~web_poet.rules.consume_modules` once
+before your first call to ``get_item``. ``consume_modules`` ensures that the
+specified Python modules are loaded. You pass ``consume_modules`` the modules
+where you define your page object classes. Upon load,
+:meth:`~web_poet.overrides.handle_urls` decorators register the page object
+classes that they decorate into the default registry, which ``get_item`` uses
+to determine which page object class to use based on its input parameters (URL
+and item class).
 
 Your web-poet framework can take care of everything else:
 
-#.  It matches the input URL to ``BookPage`` based on the URL pattern that you
-    defined with the :meth:`~web_poet.overrides.handle_urls` decorator.
+#.  It matches the input URL and item class to ``BookPage``, based on the URL
+    pattern that you defined with the :meth:`~web_poet.overrides.handle_urls`
+    decorator, and the return type that you declared in the page object class
+    (``Book``).
 
 #.  It inspects the inputs declared by ``BookPage``, and builds an instance of
     ``BookPage`` with the required inputs.
@@ -258,7 +274,7 @@ Append the following code to
 
 .. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
-   :lines: 19, 22-30, 32, 36-39
+   :lines: 16, 19-23, 25, 29-32
 
 In the code above:
 
@@ -284,21 +300,15 @@ In the code above:
     class that you can inherit to re-define the output type of your page object
     subclasses.
 
--   ``CategorizedBookPage`` uses the same
-    :meth:`~web_poet.overrides.handle_urls` decorator parameters as
-    ``BookPage``, except that it sets ``priority`` to ``1000``.
+After you update your ``tutorial-project/run.py`` script to request a
+``CategorizedBook`` item:
 
-    The ``priority`` parameter is ``500`` by default, so the priority of
-    ``BookPage`` is ``500``. By using a higher value than that of ``BookPage``,
-    you ensure that, when a URL matches both page object classes,
-    ``CategorizedBookPage`` is always used.
+.. literalinclude:: /tutorial-project/run.py
+   :language: python
+   :lines: 1-3, 5-8, 13-15, 17-18
+   :emphasize-lines: 4, 10
 
-    A ``priority`` of ``501`` would have had the same effect. Using a
-    significantly higher value is a good practice, to leave room between both
-    values in case you ever need to define page object classes that have a
-    priority between those 2 priority values.
-
-If you execute the ``tutorial-project/run.py`` script again now:
+And you execute it again:
 
 ..  code-block:: bash
 
@@ -333,13 +343,13 @@ of the category, and record in which position you found it. And categories with
 more than 20 books are split into multiple pages, so you may need more than 1
 additional request for some books.
 
-Extend ``CategorizedBookPage`` in ``tutorial-project/tutorial/items.py`` as
-follows:
+Extend ``CategorizedBookPage`` in
+``tutorial-project/tutorial/pages/books_toscrape_com.py`` as follows:
 
 .. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
-   :lines: 17-18, 20, 22-33, 35-42, 46-59
-   :emphasize-lines: 1-3, 13, 15-16, 22-37
+   :lines: 14-15, 17, 19-26, 28-35, 39-52
+   :emphasize-lines: 1-3, 9, 11-12, 18-33
 
 In the code above:
 
@@ -398,13 +408,13 @@ input, there is something you can change to save many requests: keep track of
 the positions where you find books as you visit their categories, and pass that
 position to ``CategorizedBookPage`` as additional input.
 
-Extend ``CategorizedBookPage`` in ``tutorial-project/tutorial/items.py`` as
-follows:
+Extend ``CategorizedBookPage`` in
+``tutorial-project/tutorial/pages/books_toscrape_com.py`` as follows:
 
 .. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
-   :lines: 17-18, 21-59
-   :emphasize-lines: 3, 16, 25-27
+   :lines: 14-15, 18-52
+   :emphasize-lines: 3, 12, 21-23
 
 In the code above, you declare a new input in ``CategorizedBookPage``,
 ``page_params``, of type :class:`~web_poet.page_inputs.page_params.PageParams`.
@@ -420,7 +430,8 @@ parameter to ``get_item``:
 
 .. literalinclude:: /tutorial-project/run.py
    :language: python
-   :emphasize-lines: 6
+   :lines: 13-17
+   :emphasize-lines: 4
 
 When you execute ``tutorial-project/run.py`` now, execution should take less
 time, but the result should be the same as before:

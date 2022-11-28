@@ -1,5 +1,5 @@
 from asyncio import run
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from requests import get
 from url_matcher import URLMatcher
@@ -7,7 +7,6 @@ from url_matcher import URLMatcher
 from . import default_registry
 from .page_inputs import HttpResponse, PageParams
 from .pages import ItemPage
-from .rules import consume_modules
 
 
 class _HttpClient:
@@ -15,9 +14,13 @@ class _HttpClient:
         return _get_http_response(url)
 
 
-def _get_page_class(url: str) -> Type[ItemPage]:
+def _get_page_class(url: str, item_class: Type) -> Type[ItemPage]:
     url_matcher = URLMatcher(
-        {rule.use: rule.for_patterns for rule in default_registry.get_rules()}
+        {
+            rule.use: rule.for_patterns
+            for rule in default_registry.get_rules()
+            if (rule.to_return is None or rule.to_return == item_class)
+        }
     )
     return url_matcher.match(url)
 
@@ -54,8 +57,8 @@ def _get_page(
 
 def get_item(
     url: str,
+    item_class: Type,
     *,
-    page_modules: List[str],
     page_params: Optional[Dict[Any, Any]] = None,
 ) -> Any:
     """Returns an item build from the specified URL using a page object class
@@ -68,8 +71,7 @@ def get_item(
     This function is an example of a minimal, incomplete web-poet framework
     implementation, intended for use in the web-poet tutorial.
     """
-    consume_modules(*page_modules)
-    page_class = _get_page_class(url)
+    page_class = _get_page_class(url, item_class)
     if page_class is None:
         raise ValueError(f"No page object class found for URL: {url}")
     page = _get_page(url, page_class, page_params=page_params)
