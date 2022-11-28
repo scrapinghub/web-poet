@@ -87,7 +87,7 @@ item class.
 
 Copy the following code into ``tutorial-project/tutorial/items.py``:
 
-.. literalinclude:: /../tutorial-project/tutorial/items.py
+.. literalinclude:: /tutorial-project/tutorial/items.py
    :language: python
    :lines: 1-6
 
@@ -120,7 +120,7 @@ In this tutorial you will write a page object class for webpages of
 Copy the following code into
 ``tutorial-project/tutorial/pages/books_toscrape_com.py``:
 
-.. literalinclude:: /../tutorial-project/tutorial/pages/books_toscrape_com.py
+.. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
    :lines: 1-14
 
@@ -184,7 +184,7 @@ First, install requests_, which is required by ``web_poet.example``.
 Then copy the following code into
 ``tutorial-project/run.py``:
 
-.. literalinclude:: /../tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run.py
    :language: python
    :lines: 1-5, 7-8
 
@@ -245,7 +245,7 @@ classes that inherit them.
 
 Append the following code to ``tutorial-project/tutorial/items.py``:
 
-.. literalinclude:: /../tutorial-project/tutorial/items.py
+.. literalinclude:: /tutorial-project/tutorial/items.py
    :language: python
    :lines: 9-15
 
@@ -256,7 +256,7 @@ and ``category_rank``.
 Append the following code to
 ``tutorial-project/tutorial/pages/books_toscrape_com.py``:
 
-.. literalinclude:: /../tutorial-project/tutorial/pages/books_toscrape_com.py
+.. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
    :lines: 19, 22-30, 32, 36-39
 
@@ -336,7 +336,7 @@ additional request for some books.
 Extend ``CategorizedBookPage`` in ``tutorial-project/tutorial/items.py`` as
 follows:
 
-.. literalinclude:: /../tutorial-project/tutorial/pages/books_toscrape_com.py
+.. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
    :lines: 17-18, 20, 22-33, 35-42, 46-59
    :emphasize-lines: 1-3, 13, 15-16, 22-37
@@ -401,7 +401,7 @@ position to ``CategorizedBookPage`` as additional input.
 Extend ``CategorizedBookPage`` in ``tutorial-project/tutorial/items.py`` as
 follows:
 
-.. literalinclude:: /../tutorial-project/tutorial/pages/books_toscrape_com.py
+.. literalinclude:: /tutorial-project/tutorial/pages/books_toscrape_com.py
    :language: python
    :lines: 17-18, 21-59
    :emphasize-lines: 3, 16, 25-27
@@ -418,7 +418,7 @@ additional requests to find the value.
 You can now update your ``tutorial-project/run.py`` script to pass that
 parameter to ``get_item``:
 
-.. literalinclude:: /../tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run.py
    :language: python
    :emphasize-lines: 6
 
