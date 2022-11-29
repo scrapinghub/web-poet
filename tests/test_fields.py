@@ -3,6 +3,7 @@ import random
 
 import attrs
 import pytest
+from attrs import define
 
 from tests.po_lib_to_return import (
     CustomProductPage,
@@ -454,12 +455,21 @@ async def test_field_processors_async() -> None:
 
 
 def test_field_mixin() -> None:
-    class Mixin:
+    @define
+    class A(ItemPage):
         @field
         def a(self):
-            return "a"
+            return None
 
-    class A(ItemPage, Mixin):
-        pass
+    class Mixin:
+        @field
+        def mixin(self):
+            return None
 
-    assert list(get_fields_dict(A)) == ["a"]
+    @define
+    class B(Mixin, A):
+        @field
+        def b(self):
+            return None
+
+    assert set(get_fields_dict(B)) == {"a", "b", "mixin"}
