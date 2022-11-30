@@ -3,7 +3,6 @@ import random
 
 import attrs
 import pytest
-from attrs import define
 
 from tests.po_lib_to_return import (
     CustomProductPage,
@@ -455,7 +454,6 @@ async def test_field_processors_async() -> None:
 
 
 def test_field_mixin() -> None:
-    @define
     class A(ItemPage):
         @field
         def a(self):
@@ -466,7 +464,6 @@ def test_field_mixin() -> None:
         def mixin(self):
             return None
 
-    @define
     class B(Mixin, A):
         @field
         def b(self):
