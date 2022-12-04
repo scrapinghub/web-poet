@@ -1,5 +1,9 @@
 [flake8]
 ignore =
+    # Refers to "whitespace before ':'", which black produces.
+    # https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#slices
+    E203,
+
     # Refers to the max-line length. Let's suppress the error and simply
     # let black take care on how it wants to format the lines.
     E501,
