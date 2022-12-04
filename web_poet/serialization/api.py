@@ -1,12 +1,28 @@
 import os
 from functools import singledispatch
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
+import andi
+
+from web_poet import (
+    HttpClient,
+    HttpResponse,
+    Injectable,
+    PageParams,
+    RequestUrl,
+    ResponseUrl,
+)
+from web_poet.pages import is_injectable
+
+# represents a leaf dependency of any type serialized as a set of files
+SerializedLeafData = Dict[str, bytes]
+# represents a set of leaf dependencies of different types
+SerializedData = Dict[str, SerializedLeafData]
 T = TypeVar("T")
-SerializedData = Dict[str, Union[bytes, "SerializedData"]]
-SerializeFunction = Callable[[Any], SerializedData]
-DeserializeFunction = Callable[[Type[T], SerializedData], T]
+InjectableT = TypeVar("InjectableT", bound=Injectable)
+SerializeFunction = Callable[[Any], SerializedLeafData]
+DeserializeFunction = Callable[[Type[T], SerializedLeafData], T]
 
 
 def read_serialized_data(directory: Union[str, os.PathLike]) -> SerializedData:
@@ -15,58 +31,92 @@ def read_serialized_data(directory: Union[str, os.PathLike]) -> SerializedData:
     for entry in directory.iterdir():
         if not entry.is_file():
             continue
-        *keys, ext = entry.name.split(".")
-        node = result
-        for key in keys:
-            if key not in node:
-                node[key] = {}
-            node = node[key]
-        node[ext] = entry.read_bytes()
+        if "-" in entry.name:
+            prefix, name = entry.name.split("-")
+        else:
+            prefix, name = entry.name.split(".")
+        if prefix not in result:
+            result[prefix] = {}
+        result[prefix][name] = entry.read_bytes()
     return result
 
 
 def write_serialized_data(
-    data: SerializedData,
-    directory: Union[str, os.PathLike],
-    prefix: Optional[str] = None,
+    data: SerializedData, directory: Union[str, os.PathLike]
 ) -> None:
-    for k, v in data.items():
-        new_prefix = prefix + "." + k if prefix else k
-        if isinstance(v, bytes):
-            file_name = Path(directory, new_prefix)
-            file_name.write_bytes(v)
-        elif isinstance(v, dict):
-            write_serialized_data(v, directory, new_prefix)
+    for prefix, leaf in data.items():
+        for name, contents in leaf.items():
+            if "." not in name:
+                # TypeName.ext
+                full_name = prefix + "." + name
+            else:
+                # TypeName-component.ext
+                full_name = prefix + "-" + name
+            file_name = Path(directory, full_name)
+            file_name.write_bytes(contents)
 
 
-def serialize(o: Any) -> SerializedData:
+def serialize_leaf(o: Any) -> SerializedLeafData:
     raise NotImplementedError(f"Serialization for {type(o)} is not implemented")
 
 
-def _deserialize_base(t: Type[Any], data: SerializedData) -> Any:
+def _deserialize_leaf_base(t: Type[Any], data: SerializedLeafData) -> Any:
     raise NotImplementedError(f"Deserialization for {t} is not implemented")
 
 
-serialize.f_deserialize = _deserialize_base
-serialize = singledispatch(serialize)
+serialize_leaf.f_deserialize = _deserialize_leaf_base
+serialize_leaf = singledispatch(serialize_leaf)
 
 
 def register_serialization(
     f_serialize: SerializeFunction, f_deserialize: DeserializeFunction
 ) -> None:
-    serialize.register(f_serialize)
+    serialize_leaf.register(f_serialize)
     f_serialize.f_deserialize = f_deserialize
 
 
-def deserialize(t: Type[T], data: SerializedData) -> T:
-    f_ser: SerializeFunction = serialize.dispatch(t)
+def deserialize_leaf(t: Type[T], data: SerializedLeafData) -> T:
+    f_ser: SerializeFunction = serialize_leaf.dispatch(t)
     return f_ser.f_deserialize(t, data)
 
 
-def get_bytes(d: dict, key: str) -> bytes:
-    if key not in d:
-        raise ValueError(f"Expected key {key} not found")
-    value = d[key]
-    if not isinstance(value, bytes):
-        raise ValueError(f"Expected key {key} contains {type(value)} instead of bytes.")
-    return value
+externally_provided = [
+    HttpResponse,
+    HttpClient,
+    PageParams,
+    RequestUrl,
+    ResponseUrl,
+]
+
+
+def get_dep_type(type_name: str) -> Optional[type]:
+    for dep_type in externally_provided:
+        if dep_type.__name__ == type_name:
+            return dep_type
+
+
+def serialize(deps: List[Any]) -> SerializedData:
+    # we don't use the fully-qualified type name for now
+    # we skip injectable classes though the interface should probably not accept them at all
+    # we could instead skip/complain about classes that are not in externally_provided
+    return {
+        dep.__class__.__name__: serialize_leaf(dep)
+        for dep in deps
+        if not is_injectable(dep.__class__)
+    }
+
+
+def deserialize(t: Type[InjectableT], data: SerializedData) -> InjectableT:
+    plan = andi.plan(
+        t, is_injectable=is_injectable, externally_provided=externally_provided
+    )
+
+    deps: Dict[type, Any] = {}
+
+    for dep_type_name, dep_data in data.items():
+        dep_type = get_dep_type(dep_type_name)
+        if dep_type is None:
+            raise ValueError(f"Unknown serialized type {dep_type_name}")
+        deps[dep_type] = deserialize_leaf(dep_type, dep_data)
+
+    return t(**plan.final_kwargs(deps))
