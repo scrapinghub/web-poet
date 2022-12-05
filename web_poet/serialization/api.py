@@ -80,7 +80,8 @@ def deserialize_leaf(t: Type[T], data: SerializedLeafData) -> T:
     return f_ser.f_deserialize(t, data)
 
 
-externally_provided = [
+# this is only needed because we don't store the fully qualified class name
+known_types = [
     HttpResponse,
     HttpClient,
     PageParams,
@@ -90,7 +91,7 @@ externally_provided = [
 
 
 def get_dep_type(type_name: str) -> Optional[type]:
-    for dep_type in externally_provided:
+    for dep_type in known_types:
         if dep_type.__name__ == type_name:
             return dep_type
 
@@ -107,10 +108,6 @@ def serialize(deps: List[Any]) -> SerializedData:
 
 
 def deserialize(t: Type[InjectableT], data: SerializedData) -> InjectableT:
-    plan = andi.plan(
-        t, is_injectable=is_injectable, externally_provided=externally_provided
-    )
-
     deps: Dict[type, Any] = {}
 
     for dep_type_name, dep_data in data.items():
@@ -119,4 +116,5 @@ def deserialize(t: Type[InjectableT], data: SerializedData) -> InjectableT:
             raise ValueError(f"Unknown serialized type {dep_type_name}")
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)
 
+    plan = andi.plan(t, is_injectable=is_injectable, externally_provided=deps.keys())
     return t(**plan.final_kwargs(deps))
