@@ -1,18 +1,12 @@
 import os
 from functools import singledispatch
+from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 import andi
 
-from web_poet import (
-    HttpClient,
-    HttpResponse,
-    Injectable,
-    PageParams,
-    RequestUrl,
-    ResponseUrl,
-)
+from web_poet import Injectable
 from web_poet.pages import is_injectable
 
 # represents a leaf dependency of any type serialized as a set of files
@@ -32,9 +26,9 @@ def read_serialized_data(directory: Union[str, os.PathLike]) -> SerializedData:
         if not entry.is_file():
             continue
         if "-" in entry.name:
-            prefix, name = entry.name.split("-")
+            prefix, name = entry.name.split("-", 1)
         else:
-            prefix, name = entry.name.split(".")
+            prefix, name = entry.name.rsplit(".", 1)
         if prefix not in result:
             result[prefix] = {}
         result[prefix][name] = entry.read_bytes()
@@ -80,38 +74,30 @@ def deserialize_leaf(t: Type[T], data: SerializedLeafData) -> T:
     return f_ser.f_deserialize(t, data)
 
 
-# this is only needed because we don't store the fully qualified class name
-known_types = [
-    HttpResponse,
-    HttpClient,
-    PageParams,
-    RequestUrl,
-    ResponseUrl,
-]
-
-
-def get_dep_type(type_name: str) -> Optional[type]:
-    for dep_type in known_types:
-        if dep_type.__name__ == type_name:
-            return dep_type
+def _get_fqname(t: type) -> str:
+    return f"{t.__module__}.{t.__qualname__}"
 
 
 def serialize(deps: List[Any]) -> SerializedData:
-    # we don't use the fully-qualified type name for now
     # we skip injectable classes though the interface should probably not accept them at all
-    # we could instead skip/complain about classes that are not in externally_provided
     return {
-        dep.__class__.__name__: serialize_leaf(dep)
+        _get_fqname(dep.__class__): serialize_leaf(dep)
         for dep in deps
         if not is_injectable(dep.__class__)
     }
+
+
+def _load_type(type_name: str) -> Optional[type]:
+    module, name = type_name.rsplit(".", 1)
+    mod = import_module(module)
+    return getattr(mod, name, None)
 
 
 def deserialize(t: Type[InjectableT], data: SerializedData) -> InjectableT:
     deps: Dict[type, Any] = {}
 
     for dep_type_name, dep_data in data.items():
-        dep_type = get_dep_type(dep_type_name)
+        dep_type = _load_type(dep_type_name)
         if dep_type is None:
             raise ValueError(f"Unknown serialized type {dep_type_name}")
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)

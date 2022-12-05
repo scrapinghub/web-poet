@@ -60,12 +60,17 @@ def test_serialization(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     serialized_deps = serialize([book_list_html_response, url])
-    assert serialized_deps["HttpResponse"]["body.html"] == bytes(
-        book_list_html_response.body
+    assert serialized_deps["web_poet.page_inputs.http.HttpResponse"][
+        "body.html"
+    ] == bytes(book_list_html_response.body)
+    other_data = json.loads(
+        serialized_deps["web_poet.page_inputs.http.HttpResponse"]["other.json"]
     )
-    other_data = json.loads(serialized_deps["HttpResponse"]["other.json"])
     assert other_data["url"] == url_str
-    assert serialized_deps["ResponseUrl"]["txt"] == url_str.encode()
+    assert (
+        serialized_deps["web_poet.page_inputs.url.ResponseUrl"]["txt"]
+        == url_str.encode()
+    )
 
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, serialized_deps)
@@ -122,13 +127,13 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     directory.mkdir()
     serialized_deps = serialize([book_list_html_response, url])
     write_serialized_data(serialized_deps, directory)
-    assert (directory / "HttpResponse-body.html").exists()
-    assert (directory / "HttpResponse-body.html").read_bytes() == bytes(
-        book_list_html_response.body
-    )
-    assert (directory / "HttpResponse-other.json").exists()
-    assert (directory / "ResponseUrl.txt").exists()
-    assert (directory / "ResponseUrl.txt").read_text(
+    assert (directory / "web_poet.page_inputs.http.HttpResponse-body.html").exists()
+    assert (
+        directory / "web_poet.page_inputs.http.HttpResponse-body.html"
+    ).read_bytes() == bytes(book_list_html_response.body)
+    assert (directory / "web_poet.page_inputs.http.HttpResponse-other.json").exists()
+    assert (directory / "web_poet.page_inputs.url.ResponseUrl.txt").exists()
+    assert (directory / "web_poet.page_inputs.url.ResponseUrl.txt").read_text(
         encoding="utf-8"
     ) == "http://example.com"
 
