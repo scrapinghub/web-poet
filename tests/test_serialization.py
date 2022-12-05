@@ -1,3 +1,4 @@
+import json
 from typing import Type
 
 import attrs
@@ -33,6 +34,8 @@ def _assert_urls_equal(u1: _Url, u2: _Url) -> None:
 def test_serialization_leaf() -> None:
     data = {"a": "b", "c": 42}
     serialized_data = serialize_leaf(data)
+    assert isinstance(serialized_data["json"], bytes)
+    assert json.loads(serialized_data["json"]) == data
     deserialized_data = deserialize_leaf(dict, serialized_data)
     assert data == deserialized_data
 
@@ -53,9 +56,17 @@ def test_serialization(book_list_html_response) -> None:
     class MyWebPage(WebPage):
         url: ResponseUrl
 
-    url = ResponseUrl("http://example.com")
+    url_str = "http://books.toscrape.com/index.html"
+    url = ResponseUrl(url_str)
 
     serialized_deps = serialize([book_list_html_response, url])
+    assert serialized_deps["HttpResponse"]["body.html"] == bytes(
+        book_list_html_response.body
+    )
+    other_data = json.loads(serialized_deps["HttpResponse"]["other.json"])
+    assert other_data["url"] == url_str
+    assert serialized_deps["ResponseUrl"]["txt"] == url_str.encode()
+
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
@@ -112,6 +123,15 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     serialized_deps = serialize([book_list_html_response, url])
     write_serialized_data(serialized_deps, directory)
     assert (directory / "HttpResponse-body.html").exists()
+    assert (directory / "HttpResponse-body.html").read_bytes() == bytes(
+        book_list_html_response.body
+    )
+    assert (directory / "HttpResponse-other.json").exists()
+    assert (directory / "ResponseUrl.txt").exists()
+    assert (directory / "ResponseUrl.txt").read_text(
+        encoding="utf-8"
+    ) == "http://example.com"
+
     read_serialized_deps = read_serialized_data(directory)
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, read_serialized_deps)
