@@ -2,7 +2,7 @@ import os
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union
 
 import andi
 
@@ -128,7 +128,7 @@ def serialize(deps: List[Any]) -> SerializedData:
     return result
 
 
-def _load_type(type_name: str) -> Optional[type]:
+def _load_type(type_name: str) -> type:
     """Return the type by its fully qualified name.
 
     >>> _load_type("decimal.Decimal")
@@ -136,14 +136,23 @@ def _load_type(type_name: str) -> Optional[type]:
     >>> _load_type("web_poet.pages.WebPage")
     <class 'web_poet.pages.WebPage'>
     >>> _load_type("decimal.foo")
+    Traceback (most recent call last):
+     ...
+    ValueError: Unknown type decimal.foo
     >>> _load_type("foo.bar")
+    Traceback (most recent call last):
+     ...
+    ValueError: Unknown type foo.bar
     """
     module, name = type_name.rsplit(".", 1)
     try:
         mod = import_module(module)
     except ModuleNotFoundError:
-        return None
-    return getattr(mod, name, None)
+        raise ValueError(f"Unknown type {type_name}")
+    result = getattr(mod, name, None)
+    if not result:
+        raise ValueError(f"Unknown type {type_name}")
+    return result
 
 
 def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
@@ -151,8 +160,6 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
 
     for dep_type_name, dep_data in data.items():
         dep_type = _load_type(dep_type_name)
-        if dep_type is None:
-            raise ValueError(f"Unknown serialized type {dep_type_name}")
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)
 
     plan = andi.plan(cls, is_injectable=is_injectable, externally_provided=deps.keys())
