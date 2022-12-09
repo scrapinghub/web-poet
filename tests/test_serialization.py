@@ -40,14 +40,18 @@ def test_serialization_leaf() -> None:
     assert data == deserialized_data
 
 
-def test_serialization_leaf_unsup() -> None:
+def test_serialization_leaf_unsupported() -> None:
     class A:
         pass
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(
+        NotImplementedError, match=r"Serialization .+ is not implemented"
+    ):
         serialize_leaf(A())
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(
+        NotImplementedError, match=r"Deserialization .+ is not implemented"
+    ):
         deserialize_leaf(A, {})
 
 
@@ -75,6 +79,11 @@ def test_serialization(book_list_html_response) -> None:
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
+
+
+def test_serialization_injectable(book_list_html_response) -> None:
+    with pytest.raises(ValueError, match=r"Injectable type .+ passed"):
+        serialize([WebPage(book_list_html_response)])
 
 
 def test_serialization_httpresponse_encoding(book_list_html) -> None:
