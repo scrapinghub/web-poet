@@ -3,23 +3,7 @@ from typing import Type
 
 from .. import HttpResponse, HttpResponseBody, HttpResponseHeaders, ResponseUrl
 from ..page_inputs.url import _Url
-from .api import (
-    SerializedLeafData,
-    deserialize_leaf,
-    register_serialization,
-    serialize_leaf,
-)
-
-
-def _serialize_dict(o: dict) -> SerializedLeafData:
-    return {"json": json.dumps(o, ensure_ascii=False, sort_keys=True).encode()}
-
-
-def _deserialize_dict(cls: Type[dict], data: SerializedLeafData) -> dict:
-    return cls(json.loads(data["json"]))
-
-
-register_serialization(_serialize_dict, _deserialize_dict)
+from .api import SerializedLeafData, register_serialization
 
 
 def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
@@ -29,27 +13,19 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
         "headers": list(o.headers.items()),
         "_encoding": o._encoding,
     }
-    body_serialized = serialize_leaf(o.body)
-    other_serialized = serialize_leaf(other_data)
-    result = {}
-    result.update({f"body.{k}": v for k, v in body_serialized.items()})
-    result.update({f"other.{k}": v for k, v in other_serialized.items()})
-    return result
+    return {
+        "body.html": bytes(o.body),
+        "other.json": json.dumps(
+            other_data, ensure_ascii=False, sort_keys=True
+        ).encode(),
+    }
 
 
 def _deserialize_HttpResponse(
     cls: Type[HttpResponse], data: SerializedLeafData
 ) -> HttpResponse:
-    body_serialized = {}
-    other_serialized = {}
-    for k, v in data.items():
-        if k.startswith("body."):
-            body_serialized[k[len("body.") :]] = v
-        elif k.startswith("other."):
-            other_serialized[k[len("other.") :]] = v
-
-    body = deserialize_leaf(HttpResponseBody, body_serialized)
-    other_data = deserialize_leaf(dict, other_serialized)
+    body = HttpResponseBody(data["body.html"])
+    other_data = json.loads(data["other.json"])
     return cls(
         body=body,
         url=ResponseUrl(other_data["url"]),
@@ -73,28 +49,6 @@ def _deserialize_HttpResponseBody(
 
 
 register_serialization(_serialize_HttpResponseBody, _deserialize_HttpResponseBody)
-
-
-def _serialize_bytes(o: bytes) -> SerializedLeafData:
-    return {"bin": bytes(o)}
-
-
-def _deserialize_bytes(cls: Type[bytes], data: SerializedLeafData) -> bytes:
-    return cls(data["bin"])
-
-
-register_serialization(_serialize_bytes, _deserialize_bytes)
-
-
-def _serialize_str(o: str) -> SerializedLeafData:
-    return {"txt": o.encode()}
-
-
-def _deserialize_str(cls: Type[str], data: SerializedLeafData) -> str:
-    return cls(data["txt"].decode())
-
-
-register_serialization(_serialize_str, _deserialize_str)
 
 
 def _serialize__Url(o: _Url) -> SerializedLeafData:

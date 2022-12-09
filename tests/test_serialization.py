@@ -32,12 +32,12 @@ def _assert_urls_equal(u1: _Url, u2: _Url) -> None:
 
 
 def test_serialization_leaf() -> None:
-    data = {"a": "b", "c": 42}
-    serialized_data = serialize_leaf(data)
-    assert isinstance(serialized_data["json"], bytes)
-    assert json.loads(serialized_data["json"]) == data
-    deserialized_data = deserialize_leaf(dict, serialized_data)
-    assert data == deserialized_data
+    leaf = HttpResponseBody(b"foo")
+    serialized_data = serialize_leaf(leaf)
+    assert isinstance(serialized_data["html"], bytes)
+    assert HttpResponseBody(serialized_data["html"]) == leaf
+    deserialized_data = deserialize_leaf(HttpResponseBody, serialized_data)
+    assert leaf == deserialized_data
 
 
 def test_serialization_leaf_unsupported() -> None:
