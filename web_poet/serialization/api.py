@@ -93,20 +93,20 @@ def _deserialize_leaf_base(cls: Type[Any], data: SerializedLeafData) -> Any:
     raise NotImplementedError(f"Deserialization for {cls} is not implemented")
 
 
-serialize_leaf.f_deserialize = _deserialize_leaf_base
+serialize_leaf.f_deserialize = _deserialize_leaf_base  # type: ignore[attr-defined]
 serialize_leaf = singledispatch(serialize_leaf)
 
 
 def register_serialization(
     f_serialize: SerializeFunction, f_deserialize: DeserializeFunction
 ) -> None:
-    serialize_leaf.register(f_serialize)
-    f_serialize.f_deserialize = f_deserialize
+    serialize_leaf.register(f_serialize)  # type: ignore[attr-defined]
+    f_serialize.f_deserialize = f_deserialize  # type: ignore[attr-defined]
 
 
 def deserialize_leaf(cls: Type[T], data: SerializedLeafData) -> T:
-    f_ser: SerializeFunction = serialize_leaf.dispatch(cls)
-    return f_ser.f_deserialize(cls, data)
+    f_ser: SerializeFunction = serialize_leaf.dispatch(cls)  # type: ignore[attr-defined]
+    return f_ser.f_deserialize(cls, data)  # type: ignore[attr-defined]
 
 
 def _get_fqname(cls: type) -> str:
@@ -156,7 +156,7 @@ def _load_type(type_name: str) -> type:
 
 
 def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
-    deps: Dict[type, Any] = {}
+    deps: Dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
         dep_type = _load_type(dep_type_name)
