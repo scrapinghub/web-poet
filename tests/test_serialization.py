@@ -6,14 +6,13 @@ import pytest
 from web_poet import HttpResponse, HttpResponseBody, ResponseUrl, WebPage
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
+    SerializedDataFileStorage,
     SerializedLeafData,
     deserialize,
     deserialize_leaf,
-    read_serialized_data,
     register_serialization,
     serialize,
     serialize_leaf,
-    write_serialized_data,
 )
 
 
@@ -136,8 +135,9 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
 
     directory = tmp_path / "ser"
     directory.mkdir()
+    storage = SerializedDataFileStorage(directory)
     serialized_deps = serialize([book_list_html_response, url])
-    write_serialized_data(serialized_deps, directory)
+    storage.write(serialized_deps)
     assert (directory / "web_poet.page_inputs.http.HttpResponse-body.html").exists()
     assert (
         directory / "web_poet.page_inputs.http.HttpResponse-body.html"
@@ -148,8 +148,20 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
         encoding="utf-8"
     ) == "http://example.com"
 
-    read_serialized_deps = read_serialized_data(directory)
+    read_serialized_deps = storage.read()
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, read_serialized_deps)
     assert type(deserialized_po) == MyWebPage
     _assert_webpages_equal(po, deserialized_po)
+
+
+def test_extra_files(book_list_html_response, tmp_path) -> None:
+    directory = tmp_path / "ser"
+    directory.mkdir()
+    storage = SerializedDataFileStorage(directory)
+    serialized_deps = serialize([book_list_html_response])
+    storage.write(serialized_deps)
+    (directory / "foo.dir").mkdir()
+    (directory / "bar.txt").touch()
+    read_serialized_deps = storage.read()
+    assert "web_poet.page_inputs.http.HttpResponse" in read_serialized_deps

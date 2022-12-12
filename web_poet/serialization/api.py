@@ -19,70 +19,71 @@ SerializeFunction = Callable[[Any], SerializedLeafData]
 DeserializeFunction = Callable[[Type[T], SerializedLeafData], T]
 
 
-def _split_file_name(file_name: str) -> Tuple[str, str]:
-    """Extract the type name and the type-specific suffix from a file name.
+class SerializedDataFileStorage:
+    def __init__(self, directory: Union[str, os.PathLike]) -> None:
+        super().__init__()
+        self.directory: Path = Path(directory)
 
-    >>> _split_file_name("TypeName.ext")
-    ('TypeName', 'ext')
-    >>> _split_file_name("Qualified.TypeName.ext")
-    ('Qualified.TypeName', 'ext')
-    >>> _split_file_name("TypeName-component.ext")
-    ('TypeName', 'component.ext')
-    >>> _split_file_name("Qualified.TypeName-component.ext")
-    ('Qualified.TypeName', 'component.ext')
-    >>> _split_file_name("Qualified.TypeName-component-with-dashes.ext")
-    ('Qualified.TypeName', 'component-with-dashes.ext')
-    """
-    if "-" in file_name:
-        type_name, suffix = file_name.split("-", 1)
-    else:
-        type_name, suffix = file_name.rsplit(".", 1)
-    return type_name, suffix
+    @staticmethod
+    def _split_file_name(file_name: str) -> Tuple[str, str]:
+        """Extract the type name and the type-specific suffix from a file name.
 
+        >>> SerializedDataFileStorage._split_file_name("TypeName.ext")
+        ('TypeName', 'ext')
+        >>> SerializedDataFileStorage._split_file_name("Qualified.TypeName.ext")
+        ('Qualified.TypeName', 'ext')
+        >>> SerializedDataFileStorage._split_file_name("TypeName-component.ext")
+        ('TypeName', 'component.ext')
+        >>> SerializedDataFileStorage._split_file_name("Qualified.TypeName-component.ext")
+        ('Qualified.TypeName', 'component.ext')
+        >>> SerializedDataFileStorage._split_file_name("Qualified.TypeName-component-with-dashes.ext")
+        ('Qualified.TypeName', 'component-with-dashes.ext')
+        """
+        if "-" in file_name:
+            type_name, suffix = file_name.split("-", 1)
+        else:
+            type_name, suffix = file_name.rsplit(".", 1)
+        return type_name, suffix
 
-def read_serialized_data(directory: Union[str, os.PathLike]) -> SerializedData:
-    result: SerializedData = {}
-    directory = Path(directory)
-    for entry in directory.iterdir():
-        if not entry.is_file():
-            continue
-        type_name, suffix = _split_file_name(entry.name)
-        if type_name not in result:
-            result[type_name] = {}
-        result[type_name][suffix] = entry.read_bytes()
-    return result
+    @staticmethod
+    def _make_file_name(type_name: str, suffix: str) -> str:
+        """Combine the type name and the type-specific suffix into a file name.
 
+        >>> SerializedDataFileStorage._make_file_name('TypeName', 'ext')
+        'TypeName.ext'
+        >>> SerializedDataFileStorage._make_file_name('Qualified.TypeName', 'ext')
+        'Qualified.TypeName.ext'
+        >>> SerializedDataFileStorage._make_file_name('TypeName', 'component.ext')
+        'TypeName-component.ext'
+        >>> SerializedDataFileStorage._make_file_name('Qualified.TypeName', 'component.ext')
+        'Qualified.TypeName-component.ext'
+        >>> SerializedDataFileStorage._make_file_name('Qualified.TypeName', 'component-with-dashes.ext')
+        'Qualified.TypeName-component-with-dashes.ext'
+        """
+        if "." not in suffix:
+            # TypeName.ext
+            return type_name + "." + suffix
+        else:
+            # TypeName-component.ext
+            return type_name + "-" + suffix
 
-def _make_file_name(type_name: str, suffix: str) -> str:
-    """Combine the type name and the type-specific suffix into a file name.
+    def read(self) -> SerializedData:  # noqa: D102
+        result: SerializedData = {}
+        for entry in self.directory.iterdir():
+            if not entry.is_file():
+                continue
+            type_name, suffix = self._split_file_name(entry.name)
+            if type_name not in result:
+                result[type_name] = {}
+            result[type_name][suffix] = entry.read_bytes()
+        return result
 
-    >>> _make_file_name('TypeName', 'ext')
-    'TypeName.ext'
-    >>> _make_file_name('Qualified.TypeName', 'ext')
-    'Qualified.TypeName.ext'
-    >>> _make_file_name('TypeName', 'component.ext')
-    'TypeName-component.ext'
-    >>> _make_file_name('Qualified.TypeName', 'component.ext')
-    'Qualified.TypeName-component.ext'
-    >>> _make_file_name('Qualified.TypeName', 'component-with-dashes.ext')
-    'Qualified.TypeName-component-with-dashes.ext'
-    """
-    if "." not in suffix:
-        # TypeName.ext
-        return type_name + "." + suffix
-    else:
-        # TypeName-component.ext
-        return type_name + "-" + suffix
-
-
-def write_serialized_data(
-    data: SerializedData, directory: Union[str, os.PathLike]
-) -> None:
-    for type_name, leaf in data.items():
-        for suffix, contents in leaf.items():
-            full_name = _make_file_name(type_name, suffix)
-            file_name = Path(directory, full_name)
-            file_name.write_bytes(contents)
+    def write(self, data: SerializedData) -> None:  # noqa: D102
+        for type_name, leaf in data.items():
+            for suffix, contents in leaf.items():
+                full_name = self._make_file_name(type_name, suffix)
+                file_name = Path(self.directory, full_name)
+                file_name.write_bytes(contents)
 
 
 def serialize_leaf(o: Any) -> SerializedLeafData:
