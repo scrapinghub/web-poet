@@ -142,13 +142,13 @@ def _load_type(type_name: str) -> type:
     >>> _load_type("foo.bar")
     Traceback (most recent call last):
      ...
-    ValueError: Unknown type foo.bar
+    ValueError: Unable to import module foo
     """
     module, name = type_name.rsplit(".", 1)
     try:
         mod = import_module(module)
     except ModuleNotFoundError:
-        raise ValueError(f"Unknown type {type_name}")
+        raise ValueError(f"Unable to import module {module}")
     result = getattr(mod, name, None)
     if not result:
         raise ValueError(f"Unknown type {type_name}")

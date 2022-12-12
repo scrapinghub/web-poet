@@ -1,4 +1,3 @@
-import json
 from typing import Type
 
 import attrs
@@ -19,6 +18,10 @@ from web_poet.serialization import (
 
 
 def _assert_webpages_equal(p1: WebPage, p2: WebPage) -> None:
+    assert type(p1) == type(p2)
+    assert type(p1.response) == type(p2.response)  # noqa: E721
+    assert type(p1.response.body) == type(p2.response.body)  # noqa: E721
+    assert type(p1.response.headers) == type(p2.response.headers)  # noqa: E721
     assert p1.response.body == p2.response.body
     assert p1.response.status == p2.response.status
     assert p1.response.headers == p2.response.headers
@@ -64,17 +67,16 @@ def test_serialization(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     serialized_deps = serialize([book_list_html_response, url])
-    assert serialized_deps["web_poet.page_inputs.http.HttpResponse"][
-        "body.html"
-    ] == bytes(book_list_html_response.body)
-    other_data = json.loads(
-        serialized_deps["web_poet.page_inputs.http.HttpResponse"]["other.json"]
-    )
-    assert other_data["url"] == url_str
-    assert (
-        serialized_deps["web_poet.page_inputs.url.ResponseUrl"]["txt"]
-        == url_str.encode()
-    )
+    other_json = f'{{"_encoding": "utf-8", "headers": [], "status": null, "url": "{url_str}"}}'.encode()
+    assert serialized_deps == {
+        "web_poet.page_inputs.http.HttpResponse": {
+            "body.html": bytes(book_list_html_response.body),
+            "other.json": other_json,
+        },
+        "web_poet.page_inputs.url.ResponseUrl": {
+            "txt": url_str.encode(),
+        },
+    }
 
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, serialized_deps)
