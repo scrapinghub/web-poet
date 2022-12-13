@@ -25,6 +25,7 @@ setup(
         "w3lib >= 1.22.0",
         "async-lru >= 1.0.3",
         "itemadapter >= 0.7.0",
+        "andi",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

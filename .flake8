@@ -1,5 +1,9 @@
 [flake8]
 ignore =
+    # Refers to "whitespace before ':'", which black produces.
+    # https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#slices
+    E203,
+
     # Refers to the max-line length. Let's suppress the error and simply
     # let black take care on how it wants to format the lines.
     E501,
@@ -37,4 +41,5 @@ per-file-ignores =
     # D102: Missing docstring in public method
     web_poet/__init__.py:F401,F403
     web_poet/page_inputs/__init__.py:F401,F403
-    tests/po_lib_to_return/__init__.py:D102 
+    web_poet/serialization/__init__.py:F401,F403
+    tests/po_lib_to_return/__init__.py:D102
