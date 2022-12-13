@@ -7,6 +7,7 @@ from .api import (
     SerializeFunction,
     deserialize,
     deserialize_leaf,
+    load_type,
     register_serialization,
     serialize,
     serialize_leaf,
