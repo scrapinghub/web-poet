@@ -6,7 +6,7 @@ from typing import Any, Iterable, Optional, Set, Union
 import pytest
 
 from web_poet import ItemPage
-from web_poet.serialization import SerializedDataFileStorage, deserialize, load_type
+from web_poet.serialization import SerializedDataFileStorage, deserialize, load_class
 from web_poet.utils import ensure_awaitable
 
 
@@ -48,7 +48,7 @@ class WebPoetItem(pytest.Item):
 
     def get_po(self) -> ItemPage:
         """Return the PO object created from the saved input."""
-        po_type = load_type(self.po_name)
+        po_type = load_class(self.po_name)
         if not issubclass(po_type, ItemPage):
             raise TypeError(f"{self.po_name} is not a descendant of ItemPage")
         storage = SerializedDataFileStorage(self.input_path)

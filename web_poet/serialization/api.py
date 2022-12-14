@@ -129,18 +129,18 @@ def serialize(deps: List[Any]) -> SerializedData:
     return result
 
 
-def load_type(type_name: str) -> type:
+def load_class(type_name: str) -> type:
     """Return the type by its fully qualified name.
 
-    >>> load_type("decimal.Decimal")
+    >>> load_class("decimal.Decimal")
     <class 'decimal.Decimal'>
-    >>> load_type("web_poet.pages.WebPage")
+    >>> load_class("web_poet.pages.WebPage")
     <class 'web_poet.pages.WebPage'>
-    >>> load_type("decimal.foo")
+    >>> load_class("decimal.foo")
     Traceback (most recent call last):
      ...
     ValueError: Unknown type decimal.foo
-    >>> load_type("foo.bar")
+    >>> load_class("foo.bar")
     Traceback (most recent call last):
      ...
     ValueError: Unable to import module foo
@@ -160,7 +160,7 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
     deps: Dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
-        dep_type = load_type(dep_type_name)
+        dep_type = load_class(dep_type_name)
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)
 
     plan = andi.plan(cls, is_injectable=is_injectable, externally_provided=deps.keys())
