@@ -20,4 +20,4 @@ def save_fixture(
     storage = SerializedDataFileStorage(inputs_dir)
     storage.write(serialized_inputs)
     with Path(base_directory, OUTPUT_FILE_NAME).open("w") as f:
-        json.dump(ItemAdapter(item).asdict(), f)
+        json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=True, indent=4)
