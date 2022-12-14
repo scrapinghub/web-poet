@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 import andi
 
+import web_poet
 from web_poet import Injectable
 from web_poet.pages import is_injectable
 
@@ -110,12 +111,20 @@ def deserialize_leaf(cls: Type[T], data: SerializedLeafData) -> T:
     return f_ser.f_deserialize(cls, data)  # type: ignore[attr-defined]
 
 
-def _get_fqname(cls: type) -> str:
-    """Return the fully qualified name for a type.
+def _get_name_for_class(cls: type) -> str:
+    """Return the type name that will be used for serialization.
 
-    >>> _get_fqname(Injectable)
-    'web_poet.pages.Injectable'
+    For classes available in the web_poet module it's the type name,
+    for others it's the fully qualified type name.
+
+    >>> _get_name_for_class(Injectable)
+    'Injectable'
+    >>> from decimal import Decimal
+    >>> _get_name_for_class(Decimal)
+    'decimal.Decimal'
     """
+    if getattr(web_poet, cls.__name__, None) == cls:
+        return cls.__name__
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
@@ -125,16 +134,21 @@ def serialize(deps: Iterable[Any]) -> SerializedData:
         cls = dep.__class__
         if is_injectable(cls):
             raise ValueError(f"Injectable type {cls} passed to serialize()")
-        result[_get_fqname(cls)] = serialize_leaf(dep)
+        result[_get_name_for_class(cls)] = serialize_leaf(dep)
     return result
 
 
 def load_class(type_name: str) -> type:
-    """Return the type by its fully qualified name.
+    """Return the type by its name.
+
+    Requires the fully qualified name unless the type
+    is available in the web_poet module.
 
     >>> load_class("decimal.Decimal")
     <class 'decimal.Decimal'>
     >>> load_class("web_poet.pages.WebPage")
+    <class 'web_poet.pages.WebPage'>
+    >>> load_class("WebPage")
     <class 'web_poet.pages.WebPage'>
     >>> load_class("decimal.foo")
     Traceback (most recent call last):
@@ -145,7 +159,11 @@ def load_class(type_name: str) -> type:
      ...
     ValueError: Unable to import module foo
     """
-    module, name = type_name.rsplit(".", 1)
+    if "." in type_name:
+        module, name = type_name.rsplit(".", 1)
+    else:
+        module = "web_poet"
+        name = type_name
     try:
         mod = import_module(module)
     except ModuleNotFoundError:
