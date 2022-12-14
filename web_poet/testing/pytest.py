@@ -77,7 +77,10 @@ def pytest_collect_file(
     file_path: Path, path: Any, parent: pytest.Collector
 ) -> Optional[pytest.Collector]:
     if file_path.name == OUTPUT_FILE_NAME:
-        po_dir = file_path.parent.parent
+        testcase_dir = file_path.parent
+        if not (testcase_dir / INPUT_DIR_NAME).is_dir():
+            return None
+        po_dir = testcase_dir.parent
         if po_dir in _found_po_dirs:
             return None
         _found_po_dirs.add(po_dir)
