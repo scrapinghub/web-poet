@@ -9,6 +9,7 @@ import andi
 import web_poet
 from web_poet import Injectable
 from web_poet.pages import is_injectable
+from web_poet.utils import get_fq_class_name
 
 # represents a leaf dependency of any type serialized as a set of files
 SerializedLeafData = Dict[str, bytes]
@@ -125,7 +126,7 @@ def _get_name_for_class(cls: type) -> str:
     """
     if getattr(web_poet, cls.__name__, None) == cls:
         return cls.__name__
-    return f"{cls.__module__}.{cls.__qualname__}"
+    return get_fq_class_name(cls)
 
 
 def serialize(deps: Iterable[Any]) -> SerializedData:
