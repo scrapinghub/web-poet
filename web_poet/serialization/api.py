@@ -2,7 +2,7 @@ import os
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 import andi
 
@@ -119,7 +119,7 @@ def _get_fqname(cls: type) -> str:
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
-def serialize(deps: List[Any]) -> SerializedData:
+def serialize(deps: Iterable[Any]) -> SerializedData:
     result: SerializedData = {}
     for dep in deps:
         cls = dep.__class__

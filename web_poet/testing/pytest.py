@@ -7,11 +7,12 @@ import pytest
 
 from web_poet import ItemPage
 from web_poet.serialization import SerializedDataFileStorage, deserialize, load_class
+from web_poet.testing import INPUT_DIR_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import ensure_awaitable
 
 
 class WebPoetFile(pytest.File):
-    """Represents a directory containing test case sibdirectories for one PO."""
+    """Represents a directory containing test case subdirectories for one page object."""
 
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:  # noqa: D102
         for entry in self.path.iterdir():
@@ -38,16 +39,16 @@ class WebPoetItem(pytest.Item):
 
     @property
     def input_path(self) -> Path:
-        """The po subdirectory path."""
-        return self.path / "po"
+        """The inputs subdirectory path."""
+        return self.path / INPUT_DIR_NAME
 
     @property
     def output_path(self) -> Path:
-        """The output.json file path"""
-        return self.path / "output.json"
+        """The output file path."""
+        return self.path / OUTPUT_FILE_NAME
 
-    def get_po(self) -> ItemPage:
-        """Return the PO object created from the saved input."""
+    def get_page(self) -> ItemPage:
+        """Return the page object created from the saved input."""
         po_type = load_class(self.po_name)
         if not issubclass(po_type, ItemPage):
             raise TypeError(f"{self.po_name} is not a descendant of ItemPage")
@@ -56,7 +57,7 @@ class WebPoetItem(pytest.Item):
 
     async def get_po_output(self) -> dict:
         """Return the output from the PO."""
-        po = self.get_po()
+        po = self.get_page()
         return await ensure_awaitable(po.to_item())
 
     def get_expected_output(self) -> dict:
@@ -75,7 +76,7 @@ _found_po_dirs: Set[Path] = set()
 def pytest_collect_file(
     file_path: Path, path: Any, parent: pytest.Collector
 ) -> Optional[pytest.Collector]:
-    if file_path.name == "output.json":
+    if file_path.name == OUTPUT_FILE_NAME:
         po_dir = file_path.parent.parent
         if po_dir in _found_po_dirs:
             return None
