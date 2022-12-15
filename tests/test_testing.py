@@ -33,9 +33,17 @@ class MyItemPage(WebPage):
         return {"foo": "bar"}
 
 
-def test_pytest_plugin(pytester, book_list_html_response) -> None:
+def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
     item = {"foo": "bar"}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
     save_fixture(base_dir, [book_list_html_response], item)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
+    item = {"foo": "wrong"}
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
+    save_fixture(base_dir, [book_list_html_response], item)
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
