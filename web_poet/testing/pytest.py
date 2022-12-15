@@ -1,7 +1,8 @@
 import asyncio
 import json
+import operator
 from pathlib import Path
-from typing import Any, Iterable, Optional, Set, Union
+from typing import Any, Iterable, List, Optional, Set, Union
 
 import pytest
 
@@ -14,7 +15,13 @@ from web_poet.utils import ensure_awaitable
 class WebPoetFile(pytest.File):
     """Represents a directory containing test case subdirectories for one page object."""
 
+    @staticmethod
+    def sorted(items: List["WebPoetItem"]) -> List["WebPoetItem"]:
+        """Sort the item list by the item name."""
+        return sorted(items, key=operator.attrgetter("name"))
+
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:  # noqa: D102
+        result: List[WebPoetItem] = []
         for entry in self.path.iterdir():
             if entry.is_dir():
                 item: WebPoetItem = WebPoetItem.from_parent(
@@ -23,8 +30,8 @@ class WebPoetFile(pytest.File):
                     path=entry,
                 )
                 if item.input_path.is_dir() and item.output_path.is_file():
-                    # item.add_marker(pytest.mark.asyncio)
-                    yield item
+                    result.append(item)
+        return self.sorted(result)
 
 
 class WebPoetItem(pytest.Item):
