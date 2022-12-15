@@ -62,17 +62,17 @@ class WebPoetItem(pytest.Item):
         storage = SerializedDataFileStorage(self.input_path)
         return deserialize(po_type, storage.read())
 
-    async def get_po_output(self) -> dict:
+    def get_po_output(self) -> dict:
         """Return the output from the PO."""
         po = self.get_page()
-        return await ensure_awaitable(po.to_item())
+        return asyncio.run(ensure_awaitable(po.to_item()))
 
     def get_expected_output(self) -> dict:
         """Return the saved output."""
         return json.loads(self.output_path.read_bytes())
 
     def runtest(self) -> None:  # noqa: D102
-        output = asyncio.run(self.get_po_output())
+        output = self.get_po_output()
         expected_output = self.get_expected_output()
         assert output == expected_output
 
