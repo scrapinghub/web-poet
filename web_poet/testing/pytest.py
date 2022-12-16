@@ -15,11 +15,11 @@ from web_poet.utils import ensure_awaitable
 
 
 class WebPoetFile(pytest.File):
-    """Represents a directory containing test case subdirectories for one Page Object."""
+    """Represents a directory containing test subdirectories for one Page Object."""
 
     @staticmethod
     def sorted(items: List["WebPoetItem"]) -> List["WebPoetItem"]:
-        """Sort the item list by the item name."""
+        """Sort the test list by the test name."""
         return sorted(items, key=operator.attrgetter("name"))
 
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:  # noqa: D102
@@ -37,7 +37,7 @@ class WebPoetFile(pytest.File):
 
 
 class WebPoetItem(pytest.Item):
-    """Represents a directory containing one test case."""
+    """Represents a directory containing one test."""
 
     @property
     def type_name(self) -> str:
