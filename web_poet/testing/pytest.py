@@ -6,6 +6,7 @@ from typing import Any, Iterable, List, Optional, Set, Union
 
 import pytest
 from freezegun import freeze_time
+from itemadapter import ItemAdapter
 
 from web_poet import ItemPage
 from web_poet.serialization import SerializedDataFileStorage, deserialize, load_class
@@ -77,7 +78,8 @@ class WebPoetItem(pytest.Item):
     def get_output(self) -> dict:
         """Return the output from the recreated Page Object."""
         po = self.get_page()
-        return asyncio.run(ensure_awaitable(po.to_item()))
+        item = asyncio.run(ensure_awaitable(po.to_item()))
+        return ItemAdapter(item).asdict()
 
     def get_expected_output(self) -> dict:
         """Return the saved output."""

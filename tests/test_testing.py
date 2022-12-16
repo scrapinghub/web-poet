@@ -3,6 +3,9 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from itemadapter import ItemAdapter
+from zyte_common_items import Item, Metadata, Product
+
 from web_poet import WebPage
 from web_poet.testing import save_fixture
 from web_poet.testing.utils import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
@@ -61,17 +64,23 @@ def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
     result.assert_outcomes(failed=1)
 
 
+def _get_product_item(date: str) -> Product:
+    return Product(
+        url="http://example.com", name="foo", metadata=Metadata(dateDownloaded=date)
+    )
+
+
 class DateItemPage(WebPage):
-    async def to_item(self) -> dict:  # noqa: D102
-        return {
-            "foo": "bar",
-            "scraped_on": datetime.datetime.now().isoformat(),
-        }
+    async def to_item(self) -> Item:  # noqa: D102
+        date = datetime.datetime.now().strftime("%Y-%M-%dT%H:%M:%SZ")
+        return _get_product_item(date)
 
 
 def test_pytest_frozen_time(pytester, book_list_html_response) -> None:
     frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22)
-    item = {"foo": "bar", "scraped_on": frozen_time.isoformat()}
+    item = ItemAdapter(
+        _get_product_item(frozen_time.strftime("%Y-%M-%dT%H:%M:%SZ"))
+    ).asdict()
     meta = {"frozen_time": frozen_time.strftime("%Y-%m-%d %H:%M:%S")}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(DateItemPage)
     save_fixture(base_dir, [book_list_html_response], item, meta)
