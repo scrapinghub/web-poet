@@ -15,7 +15,7 @@ from web_poet.utils import ensure_awaitable
 
 
 class WebPoetFile(pytest.File):
-    """Represents a directory containing test case subdirectories for one page object."""
+    """Represents a directory containing test case subdirectories for one Page Object."""
 
     @staticmethod
     def sorted(items: List["WebPoetItem"]) -> List["WebPoetItem"]:
@@ -40,8 +40,8 @@ class WebPoetItem(pytest.Item):
     """Represents a directory containing one test case."""
 
     @property
-    def po_name(self) -> str:
-        """The type name of the PO being tested."""
+    def type_name(self) -> str:
+        """The name of the type being tested."""
         if not self.parent:
             raise ValueError("WebPoetItem has no parent")
         return self.parent.name
@@ -63,11 +63,11 @@ class WebPoetItem(pytest.Item):
 
     def get_page(self) -> ItemPage:
         """Return the page object created from the saved input."""
-        po_type = load_class(self.po_name)
-        if not issubclass(po_type, ItemPage):
-            raise TypeError(f"{self.po_name} is not a descendant of ItemPage")
+        cls = load_class(self.type_name)
+        if not issubclass(cls, ItemPage):
+            raise TypeError(f"{self.type_name} is not a descendant of ItemPage")
         storage = SerializedDataFileStorage(self.input_path)
-        return deserialize(po_type, storage.read())
+        return deserialize(cls, storage.read())
 
     def get_meta(self) -> dict:
         """Return the test metadata."""
@@ -75,8 +75,8 @@ class WebPoetItem(pytest.Item):
             return {}
         return json.loads(self.meta_path.read_bytes())
 
-    def get_po_output(self) -> dict:
-        """Return the output from the PO."""
+    def get_output(self) -> dict:
+        """Return the output from the recreated Page Object."""
         po = self.get_page()
         return asyncio.run(ensure_awaitable(po.to_item()))
 
@@ -89,9 +89,9 @@ class WebPoetItem(pytest.Item):
         frozen_time: Optional[str] = meta.get("frozen_time")
         if frozen_time:
             with freeze_time(frozen_time):
-                output = self.get_po_output()
+                output = self.get_output()
         else:
-            output = self.get_po_output()
+            output = self.get_output()
         expected_output = self.get_expected_output()
         assert output == expected_output
 
