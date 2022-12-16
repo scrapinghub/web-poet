@@ -9,8 +9,7 @@ from freezegun import freeze_time
 
 from web_poet import ItemPage
 from web_poet.serialization import SerializedDataFileStorage, deserialize, load_class
-from web_poet.testing import INPUT_DIR_NAME, OUTPUT_FILE_NAME
-from web_poet.testing.utils import META_FILE_NAME
+from web_poet.testing.utils import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import ensure_awaitable
 
 

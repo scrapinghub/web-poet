@@ -4,12 +4,8 @@ from pathlib import Path
 from typing import Optional
 
 from web_poet import WebPage
-from web_poet.testing import (
-    INPUT_DIR_NAME,
-    META_FILE_NAME,
-    OUTPUT_FILE_NAME,
-    save_fixture,
-)
+from web_poet.testing import save_fixture
+from web_poet.testing.utils import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
 
