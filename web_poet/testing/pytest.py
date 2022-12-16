@@ -5,10 +5,12 @@ from pathlib import Path
 from typing import Any, Iterable, List, Optional, Set, Union
 
 import pytest
+from freezegun import freeze_time
 
 from web_poet import ItemPage
 from web_poet.serialization import SerializedDataFileStorage, deserialize, load_class
 from web_poet.testing import INPUT_DIR_NAME, OUTPUT_FILE_NAME
+from web_poet.testing.utils import META_FILE_NAME
 from web_poet.utils import ensure_awaitable
 
 
@@ -54,6 +56,11 @@ class WebPoetItem(pytest.Item):
         """The output file path."""
         return self.path / OUTPUT_FILE_NAME
 
+    @property
+    def meta_path(self) -> Path:
+        """The metadata file path."""
+        return self.path / META_FILE_NAME
+
     def get_page(self) -> ItemPage:
         """Return the page object created from the saved input."""
         po_type = load_class(self.po_name)
@@ -61,6 +68,12 @@ class WebPoetItem(pytest.Item):
             raise TypeError(f"{self.po_name} is not a descendant of ItemPage")
         storage = SerializedDataFileStorage(self.input_path)
         return deserialize(po_type, storage.read())
+
+    def get_meta(self) -> dict:
+        """Return the test metadata."""
+        if not self.meta_path.exists():
+            return {}
+        return json.loads(self.meta_path.read_bytes())
 
     def get_po_output(self) -> dict:
         """Return the output from the PO."""
@@ -72,7 +85,13 @@ class WebPoetItem(pytest.Item):
         return json.loads(self.output_path.read_bytes())
 
     def runtest(self) -> None:  # noqa: D102
-        output = self.get_po_output()
+        meta = self.get_meta()
+        frozen_time: Optional[str] = meta.get("frozen_time")
+        if frozen_time:
+            with freeze_time(frozen_time):
+                output = self.get_po_output()
+        else:
+            output = self.get_po_output()
         expected_output = self.get_expected_output()
         assert output == expected_output
 

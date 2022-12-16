@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 from itemadapter import ItemAdapter
 
@@ -9,6 +9,7 @@ from web_poet.serialization import SerializedDataFileStorage, serialize
 
 INPUT_DIR_NAME = "inputs"
 OUTPUT_FILE_NAME = "output.json"
+META_FILE_NAME = "meta.json"
 
 
 def _get_available_filename(template: str, directory: Union[str, os.PathLike]) -> str:
@@ -24,6 +25,7 @@ def save_fixture(
     base_directory: Union[str, os.PathLike],
     inputs: Iterable[Any],
     item: Any,
+    meta: Optional[dict] = None,
     fixture_name=None,
 ) -> Path:
     if not fixture_name:
@@ -36,4 +38,7 @@ def save_fixture(
     storage.write(serialized_inputs)
     with Path(fixture_dir, OUTPUT_FILE_NAME).open("w") as f:
         json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=True, indent=4)
+    if meta:
+        with Path(fixture_dir, META_FILE_NAME).open("w") as f:
+            json.dump(meta, f, ensure_ascii=True, indent=4)
     return fixture_dir

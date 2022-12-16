@@ -27,6 +27,7 @@ setup(
         "async-lru >= 1.0.3",
         "itemadapter >= 0.7.0",
         "andi",
+        "freezegun",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

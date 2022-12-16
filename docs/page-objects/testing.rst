@@ -51,12 +51,13 @@ that Page Object fully qualified class name. Each fixture is a directory inside
 it. Each fixture directory contains a subdirectory named "inputs" that contains
 the serialized dependencies and a file named "output.json" that contains the
 item which is the result of the Page Object's
-:meth:`~web_poet.pages.ItemPage.to_item` method.
+:meth:`~web_poet.pages.ItemPage.to_item` method. It can also contain a file
+named "meta.json" with optional metadata about the fixture.
 
 :func:`web_poet.testing.save_fixture` can be used to create a fixture inside a
-Page Object directory from an iterable of dependencies and an output item. It
-can optionally take a name for the fixture directory. By default it uses
-incrementing names "test-1", "test-2" etc.
+Page Object directory from an iterable of dependencies, an output item and a
+metadata dictionary. It can optionally take a name for the fixture directory.
+By default it uses incrementing names "test-1", "test-2" etc.
 
 Running tests
 =============
