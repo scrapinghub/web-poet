@@ -1,11 +1,20 @@
+import asyncio
 import json
 import os
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
+from freezegun import freeze_time
 from itemadapter import ItemAdapter
 
-from web_poet.serialization import SerializedDataFileStorage, serialize
+from web_poet import ItemPage
+from web_poet.serialization import (
+    SerializedDataFileStorage,
+    deserialize,
+    load_class,
+    serialize,
+)
+from web_poet.utils import ensure_awaitable
 
 INPUT_DIR_NAME = "inputs"
 OUTPUT_FILE_NAME = "output.json"
@@ -19,6 +28,69 @@ def _get_available_filename(template: str, directory: Union[str, os.PathLike]) -
         if not result.exists():
             return result.name
         i += 1
+
+
+class Fixture:
+    """Represents a directory containing one test."""
+
+    def __init__(self, type_name: str, path: Path) -> None:
+        self.type_name = type_name
+        self.path = path
+
+    @property
+    def input_path(self) -> Path:
+        """The inputs subdirectory path."""
+        return self.path / INPUT_DIR_NAME
+
+    @property
+    def output_path(self) -> Path:
+        """The output file path."""
+        return self.path / OUTPUT_FILE_NAME
+
+    @property
+    def meta_path(self) -> Path:
+        """The metadata file path."""
+        return self.path / META_FILE_NAME
+
+    def is_valid(self) -> bool:
+        """Return True if the fixture file structure is correct, False otherwise."""
+        return self.input_path.is_dir() and self.output_path.is_file()
+
+    def get_page(self) -> ItemPage:
+        """Return the page object created from the saved input."""
+        cls = load_class(self.type_name)
+        if not issubclass(cls, ItemPage):
+            raise TypeError(f"{self.type_name} is not a descendant of ItemPage")
+        storage = SerializedDataFileStorage(self.input_path)
+        return deserialize(cls, storage.read())
+
+    def get_meta(self) -> dict:
+        """Return the test metadata."""
+        if not self.meta_path.exists():
+            return {}
+        return json.loads(self.meta_path.read_bytes())
+
+    def get_output(self) -> dict:
+        """Return the output from the recreated Page Object."""
+        po = self.get_page()
+        item = asyncio.run(ensure_awaitable(po.to_item()))
+        return ItemAdapter(item).asdict()
+
+    def get_expected_output(self) -> dict:
+        """Return the saved output."""
+        return json.loads(self.output_path.read_bytes())
+
+    def assert_output(self):
+        """Get the output and assert that it matches the expected output."""
+        meta = self.get_meta()
+        frozen_time: Optional[str] = meta.get("frozen_time")
+        if frozen_time:
+            with freeze_time(frozen_time):
+                output = self.get_output()
+        else:
+            output = self.get_output()
+        expected_output = self.get_expected_output()
+        assert output == expected_output
 
 
 def save_fixture(
