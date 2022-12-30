@@ -33,9 +33,13 @@ def _get_available_filename(template: str, directory: Union[str, os.PathLike]) -
 class Fixture:
     """Represents a directory containing one test."""
 
-    def __init__(self, type_name: str, path: Path) -> None:
-        self.type_name = type_name
+    def __init__(self, path: Path) -> None:
         self.path = path
+
+    @property
+    def type_name(self) -> str:
+        """The name of the type being tested."""
+        return self.path.parent.name
 
     @property
     def input_path(self) -> Path:

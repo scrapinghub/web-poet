@@ -42,9 +42,7 @@ class WebPoetItem(pytest.Item):
         **kw
     ) -> None:
         super().__init__(name, parent, config, session, nodeid, **kw)
-        if not self.parent:
-            raise ValueError("WebPoetItem has no parent")
-        self.fixture = Fixture(self.parent.name, self.path)
+        self.fixture = Fixture(self.path)
 
     def runtest(self) -> None:  # noqa: D102
         self.fixture.assert_output()
@@ -59,7 +57,7 @@ def pytest_collect_file(
     if file_path.name == OUTPUT_FILE_NAME:
         testcase_dir = file_path.parent
         type_dir = testcase_dir.parent
-        fixture = Fixture(type_dir.name, testcase_dir)
+        fixture = Fixture(testcase_dir)
         if not fixture.is_valid():
             return None
         if type_dir in _found_type_dirs:
