@@ -74,7 +74,7 @@ directory. By default it uses incrementing names "test-1", "test-2" etc.
 
 .. note::
     ``output.json`` contains a result of
-    ``json.dumps(ItemAdapter(page_object.to_item()).asdict()``.
+    ``ItemAdapter(page_object.to_item()).asdict()`` saved as JSON.
 
 After generating a fixture you can edit ``output.json`` to modify expected
 field values and add new fields, which is useful when creating tests for code
@@ -103,8 +103,9 @@ discover them and run tests for them.
 Handling time fields
 ====================
 
-Page Objects can return the scraping date or even time in the result and it
-would break the test when it runs later. To avoid this the metadata dictionary
-can contain a ``frozen_time`` field set to the time value used when generating
-the test. This will instruct the test runner to use the same time value so
-that field comparisons are still correct.
+Sometimes output of a page object might depend on the current time. For
+example, the item may contain the scraping datetime, or a current timestamp may
+be used to build some URLs. When a test runs at a different time it will break.
+To avoid this the metadata dictionary can contain a ``frozen_time`` field set
+to the time value used when generating the test. This will instruct the test
+runner to use the same time value so that field comparisons are still correct.
