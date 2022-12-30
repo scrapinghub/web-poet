@@ -91,10 +91,20 @@ provided by it to generate fixtures in a convenient way.
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 .. _Scrapy command: <insert doc link>
 
-
 Running tests
 =============
 
 The provided ``pytest`` plugin is automatically registered when ``web-poet`` is
 installed, and running ``pytest`` in a directory containing fixtures will
 discover them and run tests for them.
+
+.. _web-poet-testing-frozen_time:
+
+Handling time fields
+====================
+
+Page Objects can return the scraping date or even time in the result and it
+would break the test when it runs later. To avoid this the metadata dictionary
+can contain a ``frozen_time`` field set to the time value used when generating
+the test. This will instruct the test runner to use the same time value so
+that field comparisons are still correct.
