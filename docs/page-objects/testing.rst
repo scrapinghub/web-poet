@@ -72,6 +72,10 @@ Page Object directory from an iterable of dependencies, an output item and an
 optional metadata dictionary. It can optionally take a name for the fixture
 directory. By default it uses incrementing names "test-1", "test-2" etc.
 
+.. note::
+    ``output.json`` contains a result of
+    ``json.dumps(ItemAdapter(page_object.to_item()).asdict()``.
+
 After generating a fixture you can edit ``output.json`` to modify expected
 field values and add new fields, which is useful when creating tests for code
 that isn't written yet or before modifying its behavior.
