@@ -109,3 +109,8 @@ be used to build some URLs. When a test runs at a different time it will break.
 To avoid this the metadata dictionary can contain a ``frozen_time`` field set
 to the time value used when generating the test. This will instruct the test
 runner to use the same time value so that field comparisons are still correct.
+
+The value can be any string understood by `dateutil`_. If it doesn't include
+timezone information, UTC will be assumed.
+
+.. _dateutil: https://github.com/dateutil/dateutil
