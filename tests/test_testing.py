@@ -7,7 +7,7 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import WebPage
-from web_poet.testing import save_fixture
+from web_poet.testing import Fixture
 from web_poet.testing.utils import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
@@ -35,11 +35,11 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
         else:
             assert not (directory / META_FILE_NAME).exists()
 
-    save_fixture(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, [book_list_html_response], item)
     _assert_fixture_files(base_dir / "test-1")
-    save_fixture(base_dir, [book_list_html_response], item, fixture_name="custom")
+    Fixture.save(base_dir, [book_list_html_response], item, fixture_name="custom")
     _assert_fixture_files(base_dir / "custom")
-    save_fixture(base_dir, [book_list_html_response], item, meta=meta)
+    Fixture.save(base_dir, [book_list_html_response], item, meta=meta)
     _assert_fixture_files(base_dir / "test-2", expected_meta=meta)
 
 
@@ -51,7 +51,7 @@ class MyItemPage(WebPage):
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
     item = {"foo": "bar"}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    save_fixture(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, [book_list_html_response], item)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -59,7 +59,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
 def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
     item = {"foo": "wrong"}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    save_fixture(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, [book_list_html_response], item)
     result = pytester.runpytest()
     result.assert_outcomes(failed=1)
 
@@ -83,6 +83,6 @@ def test_pytest_frozen_time(pytester, book_list_html_response) -> None:
     ).asdict()
     meta = {"frozen_time": frozen_time.strftime("%Y-%m-%d %H:%M:%S")}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(DateItemPage)
-    save_fixture(base_dir, [book_list_html_response], item, meta)
+    Fixture.save(base_dir, [book_list_html_response], item, meta)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)

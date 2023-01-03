@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Type, TypeVar, Union
 
 from freezegun import freeze_time
 from itemadapter import ItemAdapter
@@ -19,6 +19,9 @@ from web_poet.utils import ensure_awaitable
 INPUT_DIR_NAME = "inputs"
 OUTPUT_FILE_NAME = "output.json"
 META_FILE_NAME = "meta.json"
+
+
+FixtureT = TypeVar("FixtureT", bound="Fixture")
 
 
 def _get_available_filename(template: str, directory: Union[str, os.PathLike]) -> str:
@@ -96,25 +99,29 @@ class Fixture:
         expected_output = self.get_expected_output()
         assert output == expected_output
 
-
-def save_fixture(
-    base_directory: Union[str, os.PathLike],
-    inputs: Iterable[Any],
-    item: Any,
-    meta: Optional[dict] = None,
-    fixture_name=None,
-) -> Path:
-    if not fixture_name:
-        fixture_name = _get_available_filename("test-{}", base_directory)  # noqa: P103
-    fixture_dir = Path(base_directory, fixture_name)
-    inputs_dir = Path(fixture_dir, INPUT_DIR_NAME)
-    inputs_dir.mkdir(parents=True)
-    serialized_inputs = serialize(inputs)
-    storage = SerializedDataFileStorage(inputs_dir)
-    storage.write(serialized_inputs)
-    with Path(fixture_dir, OUTPUT_FILE_NAME).open("w") as f:
-        json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=True, indent=4)
-    if meta:
-        with Path(fixture_dir, META_FILE_NAME).open("w") as f:
-            json.dump(meta, f, ensure_ascii=True, indent=4)
-    return fixture_dir
+    @classmethod
+    def save(
+        cls: Type[FixtureT],
+        base_directory: Union[str, os.PathLike],
+        inputs: Iterable[Any],
+        item: Any,
+        meta: Optional[dict] = None,
+        fixture_name=None,
+    ) -> FixtureT:
+        """Save and return a fixture."""
+        if not fixture_name:
+            fixture_name = _get_available_filename(
+                "test-{}", base_directory  # noqa: P103
+            )
+        fixture_dir = Path(base_directory, fixture_name)
+        fixture = cls(fixture_dir)
+        fixture.input_path.mkdir(parents=True)
+        serialized_inputs = serialize(inputs)
+        storage = SerializedDataFileStorage(fixture.input_path)
+        storage.write(serialized_inputs)
+        with fixture.output_path.open("w") as f:
+            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=True, indent=4)
+        if meta:
+            with fixture.meta_path.open("w") as f:
+                json.dump(meta, f, ensure_ascii=True, indent=4)
+        return fixture

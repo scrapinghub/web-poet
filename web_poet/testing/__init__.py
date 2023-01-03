@@ -1,1 +1,1 @@
-from .utils import save_fixture
+from .utils import Fixture
