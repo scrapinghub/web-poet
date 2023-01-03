@@ -53,7 +53,7 @@ class WebPoetItem(pytest.Item):
 
     else:
 
-        def __init__(
+        def __init__(  # type: ignore[misc]
             self,
             name,
             parent=None,
@@ -126,7 +126,7 @@ else:
             fspath=py.path.local(path),
         )
 
-    def pytest_collect_file(
+    def pytest_collect_file(  # type: ignore[misc]
         path: py.path.local, parent: pytest.Collector
     ) -> Optional[pytest.Collector]:
         return collect_file_hook(Path(path), parent)
