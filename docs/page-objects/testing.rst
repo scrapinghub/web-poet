@@ -67,7 +67,7 @@ it, that contains data for Page Object inputs and output::
             ├── meta.json
             └── output.json
 
-:func:`web_poet.testing.save_fixture` can be used to create a fixture inside a
+:func:`web_poet.testing.Fixture.save` can be used to create a fixture inside a
 Page Object directory from an iterable of dependencies, an output item and an
 optional metadata dictionary. It can optionally take a name for the fixture
 directory. By default it uses incrementing names "test-1", "test-2" etc.
