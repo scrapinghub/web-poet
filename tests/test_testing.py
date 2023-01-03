@@ -35,11 +35,13 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
         else:
             assert not (directory / META_FILE_NAME).exists()
 
-    Fixture.save(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     _assert_fixture_files(base_dir / "test-1")
-    Fixture.save(base_dir, [book_list_html_response], item, fixture_name="custom")
+    Fixture.save(
+        base_dir, inputs=[book_list_html_response], item=item, fixture_name="custom"
+    )
     _assert_fixture_files(base_dir / "custom")
-    Fixture.save(base_dir, [book_list_html_response], item, meta=meta)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item, meta=meta)
     _assert_fixture_files(base_dir / "test-2", expected_meta=meta)
 
 
@@ -51,7 +53,7 @@ class MyItemPage(WebPage):
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
     item = {"foo": "bar"}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    Fixture.save(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -59,7 +61,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
 def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
     item = {"foo": "wrong"}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    Fixture.save(base_dir, [book_list_html_response], item)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     result = pytester.runpytest()
     result.assert_outcomes(failed=1)
 
@@ -83,6 +85,6 @@ def test_pytest_frozen_time(pytester, book_list_html_response) -> None:
     ).asdict()
     meta = {"frozen_time": frozen_time.strftime("%Y-%m-%d %H:%M:%S")}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(DateItemPage)
-    Fixture.save(base_dir, [book_list_html_response], item, meta)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item, meta=meta)
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)

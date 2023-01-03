@@ -103,6 +103,7 @@ class Fixture:
     def save(
         cls: Type[FixtureT],
         base_directory: Union[str, os.PathLike],
+        *,
         inputs: Iterable[Any],
         item: Any,
         meta: Optional[dict] = None,
