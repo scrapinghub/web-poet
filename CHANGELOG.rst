@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.6.1 (to be released)
+----------------------
+
+* Support page object serialization, to make it easier to implement caching
+  mechanisms in web-poet frameworks.
+
+* Support implementing fields in mixin classes.
+
+
 0.6.0 (2022-11-08)
 ------------------
 
