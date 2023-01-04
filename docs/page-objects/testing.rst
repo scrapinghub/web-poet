@@ -80,17 +80,6 @@ After generating a fixture you can edit ``output.json`` to modify expected
 field values and add new fields, which is useful when creating tests for code
 that isn't written yet or before modifying its behavior.
 
-.. _web-poet-testing-scrapy-poet:
-
-scrapy-poet integration
-=======================
-
-Projects that use the `scrapy-poet`_ library can use the `Scrapy command`_
-provided by it to generate fixtures in a convenient way.
-
-.. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
-.. _Scrapy command: <insert doc link>
-
 Running tests
 =============
 
