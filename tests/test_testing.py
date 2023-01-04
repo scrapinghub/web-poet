@@ -8,7 +8,7 @@ from zyte_common_items import Item, Metadata, Product
 
 from web_poet import WebPage
 from web_poet.testing import Fixture
-from web_poet.testing.utils import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
+from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
 

@@ -1,1 +1,1 @@
-from .utils import Fixture
+from .fixture import Fixture

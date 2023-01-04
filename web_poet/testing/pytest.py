@@ -4,7 +4,7 @@ from typing import Any, Iterable, List, Optional, Set, Union
 
 import pytest
 
-from web_poet.testing.utils import OUTPUT_FILE_NAME, Fixture
+from web_poet.testing.fixture import OUTPUT_FILE_NAME, Fixture
 
 # https://github.com/pytest-dev/pytest/discussions/10261
 _version_tuple = getattr(pytest, "version_tuple", None)
