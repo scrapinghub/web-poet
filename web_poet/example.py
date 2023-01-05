@@ -8,6 +8,7 @@ from url_matcher import URLMatcher
 from . import default_registry
 from .page_inputs import HttpClient, HttpResponse, PageParams
 from .pages import ItemPage, is_injectable
+from .utils import ensure_awaitable
 
 
 class _HttpClient:
@@ -69,7 +70,7 @@ def get_item(
     *,
     page_params: Optional[Dict[Any, Any]] = None,
 ) -> Any:
-    """Returns an item build from the specified URL using a page object class
+    """Returns an item built from the specified URL using a page object class
     from the default registry.
 
     *page_modules* is a list of the import paths of modules that define page
@@ -83,4 +84,4 @@ def get_item(
     if page_class is None:
         raise ValueError(f"No page object class found for URL: {url}")
     page = _get_page(url, page_class, page_params=page_params)
-    return run(page.to_item())
+    return run(ensure_awaitable(page.to_item()))
