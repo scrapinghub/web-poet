@@ -1,5 +1,13 @@
+"""This is a simplified, incomplete example of a web-poet framework, written as
+support material for the web-poet tutorial.
+
+No part of this module is intended for production use, and it may change in a
+backward-incompatible way at any point in the future.
+"""
+
 from asyncio import run
 from typing import Any, Dict, Optional, Type
+from warnings import warn
 
 import andi
 from requests import get
@@ -9,6 +17,15 @@ from . import default_registry
 from .page_inputs import HttpClient, HttpResponse, PageParams
 from .pages import ItemPage, is_injectable
 from .utils import ensure_awaitable
+
+warn(
+    (
+        "You should only be importing web_poet.example to follow the web-poet "
+        "tutorial, never as part of production code."
+    ),
+    UserWarning,
+    stacklevel=2,
+)
 
 
 class _HttpClient:
