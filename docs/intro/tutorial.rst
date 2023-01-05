@@ -153,13 +153,13 @@ In the code above:
     specified type parameter is used for more than type hinting: it determines
     the item class that is used to store the data that fields return.
 
--   ``BookPage`` is decorated with :meth:`~web_poet.overrides.handle_urls`,
+-   ``BookPage`` is decorated with :meth:`~web_poet.handle_urls`,
     which indicates for which domain ``BookPage`` is intended to work.
 
     It is possible to specify more specific URL patterns, instead of only the
     target URL domain. However, the URL domain and the output type (``Book``)
     are usually all the data needed to determine which page object class to
-    use, which is the goal of the :meth:`~web_poet.overrides.handle_urls`
+    use, which is the goal of the :meth:`~web_poet.handle_urls`
     decorator.
 
 -   ``BookPage`` defines a field named ``title``.
@@ -220,7 +220,7 @@ Notice that you must also call :func:`~web_poet.rules.consume_modules` once
 before your first call to ``get_item``. ``consume_modules`` ensures that the
 specified Python modules are loaded. You pass ``consume_modules`` the modules
 where you define your page object classes. Upon load,
-:meth:`~web_poet.overrides.handle_urls` decorators register the page object
+:meth:`~web_poet.handle_urls` decorators register the page object
 classes that they decorate into the default registry, which ``get_item`` uses
 to determine which page object class to use based on its input parameters (URL
 and item class).
@@ -228,7 +228,7 @@ and item class).
 Your web-poet framework can take care of everything else:
 
 #.  It matches the input URL and item class to ``BookPage``, based on the URL
-    pattern that you defined with the :meth:`~web_poet.overrides.handle_urls`
+    pattern that you defined with the :meth:`~web_poet.handle_urls`
     decorator, and the return type that you declared in the page object class
     (``Book``).
 
