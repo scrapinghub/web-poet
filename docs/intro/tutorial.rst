@@ -173,7 +173,7 @@ In the code above:
     webpage. Specifically, it extracts the text from the first ``h1`` element
     on the input HTTP response.
 
-    Here ``title`` is not an arbitrary name, it was chosen specifically to
+    Here, ``title`` is not an arbitrary name. It was chosen specifically to
     match ``Book.title``, so that during web data extraction the value that
     ``BookPage.title`` returns gets mapped to ``Book.title``.
 
