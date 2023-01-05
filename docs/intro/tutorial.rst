@@ -16,43 +16,43 @@ To follow this tutorial you must first be familiar with Python_ and have
 .. _Python: https://docs.python.org/
 
 
-Create a project folder
-=======================
+Create a project directory
+==========================
 
 web-poet does not limit how you structure your web-poet web data extraction
 code, beyond the limitations of Python itself.
 
-However, in this tutorial you will use a specific project folder structure
+However, in this tutorial you will use a specific project directory structure
 designed with web-poet best practices in mind. Consider using the same project
-folder structure in all your web-poet projects.
+directory structure in all your web-poet projects.
 
-First create your project folder: ``tutorial-project/``.
+First create your project directory: ``tutorial-project/``.
 
-Within the ``tutorial-project`` folder, create:
+Within the ``tutorial-project`` directory, create:
 
 -   A ``run.py`` file, a file specific to this tutorial where you will put code
     to test the execution of your web data extraction code.
 
--   A ``tutorial`` folder, where you will place your web data extraction code.
+-   A ``tutorial`` directory, where you will place your web data extraction code.
 
-Within the ``tutorial-project/tutorial`` folder, create:
+Within the ``tutorial-project/tutorial`` directory, create:
 
--   An ``__init__.py`` file, so that the ``tutorial`` folder becomes an
+-   An ``__init__.py`` file, so that the ``tutorial`` directory becomes an
     importable Python module.
 
 -   An ``items.py`` file, where you will define item classes to store extracted
     data.
 
--   A ``pages`` folder, where you will define your page object classes.
+-   A ``pages`` directory, where you will define your page object classes.
 
-Within the ``tutorial-project/tutorial/pages`` folder, create:
+Within the ``tutorial-project/tutorial/pages`` directory, create:
 
 -   An ``__init__.py`` file.
 
 -   A ``books_toscrape_com.py`` file, for page object class code targeting
     `books.toscrape.com`_.
 
-Your project folder should look as follows:
+Your project directory should look as follows:
 
 .. code-block:: text
 
