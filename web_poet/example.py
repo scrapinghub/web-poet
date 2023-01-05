@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional, Type
 from warnings import warn
 
 import andi
-from requests import get
+import requests
 from url_matcher import URLMatcher
 
 from . import default_registry
