@@ -286,7 +286,7 @@ In the code above:
 
     ``CategorizedBookPage`` does *not* define a ``category_rank`` field
     yet, you will add it later on. For now, the default value defined in
-    ``CategorizedBook`` for ``category_rank``, ``None``, will be used.
+    ``CategorizedBook`` for ``category_rank`` will be ``None``.
 
 -   ``CategorizedBookPage`` indicates that it returns a ``CaterogizedBook``
     object.
