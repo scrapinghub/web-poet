@@ -237,11 +237,11 @@ Your web-poet framework can take care of everything else:
 
     ``BookPage`` is a :class:`~web_poet.pages.WebPage` subclass, and
     :class:`~web_poet.pages.WebPage` declares an attribute named ``response``
-    of type :class:`~web_poet.page_inputs.HttpResponse`. Your web-poet
+    of type :class:`~web_poet.page_inputs.http.HttpResponse`. Your web-poet
     framework sees this, and creates an
-    :class:`~web_poet.page_inputs.HttpResponse` object from the input URL as a
-    result, by downloading the URL response, and assigns that object to the
-    ``response`` attribute of a new ``BookPage`` object.
+    :class:`~web_poet.page_inputs.http.HttpResponse` object from the input URL
+    as a result, by downloading the URL response, and assigns that object to
+    the ``response`` attribute of a new ``BookPage`` object.
 
 #.  It builds the output item, ``Book(title='The Exiled')``, using the
     :meth:`~web_poet.pages.ItemPage.to_item` method of ``BookPage``, inherited
