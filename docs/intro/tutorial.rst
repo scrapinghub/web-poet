@@ -130,7 +130,7 @@ In the code above:
     :class:`~web_poet.pages.WebPage`.
 
     It is possible to create a page object class subclassing instead the
-    simpler :class:`~web_poet.pages.ItemPage` class, but
+    simpler :class:`~web_poet.pages.ItemPage` class. However,
     :class:`~web_poet.pages.WebPage`:
 
     -   Indicates that your page object class requires an HTTP response as
