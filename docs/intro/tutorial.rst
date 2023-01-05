@@ -288,7 +288,7 @@ In the code above:
     yet, you will add it later on. For now, the default value defined in
     ``CategorizedBook`` for ``category_rank`` will be ``None``.
 
--   ``CategorizedBookPage`` indicates that it returns a ``CaterogizedBook``
+-   ``CategorizedBookPage`` indicates that it returns a ``CategorizedBook``
     object.
 
     :class:`~web_poet.pages.WebPage` is a :ref:`generic class <generics>`,
