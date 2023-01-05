@@ -91,8 +91,8 @@ Copy the following code into ``tutorial-project/tutorial/items.py``:
    :language: python
    :lines: 1-6
 
-This code defines a ``Book`` item class, with a single, required, string
-``title`` attribute to store the book title.
+This code defines a ``Book`` item class, with a single required ``title``
+string attribute to store the book title.
 
 ``Book`` is a minimal class designed specifically for this tutorial. In real
 web-poet projects, you will usually define item classes with many more
