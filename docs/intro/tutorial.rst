@@ -26,16 +26,16 @@ However, in this tutorial you will use a specific project folder structure
 designed with web-poet best practices in mind. Consider using the same project
 folder structure in all your web-poet projects.
 
-First create your project folder: ``tutorial-project``.
+First create your project folder: ``tutorial-project/``.
 
-Within ``tutorial-project``, create:
+Within the ``tutorial-project`` folder, create:
 
 -   A ``run.py`` file, a file specific to this tutorial where you will put code
     to test the execution of your web data extraction code.
 
 -   A ``tutorial`` folder, where you will place your web data extraction code.
 
-Within ``tutorial-project/tutorial``, create:
+Within the ``tutorial-project/tutorial`` folder, create:
 
 -   An ``__init__.py`` file, so that the ``tutorial`` folder becomes an
     importable Python module.
@@ -45,7 +45,7 @@ Within ``tutorial-project/tutorial``, create:
 
 -   A ``pages`` folder, where you will define your page object classes.
 
-Within ``tutorial-project/tutorial/pages``, create:
+Within the ``tutorial-project/tutorial/pages`` folder, create:
 
 -   An ``__init__.py`` file.
 
