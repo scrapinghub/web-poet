@@ -27,7 +27,7 @@ def _get_page_class(url: str, item_class: Type) -> Type[ItemPage]:
 
 
 def _get_http_response(url: str) -> HttpResponse:
-    response = get(url)
+    response = requests.get(url)
     return HttpResponse(
         response.url,
         body=response.content,
