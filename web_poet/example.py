@@ -21,7 +21,7 @@ def _get_page_class(url: str, item_class: Type) -> Type[ItemPage]:
         {
             rule.use: rule.for_patterns
             for rule in default_registry.get_rules()
-            if (rule.to_return is None or rule.to_return == item_class)
+            if rule.to_return == item_class
         }
     )
     return url_matcher.match(url)
