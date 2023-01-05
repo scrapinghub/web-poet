@@ -90,10 +90,6 @@ def get_item(
     """Returns an item built from the specified URL using a page object class
     from the default registry.
 
-    *page_modules* is a list of the import paths of modules that define page
-    object classes, to be imported recursively and hence allow their
-    ``@handle_urls`` to take effect.
-
     This function is an example of a minimal, incomplete web-poet framework
     implementation, intended for use in the web-poet tutorial.
     """
