@@ -56,14 +56,14 @@ Your project directory should look as follows:
 
 .. code-block:: text
 
-    tutorial-project/
-        run.py
-        tutorial/
-            __init__.py
-            items.py
-            pages/
-                __init__.py
-                books_toscrape_com.py
+   tutorial-project
+   ├── run.py
+   └── tutorial
+       ├── __init__.py
+       ├── items.py
+       └── pages
+           ├── __init__.py
+           └── books_toscrape_com.py
 
 
 Create an item class
