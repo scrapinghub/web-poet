@@ -10,8 +10,8 @@ extraction code for book detail pages from `books.toscrape.com`_.
 
 .. _books.toscrape.com: http://books.toscrape.com/
 
-To follow this tutorial you must first be familiar with Python_ and
-:ref:`install web-poet <install>`.
+To follow this tutorial you must first be familiar with Python_ and have
+:ref:`installed web-poet <install>`.
 
 .. _Python: https://docs.python.org/
 
