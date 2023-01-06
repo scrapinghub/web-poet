@@ -357,7 +357,7 @@ def test_add_rule() -> None:
 
 
 def test_overrides_for() -> None:
-    # FIXME: Flaky
+    # TODO: Test with RequestUrl/ResponseUrl as well
 
     assert default_registry.overrides_for("https://example.com") == {
         POTopLevelOverriden1: POTopLevel1,
@@ -375,10 +375,10 @@ def test_overrides_for() -> None:
 
 
 def test_page_object_for() -> None:
-    # FIXME: Flaky
+    # TODO: Test with RequestUrl/ResponseUrl as well
 
     assert default_registry.page_object_for("https://example.com") == {
-        ProductSimilar: SimilarProductPage,
+        ProductSimilar: CustomProductPageNoReturns,
         Product: CustomProductPageDataTypeOnly,
         ProductSeparate: SeparateProductPage,
         ProductFewerFields: LessProductPage,

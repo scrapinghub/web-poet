@@ -122,14 +122,23 @@ class RulesRegistry:
         )
         self.item_matcher: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
 
+        # Ensures that URLMatcher is deterministic in returning a rule when
+        # matching. Currently, `URLMatcher._sort_domain` has this sorting
+        # criteria:
+        #   * Priority (descending)
+        #   * Sorted list of includes for this domain (descending)
+        #   * Rule identifier (descending)
+        # This means that if the priority and domain are the same, the last tie
+        # breaker woulud be the "Rule identifier", this means we can base it on
+        # when a given rule was added to the registry, i.e. a counter.
+        self._rule_counter = 0
+
         if rules is not None:
             for rule in rules:
                 self.add_rule(rule)
 
     def add_rule(self, rule: ApplyRule) -> None:
         """Registers an :class:`web_poet.rules.ApplyRule` instance."""
-        rule_id = hash(rule)
-
         # A common case when a page object subclasses another one with the same
         # URL pattern.
         matched = self.item_matcher.get(rule.to_return)
@@ -152,6 +161,9 @@ class RulesRegistry:
                     f"against URLs. Consider updating the priority of these rules: "
                     f"{rules}."
                 )
+
+        self._rule_counter += 1
+        rule_id = self._rule_counter
 
         if rule.instead_of:
             self.overrides_matcher[rule.instead_of].add_or_update(
