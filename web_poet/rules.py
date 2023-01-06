@@ -4,14 +4,15 @@ import importlib
 import importlib.util
 import pkgutil
 import warnings
-from collections import deque
+from collections import defaultdict, deque
 from operator import attrgetter
-from typing import Any, Dict, Iterable, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Type, TypeVar, Union
 
 import attrs
-from url_matcher import Patterns
+from url_matcher import Patterns, URLMatcher
 
 from web_poet._typing import get_item_cls
+from web_poet.page_inputs.url import _Url
 from web_poet.pages import ItemPage
 from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
 
@@ -115,9 +116,52 @@ class RulesRegistry:
     """
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
-        self._rules: List[ApplyRule] = []
+        self._rules: Dict[int, ApplyRule] = {}
+        self.overrides_matcher: Dict[Type[ItemPage], URLMatcher] = defaultdict(
+            URLMatcher
+        )
+        self.item_matcher: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
+
         if rules is not None:
-            self._rules = list(rules)
+            for rule in rules:
+                self.add_rule(rule)
+
+    def add_rule(self, rule: ApplyRule) -> None:
+        """Registers an :class:`web_poet.rules.ApplyRule` instance."""
+        rule_id = hash(rule)
+
+        # A common case when a page object subclasses another one with the same
+        # URL pattern.
+        matched = self.item_matcher.get(rule.to_return)
+        if matched:
+            pattern_dupes = [
+                pattern
+                for pattern in matched.patterns.values()
+                if pattern == rule.for_patterns
+            ]
+            if pattern_dupes:
+                rules = [
+                    r
+                    for p in pattern_dupes
+                    for r in self.search(for_patterns=p, to_return=rule.to_return)
+                ]
+                warnings.warn(
+                    f"Similar URL patterns {pattern_dupes} were declared earlier "
+                    f"that use to_return={rule.to_return}. The first, highest-priority "
+                    f"rule added to SCRAPY_POET_REGISTRY will be used when matching "
+                    f"against URLs. Consider updating the priority of these rules: "
+                    f"{rules}."
+                )
+
+        if rule.instead_of:
+            self.overrides_matcher[rule.instead_of].add_or_update(
+                rule_id, rule.for_patterns
+            )
+        if rule.to_return:
+            self.item_matcher[rule.to_return].add_or_update(rule_id, rule.for_patterns)
+
+        # TODO: test removing the rule
+        self._rules[rule_id] = rule
 
     @classmethod
     def from_override_rules(
@@ -199,7 +243,7 @@ class RulesRegistry:
                 to_return=to_return or get_item_cls(cls),
                 meta=kwargs,
             )
-            self._rules.append(rule)
+            self.add_rule(rule)
             return cls
 
         return wrapper
@@ -214,7 +258,7 @@ class RulesRegistry:
             beforehand to recursively import all submodules which contains the
             ``@handle_urls`` decorators from external Page Objects.
         """
-        return self._rules[:]
+        return list(self._rules.values())
 
     def get_overrides(self) -> List[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
@@ -258,6 +302,32 @@ class RulesRegistry:
         msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
+
+    def _rules_for_url(
+        self, url: Union[_Url, str], url_matcher: Dict[Any, URLMatcher]
+    ) -> Mapping[Type, Type[ItemPage]]:
+        result: Dict[Type, Type[ItemPage]] = {}
+
+        for target, matcher in url_matcher.items():
+            rule_id = matcher.match(url)
+            if rule_id is not None:
+                result[target] = self._rules[rule_id].use
+
+        return result
+
+    def overrides_for(self, url: Union[_Url, str]) -> Mapping[Type, Type[ItemPage]]:
+        """Finds all of the page objects associated with the given URL and
+        returns a Mapping where the 'key' represents the page object that is
+        **overridden** by the page object in 'value'.
+        """
+        return self._rules_for_url(url, self.overrides_matcher)
+
+    def page_object_for(self, url: Union[_Url, str]) -> Mapping[Type, Type[ItemPage]]:
+        """Finds all of the page objects associated with the given URL and
+        returns a Mapping where the 'key' represents the item class that is
+        **produced** by the page object in 'value'.
+        """
+        return self._rules_for_url(url, self.item_matcher)
 
 
 def _walk_module(module: str) -> Iterable:

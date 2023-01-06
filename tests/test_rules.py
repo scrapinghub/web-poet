@@ -1,3 +1,5 @@
+import warnings
+
 import attrs
 import pytest
 from url_matcher import Patterns
@@ -9,8 +11,11 @@ from tests.po_lib import (
     POTopLevelOverriden2,
 )
 from tests.po_lib.a_module import POModule, POModuleOverriden
-from tests.po_lib.nested_package import PONestedPkg
-from tests.po_lib.nested_package.a_nested_module import PONestedModule
+from tests.po_lib.nested_package import PONestedPkg, PONestedPkgOverriden
+from tests.po_lib.nested_package.a_nested_module import (
+    PONestedModule,
+    PONestedModuleOverriden,
+)
 from tests.po_lib_sub import POLibSub
 from tests.po_lib_to_return import (
     CustomProductPage,
@@ -20,7 +25,10 @@ from tests.po_lib_to_return import (
     LessProductPage,
     MoreProductPage,
     Product,
+    ProductFewerFields,
+    ProductMoreFields,
     ProductPage,
+    ProductSeparate,
     ProductSimilar,
     SeparateProductPage,
     SimilarProductPage,
@@ -292,7 +300,7 @@ def test_registry_search_overrides_deprecation() -> None:
 def test_init_rules() -> None:
     rules = (
         ApplyRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         ),
@@ -305,10 +313,90 @@ def test_init_rules() -> None:
     assert default_registry.get_rules() != rules
 
 
+def test_add_rule() -> None:
+    registry = RulesRegistry()
+
+    # Basic case of adding a rule
+    rule_1 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden1,
+        to_return=Product,
+    )
+    registry.add_rule(rule_1)
+    assert registry.get_rules() == [rule_1]
+
+    # Adding a second rule should not emit a warning as long as both the URL
+    # pattern and `.to_return` value is not the same.
+    rule_2 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        to_return=ProductSimilar,
+    )
+    with warnings.catch_warnings(record=True) as warnings_emitted:
+        registry.add_rule(rule_2)
+    assert not warnings_emitted
+    assert registry.get_rules() == [rule_1, rule_2]
+
+    # Warnings should be raised for this case since it's the same URL pattern
+    # and `.to_return` value from one of the past rules.
+    rule_3 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        to_return=Product,
+    )
+    expected_msg = (
+        r"Similar URL patterns .+? were declared earlier that use "
+        r"to_return=<class 'tests.po_lib_to_return.Product'>."
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        registry.add_rule(rule_3)
+    assert registry.get_rules() == [rule_1, rule_2, rule_3]
+
+
+def test_overrides_for() -> None:
+    # FIXME: Flaky
+
+    assert default_registry.overrides_for("https://example.com") == {
+        POTopLevelOverriden1: POTopLevel1,
+        POTopLevelOverriden2: POTopLevel2,
+        POModuleOverriden: POModule,
+        PONestedPkgOverriden: PONestedPkg,
+        PONestedModuleOverriden: PONestedModule,
+        ProductPage: CustomProductPageNoReturns,
+    }
+
+    assert default_registry.overrides_for("https://example.org") == {
+        PONestedModuleOverriden: PONestedModule,
+        PONestedPkgOverriden: PONestedPkg,
+    }
+
+
+def test_page_object_for() -> None:
+    # FIXME: Flaky
+
+    assert default_registry.page_object_for("https://example.com") == {
+        ProductSimilar: SimilarProductPage,
+        Product: CustomProductPageDataTypeOnly,
+        ProductSeparate: SeparateProductPage,
+        ProductFewerFields: LessProductPage,
+        ProductMoreFields: MoreProductPage,
+    }
+
+    assert not default_registry.page_object_for("https://example.org")
+
+
+# TODO: test for updating the hash
+
+# TODO: Add the other new tests from scrapy-poet
+
+
 def test_from_override_rules_deprecation_using_ApplyRule() -> None:
     rules = [
         ApplyRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         )
@@ -325,7 +413,7 @@ def test_from_override_rules_deprecation_using_ApplyRule() -> None:
 def test_from_override_rules_deprecation_using_OverrideRule() -> None:
     rules = [
         OverrideRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         )
