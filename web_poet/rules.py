@@ -320,6 +320,8 @@ class RulesRegistry:
     ) -> Mapping[Type, Type[ItemPage]]:
         result: Dict[Type, Type[ItemPage]] = {}
 
+        url = str(url)
+
         for target, matcher in url_matcher.items():
             rule_id = matcher.match(url)
             if rule_id is not None:

@@ -42,6 +42,7 @@ from web_poet import (
     default_registry,
     handle_urls,
 )
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 POS = {
     CustomProductPage,
@@ -357,40 +358,33 @@ def test_add_rule() -> None:
 
 
 def test_overrides_for() -> None:
-    # TODO: Test with RequestUrl/ResponseUrl as well
+    for cls in [str, RequestUrl, ResponseUrl]:
+        assert default_registry.overrides_for(cls("https://example.com")) == {
+            POTopLevelOverriden1: POTopLevel1,
+            POTopLevelOverriden2: POTopLevel2,
+            POModuleOverriden: POModule,
+            PONestedPkgOverriden: PONestedPkg,
+            PONestedModuleOverriden: PONestedModule,
+            ProductPage: CustomProductPageNoReturns,
+        }
 
-    assert default_registry.overrides_for("https://example.com") == {
-        POTopLevelOverriden1: POTopLevel1,
-        POTopLevelOverriden2: POTopLevel2,
-        POModuleOverriden: POModule,
-        PONestedPkgOverriden: PONestedPkg,
-        PONestedModuleOverriden: PONestedModule,
-        ProductPage: CustomProductPageNoReturns,
-    }
-
-    assert default_registry.overrides_for("https://example.org") == {
-        PONestedModuleOverriden: PONestedModule,
-        PONestedPkgOverriden: PONestedPkg,
-    }
+        assert default_registry.overrides_for(cls("https://example.org")) == {
+            PONestedModuleOverriden: PONestedModule,
+            PONestedPkgOverriden: PONestedPkg,
+        }
 
 
 def test_page_object_for() -> None:
-    # TODO: Test with RequestUrl/ResponseUrl as well
+    for cls in [str, RequestUrl, ResponseUrl]:
+        assert default_registry.page_object_for(cls("https://example.com")) == {
+            ProductSimilar: CustomProductPageNoReturns,
+            Product: CustomProductPageDataTypeOnly,
+            ProductSeparate: SeparateProductPage,
+            ProductFewerFields: LessProductPage,
+            ProductMoreFields: MoreProductPage,
+        }
 
-    assert default_registry.page_object_for("https://example.com") == {
-        ProductSimilar: CustomProductPageNoReturns,
-        Product: CustomProductPageDataTypeOnly,
-        ProductSeparate: SeparateProductPage,
-        ProductFewerFields: LessProductPage,
-        ProductMoreFields: MoreProductPage,
-    }
-
-    assert not default_registry.page_object_for("https://example.org")
-
-
-# TODO: test for updating the hash
-
-# TODO: Add the other new tests from scrapy-poet
+        assert not default_registry.page_object_for(cls("https://example.org"))
 
 
 def test_from_override_rules_deprecation_using_ApplyRule() -> None:
