@@ -117,10 +117,10 @@ class RulesRegistry:
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
         self._rules: Dict[int, ApplyRule] = {}
-        self.overrides_matcher: Dict[Type[ItemPage], URLMatcher] = defaultdict(
+        self._overrides_matchers: Dict[Type[ItemPage], URLMatcher] = defaultdict(
             URLMatcher
         )
-        self.item_matcher: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
+        self._item_matchers: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
 
         # Ensures that URLMatcher is deterministic in returning a rule when
         # matching. Currently, `URLMatcher._sort_domain` has this sorting
@@ -141,7 +141,7 @@ class RulesRegistry:
         """Registers an :class:`web_poet.rules.ApplyRule` instance."""
         # A common case when a page object subclasses another one with the same
         # URL pattern.
-        matched = self.item_matcher.get(rule.to_return)
+        matched = self._item_matchers.get(rule.to_return)
         if matched:
             pattern_dupes = [
                 pattern
@@ -166,11 +166,13 @@ class RulesRegistry:
         rule_id = self._rule_counter
 
         if rule.instead_of:
-            self.overrides_matcher[rule.instead_of].add_or_update(
+            self._overrides_matchers[rule.instead_of].add_or_update(
                 rule_id, rule.for_patterns
             )
         if rule.to_return:
-            self.item_matcher[rule.to_return].add_or_update(rule_id, rule.for_patterns)
+            self._item_matchers[rule.to_return].add_or_update(
+                rule_id, rule.for_patterns
+            )
 
         # TODO: test removing the rule
         self._rules[rule_id] = rule
@@ -316,13 +318,13 @@ class RulesRegistry:
         return self.search(**kwargs)
 
     def _rules_for_url(
-        self, url: Union[_Url, str], url_matcher: Dict[Any, URLMatcher]
+        self, url: Union[_Url, str], matchers: Dict[Any, URLMatcher]
     ) -> Mapping[Type, Type[ItemPage]]:
         result: Dict[Type, Type[ItemPage]] = {}
 
         url = str(url)
 
-        for target, matcher in url_matcher.items():
+        for target, matcher in matchers.items():
             rule_id = matcher.match(url)
             if rule_id is not None:
                 result[target] = self._rules[rule_id].use
@@ -334,14 +336,14 @@ class RulesRegistry:
         returns a Mapping where the 'key' represents the page object that is
         **overridden** by the page object in 'value'.
         """
-        return self._rules_for_url(url, self.overrides_matcher)
+        return self._rules_for_url(url, self._overrides_matchers)
 
     def page_object_for(self, url: Union[_Url, str]) -> Mapping[Type, Type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the item class that is
         **produced** by the page object in 'value'.
         """
-        return self._rules_for_url(url, self.item_matcher)
+        return self._rules_for_url(url, self._item_matchers)
 
 
 def _walk_module(module: str) -> Iterable:
