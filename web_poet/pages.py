@@ -67,6 +67,14 @@ class ItemPage(Injectable, Returns[ItemT]):
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
 
+    async def _validate_input(self) -> None:
+        """Run self.validate_input if defined."""
+        if not hasattr(self, "validate_input"):
+            return
+        await self.validate_input()
+        # TODO: Implement caching
+        # TODO: Avoid recursion when validate_input calls @field methods.
+
 
 @attr.s(auto_attribs=True)
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
