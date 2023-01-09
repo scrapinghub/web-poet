@@ -374,19 +374,6 @@ def test_overrides_for() -> None:
         }
 
 
-def test_page_object_for() -> None:
-    for cls in [str, RequestUrl, ResponseUrl]:
-        assert default_registry.page_object_for(cls("https://example.com")) == {
-            ProductSimilar: CustomProductPageNoReturns,
-            Product: CustomProductPageDataTypeOnly,
-            ProductSeparate: SeparateProductPage,
-            ProductFewerFields: LessProductPage,
-            ProductMoreFields: MoreProductPage,
-        }
-
-        assert not default_registry.page_object_for(cls("https://example.org"))
-
-
 def test_page_object_for_item() -> None:
     # This is not associated with any rule.
     class FakeItem:

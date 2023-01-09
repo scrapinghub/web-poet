@@ -340,13 +340,6 @@ class RulesRegistry:
         """
         return self._rules_for_url(url, self._overrides_matchers)
 
-    def page_object_for(self, url: Union[_Url, str]) -> Mapping[Type, Type[ItemPage]]:
-        """Finds all of the page objects associated with the given URL and
-        returns a Mapping where the 'key' represents the item class that is
-        **produced** by the page object in 'value'.
-        """
-        return self._rules_for_url(url, self._item_matchers)
-
     def page_object_for_item(
         self, url: Union[_Url, str], item_cls: Type
     ) -> Optional[Type]:
