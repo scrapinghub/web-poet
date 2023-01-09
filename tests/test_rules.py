@@ -163,7 +163,7 @@ def test_apply_rule_kwargs_only() -> None:
             ApplyRule(
                 "example.com",
                 *[params[r] for r in remove],
-                **{k: v for k, v in params.items() if k not in remove}  # type: ignore[arg-type]
+                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]
             )
 
 
@@ -348,12 +348,13 @@ def test_add_rule() -> None:
         instead_of=POTopLevelOverriden2,
         to_return=Product,
     )
-    expected_msg = (
-        r"Similar URL patterns .+? were declared earlier that use "
-        r"to_return=<class 'tests.po_lib_to_return.Product'>."
-    )
-    with pytest.warns(UserWarning, match=expected_msg):
+    # Since we're using f-strings to compare the warning emitted, don't use
+    # ``pytest.warns()`` here since it treats the msg as regex which translates
+    # the "(" and ")" characters differently from the expected message.
+    with warnings.catch_warnings(record=True) as warnings_emitted:
         registry.add_rule(rule_3)
+    expected_msg = f"Consider updating the priority of these rules: {[rule_1, rule_3]}."
+    assert any([True for w in warnings_emitted if expected_msg in str(w.message)])
     assert registry.get_rules() == [rule_1, rule_2, rule_3]
 
 

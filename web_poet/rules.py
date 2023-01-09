@@ -149,17 +149,17 @@ class RulesRegistry:
                 if pattern == rule.for_patterns
             ]
             if pattern_dupes:
-                rules = [
+                rules_to_warn = [
                     r
                     for p in pattern_dupes
                     for r in self.search(for_patterns=p, to_return=rule.to_return)
-                ]
+                ] + [rule]
                 warnings.warn(
                     f"Similar URL patterns {pattern_dupes} were declared earlier "
                     f"that use to_return={rule.to_return}. The first, highest-priority "
-                    f"rule added to SCRAPY_POET_REGISTRY will be used when matching "
+                    f"rule added to the registry will be used when matching "
                     f"against URLs. Consider updating the priority of these rules: "
-                    f"{rules}."
+                    f"{rules_to_warn}."
                 )
 
         self._rule_counter += 1
@@ -174,7 +174,6 @@ class RulesRegistry:
                 rule_id, rule.for_patterns
             )
 
-        # TODO: test removing the rule
         self._rules[rule_id] = rule
 
     @classmethod
