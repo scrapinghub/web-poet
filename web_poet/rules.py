@@ -123,14 +123,14 @@ class RulesRegistry:
         self._item_matchers: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
 
         # Ensures that URLMatcher is deterministic in returning a rule when
-        # matching. Currently, `URLMatcher._sort_domain` has this sorting
-        # criteria:
+        # matching. As of url_macher==0.2.0, `url_matcher.URLMatcher._sort_domain`
+        # has this sorting criteria:
         #   * Priority (descending)
         #   * Sorted list of includes for this domain (descending)
         #   * Rule identifier (descending)
         # This means that if the priority and domain are the same, the last tie
-        # breaker woulud be the "Rule identifier", this means we can base it on
-        # when a given rule was added to the registry, i.e. a counter.
+        # breaker would be the "Rule identifier", this means we can base it on
+        # the order of rule addition to the registry, i.e. a counter.
         self._rule_counter = 0
 
         if rules is not None:
@@ -331,7 +331,9 @@ class RulesRegistry:
 
         return result
 
-    def overrides_for(self, url: Union[_Url, str]) -> Mapping[Type, Type[ItemPage]]:
+    def overrides_for(
+        self, url: Union[_Url, str]
+    ) -> Mapping[Type[ItemPage], Type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the page object that is
         **overridden** by the page object in 'value'.
