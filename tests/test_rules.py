@@ -387,6 +387,28 @@ def test_page_object_for() -> None:
         assert not default_registry.page_object_for(cls("https://example.org"))
 
 
+def test_page_object_for_item() -> None:
+    # This is not associated with any rule.
+    class FakeItem:
+        pass
+
+    method = default_registry.page_object_for_item
+
+    for cls in [str, RequestUrl, ResponseUrl]:
+        url = cls("https://example.com")
+        assert method(url, ProductSimilar) == CustomProductPageNoReturns
+        assert method(url, Product) == CustomProductPageDataTypeOnly
+        assert method(url, ProductSeparate) == SeparateProductPage
+        assert method(url, ProductFewerFields) == LessProductPage
+        assert method(url, ProductMoreFields) == MoreProductPage
+
+        # When there's no rule specifying to return this FakeItem
+        assert method(url, FakeItem) is None
+
+        # When the URL itself doesn't have any ``to_return`` in any of its rules
+        assert method(cls("https://example.org"), FakeItem) is None
+
+
 def test_from_override_rules_deprecation_using_ApplyRule() -> None:
     rules = [
         ApplyRule(

@@ -347,6 +347,23 @@ class RulesRegistry:
         """
         return self._rules_for_url(url, self._item_matchers)
 
+    def page_object_for_item(
+        self, url: Union[_Url, str], item_cls: Type
+    ) -> Optional[Type]:
+        """Return the page object class associated with the given URL that's able
+        to produce the given ``item_cls``.
+        """
+
+        url = str(url)
+
+        matcher = self._item_matchers.get(item_cls)
+        if matcher:
+            rule_id = matcher.match(url)
+            if rule_id is not None:
+                return self._rules[rule_id].use
+
+        return None
+
 
 def _walk_module(module: str) -> Iterable:
     """Return all modules from a module recursively.
