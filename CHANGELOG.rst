@@ -2,6 +2,15 @@
 Changelog
 =========
 
+TBR
+---
+
+* Introduce new methods for :class:`web_poet.rules.RulesRegistry`:
+
+    * :meth:`web_poet.rules.RulesRegistry.add_rule`
+    * :meth:`web_poet.rules.RulesRegistry.overrides_for`
+    * :meth:`web_poet.rules.RulesRegistry.page_object_for_item`
+
 0.6.0 (2022-11-08)
 ------------------
 

@@ -337,6 +337,8 @@ class RulesRegistry:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the page object that is
         **overridden** by the page object in 'value'.
+
+        See example: :ref:`rules-overrides_for-example`.
         """
         return self._rules_for_url(url, self._overrides_matchers)
 
@@ -345,6 +347,8 @@ class RulesRegistry:
     ) -> Optional[Type]:
         """Return the page object class associated with the given URL that's able
         to produce the given ``item_cls``.
+
+        See example: :ref:`rules-page_object_for_item-example`.
         """
 
         url = str(url)
