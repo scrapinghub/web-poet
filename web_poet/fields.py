@@ -2,7 +2,6 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
-import asyncio
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
@@ -95,6 +94,12 @@ def field(
             return self.unbound_method(instance)
 
         @staticmethod
+        def _validate(page_object):
+            validate_input = getattr(page_object, "_validate_input", None)
+            if validate_input is not None:
+                validate_input()
+
+        @staticmethod
         def _process(value):
             if out:
                 for processor in out:
@@ -106,29 +111,13 @@ def field(
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    await args[0]._validate_input()
+                    self._validate(args[0])
                     return self._process(await method(*args, **kwargs))
 
             else:
 
                 def processed(*args, **kwargs):
-                    task = args[0]._validate_input()
-                    try:
-                        asyncio.get_running_loop()
-                    except RuntimeError:
-                        asyncio.run(task)
-                    else:
-                        # TODO: Implement
-                        #
-                        # Running an async function within a sync function
-                        # looks complicated
-                        # https://github.com/django/asgiref/blob/36022636d3390c1c1cbb952336a34d652a6bfb26/asgiref/sync.py#L107-L314
-                        #
-                        # I am not sure if there is a different approach that
-                        # we can take, but I can’t help how much easier things
-                        # would be if we requred the field methods and the
-                        # to_item methods to be async.
-                        pass
+                    self._validate(args[0])
                     return self._process(method(*args, **kwargs))
 
             return wraps(method)(processed)

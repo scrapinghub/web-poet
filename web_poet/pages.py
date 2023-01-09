@@ -7,7 +7,7 @@ from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
-from web_poet.utils import _create_deprecated_class
+from web_poet.utils import _create_deprecated_class, cached_method
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -67,13 +67,18 @@ class ItemPage(Injectable, Returns[ItemT]):
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
 
-    async def _validate_input(self) -> None:
+    @cached_method
+    def _validate_input(self) -> None:
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
             return
-        await self.validate_input()
-        # TODO: Implement caching
-        # TODO: Avoid recursion when validate_input calls @field methods.
+        if hasattr(self, "_validating_input"):
+            # We are in a recursive call, i.e. _validate_input is being called
+            # from _validate_input itself (likely through a @field method).
+            return
+        self._validating_input = True
+        self.validate_input()  # type: ignore[attr-defined]
+        delattr(self, "_validating_input")
 
 
 @attr.s(auto_attribs=True)

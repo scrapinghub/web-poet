@@ -32,7 +32,7 @@ class BasePage(ItemPage[Item]):
 
 
 class BaseValidInputPage(BasePage):
-    async def validate_input(self):  # noqa: D102
+    def validate_input(self):  # noqa: D102
         pass
 
 
@@ -67,7 +67,7 @@ async def test_valid_input_async_field():
 
 
 class BaseInvalidInputPage(BasePage):
-    async def validate_input(self):  # noqa: D102
+    def validate_input(self):  # noqa: D102
         raise InvalidInput()
 
 
@@ -142,7 +142,7 @@ async def test_unvalidated_input_async_field():
 class BaseCachingPage(BasePage):
     _raise = False
 
-    async def validate_input(self):  # noqa: D102
+    def validate_input(self):  # noqa: D102
         if self._raise:
             raise InvalidInput()
         self._raise = True
@@ -211,7 +211,7 @@ async def test_recursion():
     class Page(BasePage):
         _raise = False
 
-        async def validate_input(self):
+        def validate_input(self):
             if self._raise:
                 raise InvalidInput()
             self._raise = True
