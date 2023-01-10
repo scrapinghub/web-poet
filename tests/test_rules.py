@@ -257,18 +257,18 @@ def test_registry_search() -> None:
     # param: to_return
     rules = default_registry.search(to_return=Product)
     assert rules == [
-        ApplyRule("example.com", use=ProductPage, to_return=Product),
-        ApplyRule(
-            "example.com",
-            use=ImprovedProductPage,
-            instead_of=ProductPage,
-            to_return=Product,
-        ),
         ApplyRule(
             "example.com",
             # mypy complains here since it's expecting a container class when
             # declared, i.e, ``ItemPage[SomeItem]``
             use=CustomProductPageDataTypeOnly,  # type: ignore[arg-type]
+            to_return=Product,
+        ),
+        ApplyRule("example.com", use=ProductPage, to_return=Product),
+        ApplyRule(
+            "example.com",
+            use=ImprovedProductPage,
+            instead_of=ProductPage,
             to_return=Product,
         ),
     ]

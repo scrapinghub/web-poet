@@ -120,7 +120,7 @@ class RulesRegistry:
         self._overrides_matchers: Dict[Type[ItemPage], URLMatcher] = defaultdict(
             URLMatcher
         )
-        self._item_matchers: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
+        self._item_matchers: Dict[Type, URLMatcher] = defaultdict(URLMatcher)
 
         # Ensures that URLMatcher is deterministic in returning a rule when
         # matching. As of url_macher==0.2.0, `url_matcher.URLMatcher._sort_domain`
@@ -139,10 +139,12 @@ class RulesRegistry:
 
     def add_rule(self, rule: ApplyRule) -> None:
         """Registers an :class:`web_poet.rules.ApplyRule` instance."""
-        # A common case when a page object subclasses another one with the same
-        # URL pattern.
-        matched = self._item_matchers.get(rule.to_return)
+
+        # Ignore the type since ``ApplyRule`` could have an empty ``.to_return``
+        matched = self._item_matchers.get(rule.to_return)  # type: ignore[arg-type]
         if matched:
+            # A common case when a page object subclasses another one with the
+            # same URL pattern.
             pattern_dupes = [
                 pattern
                 for pattern in matched.patterns.values()
@@ -293,10 +295,32 @@ class RulesRegistry:
             print(rules[0].instead_of)  # GenericPO
 
         """
+        rule_ids = set()
+
+        # Ignore the types since we're using None value as a quick look-up.
+
+        matcher = self._item_matchers.get(kwargs.get("to_return"))  # type: ignore[arg-type]
+        if matcher:
+            rule_ids.update(matcher.patterns.keys())
+
+        matcher = self._overrides_matchers.get(kwargs.get("instead_of"))  # type: ignore[arg-type]
+        if matcher:
+            if rule_ids:
+                # If both params are used then narrow down the rules.
+                rule_ids.union(matcher.patterns.keys())
+            else:
+                rule_ids.update(matcher.patterns.keys())
+
+        rules = [self._rules[id_] for id_ in rule_ids]
+
+        if len(kwargs) == 1 and rules:
+            return rules
+
+        # Search other parameters as well
 
         getter = attrgetter(*kwargs.keys())
 
-        def matcher(rule: ApplyRule):
+        def finder(rule: ApplyRule):
             attribs = getter(rule)
             if not isinstance(attribs, tuple):
                 attribs = (attribs,)
@@ -305,8 +329,8 @@ class RulesRegistry:
             return False
 
         results = []
-        for rule in self.get_rules():
-            if matcher(rule):
+        for rule in rules or self.get_rules():
+            if finder(rule):
                 results.append(rule)
         return results
 
