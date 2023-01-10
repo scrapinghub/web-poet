@@ -316,19 +316,16 @@ class RulesRegistry:
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
 
-    def _rules_for_url(
-        self, url: Union[_Url, str], matchers: Dict[Any, URLMatcher]
-    ) -> Mapping[Type, Type[ItemPage]]:
-        result: Dict[Type, Type[ItemPage]] = {}
+    def _match_url_for_po(
+        self, url: Union[_Url, str], matcher: Optional[URLMatcher] = None
+    ) -> Optional[Type[ItemPage]]:
+        """Returns the page object to use based on the URL and URLMatcher."""
+        if not url or matcher is None:
+            return None
 
-        url = str(url)
-
-        for target, matcher in matchers.items():
-            rule_id = matcher.match(url)
-            if rule_id is not None:
-                result[target] = self._rules[rule_id].use
-
-        return result
+        rule_id = matcher.match(str(url))
+        if rule_id is not None:
+            return self._rules[rule_id].use
 
     def overrides_for(
         self, url: Union[_Url, str]
@@ -339,7 +336,12 @@ class RulesRegistry:
 
         See example: :ref:`rules-overrides_for-example`.
         """
-        return self._rules_for_url(url, self._overrides_matchers)
+        result: Dict[Type[ItemPage], Type[ItemPage]] = {}
+        for target, matcher in self._overrides_matchers.items():
+            po = self._match_url_for_po(url, matcher)
+            if po:
+                result[target] = po
+        return result
 
     def page_object_for_item(
         self, url: Union[_Url, str], item_cls: Type
@@ -349,16 +351,8 @@ class RulesRegistry:
 
         See example: :ref:`rules-page_object_for_item-example`.
         """
-
-        url = str(url)
-
         matcher = self._item_matchers.get(item_cls)
-        if matcher:
-            rule_id = matcher.match(url)
-            if rule_id is not None:
-                return self._rules[rule_id].use
-
-        return None
+        return self._match_url_for_po(url, matcher)
 
 
 def _walk_module(module: str) -> Iterable:
