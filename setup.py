@@ -27,7 +27,9 @@ setup(
         "async-lru >= 1.0.3",
         "itemadapter >= 0.7.0",
         "andi",
-        "freezegun",
+        "python-dateutil",
+        "time-machine",
+        "backports.zoneinfo; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

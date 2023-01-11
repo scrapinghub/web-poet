@@ -1,10 +1,14 @@
 import asyncio
+import datetime
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Iterable, Optional, Type, TypeVar, Union
 
-from freezegun import freeze_time
+import dateutil.parser
+import dateutil.tz
+import time_machine
 from itemadapter import ItemAdapter
 
 from web_poet import ItemPage
@@ -15,6 +19,9 @@ from web_poet.serialization import (
     serialize,
 )
 from web_poet.utils import ensure_awaitable
+
+logger = logging.getLogger(__name__)
+
 
 INPUT_DIR_NAME = "inputs"
 OUTPUT_FILE_NAME = "output.json"
@@ -87,12 +94,44 @@ class Fixture:
         """Return the saved output."""
         return json.loads(self.output_path.read_bytes())
 
+    @staticmethod
+    def _parse_frozen_time(meta_value: str) -> datetime.datetime:
+        """Parse and possibly fix the frozen_time metadata string."""
+        parsed_value = dateutil.parser.parse(meta_value)
+
+        if parsed_value.tzinfo is None:
+            # if it's left as None, time_machine will set it to timezone.utc,
+            # but we want to interpret the value as local time
+            parsed_value = parsed_value.astimezone()
+            return parsed_value
+
+        if not time_machine.HAVE_TZSET:
+            logger.warning(
+                f"frozen_time {meta_value} includes timezone data which"
+                f" is not supported on Windows, converting to local"
+            )
+            return parsed_value.astimezone()
+
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            from backports.zoneinfo import ZoneInfo
+
+        if parsed_value.tzinfo == dateutil.tz.UTC:
+            return parsed_value.replace(tzinfo=ZoneInfo("UTC"))
+
+        offset = parsed_value.tzinfo.utcoffset(None)
+        offset_hours = int(offset.days * 24 + offset.seconds / 3600)
+        tzinfo = ZoneInfo(f"Etc/GMT{-offset_hours:+d}")
+        return parsed_value.replace(tzinfo=tzinfo)
+
     def assert_output(self):
         """Get the output and assert that it matches the expected output."""
         meta = self.get_meta()
         frozen_time: Optional[str] = meta.get("frozen_time")
         if frozen_time:
-            with freeze_time(frozen_time):
+            frozen_time_parsed = self._parse_frozen_time(frozen_time)
+            with time_machine.travel(frozen_time_parsed):
                 output = self.get_output()
         else:
             output = self.get_output()

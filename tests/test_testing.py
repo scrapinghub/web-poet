@@ -3,10 +3,14 @@ import json
 from pathlib import Path
 from typing import Optional
 
+import attrs
+import dateutil.tz
+import pytest
+import time_machine
 from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
-from web_poet import WebPage
+from web_poet import HttpResponse, WebPage
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
@@ -66,25 +70,62 @@ def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
     result.assert_outcomes(failed=1)
 
 
-def _get_product_item(date: str) -> Product:
+@attrs.define(kw_only=True)
+class MetadataLocalTime(Metadata):
+    dateDownloadedLocal: Optional[str] = None
+
+
+def _get_product_item(date: datetime) -> Product:
+    if date.tzinfo is None:
+        # convert to the aware object so that date_local_str always includes the offset
+        date = date.astimezone()
+    date_str = date.astimezone(dateutil.tz.UTC).strftime("%Y-%M-%dT%H:%M:%SZ")
+    date_local_str = date.strftime("%Y-%M-%dT%H:%M:%S%z")
     return Product(
-        url="http://example.com", name="foo", metadata=Metadata(dateDownloaded=date)
+        url="http://example.com",
+        name="foo",
+        metadata=MetadataLocalTime(
+            dateDownloaded=date_str, dateDownloadedLocal=date_local_str
+        ),
     )
 
 
 class DateItemPage(WebPage):
     async def to_item(self) -> Item:  # noqa: D102
-        date = datetime.datetime.now().strftime("%Y-%M-%dT%H:%M:%SZ")
+        date = datetime.datetime.now().astimezone()
         return _get_product_item(date)
 
 
-def test_pytest_frozen_time(pytester, book_list_html_response) -> None:
-    frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22)
-    item = ItemAdapter(
-        _get_product_item(frozen_time.strftime("%Y-%M-%dT%H:%M:%SZ"))
-    ).asdict()
-    meta = {"frozen_time": frozen_time.strftime("%Y-%m-%d %H:%M:%S")}
+def _assert_frozen_item(
+    frozen_time: datetime.datetime, pytester: pytest.Pytester, response: HttpResponse
+) -> None:
+    # this makes an item with datetime fields corresponding to frozen_time
+    item = ItemAdapter(_get_product_item(frozen_time)).asdict()
+    # this marks the fixture to be run under frozen_time
+    meta = {"frozen_time": frozen_time.strftime("%Y-%m-%d %H:%M:%S %z")}
     base_dir = pytester.path / "fixtures" / get_fq_class_name(DateItemPage)
-    Fixture.save(base_dir, inputs=[book_list_html_response], item=item, meta=meta)
+    Fixture.save(base_dir, inputs=[response], item=item, meta=meta)
+    # this runs the test, faking the time and the timezone from frozen_time,
+    # the result should contain frozen_time in the datetime fields
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_pytest_frozen_time_utc(pytester, book_list_html_response) -> None:
+    frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.UTC)
+    _assert_frozen_item(frozen_time, pytester, book_list_html_response)
+
+
+def test_pytest_frozen_time_naive(pytester, book_list_html_response) -> None:
+    frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22)
+    _assert_frozen_item(frozen_time, pytester, book_list_html_response)
+
+
+@pytest.mark.skipif(not time_machine.HAVE_TZSET, reason="Not supported on Windows")
+@pytest.mark.parametrize("offset", [-5, 0, 8])
+def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> None:
+    import zoneinfo
+
+    tzinfo = zoneinfo.ZoneInfo(f"Etc/GMT{-offset:+d}")
+    frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=tzinfo)
+    _assert_frozen_item(frozen_time, pytester, book_list_html_response)
