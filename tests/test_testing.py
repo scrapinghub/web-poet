@@ -124,8 +124,11 @@ def test_pytest_frozen_time_naive(pytester, book_list_html_response) -> None:
 @pytest.mark.skipif(not time_machine.HAVE_TZSET, reason="Not supported on Windows")
 @pytest.mark.parametrize("offset", [-5, 0, 8])
 def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> None:
-    import zoneinfo
+    try:
+        from zoneinfo import ZoneInfo
+    except ImportError:
+        from backports.zoneinfo import ZoneInfo
 
-    tzinfo = zoneinfo.ZoneInfo(f"Etc/GMT{-offset:+d}")
+    tzinfo = ZoneInfo(f"Etc/GMT{-offset:+d}")
     frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=tzinfo)
     _assert_frozen_item(frozen_time, pytester, book_list_html_response)
