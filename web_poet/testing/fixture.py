@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any, Iterable, Optional, Type, TypeVar, Union
 
@@ -112,15 +113,16 @@ class Fixture:
             )
             return parsed_value.astimezone()
 
-        try:
+        if sys.version_info >= (3, 9):
             from zoneinfo import ZoneInfo
-        except ImportError:
+        else:
             from backports.zoneinfo import ZoneInfo
 
         if parsed_value.tzinfo == dateutil.tz.UTC:
             return parsed_value.replace(tzinfo=ZoneInfo("UTC"))
 
         offset = parsed_value.tzinfo.utcoffset(None)
+        assert offset is not None  # typing
         offset_hours = int(offset.days * 24 + offset.seconds / 3600)
         tzinfo = ZoneInfo(f"Etc/GMT{-offset_hours:+d}")
         return parsed_value.replace(tzinfo=tzinfo)

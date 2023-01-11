@@ -1,5 +1,6 @@
 import datetime
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -75,7 +76,7 @@ class MetadataLocalTime(Metadata):
     dateDownloadedLocal: Optional[str] = None
 
 
-def _get_product_item(date: datetime) -> Product:
+def _get_product_item(date: datetime.datetime) -> Product:
     if date.tzinfo is None:
         # convert to the aware object so that date_local_str always includes the offset
         date = date.astimezone()
@@ -85,7 +86,7 @@ def _get_product_item(date: datetime) -> Product:
         url="http://example.com",
         name="foo",
         metadata=MetadataLocalTime(
-            dateDownloaded=date_str, dateDownloadedLocal=date_local_str
+            dateDownloaded=date_str, dateDownloadedLocal=date_local_str  # type: ignore[call-arg]
         ),
     )
 
@@ -124,9 +125,9 @@ def test_pytest_frozen_time_naive(pytester, book_list_html_response) -> None:
 @pytest.mark.skipif(not time_machine.HAVE_TZSET, reason="Not supported on Windows")
 @pytest.mark.parametrize("offset", [-5, 0, 8])
 def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> None:
-    try:
+    if sys.version_info >= (3, 9):
         from zoneinfo import ZoneInfo
-    except ImportError:
+    else:
         from backports.zoneinfo import ZoneInfo
 
     tzinfo = ZoneInfo(f"Etc/GMT{-offset:+d}")
