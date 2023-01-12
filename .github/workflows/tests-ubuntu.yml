@@ -39,8 +39,10 @@ jobs:
       run: |
         tox
     - name: coverage
+      uses: codecov/codecov-action@v3
       if: ${{ success() }}
-      run: bash <(curl -s https://codecov.io/bash)
+      with:
+        fail_ci_if_error: true
 
   check:
     runs-on: ubuntu-latest
