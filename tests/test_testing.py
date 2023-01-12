@@ -98,7 +98,11 @@ class DateItemPage(WebPage):
 
 
 def _assert_frozen_item(
-    frozen_time: datetime.datetime, pytester: pytest.Pytester, response: HttpResponse
+    frozen_time: datetime.datetime,
+    pytester: pytest.Pytester,
+    response: HttpResponse,
+    *,
+    outcomes: dict = None,
 ) -> None:
     # this makes an item with datetime fields corresponding to frozen_time
     item = ItemAdapter(_get_product_item(frozen_time)).asdict()
@@ -109,9 +113,12 @@ def _assert_frozen_item(
     # this runs the test, faking the time and the timezone from frozen_time,
     # the result should contain frozen_time in the datetime fields
     result = pytester.runpytest()
-    result.assert_outcomes(passed=1)
+    if outcomes is None:
+        outcomes = {"passed": 1, "warnings": 0}
+    result.assert_outcomes(**outcomes)
 
 
+@pytest.mark.xfail(not time_machine.HAVE_TZSET, reason="Works on Windows only in UTC")
 def test_pytest_frozen_time_utc(pytester, book_list_html_response) -> None:
     frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.UTC)
     _assert_frozen_item(frozen_time, pytester, book_list_html_response)
@@ -132,4 +139,22 @@ def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> Non
 
     tzinfo = ZoneInfo(f"Etc/GMT{-offset:+d}")
     frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=tzinfo)
+    _assert_frozen_item(frozen_time, pytester, book_list_html_response)
+
+
+@pytest.mark.skipif(time_machine.HAVE_TZSET, reason="Tests Windows-specific code")
+def test_pytest_frozen_time_tz_windows_fail(pytester, book_list_html_response) -> None:
+    frozen_time = datetime.datetime(
+        2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzoffset(None, -7.5)
+    )
+    _assert_frozen_item(
+        frozen_time, pytester, book_list_html_response, outcomes={"failed": 1}
+    )
+
+
+@pytest.mark.skipif(time_machine.HAVE_TZSET, reason="Tests Windows-specific code")
+def test_pytest_frozen_time_tz_windows_pass(pytester, book_list_html_response) -> None:
+    frozen_time = datetime.datetime(
+        2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzlocal()
+    )
     _assert_frozen_item(frozen_time, pytester, book_list_html_response)
