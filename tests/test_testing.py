@@ -114,7 +114,7 @@ def _assert_frozen_item(
     # the result should contain frozen_time in the datetime fields
     result = pytester.runpytest()
     if outcomes is None:
-        outcomes = {"passed": 1, "warnings": 0}
+        outcomes = {"passed": 1}
     result.assert_outcomes(**outcomes)
 
 
