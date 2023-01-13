@@ -6,7 +6,18 @@ import pkgutil
 import warnings
 from collections import defaultdict, deque
 from operator import attrgetter
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -117,10 +128,12 @@ class RulesRegistry:
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
         self._rules: Dict[int, ApplyRule] = {}
-        self._overrides_matchers: Dict[
+        self._overrides_matchers: DefaultDict[
             Optional[Type[ItemPage]], URLMatcher
         ] = defaultdict(URLMatcher)
-        self._item_matchers: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
+        self._item_matchers: DefaultDict[Optional[Type], URLMatcher] = defaultdict(
+            URLMatcher
+        )
 
         # Ensures that URLMatcher is deterministic in returning a rule when
         # matching. As of url_macher==0.2.0, `url_matcher.URLMatcher._sort_domain`
@@ -140,8 +153,7 @@ class RulesRegistry:
     def add_rule(self, rule: ApplyRule) -> None:
         """Registers an :class:`web_poet.rules.ApplyRule` instance."""
 
-        # Ignore the type since ``ApplyRule`` could have an empty ``.to_return``
-        matched = self._item_matchers.get(rule.to_return)  # type: ignore[arg-type]
+        matched = self._item_matchers.get(rule.to_return)
         if matched:
             # A common case when a page object subclasses another one with the
             # same URL pattern.
