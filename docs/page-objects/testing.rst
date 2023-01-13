@@ -100,6 +100,48 @@ to the time value used when generating the test. This will instruct the test
 runner to use the same time value so that field comparisons are still correct.
 
 The value can be any string understood by `dateutil`_. If it doesn't include
-timezone information, UTC will be assumed.
+timezone information, the local time of the machine will be assumed. If it
+includes timezone information, on non-Windows systems the test process will be
+executed in that timezone, so that output fields that contain local time are
+correct. On Windows systems (where changing the process timezone is not
+possible) the time value will be converted to the local time of the machine,
+and such fields will containt wrong data if these timezones don't match.
+Consider an example item::
+
+    import datetime
+    from web_poet import WebPage
+
+    class DateItemPage(WebPage):
+        async def to_item(self) -> dict:
+            # e.g. 2001-01-01 11:00:00 +00
+            now = datetime.datetime.now(datetime.timezone.utc)
+            return {
+                # '2001-01-01T11:00:00Z'
+                "time_utc": now.strftime("%Y-%M-%dT%H:%M:%SZ"),
+                # if the current timezone is CET, then '2001-01-01T12:00:00+01:00'
+                "time_local": now.astimezone().strftime("%Y-%M-%dT%H:%M:%S%z"),
+            }
+
+We will assume that the fixture was generated in CET (UTC+1).
+
+* If the fixture doesn't have the ``frozen_time`` metadata field, the item will
+  simply contain the current time and the test will always fail.
+* If ``frozen_time`` doesn't contain the timezone data (e.g. it is
+  ``2001-01-01T11:00:00``), the item will depend on the machine timezone: in
+  CET it will contain the expected values, in timezones with a different offset
+  ``time_local`` will be different.
+* If ``frozen_time`` contains the timezone data and the system is not Windows,
+  the ``time_local`` field will contain the date in that timezone, so if the
+  timezone in ``frozen_time`` is not UTC+1, the test will fail.
+* If the system is Windows, the ``frozen_time`` value will be converted to the
+  machine timezone, so the item will depend on that timezone, just like when
+  ``frozen_time`` doesn't contain the timezone data, and ``time_local`` will
+  similarly be only correct if the machine timezone has the same offset as CET.
+
+This means that most combinations of setups will work if ``frozen_time``
+contains the timezone data, except for running tests on Windows, in which case
+the machine timezone should match the timezone in ``frozen_time``. Also, if
+items do not depend on the machine timezone (e.g. if all datetime-derived data
+they contain is in UTC), the tests for them should work everywhere.
 
 .. _dateutil: https://github.com/dateutil/dateutil
