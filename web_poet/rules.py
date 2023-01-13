@@ -372,12 +372,12 @@ class RulesRegistry:
         See example: :ref:`rules-overrides_for-example`.
         """
         result: Dict[Type[ItemPage], Type[ItemPage]] = {}
-        for target, matcher in self._overrides_matchers.items():
-            if target is None:
+        for replaced_page, matcher in self._overrides_matchers.items():
+            if replaced_page is None:
                 continue
-            po = self._match_url_for_page_object(url, matcher)
-            if po:
-                result[target] = po
+            page = self._match_url_for_page_object(url, matcher)
+            if page:
+                result[replaced_page] = page
         return result
 
     def page_object_for_item(
