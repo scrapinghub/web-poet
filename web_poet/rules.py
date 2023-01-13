@@ -117,10 +117,10 @@ class RulesRegistry:
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
         self._rules: Dict[int, ApplyRule] = {}
-        self._overrides_matchers: Dict[Type[ItemPage], URLMatcher] = defaultdict(
-            URLMatcher
-        )
-        self._item_matchers: Dict[Type, URLMatcher] = defaultdict(URLMatcher)
+        self._overrides_matchers: Dict[
+            Optional[Type[ItemPage]], URLMatcher
+        ] = defaultdict(URLMatcher)
+        self._item_matchers: Dict[Optional[Type], URLMatcher] = defaultdict(URLMatcher)
 
         # Ensures that URLMatcher is deterministic in returning a rule when
         # matching. As of url_macher==0.2.0, `url_matcher.URLMatcher._sort_domain`
@@ -167,14 +167,10 @@ class RulesRegistry:
         self._rule_counter += 1
         rule_id = self._rule_counter
 
-        if rule.instead_of:
-            self._overrides_matchers[rule.instead_of].add_or_update(
-                rule_id, rule.for_patterns
-            )
-        if rule.to_return:
-            self._item_matchers[rule.to_return].add_or_update(
-                rule_id, rule.for_patterns
-            )
+        self._overrides_matchers[rule.instead_of].add_or_update(
+            rule_id, rule.for_patterns
+        )
+        self._item_matchers[rule.to_return].add_or_update(rule_id, rule.for_patterns)
 
         self._rules[rule_id] = rule
 
@@ -295,25 +291,28 @@ class RulesRegistry:
             print(rules[0].instead_of)  # GenericPO
 
         """
-        rule_ids = set()
+        # Use a dict instead of set() to preserve the order.
+        rule_ids = {}
 
-        # Ignore the types since we're using None value as a quick look-up.
+        if "to_return" in kwargs:
+            matcher = self._item_matchers.get(kwargs["to_return"])
+            if matcher:
+                rule_ids.update(matcher.patterns)
 
-        matcher = self._item_matchers.get(kwargs.get("to_return"))  # type: ignore[arg-type]
-        if matcher:
-            rule_ids.update(matcher.patterns.keys())
-
-        matcher = self._overrides_matchers.get(kwargs.get("instead_of"))  # type: ignore[arg-type]
-        if matcher:
-            if rule_ids:
-                # If both params are used then narrow down the rules.
-                rule_ids.union(matcher.patterns.keys())
-            else:
-                rule_ids.update(matcher.patterns.keys())
+        if "instead_of" in kwargs:
+            matcher = self._overrides_matchers.get(kwargs["instead_of"])
+            if matcher:
+                if rule_ids:
+                    # If both params are used then narrow down the rules.
+                    rule_ids = {
+                        k: v for k, v in matcher.patterns.items() if k in rule_ids
+                    }
+                else:
+                    rule_ids.update(matcher.patterns)
 
         rules = [self._rules[id_] for id_ in rule_ids]
 
-        if len(kwargs) == 1 and rules:
+        if rules and kwargs.keys() <= {"to_return", "instead_of"}:
             return rules
 
         # Search other parameters as well
@@ -340,7 +339,7 @@ class RulesRegistry:
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
 
-    def _match_url_for_po(
+    def _match_url_for_page_object(
         self, url: Union[_Url, str], matcher: Optional[URLMatcher] = None
     ) -> Optional[Type[ItemPage]]:
         """Returns the page object to use based on the URL and URLMatcher."""
@@ -362,7 +361,9 @@ class RulesRegistry:
         """
         result: Dict[Type[ItemPage], Type[ItemPage]] = {}
         for target, matcher in self._overrides_matchers.items():
-            po = self._match_url_for_po(url, matcher)
+            if target is None:
+                continue
+            po = self._match_url_for_page_object(url, matcher)
             if po:
                 result[target] = po
         return result
@@ -375,8 +376,10 @@ class RulesRegistry:
 
         See example: :ref:`rules-page_object_for_item-example`.
         """
+        if item_cls is None:
+            return None
         matcher = self._item_matchers.get(item_cls)
-        return self._match_url_for_po(url, matcher)
+        return self._match_url_for_page_object(url, matcher)
 
 
 def _walk_module(module: str) -> Iterable:

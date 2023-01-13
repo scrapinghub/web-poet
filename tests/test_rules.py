@@ -254,16 +254,13 @@ def test_registry_search() -> None:
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
+    rules = default_registry.search(instead_of=None)
+    for rule in rules:
+        assert rule.instead_of is None
+
     # param: to_return
     rules = default_registry.search(to_return=Product)
     assert rules == [
-        ApplyRule(
-            "example.com",
-            # mypy complains here since it's expecting a container class when
-            # declared, i.e, ``ItemPage[SomeItem]``
-            use=CustomProductPageDataTypeOnly,  # type: ignore[arg-type]
-            to_return=Product,
-        ),
         ApplyRule("example.com", use=ProductPage, to_return=Product),
         ApplyRule(
             "example.com",
@@ -271,13 +268,42 @@ def test_registry_search() -> None:
             instead_of=ProductPage,
             to_return=Product,
         ),
+        ApplyRule(
+            "example.com",
+            # mypy complains here since it's expecting a container class when
+            # declared, i.e, ``ItemPage[SomeItem]``
+            use=CustomProductPageDataTypeOnly,  # type: ignore[arg-type]
+            to_return=Product,
+        ),
     ]
+
+    rules = default_registry.search(to_return=None)
+    for rule in rules:
+        assert rule.to_return is None
 
     # params: to_return and use
     rules = default_registry.search(to_return=Product, use=ImprovedProductPage)
     assert len(rules) == 1
     assert rules[0].to_return == Product
     assert rules[0].use == ImprovedProductPage
+
+    # params: to_return and instead_of
+    rules = default_registry.search(to_return=Product, instead_of=None)
+    assert len(rules) == 2
+    assert rules[0].to_return == Product
+    assert rules[0].instead_of is None
+    assert rules[1].to_return == Product
+    assert rules[1].instead_of is None
+
+    rules = default_registry.search(to_return=None, instead_of=ProductPage)
+    for rule in rules:
+        assert rule.to_return is None
+        assert rule.instead_of is None
+
+    rules = default_registry.search(to_return=None, instead_of=None)
+    assert len(rules) == 1
+    assert rules[0].to_return is None
+    assert rules[0].instead_of is None
 
     # Such rules doesn't exist
     rules = default_registry.search(use=POModuleOverriden)
@@ -389,6 +415,9 @@ def test_page_object_for_item() -> None:
         assert method(url, ProductSeparate) == SeparateProductPage
         assert method(url, ProductFewerFields) == LessProductPage
         assert method(url, ProductMoreFields) == MoreProductPage
+
+        # Type is ignored since item_cls shouldn't be None
+        assert method(url, None) is None  # type: ignore[arg-type]
 
         # When there's no rule specifying to return this FakeItem
         assert method(url, FakeItem) is None
