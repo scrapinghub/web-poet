@@ -436,11 +436,11 @@ item class that you want from a given webpage, you can use
 
     from web_poet import default_registry
 
-    item_cls = default_registry.page_object_for_item(
+    page_cls = default_registry.page_object_for_item(
         "http://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html",
         Book
     )
-    print(item_cls)  # BookPage
+    print(page_cls)  # BookPage
 
 
 Using rules from External Packages
