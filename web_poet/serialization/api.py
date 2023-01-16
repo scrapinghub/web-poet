@@ -2,12 +2,14 @@ import os
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 import andi
 
+import web_poet
 from web_poet import Injectable
 from web_poet.pages import is_injectable
+from web_poet.utils import get_fq_class_name
 
 # represents a leaf dependency of any type serialized as a set of files
 SerializedLeafData = Dict[str, bytes]
@@ -110,42 +112,59 @@ def deserialize_leaf(cls: Type[T], data: SerializedLeafData) -> T:
     return f_ser.f_deserialize(cls, data)  # type: ignore[attr-defined]
 
 
-def _get_fqname(cls: type) -> str:
-    """Return the fully qualified name for a type.
+def _get_name_for_class(cls: type) -> str:
+    """Return the type name that will be used for serialization.
 
-    >>> _get_fqname(Injectable)
-    'web_poet.pages.Injectable'
+    For classes available in the web_poet module it's the type name,
+    for others it's the fully qualified type name.
+
+    >>> _get_name_for_class(Injectable)
+    'Injectable'
+    >>> from decimal import Decimal
+    >>> _get_name_for_class(Decimal)
+    'decimal.Decimal'
     """
-    return f"{cls.__module__}.{cls.__qualname__}"
+    if getattr(web_poet, cls.__name__, None) == cls:
+        return cls.__name__
+    return get_fq_class_name(cls)
 
 
-def serialize(deps: List[Any]) -> SerializedData:
+def serialize(deps: Iterable[Any]) -> SerializedData:
     result: SerializedData = {}
     for dep in deps:
         cls = dep.__class__
         if is_injectable(cls):
             raise ValueError(f"Injectable type {cls} passed to serialize()")
-        result[_get_fqname(cls)] = serialize_leaf(dep)
+        result[_get_name_for_class(cls)] = serialize_leaf(dep)
     return result
 
 
-def _load_type(type_name: str) -> type:
-    """Return the type by its fully qualified name.
+def load_class(type_name: str) -> type:
+    """Return the type by its name.
 
-    >>> _load_type("decimal.Decimal")
+    Requires the fully qualified name unless the type
+    is available in the web_poet module.
+
+    >>> load_class("decimal.Decimal")
     <class 'decimal.Decimal'>
-    >>> _load_type("web_poet.pages.WebPage")
+    >>> load_class("web_poet.pages.WebPage")
     <class 'web_poet.pages.WebPage'>
-    >>> _load_type("decimal.foo")
+    >>> load_class("WebPage")
+    <class 'web_poet.pages.WebPage'>
+    >>> load_class("decimal.foo")
     Traceback (most recent call last):
      ...
     ValueError: Unknown type decimal.foo
-    >>> _load_type("foo.bar")
+    >>> load_class("foo.bar")
     Traceback (most recent call last):
      ...
     ValueError: Unable to import module foo
     """
-    module, name = type_name.rsplit(".", 1)
+    if "." in type_name:
+        module, name = type_name.rsplit(".", 1)
+    else:
+        module = "web_poet"
+        name = type_name
     try:
         mod = import_module(module)
     except ModuleNotFoundError:
@@ -160,7 +179,7 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
     deps: Dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
-        dep_type = _load_type(dep_type_name)
+        dep_type = load_class(dep_type_name)
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)
 
     plan = andi.plan(cls, is_injectable=is_injectable, externally_provided=deps.keys())

@@ -43,7 +43,7 @@ def test_subclassing_warning_message() -> None:
     w = _mywarnings(w)
     assert len(w) == 1
     expected = (
-        f"{__name__}.UserClass inherits from deprecated class "
+        f"{__name__}.{UserClass.__qualname__} inherits from deprecated class "
         f"{__name__}.Deprecated, please inherit from {__name__}.NewName. "
         f"(warning only on first subclass, there may be others)"
     )
