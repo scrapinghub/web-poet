@@ -423,20 +423,20 @@ by passing the webpage URL. For example:
 It returns a :class:`Mapping` where the *key* represents the page object class
 that is overridden or replaced by the page object class in the *value*.
 
-.. _rules-page_object_for_item-example:
+.. _rules-page_cls_for_item-example:
 
 Identify the page object that could create the item
 """""""""""""""""""""""""""""""""""""""""""""""""""
 
 Suppose you want to retrieve the page object class that is able to create the
 item class that you want from a given webpage, you can use
-:meth:`~.RulesRegistry.page_object_for_item`. For example:
+:meth:`~.RulesRegistry.page_cls_for_item`. For example:
 
 .. code-block:: python
 
     from web_poet import default_registry
 
-    page_cls = default_registry.page_object_for_item(
+    page_cls = default_registry.page_cls_for_item(
         "http://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html",
         Book
     )

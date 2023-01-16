@@ -9,7 +9,7 @@ TBR
 
     * :meth:`web_poet.rules.RulesRegistry.add_rule`
     * :meth:`web_poet.rules.RulesRegistry.overrides_for`
-    * :meth:`web_poet.rules.RulesRegistry.page_object_for_item`
+    * :meth:`web_poet.rules.RulesRegistry.page_cls_for_item`
 
 * Improved the performance of :meth:`web_poet.rules.RulesRegistry.search` where
   passing a single parameter of either ``instead_of`` or ``to_return`` results

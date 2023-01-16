@@ -401,12 +401,12 @@ def test_overrides_for() -> None:
         }
 
 
-def test_page_object_for_item() -> None:
+def test_page_cls_for_item() -> None:
     # This is not associated with any rule.
     class FakeItem:
         pass
 
-    method = default_registry.page_object_for_item
+    method = default_registry.page_cls_for_item
 
     for cls in [str, RequestUrl, ResponseUrl]:
         url = cls("https://example.com")

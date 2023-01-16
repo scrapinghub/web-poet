@@ -380,13 +380,13 @@ class RulesRegistry:
                 result[replaced_page] = page
         return result
 
-    def page_object_for_item(
+    def page_cls_for_item(
         self, url: Union[_Url, str], item_cls: Type
     ) -> Optional[Type]:
         """Return the page object class associated with the given URL that's able
         to produce the given ``item_cls``.
 
-        See example: :ref:`rules-page_object_for_item-example`.
+        See example: :ref:`rules-page_cls_for_item-example`.
         """
         if item_cls is None:
             return None
