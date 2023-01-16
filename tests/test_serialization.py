@@ -68,11 +68,11 @@ def test_serialization(book_list_html_response) -> None:
     serialized_deps = serialize([book_list_html_response, url])
     other_json = f'{{"_encoding": "utf-8", "headers": [], "status": null, "url": "{url_str}"}}'.encode()
     assert serialized_deps == {
-        "web_poet.page_inputs.http.HttpResponse": {
+        "HttpResponse": {
             "body.html": bytes(book_list_html_response.body),
             "other.json": other_json,
         },
-        "web_poet.page_inputs.url.ResponseUrl": {
+        "ResponseUrl": {
             "txt": url_str.encode(),
         },
     }
@@ -138,13 +138,13 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     storage = SerializedDataFileStorage(directory)
     serialized_deps = serialize([book_list_html_response, url])
     storage.write(serialized_deps)
-    assert (directory / "web_poet.page_inputs.http.HttpResponse-body.html").exists()
-    assert (
-        directory / "web_poet.page_inputs.http.HttpResponse-body.html"
-    ).read_bytes() == bytes(book_list_html_response.body)
-    assert (directory / "web_poet.page_inputs.http.HttpResponse-other.json").exists()
-    assert (directory / "web_poet.page_inputs.url.ResponseUrl.txt").exists()
-    assert (directory / "web_poet.page_inputs.url.ResponseUrl.txt").read_text(
+    assert (directory / "HttpResponse-body.html").exists()
+    assert (directory / "HttpResponse-body.html").read_bytes() == bytes(
+        book_list_html_response.body
+    )
+    assert (directory / "HttpResponse-other.json").exists()
+    assert (directory / "ResponseUrl.txt").exists()
+    assert (directory / "ResponseUrl.txt").read_text(
         encoding="utf-8"
     ) == "http://example.com"
 
@@ -164,4 +164,4 @@ def test_extra_files(book_list_html_response, tmp_path) -> None:
     (directory / "foo.dir").mkdir()
     (directory / "bar.txt").touch()
     read_serialized_deps = storage.read()
-    assert "web_poet.page_inputs.http.HttpResponse" in read_serialized_deps
+    assert "HttpResponse" in read_serialized_deps

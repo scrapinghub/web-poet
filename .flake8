@@ -42,4 +42,5 @@ per-file-ignores =
     web_poet/__init__.py:F401,F403
     web_poet/page_inputs/__init__.py:F401,F403
     web_poet/serialization/__init__.py:F401,F403
+    web_poet/testing/__init__.py:F401,F403
     tests/po_lib_to_return/__init__.py:D102
