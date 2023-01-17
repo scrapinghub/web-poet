@@ -390,6 +390,58 @@ in the :class:`~.ApplyRule` to be written into ``web_poet.default_registry``.
 
     The next section explores this caveat further.
 
+Using URLs against the registered rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One of the important aspects of :class:`~.ApplyRule` is dictating which URLs it's
+able to work using its ``for_patterns`` attribute. There are a few methods
+available in :class:`~.RulesRegistry` which accepts a URL value (:class:`str`,
+:class:`~.RequestUrl`, or :class:`~.ResponseUrl`) to find specific information
+from the registered rules.
+
+.. _rules-overrides_for-example:
+
+Find the page object overrides
+""""""""""""""""""""""""""""""
+
+Suppose you want to see what are the :ref:`rules-intro-overrides` that are
+available from a given webpage, you can use :meth:`~.RulesRegistry.overrides_for`
+by passing the webpage URL. For example:
+
+.. code-block:: python
+
+    from web_poet import default_registry
+
+    overrides = default_registry.overrides_for("http://books.toscrape.com/")
+    print(overrides)
+
+    # {
+    #     <class 'OldProductPage'>: <class 'NewProductPage'>,
+    #     <class 'OverriddenPage'>: <class 'UseThisPage'>,
+    # }
+
+It returns a :class:`Mapping` where the *key* represents the page object class
+that is overridden or replaced by the page object class in the *value*.
+
+.. _rules-page_cls_for_item-example:
+
+Identify the page object that could create the item
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Suppose you want to retrieve the page object class that is able to create the
+item class that you want from a given webpage, you can use
+:meth:`~.RulesRegistry.page_cls_for_item`. For example:
+
+.. code-block:: python
+
+    from web_poet import default_registry
+
+    page_cls = default_registry.page_cls_for_item(
+        "http://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html",
+        Book
+    )
+    print(page_cls)  # BookPage
+
 
 Using rules from External Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

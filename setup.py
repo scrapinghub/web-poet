@@ -17,6 +17,7 @@ setup(
     package_data={
         "web_poet": ["py.typed"],
     },
+    entry_points={"pytest11": ["web-poet = web_poet.testing.pytest"]},
     install_requires=[
         "attrs >= 21.3.0",
         "parsel",
@@ -26,6 +27,9 @@ setup(
         "async-lru >= 1.0.3",
         "itemadapter >= 0.7.0",
         "andi",
+        "python-dateutil",
+        "time-machine",
+        "backports.zoneinfo; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
