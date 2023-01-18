@@ -16,6 +16,8 @@ tools for this:
 * a high-level function to save a test fixture;
 * a ``pytest`` plugin that discovers fixtures and runs tests for them.
 
+.. _dep-serialization:
+
 Serialization
 =============
 

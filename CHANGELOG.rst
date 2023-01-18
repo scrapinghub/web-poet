@@ -2,8 +2,13 @@
 Changelog
 =========
 
-TBR
----
+0.7.0 (to be released)
+----------------------
+
+* Add :ref:`a framework for creating tests and running them with pytest
+  <web-poet-testing>`.
+
+* Support implementing fields in mixin classes.
 
 * Introduce new methods for :class:`web_poet.rules.RulesRegistry`:
 
@@ -16,6 +21,13 @@ TBR
   in *O(1)* look-up time instead of *O(N)*. Additionally, having either
   ``instead_of`` or ``to_return`` present in multi-parameter search calls would
   filter the initial candidate results resulting in a faster search.
+
+* Support :ref:`page object dependency serialization <dep-serialization>`.
+
+* Add new dependencies used in testing and serialization code: ``andi``,
+  ``python-dateutil``, and ``time-machine``. Also ``backports.zoneinfo`` on
+  non-Windows platforms when the Python version is older than 3.9.
+
 
 0.6.0 (2022-11-08)
 ------------------
