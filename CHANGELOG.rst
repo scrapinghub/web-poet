@@ -25,7 +25,7 @@ Changelog
 * Support :ref:`page object dependency serialization <dep-serialization>`.
 
 * Add new dependencies used in testing and serialization code: ``andi``,
-  ``python-dateutil`` and ``time-machine``. Also ``backports.zoneinfo`` on
+  ``python-dateutil``, and ``time-machine``. Also ``backports.zoneinfo`` on
   non-Windows platforms when the Python version is older than 3.9.
 
 
