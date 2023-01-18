@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.7.0 (to be released)
+0.7.0 (2023-01-18)
 ----------------------
 
 * Add :ref:`a framework for creating tests and running them with pytest
