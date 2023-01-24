@@ -212,4 +212,8 @@ intersphinx_mapping = {
         "https://multidict.readthedocs.io/en/latest/",
         None,
     ),
+    "scrapy-poet": (
+        "https://scrapy-poet.readthedocs.io/en/latest/",
+        None,
+    ),
 }
