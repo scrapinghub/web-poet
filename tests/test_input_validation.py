@@ -63,7 +63,7 @@ async def test_valid_input_async_field():
     assert await Page().a == "a"
 
 
-# Inalid input
+# Invalid input
 
 
 class BaseInvalidInputPage(BasePage):
