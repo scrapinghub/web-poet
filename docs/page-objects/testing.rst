@@ -89,6 +89,7 @@ scrapy-poet integration
 
 Projects that use the `scrapy-poet`_ library can use the :ref:`Scrapy command
 <scrapy-poet:testing>` provided by it to generate fixtures in a convenient way.
+It's available starting with scrapy-poet 0.8.0.
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 
