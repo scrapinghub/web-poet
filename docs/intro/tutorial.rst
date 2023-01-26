@@ -141,7 +141,7 @@ In the code above:
     -   Indicates that your page object class requires an HTTP response as
         input, which gets stored in the
         :attr:`~web_poet.pages.WebPage.response` attribute of your page object
-        class.
+        class as an :class:`~web_poet.page_inputs.http.HttpResponse` object.
 
     -   Provides attributes like :attr:`~web_poet.pages.WebPage.html` and
         :attr:`~web_poet.pages.WebPage.url`, and methods like
