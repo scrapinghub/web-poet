@@ -1,10 +1,10 @@
 import abc
-import typing
+from typing import Any, Generic, Iterable, Optional, Type, TypeVar
 
 import attr
 
 from web_poet._typing import get_item_cls
-from web_poet.fields import FieldsMixin, item_from_fields
+from web_poet.fields import FieldsMixin, SelectFields, get_fields_dict, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import _create_deprecated_class
@@ -31,21 +31,21 @@ class Injectable(abc.ABC, FieldsMixin):
 Injectable.register(type(None))
 
 
-def is_injectable(cls: typing.Any) -> bool:
+def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
-ItemT = typing.TypeVar("ItemT")
+ItemT = TypeVar("ItemT")
 
 
-class Returns(typing.Generic[ItemT]):
+class Returns(Generic[ItemT]):
     """Inherit from this generic mixin to change the item class used by
     :class:`~.ItemPage`"""
 
     @property
-    def item_cls(self) -> typing.Type[ItemT]:
+    def item_cls(self) -> Type[ItemT]:
         """Item class"""
         return get_item_cls(self.__class__, default=dict)
 
@@ -63,8 +63,61 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
+
+        partial_item = await self._partial_item()
+        if partial_item:
+            return partial_item
+
         return await item_from_fields(
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+        )
+
+    # TODO: cache
+    def _get_select_fields(self) -> Optional[SelectFields]:
+        select_fields = getattr(self, "select_fields", None)
+        if not select_fields:
+            return None
+
+        if not isinstance(select_fields, SelectFields):
+            return None
+
+        return select_fields
+
+    @property
+    def fields_to_extract(self) -> Optional[Iterable[str]]:
+        """Returns an Iterable of field names which should populate the designated
+        ``item_cls``.
+
+        This takes into account the ``include`` and ``excluded`` fields, if
+        :class:`web_poet.fields.SelectFields` is available as an instance
+        attribute to the page object.
+        """
+        select_fields = self._get_select_fields()
+        if select_fields is None:
+            return None
+        all_fields = get_fields_dict(self).keys()
+        return (set(select_fields.include or []) or all_fields) - set(
+            select_fields.exclude or []
+        )
+
+    async def _partial_item(self) -> Optional[Any]:
+        # TODO: Should we support other naming conventions? this means we need
+        # to iterate over all instance attributes to see if there's an instance
+        # of SelectFields.
+        # for key, param in inspect.signature(self.__init__).parameters.items():
+
+        select_fields = self._get_select_fields()
+        if not select_fields:
+            return None
+
+        field_names = self.fields_to_extract
+
+        return await item_from_fields(
+            self,
+            item_cls=self.item_cls,
+            skip_nonitem_fields=self._skip_nonitem_fields,
+            field_names=field_names,
+            on_unknown_field=select_fields.on_unknown_field,
         )
 
 

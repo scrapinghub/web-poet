@@ -5,12 +5,13 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Type, TypeVar
+from typing import Callable, Dict, Iterable, List, Literal, Optional, Type, TypeVar
+from warnings import warn
 
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, ensure_awaitable
+from web_poet.utils import cached_method, ensure_awaitable, get_fq_class_name
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -172,13 +173,19 @@ def get_fields_dict(
 
 
 T = TypeVar("T")
+UnknownFieldActions = Literal["ignore", "warn", "raise"]
 
 
 # FIXME: type is ignored as a workaround for https://github.com/python/mypy/issues/3737
 # inference works properly if a non-default item_cls is passed; for dict
 # it's not working (return type is Any)
 async def item_from_fields(
-    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: Type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
+    field_names: Optional[Iterable[str]] = None,
+    on_unknown_field: UnknownFieldActions = "raise",
 ) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
@@ -190,29 +197,80 @@ async def item_from_fields(
     to ``item_cls.__init__``, possibly causing exceptions if
     ``item_cls.__init__`` doesn't support them.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
-    field_names = list(item_dict.keys())
+    item_dict = item_from_fields_sync(
+        obj,
+        item_cls=dict,
+        skip_nonitem_fields=False,
+        field_names=field_names,
+        on_unknown_field=on_unknown_field,
+    )
+    if not field_names:
+        field_names = list(item_dict.keys())
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
-    return item_cls(
-        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
-    )
+    params = {}
+    for name in field_names:
+        try:
+            params[name] = await ensure_awaitable(item_dict[name])
+        except KeyError:
+            _handle_unknown_field(obj, name, on_unknown_field)
+    return item_cls(**params)
 
 
 def item_from_fields_sync(
-    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: Type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
+    field_names: Optional[Iterable[str]] = None,
+    on_unknown_field: UnknownFieldActions = "raise",
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = list(get_fields_dict(obj))
-    if skip_nonitem_fields:
-        field_names = _without_unsupported_field_names(item_cls, field_names)
-    return item_cls(**{name: getattr(obj, name) for name in field_names})
+    if not field_names:
+        field_names = list(get_fields_dict(obj))
+        if skip_nonitem_fields:
+            field_names = _without_unsupported_field_names(item_cls, field_names)
+    params = {}
+    for name in field_names:
+        try:
+            params[name] = getattr(obj, name)
+        except AttributeError:
+            _handle_unknown_field(obj, name, on_unknown_field)
+    return item_cls(**params)
+
+
+def _handle_unknown_field(obj, name, action: UnknownFieldActions = "raise") -> None:
+    if action == "ignore":
+        return
+
+    msg = f"Field '{name}' isn't available in {get_fq_class_name(obj.__class__)}."
+
+    if action == "raise":
+        raise AttributeError(msg)
+    elif action == "warn":
+        warn(msg)
+    else:
+        raise ValueError(
+            f"web_poet.SelectFields only accepts 'ignore', 'warn', and 'raise' "
+            f"values. Received unrecognized '{action}' value which it treats as "
+            f"'ignore'."
+        )
 
 
 def _without_unsupported_field_names(
-    item_cls: type, field_names: List[str]
+    item_cls: type, field_names: Iterable[str]
 ) -> List[str]:
     item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
     if item_field_names is None:  # item_cls doesn't define field names upfront
-        return field_names[:]
+        return list(field_names)
     return list(set(field_names) & set(item_field_names))
+
+
+@attrs.define
+class SelectFields:
+    include: Optional[Iterable[str]] = None
+    exclude: Optional[Iterable[str]] = None
+    # when encountering an unknown field even after perfomring include/exclucde
+    # {"x", "not-exist-1", "not-exist-2"} - {"not-exist-1"}
+    on_unknown_field: UnknownFieldActions = "raise"
+    swap_item_cls: Optional[Type] = None
