@@ -98,6 +98,11 @@ string attribute to store the book title.
 web-poet projects, you will usually define item classes with many more
 attributes.
 
+.. tip:: For an example of real item classes, see the `zyte-common-items`_
+         library.
+
+         .. _zyte-common-items: https://zyte-common-items.readthedocs.io/en/latest/
+
 Also mind that, while in this tutorial you use ``Book`` only for data from 1
 website, `books.toscrape.com`_, item classes are usually meant to be usable for
 many different websites that provide data with a similar data schema.
