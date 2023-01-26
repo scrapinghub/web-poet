@@ -16,6 +16,8 @@ tools for this:
 * a high-level function to save a test fixture;
 * a ``pytest`` plugin that discovers fixtures and runs tests for them.
 
+.. _dep-serialization:
+
 Serialization
 =============
 
@@ -79,6 +81,17 @@ directory. By default it uses incrementing names "test-1", "test-2" etc.
 After generating a fixture you can edit ``output.json`` to modify expected
 field values and add new fields, which is useful when creating tests for code
 that isn't written yet or before modifying its behavior.
+
+.. _web-poet-testing-scrapy-poet:
+
+scrapy-poet integration
+=======================
+
+Projects that use the `scrapy-poet`_ library can use the :ref:`Scrapy command
+<scrapy-poet:testing>` provided by it to generate fixtures in a convenient way.
+It's available starting with scrapy-poet 0.8.0.
+
+.. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 
 Running tests
 =============
