@@ -4,6 +4,8 @@ import pytest
 
 from web_poet.page_inputs import HttpResponse, HttpResponseBody
 
+pytest_plugins = ["pytester"]
+
 
 def read_fixture(path):
     path = os.path.join(os.path.dirname(__file__), path)

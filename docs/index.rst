@@ -28,6 +28,7 @@ web-poet
    Webpage layouts <page-objects/layouts>
    page-objects/retries
    page-objects/page-params
+   page-objects/testing
 
 .. toctree::
    :caption: Writing frameworks

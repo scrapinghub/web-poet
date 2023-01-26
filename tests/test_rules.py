@@ -1,3 +1,5 @@
+import warnings
+
 import attrs
 import pytest
 from url_matcher import Patterns
@@ -9,8 +11,11 @@ from tests.po_lib import (
     POTopLevelOverriden2,
 )
 from tests.po_lib.a_module import POModule, POModuleOverriden
-from tests.po_lib.nested_package import PONestedPkg
-from tests.po_lib.nested_package.a_nested_module import PONestedModule
+from tests.po_lib.nested_package import PONestedPkg, PONestedPkgOverriden
+from tests.po_lib.nested_package.a_nested_module import (
+    PONestedModule,
+    PONestedModuleOverriden,
+)
 from tests.po_lib_sub import POLibSub
 from tests.po_lib_to_return import (
     CustomProductPage,
@@ -20,7 +25,10 @@ from tests.po_lib_to_return import (
     LessProductPage,
     MoreProductPage,
     Product,
+    ProductFewerFields,
+    ProductMoreFields,
     ProductPage,
+    ProductSeparate,
     ProductSimilar,
     SeparateProductPage,
     SimilarProductPage,
@@ -34,6 +42,7 @@ from web_poet import (
     default_registry,
     handle_urls,
 )
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 POS = {
     CustomProductPage,
@@ -154,7 +163,7 @@ def test_apply_rule_kwargs_only() -> None:
             ApplyRule(
                 "example.com",
                 *[params[r] for r in remove],
-                **{k: v for k, v in params.items() if k not in remove}  # type: ignore[arg-type]
+                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]
             )
 
 
@@ -245,6 +254,10 @@ def test_registry_search() -> None:
     assert len(rules) == 1
     assert rules[0].instead_of == POTopLevelOverriden2
 
+    rules = default_registry.search(instead_of=None)
+    for rule in rules:
+        assert rule.instead_of is None
+
     # param: to_return
     rules = default_registry.search(to_return=Product)
     assert rules == [
@@ -264,11 +277,33 @@ def test_registry_search() -> None:
         ),
     ]
 
+    rules = default_registry.search(to_return=None)
+    for rule in rules:
+        assert rule.to_return is None
+
     # params: to_return and use
     rules = default_registry.search(to_return=Product, use=ImprovedProductPage)
     assert len(rules) == 1
     assert rules[0].to_return == Product
     assert rules[0].use == ImprovedProductPage
+
+    # params: to_return and instead_of
+    rules = default_registry.search(to_return=Product, instead_of=None)
+    assert len(rules) == 2
+    assert rules[0].to_return == Product
+    assert rules[0].instead_of is None
+    assert rules[1].to_return == Product
+    assert rules[1].instead_of is None
+
+    rules = default_registry.search(to_return=None, instead_of=ProductPage)
+    for rule in rules:
+        assert rule.to_return is None
+        assert rule.instead_of is None
+
+    rules = default_registry.search(to_return=None, instead_of=None)
+    assert len(rules) == 1
+    assert rules[0].to_return is None
+    assert rules[0].instead_of is None
 
     # Such rules doesn't exist
     rules = default_registry.search(use=POModuleOverriden)
@@ -292,7 +327,7 @@ def test_registry_search_overrides_deprecation() -> None:
 def test_init_rules() -> None:
     rules = (
         ApplyRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         ),
@@ -305,10 +340,96 @@ def test_init_rules() -> None:
     assert default_registry.get_rules() != rules
 
 
+def test_add_rule() -> None:
+    registry = RulesRegistry()
+
+    # Basic case of adding a rule
+    rule_1 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden1,
+        to_return=Product,
+    )
+    registry.add_rule(rule_1)
+    assert registry.get_rules() == [rule_1]
+
+    # Adding a second rule should not emit a warning as long as both the URL
+    # pattern and `.to_return` value is not the same.
+    rule_2 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        to_return=ProductSimilar,
+    )
+    with warnings.catch_warnings(record=True) as warnings_emitted:
+        registry.add_rule(rule_2)
+    assert not warnings_emitted
+    assert registry.get_rules() == [rule_1, rule_2]
+
+    # Warnings should be raised for this case since it's the same URL pattern
+    # and `.to_return` value from one of the past rules.
+    rule_3 = ApplyRule(
+        for_patterns=Patterns(include=["example.com"]),
+        use=POTopLevel1,
+        instead_of=POTopLevelOverriden2,
+        to_return=Product,
+    )
+    # Since we're using f-strings to compare the warning emitted, don't use
+    # ``pytest.warns()`` here since it treats the msg as regex which translates
+    # the "(" and ")" characters differently from the expected message.
+    with warnings.catch_warnings(record=True) as warnings_emitted:
+        registry.add_rule(rule_3)
+    expected_msg = f"Consider updating the priority of these rules: {[rule_1, rule_3]}."
+    assert any([True for w in warnings_emitted if expected_msg in str(w.message)])
+    assert registry.get_rules() == [rule_1, rule_2, rule_3]
+
+
+def test_overrides_for() -> None:
+    for cls in [str, RequestUrl, ResponseUrl]:
+        assert default_registry.overrides_for(cls("https://example.com")) == {
+            POTopLevelOverriden1: POTopLevel1,
+            POTopLevelOverriden2: POTopLevel2,
+            POModuleOverriden: POModule,
+            PONestedPkgOverriden: PONestedPkg,
+            PONestedModuleOverriden: PONestedModule,
+            ProductPage: CustomProductPageNoReturns,
+        }
+
+        assert default_registry.overrides_for(cls("https://example.org")) == {
+            PONestedModuleOverriden: PONestedModule,
+            PONestedPkgOverriden: PONestedPkg,
+        }
+
+
+def test_page_cls_for_item() -> None:
+    # This is not associated with any rule.
+    class FakeItem:
+        pass
+
+    method = default_registry.page_cls_for_item
+
+    for cls in [str, RequestUrl, ResponseUrl]:
+        url = cls("https://example.com")
+        assert method(url, ProductSimilar) == CustomProductPageNoReturns
+        assert method(url, Product) == CustomProductPageDataTypeOnly
+        assert method(url, ProductSeparate) == SeparateProductPage
+        assert method(url, ProductFewerFields) == LessProductPage
+        assert method(url, ProductMoreFields) == MoreProductPage
+
+        # Type is ignored since item_cls shouldn't be None
+        assert method(url, None) is None  # type: ignore[arg-type]
+
+        # When there's no rule specifying to return this FakeItem
+        assert method(url, FakeItem) is None
+
+        # When the URL itself doesn't have any ``to_return`` in any of its rules
+        assert method(cls("https://example.org"), FakeItem) is None
+
+
 def test_from_override_rules_deprecation_using_ApplyRule() -> None:
     rules = [
         ApplyRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         )
@@ -325,7 +446,7 @@ def test_from_override_rules_deprecation_using_ApplyRule() -> None:
 def test_from_override_rules_deprecation_using_OverrideRule() -> None:
     rules = [
         OverrideRule(
-            for_patterns=Patterns(include=["sample.com"]),
+            for_patterns=Patterns(include=["example.com"]),
             use=POTopLevel1,
             instead_of=POTopLevelOverriden2,
         )

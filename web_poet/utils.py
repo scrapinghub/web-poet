@@ -10,10 +10,23 @@ from async_lru import alru_cache
 from url_matcher import Patterns
 
 
-def _clspath(cls, forced=None):
+def get_fq_class_name(cls: type) -> str:
+    """Return the fully qualified name for a type.
+
+    >>> from web_poet import Injectable
+    >>> get_fq_class_name(Injectable)
+    'web_poet.pages.Injectable'
+    >>> from decimal import Decimal
+    >>> get_fq_class_name(Decimal)
+    'decimal.Decimal'
+    """
+    return f"{cls.__module__}.{cls.__qualname__}"
+
+
+def _clspath(cls: type, forced: Optional[str] = None) -> str:
     if forced is not None:
         return forced
-    return f"{cls.__module__}.{cls.__name__}"
+    return get_fq_class_name(cls)
 
 
 def _create_deprecated_class(

@@ -355,6 +355,58 @@ def test_field_subclassing() -> None:
     assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
 
 
+def test_field_subclassing_from_to_item() -> None:
+    # to_item() should be the same since it was not overridden from the
+    # subclass.
+    class PageToItem(ItemPage):
+        def to_item(self):
+            return {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
+
+    class Page1(PageToItem):
+        @field
+        def field1(self):
+            return 0
+
+    page_1 = Page1()
+    assert page_1.field1 == 0
+    assert page_1.to_item() == {"field1": 1, "field2": 2, "field3": 3, "field4": 4}
+
+    # to_item() only reflects the field that was decorated.
+    class Page2(PageToItem):
+        @field
+        def field2(self):
+            return 0
+
+        def to_item(self):
+            return item_from_fields_sync(self)
+
+    page_2 = Page2()
+    assert page_2.field2 == 0
+    assert page_2.to_item() == {"field2": 0}
+
+    # to_item() raises an error if there are some required fields from the item_cls
+    # that doesn't have a corresponding field value.
+    @attrs.define
+    class SomeItem:
+        field1: int
+        field2: int
+        field3: int
+        field4: int
+
+    class Page3(PageToItem):
+        @field
+        def field3(self):
+            return 0
+
+        def to_item(self):
+            return item_from_fields_sync(self, item_cls=SomeItem)
+
+    page_3 = Page3()
+    assert page_3.field3 == 0
+    with pytest.raises(TypeError):
+        page_3.to_item()
+
+
 def test_field_with_other_decorators() -> None:
     def clean_str(method):
         def wrapper(*args, **kwargs):
@@ -451,3 +503,22 @@ async def test_field_processors_async() -> None:
 
     page = Page()
     assert await page.name == "namex"
+
+
+def test_field_mixin() -> None:
+    class A(ItemPage):
+        @field
+        def a(self):
+            return None
+
+    class Mixin:
+        @field
+        def mixin(self):
+            return None
+
+    class B(Mixin, A):
+        @field
+        def b(self):
+            return None
+
+    assert set(get_fields_dict(B)) == {"a", "b", "mixin"}

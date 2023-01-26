@@ -29,7 +29,7 @@ author = "Zyte Group Ltd"
 # The short X.Y version
 version = ""
 # The full version, including alpha/beta/rc tags
-release = "0.6.0"
+release = "0.7.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -210,6 +210,10 @@ intersphinx_mapping = {
     ),
     "multidict": (
         "https://multidict.readthedocs.io/en/latest/",
+        None,
+    ),
+    "scrapy-poet": (
+        "https://scrapy-poet.readthedocs.io/en/latest/",
         None,
     ),
 }
