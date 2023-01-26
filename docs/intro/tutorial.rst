@@ -223,7 +223,7 @@ output item class.
 Notice that you must also call :func:`~web_poet.rules.consume_modules` once
 before your first call to ``get_item``. ``consume_modules`` ensures that the
 specified Python modules are loaded. You pass ``consume_modules`` the import
-paths of the modules where you define your page object classes. After loading
+paths of the modules where your page object classes are defined. After loading
 those modules, :meth:`~web_poet.handle_urls` decorators register the page
 object classes that they decorate into ``web_poet.default_registry``, which
 ``get_item`` uses to determine which page object class to use based on its
