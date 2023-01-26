@@ -11,7 +11,6 @@ from warnings import warn
 
 import andi
 import requests
-from url_matcher import URLMatcher
 
 from . import default_registry
 from .page_inputs import HttpClient, HttpResponse, PageParams
@@ -33,17 +32,6 @@ class _HttpClient:
         return _get_http_response(url)
 
 
-def _get_page_class(url: str, item_class: Type) -> Type[ItemPage]:
-    url_matcher = URLMatcher(
-        {
-            rule.use: rule.for_patterns
-            for rule in default_registry.get_rules()
-            if rule.to_return == item_class
-        }
-    )
-    return url_matcher.match(url)
-
-
 def _get_http_response(url: str) -> HttpResponse:
     response = requests.get(url)
     return HttpResponse(
@@ -55,12 +43,12 @@ def _get_http_response(url: str) -> HttpResponse:
 
 def _get_page(
     url: str,
-    page_class: Type[ItemPage],
+    page_cls: Type[ItemPage],
     *,
     page_params: Optional[Dict[Any, Any]] = None,
 ) -> ItemPage:
     plan = andi.plan(
-        page_class,
+        page_cls,
         is_injectable=is_injectable,
         externally_provided={
             HttpClient,
@@ -78,12 +66,12 @@ def _get_page(
             instances[fn_or_cls] = PageParams(page_params or {})
         else:
             instances[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(instances))
-    return instances[page_class]
+    return instances[page_cls]
 
 
 def get_item(
     url: str,
-    item_class: Type,
+    item_cls: Type,
     *,
     page_params: Optional[Dict[Any, Any]] = None,
 ) -> Any:
@@ -93,8 +81,8 @@ def get_item(
     This function is an example of a minimal, incomplete web-poet framework
     implementation, intended for use in the web-poet tutorial.
     """
-    page_class = _get_page_class(url, item_class)
-    if page_class is None:
+    page_cls = default_registry.page_cls_for_item(url, item_cls)
+    if page_cls is None:
         raise ValueError(f"No page object class found for URL: {url}")
-    page = _get_page(url, page_class, page_params=page_params)
+    page = _get_page(url, page_cls, page_params=page_params)
     return run(ensure_awaitable(page.to_item()))
