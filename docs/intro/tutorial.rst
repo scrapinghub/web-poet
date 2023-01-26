@@ -23,7 +23,7 @@ web-poet does not limit how you structure your web-poet web data extraction
 code, beyond the limitations of Python itself.
 
 However, in this tutorial you will use a specific project directory structure
-designed with web-poet best practices in mind. Consider using the same project
+designed with web-poet best practices in mind. Consider using a similar project
 directory structure in all your web-poet projects.
 
 First create your project directory: ``tutorial-project/``.
