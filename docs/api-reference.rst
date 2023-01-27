@@ -4,6 +4,8 @@
 API Reference
 =============
 
+.. _input:
+
 Page Inputs
 ===========
 

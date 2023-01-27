@@ -43,7 +43,7 @@ Retrying Additional Requests
 ============================
 
 When the bad response data comes from :ref:`additional requests
-<advanced-requests>`, you must handle retries on your own.
+<additional-requests>`, you must handle retries on your own.
 
 The page object code is responsible for retrying additional requests until good
 response data is received, or until some maximum number of retries is exceeded.

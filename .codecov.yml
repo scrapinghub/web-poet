@@ -4,3 +4,6 @@ comment:
 coverage:
   status:
     project: false
+
+ignore:
+  - "web_poet/example.py"
