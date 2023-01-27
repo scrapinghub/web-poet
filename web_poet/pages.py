@@ -119,7 +119,7 @@ class ItemPage(Injectable, Returns[ItemT]):
 
         return await item_from_fields(
             self,
-            item_cls=self.item_cls,
+            item_cls=select_fields.swap_item_cls or self.item_cls,
             skip_nonitem_fields=self._skip_nonitem_fields,
             field_names=field_names,
             on_unknown_field=select_fields.on_unknown_field,

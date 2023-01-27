@@ -693,13 +693,16 @@ async def test_select_fields_include() -> None:
     assert page.call_counter == {"x": 1, "y": 1, "z": 1}
 
     # Required fields from the item cls which are not included raise an TypeError
+    expected_type_error_msg = (
+        r"__init__\(\) missing 1 required positional argument: 'x'"
+    )
     page = BigPage(SelectFields(include=[]))
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=expected_type_error_msg):
         item = await page.to_item()
     assert page.call_counter == {}
 
     page = BigPage(SelectFields(include=["y", "z"]))
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=expected_type_error_msg):
         await page.to_item()
     assert page.call_counter == {"y": 1, "z": 1}
 
@@ -786,7 +789,10 @@ async def test_select_fields_exclude() -> None:
     assert page.call_counter == {"x": 1, "y": 1, "z": 1}
 
     # Required fields from the item cls which are not included raise an TypeError
-    with pytest.raises(TypeError):
+    expected_type_error_msg = (
+        r"__init__\(\) missing 1 required positional argument: 'x'"
+    )
+    with pytest.raises(TypeError, match=expected_type_error_msg):
         page = BigPage(SelectFields(exclude=["x"]))
         await page.to_item()
         assert page.call_counter == {"y": 1, "z": 1}
@@ -829,8 +835,11 @@ async def test_select_fields_include_exclude() -> None:
     assert page.call_counter == {"x": 1}
 
     # If the fields cancel out, then any required field should error out.
+    expected_type_error_msg = (
+        r"__init__\(\) missing 1 required positional argument: 'x'"
+    )
     page = BigPage(SelectFields(include=["x", "y"], exclude=["x", "y"]))
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=expected_type_error_msg):
         item = await page.to_item()
     assert page.call_counter == {}
 
@@ -864,19 +873,35 @@ async def test_select_fields_include_exclude() -> None:
     assert page.call_counter == {"x": 1, "y": 1, "z": 1}
 
     for exclude in (["y"], [], None):
-        page = BigPage(SelectFields(include=[], exclude=exclude))
-        with pytest.raises(TypeError):
+        # Ignore some of the types below since mypy is not expecting an empty list
+
+        page = BigPage(SelectFields(include=[], exclude=exclude))  # type: ignore[arg-type]
+        with pytest.raises(TypeError, match=expected_type_error_msg):
             item = await page.to_item()
         assert page.call_counter == {}
 
-        page = BigPage(SelectFields(include=["x", "z"], exclude=exclude))
+        page = BigPage(SelectFields(include=["x", "z"], exclude=exclude))  # type: ignore[arg-type]
         item = await page.to_item()
         assert item == BigItem(x=1, y=None, z=3)
         assert page.call_counter == {"x": 1, "z": 1}
 
 
-# tests
-# - no SelectFields attribute
-# - swap_item_cls
-# - swap_item_cls but include/exlude is omitted
-# - multiple SelectField attributes
+@pytest.mark.asyncio
+async def test_select_fields_swap_item_cls() -> None:
+    # Basic case
+    page = BigPage(SelectFields(exclude=["x"], swap_item_cls=SmallItem))
+    item = await page.to_item()
+    assert item == SmallItem(y=2, z=3)
+    assert page.call_counter == {"y": 1, "z": 1}
+
+    page = BigPage(SelectFields(include=["y", "z"], swap_item_cls=SmallItem))
+    item = await page.to_item()
+    assert item == SmallItem(y=2, z=3)
+    assert page.call_counter == {"y": 1, "z": 1}
+
+    # If page object supplies the new item class with unknown fields, it should
+    # raise an error
+    expected_type_error_msg = r"__init__\(\) got an unexpected keyword argument 'x'"
+    page = BigPage(SelectFields(swap_item_cls=SmallItem))
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        await page.to_item()
