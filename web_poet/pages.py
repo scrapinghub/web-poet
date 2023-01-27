@@ -105,7 +105,7 @@ class ItemPage(Injectable, Returns[ItemT]):
             return None
 
         if isinstance(select_fields.include, list) and len(select_fields.include) == 0:
-            return select_fields.include
+            return set()
 
         page_obj_fields = get_fields_dict(self).keys()
         fields = (set(select_fields.include or []) or page_obj_fields) - set(
