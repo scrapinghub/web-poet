@@ -285,8 +285,3 @@ class SelectFields:
     #: Setting it to ``"raise"`` would raise an :class:`AttributeError`,
     #: ``"warn"`` produces a :class:`UserWarning`, while ``"ignore"`` does nothing.
     on_unknown_field: UnknownFieldActions = "raise"
-
-    #: Swaps the item class that the page object returns. Use this to prevent
-    #: errors when excluding a required field by swapping the assigned item class
-    #: without the required field.
-    swap_item_cls: Optional[Type] = None

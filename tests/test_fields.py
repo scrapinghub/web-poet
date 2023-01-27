@@ -643,14 +643,6 @@ class BigItem:
 
 
 @attrs.define
-class SmallItem:
-    """Same with ``BigItem`` but removes the required ``x`` field."""
-
-    y: Optional[int] = None
-    z: Optional[int] = None
-
-
-@attrs.define
 class BigPage(ItemPage[BigItem]):
     select_fields: Optional[SelectFields] = None
     call_counter: DefaultDict = attrs.field(factory=lambda: defaultdict(int))
@@ -911,27 +903,3 @@ async def test_select_fields_include_exclude() -> None:
         assert item == BigItem(x=1, y=None, z=3)
         assert page.fields_to_extract == {"x", "z"}
         assert page.call_counter == {"x": 1, "z": 1}
-
-
-@pytest.mark.asyncio
-async def test_select_fields_swap_item_cls() -> None:
-    # Basic case
-    page = BigPage(SelectFields(exclude=["x"], swap_item_cls=SmallItem))
-    item = await page.to_item()
-    assert item == SmallItem(y=2, z=3)
-    assert page.fields_to_extract == {"y", "z"}
-    assert page.call_counter == {"y": 1, "z": 1}
-
-    page = BigPage(SelectFields(include=["y", "z"], swap_item_cls=SmallItem))
-    item = await page.to_item()
-    assert item == SmallItem(y=2, z=3)
-    assert page.fields_to_extract == {"y", "z"}
-    assert page.call_counter == {"y": 1, "z": 1}
-
-    # If page object supplies the new item class with unknown fields, it should
-    # raise an error
-    expected_type_error_msg = r"__init__\(\) got an unexpected keyword argument 'x'"
-    page = BigPage(SelectFields(swap_item_cls=SmallItem))
-    with pytest.raises(TypeError, match=expected_type_error_msg):
-        await page.to_item()
-    assert page.fields_to_extract == {"x", "y", "z"}
