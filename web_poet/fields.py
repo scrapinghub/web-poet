@@ -268,9 +268,25 @@ def _without_unsupported_field_names(
 
 @attrs.define
 class SelectFields:
+    """This is used as a dependency in a page object to control which fields it
+    would populate the item class that it returns.
+    """
+
+    #: Fields that the page object would use to populate its item class.
     include: Optional[Iterable[str]] = None
+
+    #: Fields that the page object would exclude when populating its item class.
     exclude: Optional[Iterable[str]] = None
-    # when encountering an unknown field even after perfomring include/exclucde
-    # {"x", "not-exist-1", "not-exist-2"} - {"not-exist-1"}
+
+    #: Controls what happens when encountering an unknown field. For example,
+    #: an unknown field was passed via 'include' and the page object doesn't
+    #: recognize it.
+    #:
+    #: Setting it to ``"raise"`` would raise an :class:`AttributeError`,
+    #: ``"warn"`` produces a :class:`UserWarning`, while ``"ignore"`` does nothing.
     on_unknown_field: UnknownFieldActions = "raise"
+
+    #: Swaps the item class that the page object returns. Use this to prevent
+    #: errors when excluding a required field by swapping the assigned item class
+    #: without the required field.
     swap_item_cls: Optional[Type] = None

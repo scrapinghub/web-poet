@@ -757,7 +757,7 @@ async def test_select_fields_on_unknown_field_bad_value() -> None:
     )
     with pytest.raises(ValueError, match=expected_value_error_msg):
         await BigPage(
-            # ignore mypy error since it's expecting a value inside the Literal.
+            # ignore mypy error since it's expecting a valid value inside the Literal.
             SelectFields(include=["y", "not_existing"], on_unknown_field=invalid_val)  # type: ignore[arg-type]
         ).to_item()
 
