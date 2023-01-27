@@ -75,6 +75,13 @@ class ItemPage(Injectable, Returns[ItemT]):
     # TODO: cache, or maybe not? since users could swap the select_field to
     # reuse the same instance.
     def _get_select_fields(self) -> Optional[SelectFields]:
+        # TODO: Should we support other naming conventions? this means we need
+        # to iterate over all instance attributes to see if there's an instance
+        # of SelectFields. But this should also mean we need to check if there
+        # are multiple SelectField instances.
+        #
+        # for key, param in inspect.signature(self.__init__).parameters.items():
+
         select_fields = getattr(self, "select_fields", None)
         if not select_fields:
             return None
@@ -96,32 +103,26 @@ class ItemPage(Injectable, Returns[ItemT]):
         select_fields = self._get_select_fields()
         if select_fields is None:
             return None
-        all_fields = get_fields_dict(self).keys()
 
         if isinstance(select_fields.include, list) and len(select_fields.include) == 0:
             return select_fields.include
-        fields = (set(select_fields.include or []) or all_fields) - set(
+
+        page_obj_fields = get_fields_dict(self).keys()
+        fields = (set(select_fields.include or []) or page_obj_fields) - set(
             select_fields.exclude or []
         )
         return fields
 
     async def _partial_item(self) -> Optional[Any]:
-        # TODO: Should we support other naming conventions? this means we need
-        # to iterate over all instance attributes to see if there's an instance
-        # of SelectFields.
-        # for key, param in inspect.signature(self.__init__).parameters.items():
-
         select_fields = self._get_select_fields()
         if not select_fields:
             return None
-
-        field_names = self.fields_to_extract
 
         return await item_from_fields(
             self,
             item_cls=select_fields.swap_item_cls or self.item_cls,
             skip_nonitem_fields=self._skip_nonitem_fields,
-            field_names=field_names,
+            field_names=self.fields_to_extract,
             on_unknown_field=select_fields.on_unknown_field,
         )
 
