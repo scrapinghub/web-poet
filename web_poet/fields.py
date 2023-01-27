@@ -204,7 +204,7 @@ async def item_from_fields(
         field_names=field_names,
         on_unknown_field=on_unknown_field,
     )
-    if not field_names:
+    if field_names is None:
         field_names = list(item_dict.keys())
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
@@ -226,7 +226,7 @@ def item_from_fields_sync(
     on_unknown_field: UnknownFieldActions = "raise",
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
-    if not field_names:
+    if field_names is None:
         field_names = list(get_fields_dict(obj))
         if skip_nonitem_fields:
             field_names = _without_unsupported_field_names(item_cls, field_names)
@@ -241,7 +241,7 @@ def item_from_fields_sync(
 
 def _handle_unknown_field(obj, name, action: UnknownFieldActions = "raise") -> None:
     if action == "ignore":
-        return
+        return None
 
     msg = f"Field '{name}' isn't available in {get_fq_class_name(obj.__class__)}."
 

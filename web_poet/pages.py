@@ -72,7 +72,8 @@ class ItemPage(Injectable, Returns[ItemT]):
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
 
-    # TODO: cache
+    # TODO: cache, or maybe not? since users could swap the select_field to
+    # reuse the same instance.
     def _get_select_fields(self) -> Optional[SelectFields]:
         select_fields = getattr(self, "select_fields", None)
         if not select_fields:
@@ -96,9 +97,13 @@ class ItemPage(Injectable, Returns[ItemT]):
         if select_fields is None:
             return None
         all_fields = get_fields_dict(self).keys()
-        return (set(select_fields.include or []) or all_fields) - set(
+
+        if isinstance(select_fields.include, list) and len(select_fields.include) == 0:
+            return select_fields.include
+        fields = (set(select_fields.include or []) or all_fields) - set(
             select_fields.exclude or []
         )
+        return fields
 
     async def _partial_item(self) -> Optional[Any]:
         # TODO: Should we support other naming conventions? this means we need
