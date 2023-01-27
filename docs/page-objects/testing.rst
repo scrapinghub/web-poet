@@ -158,3 +158,45 @@ items do not depend on the machine timezone (e.g. if all datetime-derived data
 they contain is in UTC), the tests for them should work everywhere.
 
 .. _dateutil: https://github.com/dateutil/dateutil
+
+Storing fixtures in Git
+=======================
+
+Fixtures can take a lot of disk space, as they usually include page responses
+and may include other large files, so we recommend using `Git LFS`_ when
+storing them in Git repos to reduce the repo space and get other performance
+benefits. Even if your fixtures are currently small, it may be useful to do
+this from the beginning, as migrating files to LFS is not easy and requires
+rewriting the repo history.
+
+To use Git LFS you need a Git hosting provider that supports it, and major
+providers and software (e.g. GitHub, Bitbucket, GitLab) support it. There are
+also `implementations`_ for standalone Git servers.
+
+Assuming you store the fixtures in the directory named "fixtures" in the repo
+root, the workflow should be as following. Enable normal diffs for LFS files in
+this repo::
+
+  git config diff.lfs.textconv cat
+
+Enable LFS for the fixtures directory before committing anything in it::
+
+  git lfs track "fixtures/**"
+
+Commit the ``.gitattributes`` file (which stores the tracking information)::
+
+  git add .gitattributes
+  git commit
+
+After generating the fixtures just commit them as usual::
+
+  git add fixtures/test-1
+  git commit
+
+After this all usual commands including ``push``, ``pull`` or ``checkout``
+should work as expected on these files.
+
+Please also check the official Git LFS documentation for more information.
+
+.. _Git LFS: https://git-lfs.com/
+.. _implementations: https://github.com/git-lfs/git-lfs/wiki/Implementations
