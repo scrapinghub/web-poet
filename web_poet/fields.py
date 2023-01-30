@@ -16,6 +16,10 @@ _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
 
 
+def _fields_template():
+    return {"enabled": {}, "disabled": {}}
+
+
 @attrs.define
 class FieldInfo:
     """Information about a field"""
@@ -29,6 +33,9 @@ class FieldInfo:
     #: field processors
     out: Optional[List[Callable]] = None
 
+    #: when set to ``True``, the field is not populated on ``.to_item()`` calls.
+    disabled: bool = False
+
 
 class FieldsMixin:
     """A mixin which is required for a class to support fields"""
@@ -39,11 +46,24 @@ class FieldsMixin:
         # between subclasses, i.e. a decorator in a subclass doesn't affect
         # the base class. This is done by making decorator write to a
         # temporary location, and then merging it all on subclass creation.
-        this_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-        base_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, {})
+        this_class_fields = getattr(
+            cls, _FIELDS_INFO_ATTRIBUTE_WRITE, _fields_template()
+        )
+        base_class_fields = getattr(
+            cls, _FIELDS_INFO_ATTRIBUTE_READ, _fields_template()
+        )
         if base_class_fields or this_class_fields:
-            fields = {**base_class_fields, **this_class_fields}
-            setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
+            enabled = {**base_class_fields["enabled"], **this_class_fields["enabled"]}
+            disabled = {**this_class_fields["disabled"]}
+            for name, info in this_class_fields["disabled"].items():
+                if name in enabled:
+                    del enabled[name]
+                disabled[name] = info
+            setattr(
+                cls,
+                _FIELDS_INFO_ATTRIBUTE_READ,
+                {"enabled": enabled, "disabled": disabled},
+            )
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
 
@@ -54,6 +74,7 @@ def field(
     cached: bool = False,
     meta: Optional[dict] = None,
     out: Optional[List[Callable]] = None,
+    disabled: bool = False,
 ):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
@@ -85,10 +106,11 @@ def field(
 
         def __set_name__(self, owner, name):
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
-                setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
+                setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, _fields_template())
 
-            field_info = FieldInfo(name=name, meta=meta, out=out)
-            getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
+            field_info = FieldInfo(name=name, meta=meta, out=out, disabled=disabled)
+            switch = "disabled" if disabled else "enabled"
+            getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[switch][name] = field_info
 
         def __get__(self, instance, owner=None):
             return self.unbound_method(instance)
@@ -125,12 +147,20 @@ def field(
         return _field
 
 
-def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
+def get_fields_dict(
+    cls_or_instance, include_disabled: bool = False
+) -> Dict[str, FieldInfo]:
     """Return a dictionary with information about the fields defined
     for the class: keys are field names, and values are
     :class:`web_poet.fields.FieldInfo` instances.
     """
-    return getattr(cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, {})
+    fields_info = getattr(
+        cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, _fields_template()
+    )
+    fields_dict = fields_info["enabled"]
+    if include_disabled:
+        fields_dict.update(fields_info["disabled"])
+    return fields_dict
 
 
 T = TypeVar("T")
