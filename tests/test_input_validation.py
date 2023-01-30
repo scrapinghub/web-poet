@@ -11,7 +11,7 @@ import attrs
 import pytest
 
 from web_poet import ItemPage, Returns, field
-from web_poet.exceptions import InvalidInput
+from web_poet.exceptions import Retry, UseFallback
 
 
 @attrs.define
@@ -63,46 +63,89 @@ async def test_valid_input_async_field():
     assert await Page().a == "a"
 
 
-# Inalid input
+# Retry
 
 
-class BaseInvalidInputPage(BasePage):
+class BaseRetryPage(BasePage):
     def validate_input(self):  # noqa: D102
-        raise InvalidInput()
+        raise Retry()
 
 
-def test_invalid_input_sync_to_item():
-    class Page(BaseInvalidInputPage):
+def test_retry_sync_to_item():
+    class Page(BaseRetryPage):
         def to_item(self):
             return Item(a=self.a)
 
     page = Page()
-    with pytest.raises(InvalidInput):
+    with pytest.raises(Retry):
         page.to_item()
 
 
 @pytest.mark.asyncio
-async def test_invalid_input_async_to_item():
-    page = BaseInvalidInputPage()
-    with pytest.raises(InvalidInput):
+async def test_retry_async_to_item():
+    page = BaseRetryPage()
+    with pytest.raises(Retry):
         await page.to_item()
 
 
-def test_invalid_input_sync_field():
-    page = BaseInvalidInputPage()
-    with pytest.raises(InvalidInput):
+def test_retry_sync_field():
+    page = BaseRetryPage()
+    with pytest.raises(Retry):
         page.a
 
 
 @pytest.mark.asyncio
-async def test_invalid_input_async_field():
-    class Page(BaseInvalidInputPage):
+async def test_retry_async_field():
+    class Page(BaseRetryPage):
         @field
         async def a(self):
             return "a"
 
     page = Page()
-    with pytest.raises(InvalidInput):
+    with pytest.raises(Retry):
+        await page.a
+
+
+# Use fallback
+
+
+class BaseUseFallbackPage(BasePage):
+    def validate_input(self):  # noqa: D102
+        raise UseFallback()
+
+
+def test_use_fallback_sync_to_item():
+    class Page(BaseUseFallbackPage):
+        def to_item(self):
+            return Item(a=self.a)
+
+    page = Page()
+    with pytest.raises(UseFallback):
+        page.to_item()
+
+
+@pytest.mark.asyncio
+async def test_use_fallback_async_to_item():
+    page = BaseUseFallbackPage()
+    with pytest.raises(UseFallback):
+        await page.to_item()
+
+
+def test_use_fallback_sync_field():
+    page = BaseUseFallbackPage()
+    with pytest.raises(UseFallback):
+        page.a
+
+
+@pytest.mark.asyncio
+async def test_use_fallback_async_field():
+    class Page(BaseUseFallbackPage):
+        @field
+        async def a(self):
+            return "a"
+
+    page = Page()
+    with pytest.raises(UseFallback):
         await page.a
 
 
@@ -144,7 +187,7 @@ class BaseCachingPage(BasePage):
 
     def validate_input(self):  # noqa: D102
         if self._raise:
-            raise InvalidInput()
+            raise UseFallback()
         self._raise = True
 
 
@@ -213,7 +256,7 @@ async def test_recursion():
 
         def validate_input(self):
             if self._raise:
-                raise InvalidInput()
+                raise UseFallback()
             self._raise = True
             assert self.a == "a"
 
