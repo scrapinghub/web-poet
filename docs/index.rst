@@ -27,6 +27,7 @@ web-poet
    page-objects/rules
    page-objects/retries
    page-objects/page-params
+   page-objects/testing
 
 .. toctree::
    :caption: Writing frameworks

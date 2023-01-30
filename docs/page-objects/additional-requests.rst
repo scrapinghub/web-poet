@@ -1,4 +1,4 @@
-.. _advanced-requests:
+.. _additional-requests:
 
 ===================
 Additional Requests

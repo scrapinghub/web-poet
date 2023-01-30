@@ -82,7 +82,7 @@ Controlling Page Object behavior
 --------------------------------
 
 Let's try an example wherein :class:`~.PageParams` is able to control how
-:ref:`advanced-requests` are being used. Specifically, we are going to use
+:ref:`additional-requests` are being used. Specifically, we are going to use
 :class:`~.PageParams` to control the number of paginations being made.
 
 .. code-block:: python

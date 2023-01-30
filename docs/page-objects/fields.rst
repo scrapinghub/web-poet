@@ -1,4 +1,4 @@
-.. _web-poet-fields:
+.. _fields:
 
 ======
 Fields
@@ -92,7 +92,7 @@ Asynchronous fields
 The reason :class:`~.ItemPage` provides an async ``to_item`` method by
 default is that both regular and ``async def`` fields are supported.
 
-For example, you might need to send :ref:`advanced-requests` to extract some
+For example, you might need to send :ref:`additional-requests` to extract some
 of the attributes:
 
 .. code-block:: python
@@ -256,8 +256,8 @@ Consider the following badly written page object:
         def nane(self):
             return self.response.css(".name").get()
 
-Because the ``Product`` item class is used, a typo ("nane" instead of "name") 
-is detected at runtime: the creation of a ``Product`` instance would fail with 
+Because the ``Product`` item class is used, a typo ("nane" instead of "name")
+is detected at runtime: the creation of a ``Product`` instance would fail with
 a ``TypeError``, because of the unexpected keyword argument "nane".
 
 After fixing it (renaming "nane" method to "name"), another error is going to be
