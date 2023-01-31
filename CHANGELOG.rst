@@ -2,8 +2,22 @@
 Changelog
 =========
 
-0.7.0 (2023-01-18)
+0.7.1 (to be released)
 ----------------------
+
+* Updated the :ref:`tutorial <intro-tutorial>` to cover recent features and
+  focus on best practices. Also, a new module was added,
+  :mod:`web_poet.example`, that allows using page objects while following the
+  tutorial.
+
+* :ref:`web-poet-testing` now covers :ref:`Git LFS <git-lfs>` and
+  :ref:`scrapy-poet <web-poet-testing-scrapy-poet>`.
+
+* Improved test coverage for :ref:`fields <fields>`.
+
+
+0.7.0 (2023-01-18)
+------------------
 
 * Add :ref:`a framework for creating tests and running them with pytest
   <web-poet-testing>`.
