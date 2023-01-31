@@ -54,11 +54,18 @@ class FieldsMixin:
         )
         if base_class_fields or this_class_fields:
             enabled = {**base_class_fields["enabled"], **this_class_fields["enabled"]}
-            disabled = {**this_class_fields["disabled"]}
-            for name, info in this_class_fields["disabled"].items():
+            for name in this_class_fields["disabled"]:
                 if name in enabled:
                     del enabled[name]
-                disabled[name] = info
+
+            disabled = {
+                **base_class_fields["disabled"],
+                **this_class_fields["disabled"],
+            }
+            for name in base_class_fields["disabled"]:
+                if name in enabled:
+                    del disabled[name]
+
             setattr(
                 cls,
                 _FIELDS_INFO_ATTRIBUTE_READ,
@@ -157,7 +164,8 @@ def get_fields_dict(
     fields_info = getattr(
         cls_or_instance, _FIELDS_INFO_ATTRIBUTE_READ, _fields_template()
     )
-    fields_dict = fields_info["enabled"]
+    fields_dict = {}
+    fields_dict.update(fields_info["enabled"])
     if include_disabled:
         fields_dict.update(fields_info["disabled"])
     return fields_dict
