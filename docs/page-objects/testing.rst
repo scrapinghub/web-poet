@@ -159,6 +159,8 @@ they contain is in UTC), the tests for them should work everywhere.
 
 .. _dateutil: https://github.com/dateutil/dateutil
 
+.. _git-lfs:
+
 Storing fixtures in Git
 =======================
 
