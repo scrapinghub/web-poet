@@ -149,6 +149,44 @@ async def test_use_fallback_async_field():
         await page.a
 
 
+# Invalid input
+
+
+INVALID_ITEM = Item(a="invalid")
+
+
+class BaseInvalidInputPage(BasePage):
+    def validate_input(self):  # noqa: D102
+        return INVALID_ITEM
+
+
+def test_invalid_input_sync_to_item():
+    class Page(BaseInvalidInputPage):
+        def to_item(self):
+            return Item(a=self.a)
+
+    assert Page().to_item() == INVALID_ITEM
+
+
+@pytest.mark.asyncio
+async def test_invalid_input_async_to_item():
+    assert await BaseInvalidInputPage().to_item() == INVALID_ITEM
+
+
+def test_invalid_input_sync_field():
+    assert BaseInvalidInputPage().a == "invalid"
+
+
+@pytest.mark.asyncio
+async def test_invalid_input_async_field():
+    class Page(BaseInvalidInputPage):
+        @field
+        async def a(self):
+            return "a"
+
+    assert await Page().a == "invalid"
+
+
 # Unvalidated input
 
 

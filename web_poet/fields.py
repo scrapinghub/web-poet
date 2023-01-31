@@ -95,9 +95,8 @@ def field(
 
         @staticmethod
         def _validate(page_object):
-            validate_input = getattr(page_object, "_validate_input", None)
-            if validate_input is not None:
-                validate_input()
+            if hasattr(page_object, "validate_input"):
+                page_object._validate_input()
 
         @staticmethod
         def _process(value):
