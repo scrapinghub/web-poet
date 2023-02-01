@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.7.2 (2023-02-01)
+------------------
+
+* Restore the minimum version of ``itemadapter`` from 0.7.1 to 0.7.0, and
+  prevent a similar issue from happening again in the future.
+
+
 0.7.1 (2023-02-01)
 ------------------
 
