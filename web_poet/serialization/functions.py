@@ -16,7 +16,7 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
     return {
         "body.html": bytes(o.body),
         "other.json": json.dumps(
-            other_data, ensure_ascii=False, sort_keys=True
+            other_data, ensure_ascii=False, sort_keys=True, indent=2
         ).encode(),
     }
 
