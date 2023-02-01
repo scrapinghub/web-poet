@@ -97,8 +97,8 @@ Running tests
 =============
 
 The provided ``pytest`` plugin is automatically registered when ``web-poet`` is
-installed, and running ``pytest`` in a directory containing fixtures will
-discover them and run tests for them.
+installed, and running ``python -m pytest`` in a directory containing fixtures
+will discover them and run tests for them.
 
 .. _web-poet-testing-frozen_time:
 
