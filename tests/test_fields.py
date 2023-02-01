@@ -743,6 +743,14 @@ async def test_select_fields() -> None:
     assert page.fields_to_extract == ["x", "y"]
     assert page.call_counter == {"x": 1, "y": 1}
 
+    # If a non-SelectFields instance was passed to the `select_fields` init
+    # parameter, it would simply ignore it and use the default field directives.
+    page = BigPage(select_fields="not the instance it's expecting")  # type: ignore[arg-type]
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
+
     # The remaining tests below checks the different behaviors when encountering a
     # field which doesn't existing in the PO
     fields = {"x": True, "not_existing": True}
@@ -783,19 +791,14 @@ async def test_select_fields() -> None:
         assert page.fields_to_extract == ["x", "y"]
     assert page.call_counter == {"x": 1, "y": 1}
 
-
-@pytest.mark.asyncio
-async def test_select_fields_on_unknown_field_bad_value() -> None:
     # When SelectFields receive an invalid 'on_unknown_field' value, it should
-    # error out as well.
-    invalid_val = "invalid val"
-    expected_value_error_msg = (
-        f"web_poet.SelectFields only accepts 'ignore', 'warn', and 'raise' "
-        f"values. Received unrecognized '{invalid_val}' value which it treats as "
-        f"'ignore'."
+    # ignore it. Moreover, mypy should also raise an error (see
+    # tests_typing/test_fields)
+    page = BigPage(
+        # ignore mypy error since it's expecting a valid value inside the Literal.
+        SelectFields(fields=fields, on_unknown_field="bad val")  # type: ignore[arg-type]
     )
-    with pytest.raises(ValueError, match=expected_value_error_msg):
-        await BigPage(
-            # ignore mypy error since it's expecting a valid value inside the Literal.
-            SelectFields(fields=["y", "not_existing"], on_unknown_field=invalid_val)  # type: ignore[arg-type]
-        ).to_item()
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}

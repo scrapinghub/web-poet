@@ -138,12 +138,6 @@ class ItemPage(Injectable, Returns[ItemT]):
             raise AttributeError(msg)
         elif action == "warn":
             warn(msg)
-        else:
-            raise ValueError(
-                f"web_poet.SelectFields only accepts 'ignore', 'warn', and 'raise' "
-                f"values. Received unrecognized '{action}' value which it treats as "
-                f"'ignore'."
-            )
 
 
 @attr.s(auto_attribs=True)
