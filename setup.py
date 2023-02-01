@@ -6,7 +6,7 @@ with open("README.rst") as f:
 
 setup(
     name="web-poet",
-    version="0.7.0",
+    version="0.7.1",
     description="Zyte's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type="text/x-rst",
@@ -25,7 +25,7 @@ setup(
         "multidict",
         "w3lib >= 1.22.0",
         "async-lru >= 1.0.3",
-        "itemadapter >= 0.7.0",
+        "itemadapter >= 0.7.1",
         "andi",
         "python-dateutil",
         "time-machine",
