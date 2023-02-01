@@ -70,13 +70,11 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
-
-        partial_item = await self._partial_item()
-        if partial_item:
-            return partial_item
-
         return await item_from_fields(
-            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+            self,
+            item_cls=self.item_cls,
+            skip_nonitem_fields=self._skip_nonitem_fields,
+            field_names=self.fields_to_extract,
         )
 
     def _get_select_fields(self) -> Optional[SelectFields]:
@@ -125,21 +123,6 @@ class ItemPage(Injectable, Returns[ItemT]):
                 fields_to_extract.append(name)
 
         return fields_to_extract
-
-    async def _partial_item(self) -> Optional[Any]:
-        """This only creates a partial item when the ``SelectField`` is set in
-        the page object.
-        """
-        select_fields = self._get_select_fields()
-        if not select_fields:
-            return None
-
-        return await item_from_fields(
-            self,
-            item_cls=self.item_cls,
-            skip_nonitem_fields=self._skip_nonitem_fields,
-            field_names=self.fields_to_extract,
-        )
 
     def _handle_unknown_field(
         self, name: Set[str], action: UnknownFieldActions = "raise"
