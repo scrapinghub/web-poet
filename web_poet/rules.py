@@ -157,11 +157,11 @@ class RulesRegistry:
         if matched:
             # A common case when a page object subclasses another one with the
             # same URL pattern.
-            pattern_dupes = [
+            pattern_dupes = {
                 pattern
                 for pattern in matched.patterns.values()
                 if pattern == rule.for_patterns
-            ]
+            }
             if pattern_dupes:
                 rules_to_warn = [
                     r
@@ -169,11 +169,17 @@ class RulesRegistry:
                     for r in self.search(for_patterns=p, to_return=rule.to_return)
                 ] + [rule]
                 warnings.warn(
-                    f"Similar URL patterns {pattern_dupes} were declared earlier "
-                    f"that use to_return={rule.to_return}. The first, highest-priority "
-                    f"rule added to the registry will be used when matching "
-                    f"against URLs. Consider updating the priority of these rules: "
-                    f"{rules_to_warn}."
+                    f"The registry contains {len(rules_to_warn)} conflicting "
+                    f"rules with to_return={rule.to_return} "
+                    f"and the same URL pattern:\n\n"
+                    f"{self._format_list(pattern_dupes)} "
+                    f"\n\n"
+                    f"The first rule added to the registry is used when the URL patterns are the same and "
+                    f"the priorities are equal; other rules are ignored. "
+                    f"This is error-prone. Consider setting the priority explicitly "
+                    f"for these rules:\n\n"
+                    f"{self._format_list(rules_to_warn)}",
+                    stacklevel=3,  # optimized for the common case of @handle_urls
                 )
 
         self._rule_counter += 1
@@ -185,6 +191,10 @@ class RulesRegistry:
         self._item_matchers[rule.to_return].add_or_update(rule_id, rule.for_patterns)
 
         self._rules[rule_id] = rule
+
+    @classmethod
+    def _format_list(cls, objects: Iterable) -> str:
+        return "\n".join(repr(rule) for rule in objects)
 
     @classmethod
     def from_override_rules(
