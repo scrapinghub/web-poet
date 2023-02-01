@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.7.1 (to be released)
-----------------------
+0.7.1 (2023-02-01)
+------------------
 
 * Updated the :ref:`tutorial <intro-tutorial>` to cover recent features and
   focus on best practices. Also, a new module was added,
@@ -11,7 +11,12 @@ Changelog
   tutorial.
 
 * :ref:`web-poet-testing` now covers :ref:`Git LFS <git-lfs>` and
-  :ref:`scrapy-poet <web-poet-testing-scrapy-poet>`.
+  :ref:`scrapy-poet <web-poet-testing-scrapy-poet>`, and recommends
+  ``python -m pytest`` instead of ``pytest``.
+
+* Improved the warning message when duplicate ``ApplyRule`` objects are found.
+
+* ``HttpResponse-other.json`` content is now indented for better readability.
 
 * Improved test coverage for :ref:`fields <fields>`.
 
