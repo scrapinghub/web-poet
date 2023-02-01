@@ -652,98 +652,136 @@ class BigPage(ItemPage[BigItem]):
         self.call_counter["x"] += 1
         return 1
 
-    @field
+    @field(disabled=False)
     def y(self):
         self.call_counter["y"] += 1
         return 2
 
-    @field
+    @field(disabled=True)
     def z(self):
         self.call_counter["z"] += 1
         return 3
 
 
 @pytest.mark.asyncio
-async def test_select_fields_include() -> None:
-    # Basic case
-    page = BigPage(SelectFields(include=["x", "y"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=None)
-    assert page.fields_to_extract == {"x", "y"}
-    assert page.call_counter == {"x": 1, "y": 1}
-
-    # Repeated fields are ignored
-    page = BigPage(SelectFields(include=["x", "x"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=None)
-    assert page.fields_to_extract == {"x"}
-    assert page.call_counter == {"x": 1}
-
-    # Passing None value results in all fields to be extracted.
-    # Note that this is different when [] is passed. See test below.
-    page = BigPage(SelectFields(include=None))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=3)
-    assert page.fields_to_extract == {"x", "y", "z"}
-    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
-
+async def test_select_fields() -> None:
     # Required fields from the item cls which are not included raise an TypeError
     expected_type_error_msg = (
         r"__init__\(\) missing 1 required positional argument: 'x'"
     )
-    page = BigPage(SelectFields(include=[]))
-    with pytest.raises(TypeError, match=expected_type_error_msg):
-        item = await page.to_item()
-    assert page.fields_to_extract == set()
-    assert page.call_counter == {}
 
-    page = BigPage(SelectFields(include=["y", "z"]))
+    # When SelectFields isn't set, it should simply extract the non-disabled
+    # fields.
+    page = BigPage()
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
+
+    # If no field selection directive is given but SelectFields is set, it would
+    # use the default fields that are not disabled.
+    page = BigPage(SelectFields(fields=None))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
+
+    # Same case as above but given an empty dict.
+    page = BigPage(SelectFields(fields={}))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
+
+    # Select all fields
+    page = BigPage(SelectFields(fields={"*": True}))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=3)
+    assert page.fields_to_extract == ["x", "y", "z"]
+    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
+
+    # Don't select all fields
+    page = BigPage(SelectFields(fields={"*": False}))
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await page.to_item()
-    assert page.fields_to_extract == {"y", "z"}
-    assert page.call_counter == {"y": 1, "z": 1}
+    assert page.fields_to_extract == []
+    assert page.call_counter == {}
+
+    # Exclude all but one
+    page = BigPage(SelectFields(fields={"*": False, "x": True}))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=None, z=None)
+    assert page.fields_to_extract == ["x"]
+    assert page.call_counter == {"x": 1}
+
+    # Include all fields but one
+    page = BigPage(SelectFields(fields={"*": True, "z": False}))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
+
+    # overlapping directives on the same field should be okay
+    page = BigPage(SelectFields(fields={"*": True, "x": True, "y": True, "z": True}))
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=3)
+    assert page.fields_to_extract == ["x", "y", "z"]
+    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
+
+    # Exluding a required field throws an error
+    page = BigPage(SelectFields(fields={"x": False}))
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        item = await page.to_item()
+    assert page.fields_to_extract == ["y"]
+    assert page.call_counter == {"y": 1}
+
+    # boolean-like values are not supported. They are simply ignored and the
+    # page would revert back to the default field directives.
+    page = BigPage(SelectFields(fields={"x": 0, "y": 0, "z": 1}))  # type: ignore[dict-item]
+    item = await page.to_item()
+    assert item == BigItem(x=1, y=2, z=None)
+    assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
 
     # The remaining tests below checks the different behaviors when encountering a
     # field which doesn't existing in the PO
-    fields = ["x", "not_existing"]
+    fields = {"x": True, "not_existing": True}
     expected_attribute_error_msg = (
-        "Field 'not_existing' isn't available in tests.test_fields.BigPage"
+        "The {'not_existing'} fields isn't available in tests.test_fields.BigPage"
     )
 
     # Unknown field raises an AttributeError by default
-    page = BigPage(SelectFields(include=fields))
+    page = BigPage(SelectFields(fields=fields))
     with pytest.raises(AttributeError, match=expected_attribute_error_msg):
         await page.to_item()
-    assert page.fields_to_extract == set(fields)
+    with pytest.raises(AttributeError, match=expected_attribute_error_msg):
+        assert page.fields_to_extract
 
-    page = BigPage(SelectFields(include=fields, on_unknown_field="raise"))
+    page = BigPage(SelectFields(fields=fields, on_unknown_field="raise"))
     with pytest.raises(AttributeError, match=expected_attribute_error_msg):
         await page.to_item()
-    assert page.fields_to_extract == set(fields)
+    with pytest.raises(AttributeError, match=expected_attribute_error_msg):
+        assert page.fields_to_extract
 
-    # It should safely ignore it if page object has set skip_nonitem_fields
-    page = BigPage(SelectFields(include=fields, on_unknown_field="ignore"))
+    # It should safely ignore it as well.
+    page = BigPage(SelectFields(fields=fields, on_unknown_field="ignore"))
     with warnings.catch_warnings(record=True) as caught_warnings:
         item = await page.to_item()
-        assert item == BigItem(x=1, y=None, z=None)
         assert not caught_warnings
-    assert page.fields_to_extract == set(fields)
-    assert page.call_counter == {"x": 1}
+    assert item == BigItem(x=1, y=2, z=None)
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        assert page.fields_to_extract == ["x", "y"]
+        assert not caught_warnings
+    assert page.call_counter == {"x": 1, "y": 1}
 
     # When 'warn' is used, the same msg when 'raise' is used.
-    page = BigPage(SelectFields(include=fields, on_unknown_field="warn"))
-    with warnings.catch_warnings(record=True) as caught_warnings:
+    page = BigPage(SelectFields(fields=fields, on_unknown_field="warn"))
+    with pytest.warns(UserWarning, match=expected_attribute_error_msg):
         item = await page.to_item()
-        assert item == BigItem(x=1, y=None, z=None)
-        assert any(
-            [
-                True
-                for w in caught_warnings
-                if expected_attribute_error_msg in str(w.message)
-            ]
-        )
-    assert page.fields_to_extract == set(fields)
-    assert page.call_counter == {"x": 1}
+    assert item == BigItem(x=1, y=2, z=None)
+    with pytest.warns(UserWarning, match=expected_attribute_error_msg):
+        assert page.fields_to_extract == ["x", "y"]
+    assert page.call_counter == {"x": 1, "y": 1}
 
 
 @pytest.mark.asyncio
@@ -759,147 +797,5 @@ async def test_select_fields_on_unknown_field_bad_value() -> None:
     with pytest.raises(ValueError, match=expected_value_error_msg):
         await BigPage(
             # ignore mypy error since it's expecting a valid value inside the Literal.
-            SelectFields(include=["y", "not_existing"], on_unknown_field=invalid_val)  # type: ignore[arg-type]
+            SelectFields(fields=["y", "not_existing"], on_unknown_field=invalid_val)  # type: ignore[arg-type]
         ).to_item()
-
-
-@pytest.mark.asyncio
-async def test_select_fields_exclude() -> None:
-    # Basic case
-    page = BigPage(SelectFields(exclude=["y", "z"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=None)
-    assert page.fields_to_extract == {"x"}
-    assert page.call_counter == {"x": 1}
-
-    # Repeated fields are ignored
-    page = BigPage(SelectFields(exclude=["y", "y"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=3)
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-    # A value of None would return all fields
-    page = BigPage(SelectFields(exclude=None))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=3)
-    assert page.fields_to_extract == {"x", "y", "z"}
-    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
-
-    # Using an empty list returns all fields
-    page = BigPage(SelectFields(exclude=[]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=3)
-    assert page.fields_to_extract == {"x", "y", "z"}
-    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
-
-    # Required fields from the item cls which are not included raise an TypeError
-    expected_type_error_msg = (
-        r"__init__\(\) missing 1 required positional argument: 'x'"
-    )
-    with pytest.raises(TypeError, match=expected_type_error_msg):
-        page = BigPage(SelectFields(exclude=["x"]))
-        await page.to_item()
-    assert page.fields_to_extract == {"y", "z"}
-    assert page.call_counter == {"y": 1, "z": 1}
-
-    # Unlike the test setup in ``test_select_fields_include()``, we don't
-    # expect any errors here since 'exclude' actually removes them. However, if
-    # include and exclude were used together, and include introduced an unknown
-    # field which exclude hasn't removed, it should err out.
-    # See ``test_select_fields_include_exclude()``.
-    fields = ["y", "not_existing"]
-
-    page = BigPage(SelectFields(exclude=fields))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=3)
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-    page = BigPage(SelectFields(exclude=fields, on_unknown_field="raise"))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=3)
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-    page = BigPage(SelectFields(exclude=fields, on_unknown_field="ignore"))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=3)
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-    with warnings.catch_warnings(record=True) as caught_warnings:
-        page = BigPage(SelectFields(exclude=fields, on_unknown_field="warn"))
-        item = await page.to_item()
-        assert item == BigItem(x=1, y=None, z=3)
-        assert not caught_warnings
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-
-@pytest.mark.asyncio
-async def test_select_fields_include_exclude() -> None:
-    page = BigPage(SelectFields(include=["x", "y"], exclude=["y"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=None)
-    assert page.fields_to_extract == {"x"}
-    assert page.call_counter == {"x": 1}
-
-    # If the fields cancel out, then any required field should error out.
-    expected_type_error_msg = (
-        r"__init__\(\) missing 1 required positional argument: 'x'"
-    )
-    page = BigPage(SelectFields(include=["x", "y"], exclude=["x", "y"]))
-    with pytest.raises(TypeError, match=expected_type_error_msg):
-        item = await page.to_item()
-    assert page.fields_to_extract == set()
-    assert page.call_counter == {}
-
-    page = BigPage(
-        SelectFields(include=["x", "not_existing"], exclude=["not_existing"])
-    )
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=None)
-    assert page.fields_to_extract == {"x"}
-    assert page.call_counter == {"x": 1}
-
-    page = BigPage(SelectFields(include=["x", "y", "not_existing"], exclude=["y"]))
-    expected_attribute_error_msg = (
-        "Field 'not_existing' isn't available in tests.test_fields.BigPage"
-    )
-    with pytest.raises(AttributeError, match=expected_attribute_error_msg):
-        await page.to_item()
-    assert page.fields_to_extract == {"x", "not_existing"}
-
-    page = BigPage(SelectFields(include=None, exclude=["y"]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=None, z=3)
-    assert page.fields_to_extract == {"x", "z"}
-    assert page.call_counter == {"x": 1, "z": 1}
-
-    page = BigPage(SelectFields(include=None, exclude=None))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=3)
-    assert page.fields_to_extract == {"x", "y", "z"}
-    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
-
-    page = BigPage(SelectFields(include=None, exclude=[]))
-    item = await page.to_item()
-    assert item == BigItem(x=1, y=2, z=3)
-    assert page.fields_to_extract == {"x", "y", "z"}
-    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
-
-    for exclude in (["y"], [], None):
-        # Ignore some of the types below since mypy is not expecting an empty list
-
-        page = BigPage(SelectFields(include=[], exclude=exclude))  # type: ignore[arg-type]
-        with pytest.raises(TypeError, match=expected_type_error_msg):
-            item = await page.to_item()
-        assert page.fields_to_extract == set()
-        assert page.call_counter == {}
-
-        page = BigPage(SelectFields(include=["x", "z"], exclude=exclude))  # type: ignore[arg-type]
-        item = await page.to_item()
-        assert item == BigItem(x=1, y=None, z=3)
-        assert page.fields_to_extract == {"x", "z"}
-        assert page.call_counter == {"x": 1, "z": 1}

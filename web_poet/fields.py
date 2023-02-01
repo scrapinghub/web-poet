@@ -5,13 +5,22 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, Iterable, List, Literal, Optional, Type, TypeVar
-from warnings import warn
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    MutableMapping,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, ensure_awaitable, get_fq_class_name
+from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -185,7 +194,6 @@ async def item_from_fields(
     *,
     skip_nonitem_fields: bool = False,
     field_names: Optional[Iterable[str]] = None,
-    on_unknown_field: UnknownFieldActions = "raise",
 ) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
@@ -202,19 +210,14 @@ async def item_from_fields(
         item_cls=dict,
         skip_nonitem_fields=False,
         field_names=field_names,
-        on_unknown_field=on_unknown_field,
     )
     if field_names is None:
         field_names = list(item_dict.keys())
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
-    params = {}
-    for name in field_names:
-        try:
-            params[name] = await ensure_awaitable(item_dict[name])
-        except KeyError:
-            _handle_unknown_field(obj, name, on_unknown_field)
-    return item_cls(**params)
+    return item_cls(
+        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
+    )
 
 
 def item_from_fields_sync(
@@ -223,38 +226,13 @@ def item_from_fields_sync(
     *,
     skip_nonitem_fields: bool = False,
     field_names: Optional[Iterable[str]] = None,
-    on_unknown_field: UnknownFieldActions = "raise",
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     if field_names is None:
         field_names = list(get_fields_dict(obj))
         if skip_nonitem_fields:
             field_names = _without_unsupported_field_names(item_cls, field_names)
-    params = {}
-    for name in field_names:
-        try:
-            params[name] = getattr(obj, name)
-        except AttributeError:
-            _handle_unknown_field(obj, name, on_unknown_field)
-    return item_cls(**params)
-
-
-def _handle_unknown_field(obj, name, action: UnknownFieldActions = "raise") -> None:
-    if action == "ignore":
-        return None
-
-    msg = f"Field '{name}' isn't available in {get_fq_class_name(obj.__class__)}."
-
-    if action == "raise":
-        raise AttributeError(msg)
-    elif action == "warn":
-        warn(msg)
-    else:
-        raise ValueError(
-            f"web_poet.SelectFields only accepts 'ignore', 'warn', and 'raise' "
-            f"values. Received unrecognized '{action}' value which it treats as "
-            f"'ignore'."
-        )
+    return item_cls(**{name: getattr(obj, name) for name in field_names})
 
 
 def _without_unsupported_field_names(
@@ -272,15 +250,13 @@ class SelectFields:
     would populate the item class that it returns.
     """
 
-    #: Fields that the page object would use to populate its item class.
-    include: Optional[Iterable[str]] = None
-
-    #: Fields that the page object would exclude when populating its item class.
-    exclude: Optional[Iterable[str]] = None
+    #: Fields that the page object would use to populate its item class. It's a
+    #: mapping of field names to boolean values to where ``True`` would indicate
+    #: it being included in ``.to_item()`` calls.
+    fields: Optional[MutableMapping[str, bool]] = None
 
     #: Controls what happens when encountering an unknown field. For example,
-    #: an unknown field was passed via 'include' and the page object doesn't
-    #: recognize it.
+    #: an unknown field was passed and the page object doesn't recognize it.
     #:
     #: Setting it to ``"raise"`` would raise an :class:`AttributeError`,
     #: ``"warn"`` produces a :class:`UserWarning`, while ``"ignore"`` does nothing.
