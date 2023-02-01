@@ -728,7 +728,7 @@ async def test_select_fields() -> None:
     assert page.fields_to_extract == ["x", "y", "z"]
     assert page.call_counter == {"x": 1, "y": 1, "z": 1}
 
-    # Exluding a required field throws an error
+    # Excluding a required field throws an error
     page = BigPage(SelectFields(fields={"x": False}))
     with pytest.raises(TypeError, match=expected_type_error_msg):
         item = await page.to_item()

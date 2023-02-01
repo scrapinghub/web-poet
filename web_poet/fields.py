@@ -211,8 +211,7 @@ async def item_from_fields(
         skip_nonitem_fields=False,
         field_names=field_names,
     )
-    if field_names is None:
-        field_names = list(item_dict.keys())
+    field_names = field_names or list(item_dict.keys())
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
@@ -230,8 +229,8 @@ def item_from_fields_sync(
     """Synchronous version of :func:`item_from_fields`."""
     if field_names is None:
         field_names = list(get_fields_dict(obj))
-        if skip_nonitem_fields:
-            field_names = _without_unsupported_field_names(item_cls, field_names)
+    if skip_nonitem_fields:
+        field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
 
 
