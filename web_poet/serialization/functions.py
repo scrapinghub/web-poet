@@ -1,9 +1,20 @@
 import json
-from typing import Type
+from typing import Dict, Type
 
-from .. import HttpResponse, HttpResponseBody, HttpResponseHeaders, ResponseUrl
+from .. import (
+    HttpClient,
+    HttpResponse,
+    HttpResponseBody,
+    HttpResponseHeaders,
+    ResponseUrl,
+)
 from ..page_inputs.url import _Url
-from .api import SerializedLeafData, register_serialization
+from .api import (
+    SerializedLeafData,
+    deserialize_leaf,
+    register_serialization,
+    serialize_leaf,
+)
 
 
 def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
@@ -60,3 +71,32 @@ def _deserialize__Url(cls: Type[_Url], data: SerializedLeafData) -> _Url:
 
 
 register_serialization(_serialize__Url, _deserialize__Url)
+
+
+def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
+    serialized_data: SerializedLeafData = {}
+    for response_key, response in o.saved_responses.items():
+        serialized_response = serialize_leaf(response)
+        key_prefix = response_key + "-"
+        for k, v in serialized_response.items():
+            serialized_data[key_prefix + k] = v
+    return serialized_data
+
+
+def _deserialize_HttpClient(
+    cls: Type[HttpClient], data: SerializedLeafData
+) -> HttpClient:
+    serialized_responses: Dict[str, SerializedLeafData] = {}
+    for k, v in data.items():
+        response_key, subkey = k.rsplit("-", 1)
+        serialized_responses.setdefault(response_key, {})[subkey] = v
+
+    result = cls(return_only_saved_responses=True)
+    for response_key, serialized_response in serialized_responses.items():
+        result.saved_responses[response_key] = deserialize_leaf(
+            HttpResponse, serialized_response
+        )
+    return result
+
+
+register_serialization(_serialize_HttpClient, _deserialize_HttpClient)

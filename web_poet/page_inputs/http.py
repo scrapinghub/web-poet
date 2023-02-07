@@ -1,4 +1,5 @@
 import json
+from hashlib import sha1
 from typing import Any, AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urljoin
 
@@ -180,6 +181,10 @@ class HttpRequest:
 
         If *url* is relative, it is made absolute relative to :attr:`url`."""
         return _RequestUrl(urljoin(str(self.url), str(url)))
+
+    def fingerprint(self) -> str:
+        """Return the fingerprint of this request."""
+        return sha1(str(self.url).encode()).hexdigest()  # TODO
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)

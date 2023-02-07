@@ -39,8 +39,17 @@ class HttpClient:
     :ref:`advanced-downloader-impl` documentation.
     """
 
-    def __init__(self, request_downloader: Callable = None):
+    def __init__(
+        self,
+        request_downloader: Callable = None,
+        *,
+        save_responses: bool = False,
+        return_only_saved_responses: bool = False,
+    ):
         self._request_downloader = request_downloader or _perform_request
+        self.save_responses = save_responses
+        self.return_only_saved_responses = return_only_saved_responses
+        self.saved_responses: Dict[str, HttpResponse] = {}
 
     @staticmethod
     def _handle_status(
@@ -165,8 +174,16 @@ class HttpClient:
         There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
+        response_key = request.fingerprint()
+        if self.return_only_saved_responses:
+            saved_response = self.saved_responses.get(response_key)
+            if saved_response:
+                return saved_response
+            raise ValueError(f"No saved response for {request}")
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
+        if self.save_responses:
+            self.saved_responses[response_key] = response  # TODO: copy()?
         return response
 
     async def batch_execute(

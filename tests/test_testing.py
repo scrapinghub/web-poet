@@ -11,7 +11,7 @@ import time_machine
 from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
-from web_poet import HttpResponse, WebPage
+from web_poet import HttpClient, HttpRequest, HttpResponse, HttpResponseBody, WebPage
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
@@ -158,3 +158,48 @@ def test_pytest_frozen_time_tz_windows_pass(pytester, book_list_html_response) -
         2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzlocal()
     )
     _assert_frozen_item(frozen_time, pytester, book_list_html_response)
+
+
+@attrs.define
+class ClientPage(WebPage):
+    client: HttpClient
+
+    async def to_item(self) -> dict:  # noqa: D102
+        resp1 = await self.client.get("http://books.toscrape.com/1.html")
+        resp2 = await self.client.get("http://books.toscrape.com/2.html")
+        return {"foo": "bar", "additional": [resp1.body.decode(), resp2.body.decode()]}
+
+
+def _get_fp_for_url(url: str) -> str:
+    req = HttpRequest(url=url)
+    return req.fingerprint()
+
+
+def test_httpclient_serialize(pytester, book_list_html_response) -> None:
+    client = HttpClient()
+    body1 = HttpResponseBody(b"body1")
+    url1 = "http://books.toscrape.com/1.html"
+    response1 = HttpResponse(url=url1, body=body1, encoding="utf-8")
+    fp1 = _get_fp_for_url(url1)
+    client.saved_responses[fp1] = response1
+    body2 = HttpResponseBody(b"body2")
+    url2 = "http://books.toscrape.com/2.html"
+    response2 = HttpResponse(url=url2, body=body2, encoding="utf-8")
+    fp2 = _get_fp_for_url(url2)
+    client.saved_responses[fp2] = response2
+
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(ClientPage)
+    item = {
+        "foo": "bar",
+        "additional": ["body1", "body2"],
+    }
+    Fixture.save(base_dir, inputs=[book_list_html_response, client], item=item)
+    input_dir = base_dir / "test-1" / INPUT_DIR_NAME
+    assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
+        book_list_html_response.body
+    )
+    assert (input_dir / f"HttpClient-{fp1}-other.json").exists()
+    assert (input_dir / f"HttpClient-{fp1}-body.html").read_bytes() == bytes(body1)
+    assert (input_dir / f"HttpClient-{fp2}-body.html").read_bytes() == bytes(body2)
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
