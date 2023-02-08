@@ -9,6 +9,7 @@ from web_poet.page_inputs.http import (
     HttpRequestBody,
     HttpRequestHeaders,
     HttpResponse,
+    request_fingerprint,
 )
 from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
@@ -174,7 +175,7 @@ class HttpClient:
         There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
-        response_key = request.fingerprint()
+        response_key = request_fingerprint(request)
         if self.return_only_saved_responses:
             saved_response = self.saved_responses.get(response_key)
             if saved_response:
