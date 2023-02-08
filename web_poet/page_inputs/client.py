@@ -3,7 +3,7 @@ import logging
 from http import HTTPStatus
 from typing import Callable, Dict, List, Optional, Union
 
-from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions import HttpResponseError, NoSavedHttpResponse
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestBody,
@@ -180,7 +180,7 @@ class HttpClient:
             saved_response = self.saved_responses.get(request_fingerprint(request))
             if saved_response:
                 return saved_response
-            raise ValueError(f"No saved response for {request}")
+            raise NoSavedHttpResponse(request=request)
 
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
