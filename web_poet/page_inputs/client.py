@@ -175,16 +175,17 @@ class HttpClient:
         There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
-        response_key = request_fingerprint(request)
         if self.return_only_saved_responses:
-            saved_response = self.saved_responses.get(response_key)
+            saved_response = self.saved_responses.get(request_fingerprint(request))
             if saved_response:
                 return saved_response
             raise ValueError(f"No saved response for {request}")
+
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
-            self.saved_responses[response_key] = response  # TODO: copy()?
+            # TODO: copy()?
+            self.saved_responses[request_fingerprint(request)] = response
         return response
 
     async def batch_execute(
