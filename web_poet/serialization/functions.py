@@ -91,12 +91,11 @@ def _deserialize_HttpClient(
         response_key, subkey = k.rsplit("-", 1)
         serialized_responses.setdefault(response_key, {})[subkey] = v
 
-    result = cls(return_only_saved_responses=True)
+    responses: Dict[str, HttpResponse] = {}
     for response_key, serialized_response in serialized_responses.items():
-        result.saved_responses[response_key] = deserialize_leaf(
-            HttpResponse, serialized_response
-        )
-    return result
+        responses[response_key] = deserialize_leaf(HttpResponse, serialized_response)
+
+    return cls(return_only_saved_responses=True, responses=responses)
 
 
 register_serialization(_serialize_HttpClient, _deserialize_HttpClient)

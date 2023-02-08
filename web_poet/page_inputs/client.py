@@ -46,11 +46,12 @@ class HttpClient:
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
+        responses: Optional[Dict[str, HttpResponse]] = None,
     ):
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self.saved_responses: Dict[str, HttpResponse] = {}
+        self.saved_responses: Dict[str, HttpResponse] = responses or {}
 
     @staticmethod
     def _handle_status(

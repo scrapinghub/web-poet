@@ -177,17 +177,19 @@ def _get_fp_for_url(url: str) -> str:
 
 
 def test_httpclient(pytester, book_list_html_response) -> None:
-    client = HttpClient()
     body1 = HttpResponseBody(b"body1")
     url1 = "http://books.toscrape.com/1.html"
     response1 = HttpResponse(url=url1, body=body1, encoding="utf-8")
     fp1 = _get_fp_for_url(url1)
-    client.saved_responses[fp1] = response1
     body2 = HttpResponseBody(b"body2")
     url2 = "http://books.toscrape.com/2.html"
     response2 = HttpResponse(url=url2, body=body2, encoding="utf-8")
     fp2 = _get_fp_for_url(url2)
-    client.saved_responses[fp2] = response2
+    responses = {
+        fp1: response1,
+        fp2: response2,
+    }
+    client = HttpClient(responses=responses)
 
     base_dir = pytester.path / "fixtures" / get_fq_class_name(ClientPage)
     item = {
