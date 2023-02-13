@@ -88,5 +88,5 @@ class NoSavedHttpResponse(HttpError):
     def __init__(self, msg: str = None, request: HttpRequest = None):
         self.request = request
         if msg is None:
-            msg = f"There is no saved reponse available for this HTTP Request: {self.request}"
+            msg = f"There is no saved response available for this HTTP Request: {self.request}"
         super().__init__(msg)
