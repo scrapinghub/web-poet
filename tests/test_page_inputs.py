@@ -16,6 +16,7 @@ from web_poet.page_inputs import (
     HttpResponseBody,
     HttpResponseHeaders,
 )
+from web_poet.page_inputs.http import request_fingerprint
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
@@ -580,3 +581,29 @@ def test_responseurl_move() -> None:
         ),
     ):
         ResponseUrl("https://example.com")
+
+
+def test_request_fingerprint() -> None:
+    req1 = HttpRequest(url="http://toscrape.com/1")
+    req2 = HttpRequest(url="http://toscrape.com/1")
+    assert request_fingerprint(req1) == request_fingerprint(req2)
+    req3 = HttpRequest(url="http://toscrape.com/2")
+    assert request_fingerprint(req1) != request_fingerprint(req3)
+
+    req4 = HttpRequest(url="http://toscrape.com/1", method="POST")
+    assert request_fingerprint(req1) != request_fingerprint(req4)
+
+    req5 = HttpRequest(url="http://toscrape.com/1", body=b"")
+    assert request_fingerprint(req1) == request_fingerprint(req5)
+    req6 = HttpRequest(url="http://toscrape.com/1", body=b"foo")
+    assert request_fingerprint(req1) != request_fingerprint(req6)
+
+    req7 = HttpRequest(url="http://toscrape.com/1", headers={})
+    assert request_fingerprint(req1) == request_fingerprint(req7)
+    req8 = HttpRequest(url="http://toscrape.com/1", headers={"a": "b"})
+    assert request_fingerprint(req1) != request_fingerprint(req8)
+    req9 = HttpRequest(url="http://toscrape.com/1", headers={"A": "b"})
+    assert request_fingerprint(req8) == request_fingerprint(req9)
+    req10 = HttpRequest(url="http://toscrape.com/1", headers=[("a", "b"), ("a", "c")])
+    assert request_fingerprint(req1) != request_fingerprint(req10)
+    assert request_fingerprint(req8) != request_fingerprint(req10)

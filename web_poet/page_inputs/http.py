@@ -310,6 +310,6 @@ def request_fingerprint(req: HttpRequest) -> str:
     fp.update(req.method.encode() + b"\n")
     fp.update(canonicalize_url(str(req.url)).encode())
     for name, value in sorted(req.headers.items()):
-        fp.update(f"{name}:{value}\n".encode())
+        fp.update(f"{name.title()}:{value}\n".encode())
     fp.update(req.body)
     return fp.hexdigest()
