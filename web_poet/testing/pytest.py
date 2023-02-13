@@ -17,7 +17,13 @@ _version_tuple = getattr(pytest, "version_tuple", None)
 _new_pytest = _version_tuple and _version_tuple[0] >= 7
 
 
-class WebPoetFile(pytest.File):
+class _PathCompatMixin:
+    @property
+    def _path(self):
+        return self.path if _new_pytest else Path(self.fspath)
+
+
+class WebPoetFile(pytest.File, _PathCompatMixin):
     """Represents a directory containing test subdirectories for one Page Object."""
 
     @staticmethod
@@ -27,7 +33,7 @@ class WebPoetFile(pytest.File):
 
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:  # noqa: D102
         result: List[WebPoetCollector] = []
-        path = self.path if _new_pytest else Path(self.fspath)
+        path = self._path
         for entry in path.iterdir():
             if entry.is_dir():
                 item: WebPoetCollector = _get_collector(
@@ -40,23 +46,12 @@ class WebPoetFile(pytest.File):
         return self.sorted(result)
 
 
-class WebPoetCollector(pytest.Collector):
+class WebPoetCollector(pytest.Collector, _PathCompatMixin):
     """Represents a directory containing one test."""
 
-    def __init__(
-        self,
-        name: str,
-        parent=None,
-        config: Optional[pytest.Config] = None,
-        session: "Optional[pytest.Session]" = None,
-        fspath=None,
-        path: Optional[Path] = None,
-        nodeid: Optional[str] = None,
-    ) -> None:
-        super(WebPoetCollector, self).__init__(
-            name, parent, config, session, fspath, path, nodeid
-        )
-        self.fixture = Fixture(self.path)
+    def __init__(self, name: str, parent=None, **kwargs) -> None:
+        super(WebPoetCollector, self).__init__(name, parent, **kwargs)
+        self.fixture = Fixture(self._path)
 
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:
         """Return a list of children (items and collectors) for this
@@ -80,7 +75,7 @@ class WebPoetCollector(pytest.Collector):
             return field_tests + no_extra_fields_tests
 
 
-class _WebPoetItem(pytest.Item):
+class _WebPoetItem(pytest.Item, _PathCompatMixin):
     def __init__(self, *, fixture: Fixture, **kwargs) -> None:
         super().__init__(**kwargs)
         self.fixture = fixture
@@ -91,7 +86,7 @@ class WebPoetItem(_WebPoetItem):
         self.fixture.assert_full_item_correct()
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name}"
+        return self._path, 0, f"{self.fixture.short_name}"
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, ItemValueError):
@@ -112,7 +107,7 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
         self.fixture.assert_no_extra_fields()
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name}: extra fields"
+        return self._path, 0, f"{self.fixture.short_name}: extra fields"
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, FieldsUnexpected):
@@ -137,7 +132,7 @@ class WebPoetFieldItem(_WebPoetItem):
         self.fixture.assert_field_correct(self.field_name)
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name} @ {self.field_name}"
+        return self._path, 0, f"{self.fixture.short_name} @ {self.field_name}"
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, FieldValueError):
@@ -176,7 +171,9 @@ def collect_file_hook(
     return None
 
 
-def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager):
+def pytest_addoption(
+    parser: "pytest.Parser", pluginmanager: "pytest.PytestPluginManager"
+):
     parser.addoption(
         "--web-poet-test-per-item",
         dest="WEB_POET_TEST_PER_ITEM",
@@ -187,17 +184,17 @@ def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginMa
 
 if _new_pytest:
 
-    def _get_collector(
-        parent: pytest.Collector, *, name: str, path: Path
-    ) -> WebPoetCollector:
-        return WebPoetCollector.from_parent(
+    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
+        return WebPoetItem.from_parent(
             parent,
             name=name,
             path=path,
         )
 
-    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
-        return WebPoetItem.from_parent(
+    def _get_collector(
+        parent: pytest.Collector, *, name: str, path: Path
+    ) -> WebPoetCollector:
+        return WebPoetCollector.from_parent(
             parent,
             name=name,
             path=path,
@@ -221,6 +218,15 @@ else:
         return WebPoetItem.from_parent(
             parent,
             name=name,
+        )
+
+    def _get_collector(
+        parent: pytest.Collector, *, name: str, path: Path
+    ) -> WebPoetCollector:
+        return WebPoetCollector.from_parent(
+            parent,
+            name=name,
+            fspath=py.path.local(path),
         )
 
     def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
