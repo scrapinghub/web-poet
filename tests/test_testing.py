@@ -205,3 +205,23 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_httpclient_no_response(pytester, book_list_html_response) -> None:
+    body1 = HttpResponseBody(b"body1")
+    url1 = "http://books.toscrape.com/1.html"
+    request1 = HttpRequest(url1)
+    response1 = HttpResponse(url=url1, body=body1, encoding="utf-8")
+    responses = [
+        (request1, response1),
+    ]
+    client = HttpClient(responses=responses)
+
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(ClientPage)
+    item = {
+        "foo": "bar",
+        "additional": ["body1", "body2"],
+    }
+    Fixture.save(base_dir, inputs=[book_list_html_response, client], item=item)
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
