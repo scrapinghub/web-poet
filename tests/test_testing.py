@@ -12,7 +12,6 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, HttpResponseBody, WebPage
-from web_poet.page_inputs.http import request_fingerprint
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
@@ -171,24 +170,19 @@ class ClientPage(WebPage):
         return {"foo": "bar", "additional": [resp1.body.decode(), resp2.body.decode()]}
 
 
-def _get_fp_for_url(url: str) -> str:
-    req = HttpRequest(url=url)
-    return request_fingerprint(req)
-
-
 def test_httpclient(pytester, book_list_html_response) -> None:
     body1 = HttpResponseBody(b"body1")
     url1 = "http://books.toscrape.com/1.html"
+    request1 = HttpRequest(url1)
     response1 = HttpResponse(url=url1, body=body1, encoding="utf-8")
-    fp1 = _get_fp_for_url(url1)
     body2 = HttpResponseBody(b"body2")
     url2 = "http://books.toscrape.com/2.html"
+    request2 = HttpRequest(url2)
     response2 = HttpResponse(url=url2, body=body2, encoding="utf-8")
-    fp2 = _get_fp_for_url(url2)
-    responses = {
-        fp1: response1,
-        fp2: response2,
-    }
+    responses = [
+        (request1, response1),
+        (request2, response2),
+    ]
     client = HttpClient(responses=responses)
 
     base_dir = pytester.path / "fixtures" / get_fq_class_name(ClientPage)
@@ -201,8 +195,13 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
         book_list_html_response.body
     )
-    assert (input_dir / f"HttpClient-{fp1}-other.json").exists()
-    assert (input_dir / f"HttpClient-{fp1}-body.html").read_bytes() == bytes(body1)
-    assert (input_dir / f"HttpClient-{fp2}-body.html").read_bytes() == bytes(body2)
+    assert (input_dir / "HttpClient-0-HttpRequest.other.json").exists()
+    assert (input_dir / "HttpClient-0-HttpResponse.other.json").exists()
+    assert (input_dir / "HttpClient-0-HttpResponse.body.html").read_bytes() == bytes(
+        body1
+    )
+    assert (input_dir / "HttpClient-1-HttpResponse.body.html").read_bytes() == bytes(
+        body2
+    )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)

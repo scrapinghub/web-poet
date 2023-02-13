@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from http import HTTPStatus
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from web_poet.exceptions import HttpResponseError, NoSavedHttpResponse
 from web_poet.page_inputs.http import (
@@ -9,7 +9,6 @@ from web_poet.page_inputs.http import (
     HttpRequestBody,
     HttpRequestHeaders,
     HttpResponse,
-    request_fingerprint,
 )
 from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
@@ -46,12 +45,14 @@ class HttpClient:
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
-        responses: Optional[Dict[str, HttpResponse]] = None,
+        responses: Optional[Iterable[Tuple[HttpRequest, HttpResponse]]] = None,
     ):
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self.saved_responses: Dict[str, HttpResponse] = responses or {}
+        self.saved_responses: List[Tuple[HttpRequest, HttpResponse]] = (
+            list(responses) if responses else []
+        )
 
     @staticmethod
     def _handle_status(
@@ -177,16 +178,16 @@ class HttpClient:
         because :class:`~.HttpResponseError` is not raised for them.
         """
         if self.return_only_saved_responses:
-            saved_response = self.saved_responses.get(request_fingerprint(request))
-            if saved_response:
-                return saved_response
+            for saved_request, saved_response in self.saved_responses:
+                if self.compare_requests(saved_request, request):
+                    return saved_response
             raise NoSavedHttpResponse(request=request)
 
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
             # TODO: copy()?
-            self.saved_responses[request_fingerprint(request)] = response
+            self.saved_responses.append((request, response))
         return response
 
     async def batch_execute(
@@ -227,3 +228,16 @@ class HttpClient:
             *coroutines, return_exceptions=return_exceptions
         )
         return responses
+
+    @staticmethod
+    def compare_requests(  # noqa: D102
+        request1: HttpRequest, request2: HttpRequest
+    ) -> bool:
+        return all(
+            [
+                request1.method == request2.method,
+                str(request1.url) == str(request2.url),
+                request1.headers == request2.headers,
+                request1.body == request2.body,
+            ]
+        )
