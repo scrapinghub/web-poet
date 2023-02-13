@@ -60,7 +60,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
     Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     result = pytester.runpytest()
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=2)
 
 
 def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
@@ -68,7 +68,7 @@ def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
     base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
     Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1)
+    result.assert_outcomes(failed=1, passed=1)
 
 
 @attrs.define(kw_only=True)
@@ -114,7 +114,7 @@ def _assert_frozen_item(
     # the result should contain frozen_time in the datetime fields
     result = pytester.runpytest()
     if outcomes is None:
-        outcomes = {"passed": 1}
+        outcomes = {"passed": len(attrs.fields(Product)) + 1}
     result.assert_outcomes(**outcomes)
 
 

@@ -3,7 +3,7 @@ from _pytest.assertion.util import assertrepr_compare
 
 
 def comparison_error_message(
-    config: pytest.Config, op: str, expected, got, prefix: str = ""
+    config: "pytest.Config", op: str, expected, got, prefix: str = ""
 ) -> str:
     """Generate an error message"""
     lines = [prefix] if prefix else []
