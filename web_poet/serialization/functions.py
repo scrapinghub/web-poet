@@ -110,7 +110,7 @@ register_serialization(_serialize__Url, _deserialize__Url)
 
 def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
     serialized_data: SerializedLeafData = {}
-    for i, (request, response) in enumerate(o.saved_responses):
+    for i, (request, response) in enumerate(o.get_saved_responses()):
         serialized_request = serialize_leaf(request)
         for k, v in serialized_request.items():
             serialized_data[f"{i}-HttpRequest.{k}"] = v

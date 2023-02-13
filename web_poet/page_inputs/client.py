@@ -9,6 +9,7 @@ from web_poet.page_inputs.http import (
     HttpRequestBody,
     HttpRequestHeaders,
     HttpResponse,
+    request_fingerprint,
 )
 from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
@@ -50,9 +51,9 @@ class HttpClient:
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self.saved_responses: List[Tuple[HttpRequest, HttpResponse]] = (
-            list(responses) if responses else []
-        )
+        self._saved_responses: Dict[str, Tuple[HttpRequest, HttpResponse]] = {
+            request_fingerprint(req): (req, resp) for req, resp in responses or {}
+        }
 
     @staticmethod
     def _handle_status(
@@ -178,8 +179,8 @@ class HttpClient:
         because :class:`~.HttpResponseError` is not raised for them.
         """
         if self.return_only_saved_responses:
-            for saved_request, saved_response in self.saved_responses:
-                if self.compare_requests(saved_request, request):
+            for fp, (_, saved_response) in self._saved_responses.items():
+                if request_fingerprint(request) == fp:
                     return saved_response
             raise NoSavedHttpResponse(request=request)
 
@@ -187,7 +188,7 @@ class HttpClient:
         self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
             # TODO: copy()?
-            self.saved_responses.append((request, response))
+            self._saved_responses[request_fingerprint(request)] = (request, response)
         return response
 
     async def batch_execute(
@@ -229,15 +230,6 @@ class HttpClient:
         )
         return responses
 
-    @staticmethod
-    def compare_requests(  # noqa: D102
-        request1: HttpRequest, request2: HttpRequest
-    ) -> bool:
-        return all(
-            [
-                request1.method == request2.method,
-                str(request1.url) == str(request2.url),
-                request1.headers == request2.headers,
-                request1.body == request2.body,
-            ]
-        )
+    def get_saved_responses(self) -> Iterable[Tuple[HttpRequest, HttpResponse]]:
+        """Return saved requests and responses."""
+        return self._saved_responses.values()
