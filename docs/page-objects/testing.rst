@@ -57,14 +57,14 @@ it, that contains data for Page Object inputs and output::
         ├── test-1
         │   ├── inputs
         │   │   ├── HttpResponse-body.html
-        │   │   ├── HttpResponse-other.json
+        │   │   ├── HttpResponse-info.json
         │   │   └── ResponseUrl.txt
         │   ├── meta.json
         │   └── output.json
         └─── test-2
             ├── inputs
             │   ├── HttpResponse-body.html
-            │   ├── HttpResponse-other.json
+            │   ├── HttpResponse-info.json
             │   └── ResponseUrl.txt
             ├── meta.json
             └── output.json
