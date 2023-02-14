@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, Set, Union
 import pytest
 
 from web_poet.testing.exceptions import (
+    FieldMissing,
     FieldsUnexpected,
     FieldValueError,
     ItemValueError,
@@ -144,6 +145,9 @@ class WebPoetFieldItem(_WebPoetItem):
                 got=got,
                 prefix=f"item.{self.field_name} is not correct.",
             )
+        elif isinstance(excinfo.value, FieldMissing):
+            field_name = excinfo.value.args[0]
+            return f"item.{field_name} is missing."
         else:
             return super().repr_failure(excinfo, style)
 
