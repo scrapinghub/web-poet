@@ -57,20 +57,101 @@ class MyItemPage(WebPage):
         return {"foo": "bar"}
 
 
+class MyItemPage2(WebPage):
+    async def to_item(self) -> dict:  # noqa: D102
+        return {"foo": None}
+
+
+def _save_fixture(pytester, page_cls, page_inputs, expected):
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
+    Fixture.save(base_dir, inputs=page_inputs, item=expected)
+
+
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
-    item = {"foo": "bar"}
-    base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar"},
+    )
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)
 
 
-def test_pytest_plugin_fail(pytester, book_list_html_response) -> None:
-    item = {"foo": "wrong"}
-    base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
-    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "not bar"},
+    )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, passed=1)
+    result.stdout.fnmatch_lines("item.foo is not correct*")
+
+
+def test_pytest_plugin_bad_field_value_None(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage2,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, passed=1)
+    result.stdout.fnmatch_lines("item.foo is not correct*")
+    result.stdout.fnmatch_lines("Expected: 'bar', got: None*")
+
+
+def test_pytest_plugin_missing_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar", "foo2": "bar2"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, passed=2)
+    result.stdout.fnmatch_lines("item.foo2 is missing*")
+
+
+def test_pytest_plugin_extra_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo2": "bar2"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=2, passed=0)
+    result.stdout.fnmatch_lines("item.foo2 is missing*")
+    result.stdout.fnmatch_lines("*unexpected fields*")
+    result.stdout.fnmatch_lines("*foo = 'bar'*")
+
+
+def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar"},
+    )
+    result = pytester.runpytest("--web-poet-test-per-item")
+    result.assert_outcomes(passed=1)
+
+
+def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "not bar"},
+    )
+    result = pytester.runpytest("--web-poet-test-per-item")
+    result.assert_outcomes(passed=0, failed=1)
+
+    result.stdout.fnmatch_lines("*{'foo': 'bar'} != {'foo': 'not bar'}*")
+    result.stdout.fnmatch_lines("*The output doesn't match*")
 
 
 @attrs.define(kw_only=True)
