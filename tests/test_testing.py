@@ -145,7 +145,7 @@ def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> Non
 @pytest.mark.skipif(time_machine.HAVE_TZSET, reason="Tests Windows-specific code")
 def test_pytest_frozen_time_tz_windows_fail(pytester, book_list_html_response) -> None:
     frozen_time = datetime.datetime(
-        2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzoffset(None, -7.5)
+        2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzoffset(None, -7.5 * 3600)
     )
     _assert_frozen_item(
         frozen_time, pytester, book_list_html_response, outcomes={"failed": 1}
