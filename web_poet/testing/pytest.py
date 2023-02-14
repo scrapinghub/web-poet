@@ -120,7 +120,7 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
     def _format_extra_fields(self, extra_fields):
         lines = []
         for field, value in extra_fields.items():
-            lines.append(f" * {field} == {value!r}")
+            lines.append(f" * {field} = {value!r}")
         return "\n".join(lines)
 
 
