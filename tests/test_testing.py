@@ -16,6 +16,8 @@ from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
+N_TESTS = len(attrs.fields(Product)) + 1
+
 
 def test_save_fixture(book_list_html_response, tmp_path) -> None:
     base_dir = tmp_path / "fixtures" / "some.po"
@@ -114,7 +116,7 @@ def _assert_frozen_item(
     # the result should contain frozen_time in the datetime fields
     result = pytester.runpytest()
     if outcomes is None:
-        outcomes = {"passed": len(attrs.fields(Product)) + 1}
+        outcomes = {"passed": N_TESTS}
     result.assert_outcomes(**outcomes)
 
 
@@ -148,7 +150,10 @@ def test_pytest_frozen_time_tz_windows_fail(pytester, book_list_html_response) -
         2022, 3, 4, 20, 21, 22, tzinfo=dateutil.tz.tzoffset(None, -7.5 * 3600)
     )
     _assert_frozen_item(
-        frozen_time, pytester, book_list_html_response, outcomes={"failed": 1}
+        frozen_time,
+        pytester,
+        book_list_html_response,
+        outcomes={"failed": 1, "passed": N_TESTS - 1},
     )
 
 
