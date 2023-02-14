@@ -1,17 +1,8 @@
 import json
 from typing import Dict, List, Tuple, Type
 
-from .. import (
-    HttpClient,
-    HttpRequest,
-    HttpRequestBody,
-    HttpRequestHeaders,
-    HttpResponse,
-    HttpResponseBody,
-    HttpResponseHeaders,
-    ResponseUrl,
-)
-from ..page_inputs.url import RequestUrl, _Url
+from .. import HttpClient, HttpRequest, HttpRequestBody, HttpResponse, HttpResponseBody
+from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
     deserialize_leaf,
@@ -43,9 +34,9 @@ def _deserialize_HttpRequest(
     other_data = json.loads(data["other.json"])
     return cls(
         body=body,
-        url=RequestUrl(other_data["url"]),
+        url=other_data["url"],
         method=other_data["method"],
-        headers=HttpRequestHeaders(other_data["headers"]),
+        headers=other_data["headers"],
     )
 
 
@@ -74,9 +65,9 @@ def _deserialize_HttpResponse(
     other_data = json.loads(data["other.json"])
     return cls(
         body=body,
-        url=ResponseUrl(other_data["url"]),
+        url=other_data["url"],
         status=other_data["status"],
-        headers=HttpResponseHeaders(other_data["headers"]),
+        headers=other_data["headers"],
         encoding=other_data["_encoding"],
     )
 
