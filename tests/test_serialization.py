@@ -66,7 +66,7 @@ def test_serialization(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     serialized_deps = serialize([book_list_html_response, url])
-    other_json = f"""{{
+    info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
   "status": null,
@@ -75,7 +75,7 @@ def test_serialization(book_list_html_response) -> None:
     assert serialized_deps == {
         "HttpResponse": {
             "body.html": bytes(book_list_html_response.body),
-            "other.json": other_json,
+            "info.json": info_json,
         },
         "ResponseUrl": {
             "txt": url_str.encode(),
@@ -147,7 +147,7 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     assert (directory / "HttpResponse-body.html").read_bytes() == bytes(
         book_list_html_response.body
     )
-    assert (directory / "HttpResponse-other.json").exists()
+    assert (directory / "HttpResponse-info.json").exists()
     assert (directory / "ResponseUrl.txt").exists()
     assert (directory / "ResponseUrl.txt").read_text(
         encoding="utf-8"

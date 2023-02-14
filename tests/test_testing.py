@@ -30,7 +30,7 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
         assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
             book_list_html_response.body
         )
-        assert (input_dir / "HttpResponse-other.json").exists()
+        assert (input_dir / "HttpResponse-info.json").exists()
         assert (directory / OUTPUT_FILE_NAME).exists()
         assert json.loads((directory / OUTPUT_FILE_NAME).read_bytes()) == item
         if expected_meta:
@@ -195,8 +195,8 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
         book_list_html_response.body
     )
-    assert (input_dir / "HttpClient-0-HttpRequest.other.json").exists()
-    assert (input_dir / "HttpClient-0-HttpResponse.other.json").exists()
+    assert (input_dir / "HttpClient-0-HttpRequest.info.json").exists()
+    assert (input_dir / "HttpClient-0-HttpResponse.info.json").exists()
     assert (input_dir / "HttpClient-0-HttpResponse.body.html").read_bytes() == bytes(
         body1
     )

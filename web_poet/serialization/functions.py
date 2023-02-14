@@ -12,14 +12,14 @@ from .api import (
 
 
 def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
-    other_data = {
+    info = {
         "url": str(o.url),
         "method": o.method,
         "headers": list(o.headers.items()),
     }
     result: SerializedLeafData = {
-        "other.json": json.dumps(
-            other_data, ensure_ascii=False, sort_keys=True, indent=2
+        "info.json": json.dumps(
+            info, ensure_ascii=False, sort_keys=True, indent=2
         ).encode(),
     }
     if o.body:
@@ -31,12 +31,12 @@ def _deserialize_HttpRequest(
     cls: Type[HttpRequest], data: SerializedLeafData
 ) -> HttpRequest:
     body = HttpRequestBody(data.get("body.txt", b""))
-    other_data = json.loads(data["other.json"])
+    info = json.loads(data["info.json"])
     return cls(
         body=body,
-        url=other_data["url"],
-        method=other_data["method"],
-        headers=other_data["headers"],
+        url=info["url"],
+        method=info["method"],
+        headers=info["headers"],
     )
 
 
@@ -44,7 +44,7 @@ register_serialization(_serialize_HttpRequest, _deserialize_HttpRequest)
 
 
 def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
-    other_data = {
+    info = {
         "url": str(o.url),
         "status": o.status,
         "headers": list(o.headers.items()),
@@ -52,8 +52,8 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
     }
     return {
         "body.html": bytes(o.body),
-        "other.json": json.dumps(
-            other_data, ensure_ascii=False, sort_keys=True, indent=2
+        "info.json": json.dumps(
+            info, ensure_ascii=False, sort_keys=True, indent=2
         ).encode(),
     }
 
@@ -62,13 +62,13 @@ def _deserialize_HttpResponse(
     cls: Type[HttpResponse], data: SerializedLeafData
 ) -> HttpResponse:
     body = HttpResponseBody(data["body.html"])
-    other_data = json.loads(data["other.json"])
+    info = json.loads(data["info.json"])
     return cls(
         body=body,
-        url=other_data["url"],
-        status=other_data["status"],
-        headers=other_data["headers"],
-        encoding=other_data["_encoding"],
+        url=info["url"],
+        status=info["status"],
+        headers=info["headers"],
+        encoding=info["_encoding"],
     )
 
 
@@ -119,7 +119,7 @@ def _deserialize_HttpClient(
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
     for k, v in data.items():
-        # k is number-("HttpRequest"|"HttpResponse").("body"|"other").ext
+        # k is number-("HttpRequest"|"HttpResponse").("body"|"info").ext
         key, type_suffix = k.split("-", 1)
         type_name, suffix = type_suffix.split(".", 1)
         if type_name == "HttpRequest":
