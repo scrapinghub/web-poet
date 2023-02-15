@@ -374,13 +374,9 @@ def test_add_rule() -> None:
         instead_of=POTopLevelOverriden2,
         to_return=Product,
     )
-    # Since we're using f-strings to compare the warning emitted, don't use
-    # ``pytest.warns()`` here since it treats the msg as regex which translates
-    # the "(" and ")" characters differently from the expected message.
-    with warnings.catch_warnings(record=True) as warnings_emitted:
+    with pytest.warns(UserWarning, match="conflicting rules"):
         registry.add_rule(rule_3)
-    expected_msg = f"Consider updating the priority of these rules: {[rule_1, rule_3]}."
-    assert any([True for w in warnings_emitted if expected_msg in str(w.message)])
+
     assert registry.get_rules() == [rule_1, rule_2, rule_3]
 
 

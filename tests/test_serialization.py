@@ -66,7 +66,12 @@ def test_serialization(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     serialized_deps = serialize([book_list_html_response, url])
-    other_json = f'{{"_encoding": "utf-8", "headers": [], "status": null, "url": "{url_str}"}}'.encode()
+    other_json = f"""{{
+  "_encoding": "utf-8",
+  "headers": [],
+  "status": null,
+  "url": "{url_str}"
+}}""".encode()
     assert serialized_deps == {
         "HttpResponse": {
             "body.html": bytes(book_list_html_response.body),
