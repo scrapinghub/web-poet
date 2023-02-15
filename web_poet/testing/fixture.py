@@ -211,8 +211,8 @@ class Fixture:
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
         with fixture.output_path.open("w") as f:
-            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=True, indent=4)
+            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False, indent=4)
         if meta:
             with fixture.meta_path.open("w") as f:
-                json.dump(meta, f, ensure_ascii=True, indent=4)
+                json.dump(meta, f, ensure_ascii=False, indent=4)
         return fixture
