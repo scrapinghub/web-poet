@@ -42,7 +42,7 @@ jobs:
       uses: codecov/codecov-action@v3
       if: ${{ success() }}
       with:
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
   check:
     runs-on: ubuntu-latest

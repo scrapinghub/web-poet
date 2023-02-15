@@ -7,3 +7,4 @@ htmlcov/
 docs/_build
 *.egg-info/
 __pycache__/
+build/
