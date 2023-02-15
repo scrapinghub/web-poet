@@ -1,11 +1,4 @@
-"""Test scenarios where the input that a page object received is not valid and,
-as far as the page object can tell, retries will not make a difference because
-the received input does not seem to match the type of item the page object
-generates.
-
-For example, a scenario where a product page object gets a product list page as
-input, instead of a product details page.
-"""
+"""Test page object input validation scenarios."""
 
 import attrs
 import pytest
