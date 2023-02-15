@@ -2,13 +2,13 @@ class FieldMissing(AssertionError):
     pass
 
 
-class FieldValueError(AssertionError):
-    pass
-
-
-class ItemValueError(AssertionError):
+class FieldValueIncorrect(AssertionError):
     pass
 
 
 class FieldsUnexpected(AssertionError):
+    pass
+
+
+class ItemValueIncorrect(AssertionError):
     pass

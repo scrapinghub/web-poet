@@ -21,7 +21,12 @@ from web_poet.serialization import (
 )
 from web_poet.utils import ensure_awaitable, memoizemethod_noargs
 
-from .exceptions import FieldMissing, FieldsUnexpected, FieldValueError, ItemValueError
+from .exceptions import (
+    FieldMissing,
+    FieldsUnexpected,
+    FieldValueIncorrect,
+    ItemValueIncorrect,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +169,7 @@ class Fixture:
         output = self.get_output()
         expected_output = self.get_expected_output()
         if output != expected_output:
-            raise ItemValueError(output, expected_output)
+            raise ItemValueIncorrect(output, expected_output)
 
     def assert_field_correct(self, name: str):
         """Assert that a certain field in the output matches the expected value"""
@@ -173,7 +178,7 @@ class Fixture:
             raise FieldMissing(name)
         output = self.get_output()[name]
         if output != expected_output:
-            raise FieldValueError(output, expected_output)
+            raise FieldValueIncorrect(output, expected_output)
 
     def assert_no_extra_fields(self):
         """Assert that there are no extra fields in the output"""

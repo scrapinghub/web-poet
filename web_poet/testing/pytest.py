@@ -7,8 +7,8 @@ import pytest
 from web_poet.testing.exceptions import (
     FieldMissing,
     FieldsUnexpected,
-    FieldValueError,
-    ItemValueError,
+    FieldValueIncorrect,
+    ItemValueIncorrect,
 )
 from web_poet.testing.fixture import OUTPUT_FILE_NAME, Fixture
 from web_poet.testing.utils import comparison_error_message
@@ -90,7 +90,7 @@ class WebPoetItem(_WebPoetItem):
         return self._path, 0, f"{self.fixture.short_name}"
 
     def repr_failure(self, excinfo, style=None):
-        if isinstance(excinfo.value, ItemValueError):
+        if isinstance(excinfo.value, ItemValueIncorrect):
             got, expected = excinfo.value.args
             return comparison_error_message(
                 config=self.config,
@@ -136,7 +136,7 @@ class WebPoetFieldItem(_WebPoetItem):
         return self._path, 0, f"{self.fixture.short_name} @ {self.field_name}"
 
     def repr_failure(self, excinfo, style=None):
-        if isinstance(excinfo.value, FieldValueError):
+        if isinstance(excinfo.value, FieldValueIncorrect):
             got, expected = excinfo.value.args
             return comparison_error_message(
                 config=self.config,
