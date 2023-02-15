@@ -252,7 +252,7 @@ class ClientPage(WebPage):
 
     async def to_item(self) -> dict:  # noqa: D102
         resp1 = await self.client.get("http://books.toscrape.com/1.html")
-        resp2 = await self.client.get("http://books.toscrape.com/2.html")
+        resp2 = await self.client.post("http://books.toscrape.com/2.html", body=b"post")
         return {"foo": "bar", "additional": [resp1.body.decode(), resp2.body.decode()]}
 
 
@@ -261,7 +261,7 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     request1 = HttpRequest(url1)
     response1 = HttpResponse(url=url1, body=b"body1", encoding="utf-8")
     url2 = "http://books.toscrape.com/2.html"
-    request2 = HttpRequest(url2)
+    request2 = HttpRequest(url2, method="POST", body=b"post")
     response2 = HttpResponse(url=url2, body=b"body2", encoding="utf-8")
     responses = [
         (request1, response1),
