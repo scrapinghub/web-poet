@@ -1,7 +1,8 @@
 import asyncio
 import logging
+from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Union
 
 from web_poet.exceptions import HttpResponseError, NoSavedHttpResponse
 from web_poet.page_inputs.http import (
@@ -21,6 +22,18 @@ _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
 _StatusList = Union[str, int, List[Union[str, int]]]
+
+
+@dataclass
+class SavedResponseData:
+    """Class for storing a request and its result."""
+
+    request: HttpRequest
+    response: HttpResponse
+
+    def fingerprint(self) -> str:
+        """Return the request fingeprint."""
+        return request_fingerprint(self.request)
 
 
 class HttpClient:
@@ -46,13 +59,13 @@ class HttpClient:
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
-        responses: Optional[Iterable[Tuple[HttpRequest, HttpResponse]]] = None,
+        responses: Optional[Iterable[SavedResponseData]] = None,
     ):
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self._saved_responses: Dict[str, Tuple[HttpRequest, HttpResponse]] = {
-            request_fingerprint(req): (req, resp) for req, resp in responses or {}
+        self._saved_responses: Dict[str, SavedResponseData] = {
+            data.fingerprint(): data for data in responses or []
         }
 
     @staticmethod
@@ -179,15 +192,17 @@ class HttpClient:
         because :class:`~.HttpResponseError` is not raised for them.
         """
         if self.return_only_saved_responses:
-            for fp, (_, saved_response) in self._saved_responses.items():
+            for fp, saved_data in self._saved_responses.items():
                 if request_fingerprint(request) == fp:
-                    return saved_response
+                    return saved_data.response
             raise NoSavedHttpResponse(request=request)
 
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
-            self._saved_responses[request_fingerprint(request)] = (request, response)
+            self._saved_responses[request_fingerprint(request)] = SavedResponseData(
+                request, response
+            )
         return response
 
     async def batch_execute(
@@ -229,6 +244,6 @@ class HttpClient:
         )
         return responses
 
-    def get_saved_responses(self) -> Iterable[Tuple[HttpRequest, HttpResponse]]:
+    def get_saved_responses(self) -> Iterable[SavedResponseData]:
         """Return saved requests and responses."""
         return self._saved_responses.values()

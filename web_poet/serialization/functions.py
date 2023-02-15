@@ -1,7 +1,8 @@
 import json
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Type
 
 from .. import HttpClient, HttpRequest, HttpRequestBody, HttpResponse, HttpResponseBody
+from ..page_inputs.client import SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
@@ -101,11 +102,11 @@ register_serialization(_serialize__Url, _deserialize__Url)
 
 def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
     serialized_data: SerializedLeafData = {}
-    for i, (request, response) in enumerate(o.get_saved_responses()):
-        serialized_request = serialize_leaf(request)
+    for i, data in enumerate(o.get_saved_responses()):
+        serialized_request = serialize_leaf(data.request)
         for k, v in serialized_request.items():
             serialized_data[f"{i}-HttpRequest.{k}"] = v
-        serialized_response = serialize_leaf(response)
+        serialized_response = serialize_leaf(data.response)
         for k, v in serialized_response.items():
             serialized_data[f"{i}-HttpResponse.{k}"] = v
     return serialized_data
@@ -114,7 +115,7 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
 def _deserialize_HttpClient(
     cls: Type[HttpClient], data: SerializedLeafData
 ) -> HttpClient:
-    responses: List[Tuple[HttpRequest, HttpResponse]] = []
+    responses: List[SavedResponseData] = []
 
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
@@ -133,7 +134,7 @@ def _deserialize_HttpClient(
             continue
         request = deserialize_leaf(HttpRequest, serialized_request)
         response = deserialize_leaf(HttpResponse, serialized_response)
-        responses.append((request, response))
+        responses.append(SavedResponseData(request, response))
 
     return cls(return_only_saved_responses=True, responses=responses)
 
