@@ -12,6 +12,7 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage
+from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.client import SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
@@ -309,3 +310,39 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=3)
+
+
+@attrs.define
+class ClientExceptionPage(WebPage):
+    client: HttpClient
+
+    async def to_item(self) -> dict:  # noqa: D102
+        msg = ""
+        try:
+            await self.client.get("http://books.toscrape.com/1.html")
+        except HttpResponseError as ex:
+            msg = ex.args[0]
+        return {"foo": "bar", "exception": msg}
+
+
+def test_httpclient_exception(pytester, book_list_html_response) -> None:
+    url = "http://books.toscrape.com/1.html"
+    request = HttpRequest(url)
+    response = HttpResponse(url=url, body=b"body1", status=404, encoding="utf-8")
+    responses = [
+        SavedResponseData(request, response),
+    ]
+    client = HttpClient(responses=responses)
+
+    item = {
+        "foo": "bar",
+        "exception": "404 NOT_FOUND response for http://books.toscrape.com/1.html",
+    }
+    _save_fixture(
+        pytester,
+        page_cls=ClientExceptionPage,
+        page_inputs=[book_list_html_response, client],
+        expected=item,
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)

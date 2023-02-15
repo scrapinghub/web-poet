@@ -194,15 +194,20 @@ class HttpClient:
         if self.return_only_saved_responses:
             for fp, saved_data in self._saved_responses.items():
                 if request_fingerprint(request) == fp:
+                    self._handle_status(
+                        saved_data.response,
+                        saved_data.request,
+                        allow_status=allow_status,
+                    )
                     return saved_data.response
             raise NoSavedHttpResponse(request=request)
 
         response = await self._request_downloader(request)
-        self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
             self._saved_responses[request_fingerprint(request)] = SavedResponseData(
                 request, response
             )
+        self._handle_status(response, request, allow_status=allow_status)
         return response
 
     async def batch_execute(
