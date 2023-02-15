@@ -73,20 +73,3 @@ class HttpResponseError(HttpError):
         if msg is None:
             msg = f"Unexpected HTTP Response received: {self.response}"
         super().__init__(msg, request=request)
-
-
-class NoSavedHttpResponse(HttpError):
-    """Indicates that there is no saved response for this request.
-
-    Can only be raised when a :class:`~.HttpClient` instance is used to
-    get saved responses.
-
-    :param request: The :class:`~.HttpRequest` instance that was used.
-    :type request: HttpRequest
-    """
-
-    def __init__(self, msg: str = None, request: HttpRequest = None):
-        self.request = request
-        if msg is None:
-            msg = f"There is no saved response available for this HTTP Request: {self.request}"
-        super().__init__(msg)

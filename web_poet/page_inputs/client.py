@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Callable, Dict, Iterable, List, Optional, Union
 
-from web_poet.exceptions import HttpResponseError, NoSavedHttpResponse
+from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions.core import NoSavedHttpResponse
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestBody,
