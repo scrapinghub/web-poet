@@ -19,7 +19,14 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable
+from web_poet.utils import ensure_awaitable, memoizemethod_noargs
+
+from .exceptions import (
+    FieldMissing,
+    FieldsUnexpected,
+    FieldValueIncorrect,
+    ItemValueIncorrect,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +58,16 @@ class Fixture:
     def type_name(self) -> str:
         """The name of the type being tested."""
         return self.path.parent.name
+
+    @property
+    def test_name(self) -> str:
+        """The name of the test."""
+        return self.path.name
+
+    @property
+    def short_name(self) -> str:
+        """The name of this fixture"""
+        return f"{self.type_name}/{self.test_name}"
 
     @property
     def input_path(self) -> Path:
@@ -85,12 +102,27 @@ class Fixture:
             return {}
         return json.loads(self.meta_path.read_bytes())
 
-    def get_output(self) -> dict:
-        """Return the output from the recreated Page Object."""
-        po = self.get_page()
-        item = asyncio.run(ensure_awaitable(po.to_item()))
+    def _get_output(self) -> dict:
+        page = self.get_page()
+        item = asyncio.run(ensure_awaitable(page.to_item()))
         return ItemAdapter(item).asdict()
 
+    @memoizemethod_noargs
+    def get_output(self) -> dict:
+        """
+        Return the output from the recreated Page Object,
+        taking frozen time in account.
+        """
+        meta = self.get_meta()
+        frozen_time: Optional[str] = meta.get("frozen_time")
+        if frozen_time:
+            frozen_time_parsed = self._parse_frozen_time(frozen_time)
+            with time_machine.travel(frozen_time_parsed):
+                return self._get_output()
+        else:
+            return self._get_output()
+
+    @memoizemethod_noargs
     def get_expected_output(self) -> dict:
         """Return the saved output."""
         return json.loads(self.output_path.read_bytes())
@@ -127,18 +159,35 @@ class Fixture:
         tzinfo = ZoneInfo(f"Etc/GMT{-offset_hours:+d}")
         return parsed_value.replace(tzinfo=tzinfo)
 
-    def assert_output(self):
+    def get_expected_output_fields(self):
+        """Return a list of the expected output field names."""
+        output = self.get_expected_output()
+        return list(output.keys())
+
+    def assert_full_item_correct(self):
         """Get the output and assert that it matches the expected output."""
-        meta = self.get_meta()
-        frozen_time: Optional[str] = meta.get("frozen_time")
-        if frozen_time:
-            frozen_time_parsed = self._parse_frozen_time(frozen_time)
-            with time_machine.travel(frozen_time_parsed):
-                output = self.get_output()
-        else:
-            output = self.get_output()
+        output = self.get_output()
         expected_output = self.get_expected_output()
-        assert output == expected_output
+        if output != expected_output:
+            raise ItemValueIncorrect(output, expected_output)
+
+    def assert_field_correct(self, name: str):
+        """Assert that a certain field in the output matches the expected value"""
+        expected_output = self.get_expected_output()[name]
+        if name not in self.get_output():
+            raise FieldMissing(name)
+        output = self.get_output()[name]
+        if output != expected_output:
+            raise FieldValueIncorrect(output, expected_output)
+
+    def assert_no_extra_fields(self):
+        """Assert that there are no extra fields in the output"""
+        output = self.get_output()
+        expected_output = self.get_expected_output()
+        extra_field_keys = output.keys() - expected_output.keys()
+        extra_fields = {key: output[key] for key in extra_field_keys}
+        if extra_fields:
+            raise FieldsUnexpected(extra_fields)
 
     @classmethod
     def save(
