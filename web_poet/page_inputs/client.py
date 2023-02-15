@@ -187,7 +187,6 @@ class HttpClient:
         response = await self._request_downloader(request)
         self._handle_status(response, request, allow_status=allow_status)
         if self.save_responses:
-            # TODO: copy()?
             self._saved_responses[request_fingerprint(request)] = (request, response)
         return response
 
