@@ -284,7 +284,7 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     assert (input_dir / "HttpClient-0-HttpResponse.body.html").read_bytes() == b"body1"
     assert (input_dir / "HttpClient-1-HttpResponse.body.html").read_bytes() == b"body2"
     result = pytester.runpytest()
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=3)
 
 
 def test_httpclient_no_response(pytester, book_list_html_response) -> None:
@@ -303,4 +303,4 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
     }
     Fixture.save(base_dir, inputs=[book_list_html_response, client], item=item)
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1)
+    result.assert_outcomes(failed=3)
