@@ -96,7 +96,7 @@ def field(
         @staticmethod
         def _validate(page_object):
             if hasattr(page_object, "validate_input"):
-                page_object._validate_input()
+                return page_object._validate_input()
 
         @staticmethod
         def _process(value):
@@ -110,13 +110,17 @@ def field(
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    self._validate(args[0])
+                    validation_item = self._validate(args[0])
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return self._process(await method(*args, **kwargs))
 
             else:
 
                 def processed(*args, **kwargs):
-                    self._validate(args[0])
+                    validation_item = self._validate(args[0])
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return self._process(method(*args, **kwargs))
 
             return wraps(method)(processed)

@@ -63,6 +63,9 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
+        validation_item = self._validate_input()
+        if validation_item is not None:
+            return validation_item
         return await item_from_fields(
             self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
         )
@@ -77,11 +80,9 @@ class ItemPage(Injectable, Returns[ItemT]):
             # from _validate_input itself (likely through a @field method).
             return
         self._validating_input = True
-        item = self.validate_input()  # type: ignore[attr-defined]
-        # TODO: Rewrite to_item.
-        # TODO: Rewrite fields.
-        raise ValueError(item)
+        validation_item = self.validate_input()  # type: ignore[attr-defined]
         delattr(self, "_validating_input")
+        return validation_item
 
 
 @attr.s(auto_attribs=True)
