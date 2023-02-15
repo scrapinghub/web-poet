@@ -13,7 +13,7 @@ from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage
 from web_poet.exceptions import HttpResponseError
-from web_poet.page_inputs.client import SavedResponseData
+from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
@@ -266,8 +266,8 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     request2 = HttpRequest(url2, method="POST", body=b"post")
     response2 = HttpResponse(url=url2, body=b"body2", encoding="utf-8")
     responses = [
-        SavedResponseData(request1, response1),
-        SavedResponseData(request2, response2),
+        _SavedResponseData(request1, response1),
+        _SavedResponseData(request2, response2),
     ]
     client = HttpClient(responses=responses)
 
@@ -294,7 +294,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
     request = HttpRequest(url)
     response = HttpResponse(url=url, body=b"body1", encoding="utf-8")
     responses = [
-        SavedResponseData(request, response),
+        _SavedResponseData(request, response),
     ]
     client = HttpClient(responses=responses)
 
@@ -330,7 +330,7 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
     request = HttpRequest(url)
     response = HttpResponse(url=url, body=b"body1", status=404, encoding="utf-8")
     responses = [
-        SavedResponseData(request, response),
+        _SavedResponseData(request, response),
     ]
     client = HttpClient(responses=responses)
 

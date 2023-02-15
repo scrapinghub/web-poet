@@ -26,7 +26,7 @@ _StatusList = Union[str, int, List[Union[str, int]]]
 
 
 @dataclass
-class SavedResponseData:
+class _SavedResponseData:
     """Class for storing a request and its result."""
 
     request: HttpRequest
@@ -60,12 +60,12 @@ class HttpClient:
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
-        responses: Optional[Iterable[SavedResponseData]] = None,
+        responses: Optional[Iterable[_SavedResponseData]] = None,
     ):
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self._saved_responses: Dict[str, SavedResponseData] = {
+        self._saved_responses: Dict[str, _SavedResponseData] = {
             data.fingerprint(): data for data in responses or []
         }
 
@@ -205,7 +205,7 @@ class HttpClient:
 
         response = await self._request_downloader(request)
         if self.save_responses:
-            self._saved_responses[request_fingerprint(request)] = SavedResponseData(
+            self._saved_responses[request_fingerprint(request)] = _SavedResponseData(
                 request, response
             )
         self._handle_status(response, request, allow_status=allow_status)
@@ -250,6 +250,6 @@ class HttpClient:
         )
         return responses
 
-    def get_saved_responses(self) -> Iterable[SavedResponseData]:
+    def get_saved_responses(self) -> Iterable[_SavedResponseData]:
         """Return saved requests and responses."""
         return self._saved_responses.values()

@@ -2,7 +2,7 @@ import json
 from typing import Dict, List, Type
 
 from .. import HttpClient, HttpRequest, HttpRequestBody, HttpResponse, HttpResponseBody
-from ..page_inputs.client import SavedResponseData
+from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
@@ -115,7 +115,7 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
 def _deserialize_HttpClient(
     cls: Type[HttpClient], data: SerializedLeafData
 ) -> HttpClient:
-    responses: List[SavedResponseData] = []
+    responses: List[_SavedResponseData] = []
 
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
@@ -134,7 +134,7 @@ def _deserialize_HttpClient(
             continue
         request = deserialize_leaf(HttpRequest, serialized_request)
         response = deserialize_leaf(HttpResponse, serialized_response)
-        responses.append(SavedResponseData(request, response))
+        responses.append(_SavedResponseData(request, response))
 
     return cls(return_only_saved_responses=True, responses=responses)
 
