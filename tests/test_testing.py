@@ -296,11 +296,15 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
     ]
     client = HttpClient(responses=responses)
 
-    base_dir = pytester.path / "fixtures" / get_fq_class_name(ClientPage)
     item = {
         "foo": "bar",
         "additional": ["body1", "body2"],
     }
-    Fixture.save(base_dir, inputs=[book_list_html_response, client], item=item)
+    _save_fixture(
+        pytester,
+        page_cls=ClientPage,
+        page_inputs=[book_list_html_response, client],
+        expected=item,
+    )
     result = pytester.runpytest()
     result.assert_outcomes(failed=3)
