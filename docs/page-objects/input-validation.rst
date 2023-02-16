@@ -34,9 +34,9 @@ of the following:
     you would raise :exc:`~web_poet.exceptions.UseFallback` to try to
     parse the same product page with ``ShopifyProductPage``, in case it works.
 
-    .. note:: web-poet does not yet allow defining the alternative parsing
-              implementation to use as fallback, so raising this exception has
-              no effect with the current version of web-poet.
+    .. note:: web-poet does not dictate how to define or use an alternative
+              parsing implementation as fallback. It is up to web-poet
+              frameworks to choose how they implement fallback handling.
 
 -   Return an item to override the output of the ``to_item`` method and of
     fields.
