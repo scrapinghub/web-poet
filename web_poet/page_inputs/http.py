@@ -1,4 +1,5 @@
 import json
+from hashlib import sha1
 from typing import Any, AnyStr, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from urllib.parse import urljoin
 
@@ -11,6 +12,7 @@ from w3lib.encoding import (
     resolve_encoding,
 )
 from w3lib.html import get_base_url
+from w3lib.url import canonicalize_url
 
 from web_poet._base import _HttpHeaders
 from web_poet.mixins import SelectableMixin
@@ -300,3 +302,15 @@ class HttpResponse(SelectableMixin):
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+
+
+def request_fingerprint(req: HttpRequest) -> str:
+    """Return the fingerprint of the request."""
+    fp = sha1()
+    fp.update(req.method.encode() + b"\n")
+    fp.update(canonicalize_url(str(req.url)).encode() + b"\n")
+    for name, value in sorted(req.headers.items()):
+        fp.update(f"{name.title()}:{value}\n".encode())
+    fp.update(b"\n")
+    fp.update(req.body)
+    return fp.hexdigest()
