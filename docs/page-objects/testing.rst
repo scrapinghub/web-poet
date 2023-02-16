@@ -57,14 +57,21 @@ it, that contains data for Page Object inputs and output::
         ├── test-1
         │   ├── inputs
         │   │   ├── HttpResponse-body.html
-        │   │   ├── HttpResponse-other.json
+        │   │   ├── HttpResponse-info.json
         │   │   └── ResponseUrl.txt
         │   ├── meta.json
         │   └── output.json
         └─── test-2
             ├── inputs
+            │   ├── HttpClient-0-HttpRequest.info.json
+            │   ├── HttpClient-0-HttpResponse.body.html
+            │   ├── HttpClient-0-HttpResponse.info.json
+            │   ├── HttpClient-1-HttpRequest.body.txt
+            │   ├── HttpClient-1-HttpRequest.info.json
+            │   ├── HttpClient-1-HttpResponse.body.html
+            │   ├── HttpClient-1-HttpResponse.info.json
             │   ├── HttpResponse-body.html
-            │   ├── HttpResponse-other.json
+            │   ├── HttpResponse-info.json
             │   └── ResponseUrl.txt
             ├── meta.json
             └── output.json
@@ -217,3 +224,24 @@ Please also check the official Git LFS documentation for more information.
 
 .. _Git LFS: https://git-lfs.com/
 .. _implementations: https://github.com/git-lfs/git-lfs/wiki/Implementations
+
+Additional requests support
+===========================
+
+If the page object uses the :class:`~.HttpClient` dependency to make
+:ref:`additional requests <additional-requests>`, the generated fixtures will
+contain these requests and their responses. When the test runs,
+:class:`~.HttpClient` will return the saved responses without doing actual
+requests.
+
+Currently requests are compared by their URL, method, headers and body, so if a
+page object makes requests that differ between runs, the test won't be able to
+find a saved response and will fail.
+
+Test coverage
+=============
+
+The coverage for page object code is reported correctly if tools such as
+`coverage`_ are used when running web-poet tests.
+
+.. _coverage: https://coverage.readthedocs.io/

@@ -1,14 +1,17 @@
 import asyncio
 import logging
+from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Iterable, List, Optional, Union
 
 from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions.core import NoSavedHttpResponse
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestBody,
     HttpRequestHeaders,
     HttpResponse,
+    request_fingerprint,
 )
 from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
@@ -20,6 +23,18 @@ _StrMapping = Dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
 _StatusList = Union[str, int, List[Union[str, int]]]
+
+
+@dataclass
+class _SavedResponseData:
+    """Class for storing a request and its result."""
+
+    request: HttpRequest
+    response: HttpResponse
+
+    def fingerprint(self) -> str:
+        """Return the request fingeprint."""
+        return request_fingerprint(self.request)
 
 
 class HttpClient:
@@ -39,8 +54,20 @@ class HttpClient:
     :ref:`advanced-downloader-impl` documentation.
     """
 
-    def __init__(self, request_downloader: Callable = None):
+    def __init__(
+        self,
+        request_downloader: Callable = None,
+        *,
+        save_responses: bool = False,
+        return_only_saved_responses: bool = False,
+        responses: Optional[Iterable[_SavedResponseData]] = None,
+    ):
         self._request_downloader = request_downloader or _perform_request
+        self.save_responses = save_responses
+        self.return_only_saved_responses = return_only_saved_responses
+        self._saved_responses: Dict[str, _SavedResponseData] = {
+            data.fingerprint(): data for data in responses or []
+        }
 
     @staticmethod
     def _handle_status(
@@ -165,7 +192,22 @@ class HttpClient:
         There is no need to include ``100-3xx`` status codes in ``allow_status``,
         because :class:`~.HttpResponseError` is not raised for them.
         """
+        if self.return_only_saved_responses:
+            for fp, saved_data in self._saved_responses.items():
+                if request_fingerprint(request) == fp:
+                    self._handle_status(
+                        saved_data.response,
+                        saved_data.request,
+                        allow_status=allow_status,
+                    )
+                    return saved_data.response
+            raise NoSavedHttpResponse(request=request)
+
         response = await self._request_downloader(request)
+        if self.save_responses:
+            self._saved_responses[request_fingerprint(request)] = _SavedResponseData(
+                request, response
+            )
         self._handle_status(response, request, allow_status=allow_status)
         return response
 
@@ -207,3 +249,7 @@ class HttpClient:
             *coroutines, return_exceptions=return_exceptions
         )
         return responses
+
+    def get_saved_responses(self) -> Iterable[_SavedResponseData]:
+        """Return saved requests and responses."""
+        return self._saved_responses.values()
