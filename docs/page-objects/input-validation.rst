@@ -22,8 +22,8 @@ of the following:
     See also :ref:`retries-additional-requests`.
 
 -   Raise :exc:`~web_poet.exceptions.UseFallback`, indicating that the
-    page object does not support the input, and that an alternative page object
-    should be tried instead.
+    page object does not support the input, and that an alternative parsing
+    implementation should be tried instead.
 
     For example, imagine you have a page object for website commerce.example,
     and that commerce.example is built with Shopify. You could have a generic
@@ -34,9 +34,9 @@ of the following:
     you would raise :exc:`~web_poet.exceptions.UseFallback` to try to
     parse the same product page with ``ShopifyProductPage``, in case it works.
 
-    .. note:: web-poet does not yet allow defining which page object to use as
-              fallback, so raising this exception has no effect with the
-              current version of web-poet.
+    .. note:: web-poet does not yet allow defining the alternative parsing
+              implementation to use as fallback, so raising this exception has
+              no effect with the current version of web-poet.
 
 -   Return an item to override the output of the ``to_item`` method and of
     fields.
