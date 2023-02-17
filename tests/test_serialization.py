@@ -3,7 +3,14 @@ from typing import Type
 import attrs
 import pytest
 
-from web_poet import HttpResponse, HttpResponseBody, PageParams, ResponseUrl, WebPage
+from web_poet import (
+    HttpClient,
+    HttpResponse,
+    HttpResponseBody,
+    PageParams,
+    ResponseUrl,
+    WebPage,
+)
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -175,3 +182,15 @@ def test_extra_files(book_list_html_response, tmp_path) -> None:
     (directory / "bar.txt").touch()
     read_serialized_deps = storage.read()
     assert "HttpResponse" in read_serialized_deps
+
+
+def test_httpclient_empty(tmp_path) -> None:
+    directory = tmp_path / "ser"
+    directory.mkdir()
+    client = HttpClient()
+    storage = SerializedDataFileStorage(directory)
+    serialized_deps = serialize([client])
+    storage.write(serialized_deps)
+    assert (directory / "HttpClient.exists").exists()
+    read_serialized_deps = storage.read()
+    assert "HttpClient" in read_serialized_deps

@@ -108,7 +108,9 @@ register_serialization(_serialize__Url, _deserialize__Url)
 
 
 def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
-    serialized_data: SerializedLeafData = {}
+    serialized_data: SerializedLeafData = {
+        "exists": b"",
+    }
     for i, data in enumerate(o.get_saved_responses()):
         serialized_request = serialize_leaf(data.request)
         for k, v in serialized_request.items():
@@ -127,6 +129,8 @@ def _deserialize_HttpClient(
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
     for k, v in data.items():
+        if k == "exists":
+            continue
         # k is number-("HttpRequest"|"HttpResponse").("body"|"info").ext
         key, type_suffix = k.split("-", 1)
         type_name, suffix = type_suffix.split(".", 1)
