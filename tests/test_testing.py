@@ -349,14 +349,32 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
     result.assert_outcomes(passed=3)
 
 
+class MyItemPage3(WebPage):
+    async def to_item(self) -> dict:  # noqa: D102
+        return {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
 def test_cli_rerun(pytester, book_list_html_response, capsys) -> None:
     fixture = _save_fixture(
         pytester,
-        page_cls=MyItemPage,
+        page_cls=MyItemPage3,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar2"},
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
     cli_main(["rerun", str(fixture.path)])
     captured = capsys.readouterr()
     assert not captured.err
-    assert json.loads(captured.out) == {"foo": "bar"}
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}

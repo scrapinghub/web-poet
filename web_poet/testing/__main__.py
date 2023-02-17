@@ -7,6 +7,9 @@ from web_poet.testing import Fixture
 def rerun(args):
     fixture = Fixture(Path(args.fixture_path))
     item = fixture.get_output()
+    if args.fields:
+        fields = args.fields.split(",")
+        item = {field: item[field] for field in fields}
     print(fixture.item_to_json(item))
 
 
@@ -24,6 +27,9 @@ def main(argv=None):
         "",
     )
     parser_rerun.add_argument("fixture_path", type=str, help="Path to a fixture")
+    parser_rerun.add_argument(
+        "--fields", "-f", type=str, help="Field names, comma-separated"
+    )
     parser_rerun.set_defaults(func=rerun)
 
     args = parser.parse_args(argv)
