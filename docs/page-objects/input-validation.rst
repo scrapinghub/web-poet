@@ -67,7 +67,7 @@ For example:
 may also be raised from the ``to_item`` method. This could come in handy, for
 example, if after you execute some asynchronous code, such as an
 :ref:`additional request <additional-requests>`, you find out that you need to
-retry the original request or use a fallback page object.
+retry the original request or use a fallback.
 
 
 Input Validation Exceptions
