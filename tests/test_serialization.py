@@ -7,6 +7,7 @@ from web_poet import (
     HttpClient,
     HttpResponse,
     HttpResponseBody,
+    Injectable,
     PageParams,
     ResponseUrl,
     WebPage,
@@ -66,9 +67,14 @@ def test_serialization_leaf_unsupported() -> None:
 
 def test_serialization(book_list_html_response) -> None:
     @attrs.define
+    class ResponseData(Injectable):
+        response: HttpResponse
+
+    @attrs.define
     class MyWebPage(WebPage):
         url: ResponseUrl
         params: PageParams
+        data: ResponseData
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
@@ -94,9 +100,12 @@ def test_serialization(book_list_html_response) -> None:
         },
     }
 
-    po = MyWebPage(book_list_html_response, url, page_params)
+    po = MyWebPage(
+        book_list_html_response, url, page_params, ResponseData(book_list_html_response)
+    )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
+    assert deserialized_po.data is not None
 
 
 def test_serialization_injectable(book_list_html_response) -> None:
