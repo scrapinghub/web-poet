@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 
 from web_poet.testing import Fixture
@@ -9,7 +10,14 @@ def rerun(args):
     item = fixture.get_output()
     if args.fields:
         fields = args.fields.split(",")
-        item = {field: item[field] for field in fields}
+        unknown_fields = sorted(set(fields) - item.keys())
+        if unknown_fields:
+            print(
+                f"Unknown field names: {unknown_fields}. "
+                f"Allowed names are: {sorted(item.keys())}\n",
+                file=sys.stderr,
+            )
+        item = {field: item[field] for field in fields if field in item}
     print(fixture.item_to_json(item))
 
 

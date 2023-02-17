@@ -400,3 +400,21 @@ def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
     captured = capsys.readouterr()
     assert not captured.err
     assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
+
+
+def test_cli_rerun_fields_unknown_names(
+    pytester, book_list_html_response, capsys
+) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
+    captured = capsys.readouterr()
+    assert (
+        "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
+        in captured.err
+    )
+    assert json.loads(captured.out) == {"foo": "bar"}
