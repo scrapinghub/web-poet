@@ -1,7 +1,14 @@
 import json
 from typing import Dict, List, Type
 
-from .. import HttpClient, HttpRequest, HttpRequestBody, HttpResponse, HttpResponseBody
+from .. import (
+    HttpClient,
+    HttpRequest,
+    HttpRequestBody,
+    HttpResponse,
+    HttpResponseBody,
+    PageParams,
+)
 from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
@@ -101,7 +108,9 @@ register_serialization(_serialize__Url, _deserialize__Url)
 
 
 def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
-    serialized_data: SerializedLeafData = {}
+    serialized_data: SerializedLeafData = {
+        "exists": b"",
+    }
     for i, data in enumerate(o.get_saved_responses()):
         serialized_request = serialize_leaf(data.request)
         for k, v in serialized_request.items():
@@ -120,6 +129,8 @@ def _deserialize_HttpClient(
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
     for k, v in data.items():
+        if k == "exists":
+            continue
         # k is number-("HttpRequest"|"HttpResponse").("body"|"info").ext
         key, type_suffix = k.split("-", 1)
         type_name, suffix = type_suffix.split(".", 1)
@@ -140,3 +151,18 @@ def _deserialize_HttpClient(
 
 
 register_serialization(_serialize_HttpClient, _deserialize_HttpClient)
+
+
+def _serialize_PageParams(o: PageParams) -> SerializedLeafData:
+    return {
+        "json": json.dumps(o, ensure_ascii=False, sort_keys=True, indent=2).encode()
+    }
+
+
+def _deserialize_PageParams(
+    cls: Type[PageParams], data: SerializedLeafData
+) -> PageParams:
+    return cls(json.loads(data["json"]))
+
+
+register_serialization(_serialize_PageParams, _deserialize_PageParams)
