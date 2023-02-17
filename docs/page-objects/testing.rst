@@ -107,7 +107,7 @@ The provided ``pytest`` plugin is automatically registered when ``web-poet`` is
 installed, and running ``python -m pytest`` in a directory containing fixtures
 will discover them and run tests for them.
 
-By default, the plugin generates
+By default, the plugin generates:
 
 * a test which checks that ``to_item()`` doesn't raise an exception
   (i.e. it can be executed),
