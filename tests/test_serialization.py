@@ -3,7 +3,7 @@ from typing import Type
 import attrs
 import pytest
 
-from web_poet import HttpResponse, HttpResponseBody, ResponseUrl, WebPage
+from web_poet import HttpResponse, HttpResponseBody, PageParams, ResponseUrl, WebPage
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -61,11 +61,13 @@ def test_serialization(book_list_html_response) -> None:
     @attrs.define
     class MyWebPage(WebPage):
         url: ResponseUrl
+        params: PageParams
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
+    page_params = PageParams(foo="bar")
 
-    serialized_deps = serialize([book_list_html_response, url])
+    serialized_deps = serialize([book_list_html_response, url, page_params])
     info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
@@ -80,9 +82,12 @@ def test_serialization(book_list_html_response) -> None:
         "ResponseUrl": {
             "txt": url_str.encode(),
         },
+        "PageParams": {
+            "json": b'{\n  "foo": "bar"\n}',
+        },
     }
 
-    po = MyWebPage(book_list_html_response, url)
+    po = MyWebPage(book_list_html_response, url, page_params)
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
 

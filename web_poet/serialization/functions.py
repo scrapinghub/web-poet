@@ -140,3 +140,16 @@ def _deserialize_HttpClient(
 
 
 register_serialization(_serialize_HttpClient, _deserialize_HttpClient)
+
+
+def _serialize_dict(o: dict) -> SerializedLeafData:
+    return {
+        "json": json.dumps(o, ensure_ascii=False, sort_keys=True, indent=2).encode()
+    }
+
+
+def _deserialize_dict(cls: Type[dict], data: SerializedLeafData) -> dict:
+    return cls(json.loads(data["json"]))
+
+
+register_serialization(_serialize_dict, _deserialize_dict)
