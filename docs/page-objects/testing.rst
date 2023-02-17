@@ -53,7 +53,7 @@ that Page Object fully qualified class name. Each fixture is a directory inside
 it, that contains data for Page Object inputs and output::
 
     fixtures
-    └── my_project.po.MyItemPage
+    └── my_project.pages.MyItemPage
         ├── test-1
         │   ├── inputs
         │   │   ├── HttpResponse-body.html
@@ -100,6 +100,8 @@ It's available starting with scrapy-poet 0.8.0.
 
 .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 
+.. _web-poet-testing-pytest:
+
 Running tests
 =============
 
@@ -121,6 +123,56 @@ the ``--web-poet-test-per-item`` option::
 In this case there is going to be a test per fixture: if the result
 is not fully correct, the test fails. So, following the previous example,
 it'd be 2 tests instead of 12.
+
+Test-Driven Development
+=======================
+
+You can follow TDD (Test-Driven Development) approach to develop your
+page objects. To do so,
+
+1. Generate a fixture (see :ref:`web-poet-testing-scrapy-poet`).
+2. Populate ``output.json`` with the correct expected output.
+3. Run the tests (see :ref:`web-poet-testing-pytest`) and update the code
+   until all tests pass. It's convenient to use web-poet :ref:`fields`,
+   and implement extraction field-by-field, because you'll be getting
+   an additional test passing after each field is implemented.
+
+This approach allows a fast feedback loop: there is no need to download page
+multiple times, and you have a clear progress indication for your work
+(number of failing tests remaining). Also, in the end you get
+a regression test, which can be helpful later.
+
+Sometimes it may be awkward to set the correct value in JSON before starting
+the development, especially if a value is large or has a complex structure.
+For example, this could be the case for e-commerce product description field,
+which can be hard to copy-paste from the website, and which may have various
+whitespace normalization rules which you need to apply.
+
+In this case, it may be more convenient to implement the extraction first,
+and only then populate the ``output.json`` file with the correct value.
+
+You can use ``python -m web-poet.testing rerun <fixture_path>`` command
+in this case, to re-run the page object using the inputs saved in a fixture.
+This command prints output of the page object, as JSON; you can then copy-paste
+relevant parts to the ``output.json`` file. It's also possible to make
+the command print only some of the fields. For example, you might run the
+following command after implementing extraction for "description" and
+"descriptionHtml" fields in ``my_project.pages.MyItemPage``::
+
+    python -m web-poet.testing rerun \
+        fixtures/my_project.pages.MyItemPage/test-1 \
+        --fields description,descriptionHtml
+
+It may output something like this::
+
+    {
+        "description": "..description of the product..",
+        "descriptionHtml": "<p>...</p>"
+    }
+
+If these values look good, you can update
+``fixtures/my_project.pages.MyItemPage/test-1/output.json`` file
+with these values.
 
 .. _web-poet-testing-frozen_time:
 
