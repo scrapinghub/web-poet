@@ -107,20 +107,28 @@ The provided ``pytest`` plugin is automatically registered when ``web-poet`` is
 installed, and running ``python -m pytest`` in a directory containing fixtures
 will discover them and run tests for them.
 
-By default, the plugin generates a test per each output attribute of the item,
-and an additional test to check that there are no extra attributes in the output.
+By default, the plugin generates:
+
+* a test which checks that ``to_item()`` doesn't raise an exception
+  (i.e. it can be executed),
+* a test per each output attribute of the item,
+* an additional test to check that there are no extra attributes in the output.
+
 For example, if your item has 5 attributes, and you created 2 fixtures, pytest
-will run (5+1)*2 = 12 tests. This allows to report failures for individual
+will run (5+1+1)*2 = 14 tests. This allows to report failures for individual
 fields separately.
 
-If you prefer less granular test running, you can use pytest with
+If ``to_item`` raises an error, there is no point in running other tests,
+so they're skipped in this case.
+
+If you prefer less granular test failure reporting, you can use pytest with
 the ``--web-poet-test-per-item`` option::
 
     python -m pytest --web-poet-test-per-item
 
-In this case there is going to be a test per fixture: if the result
+In this case there is going to be a single test per fixture: if the result
 is not fully correct, the test fails. So, following the previous example,
-it'd be 2 tests instead of 12.
+it'd be 2 tests instead of 14.
 
 .. _web-poet-testing-frozen_time:
 

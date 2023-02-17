@@ -62,18 +62,21 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
             ]
         else:
+            overall_tests = [
+                WebPoetNoToItemException.from_parent(
+                    parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
+                ),
+                WebPoetNoExtraFieldsItem.from_parent(
+                    parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
+                ),
+            ]
             field_tests = [
                 WebPoetFieldItem.from_parent(
                     parent=self, name=field, fixture=self.fixture, field_name=field
                 )
                 for field in self.fixture.get_expected_output_fields()
             ]
-            no_extra_fields_tests = [
-                WebPoetNoExtraFieldsItem.from_parent(
-                    parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
-                )
-            ]
-            return field_tests + no_extra_fields_tests
+            return overall_tests + field_tests
 
 
 class _WebPoetItem(pytest.Item, _PathCompatMixin):
@@ -105,6 +108,11 @@ class WebPoetItem(_WebPoetItem):
 
 class WebPoetNoExtraFieldsItem(_WebPoetItem):
     def runtest(self) -> None:
+        if self.fixture.to_item_raised():
+            raise pytest.skip(
+                "Skipping a test for unexpected item fields "
+                "because to_item raised an exception."
+            )
         self.fixture.assert_no_extra_fields()
 
     def reportinfo(self):
@@ -124,12 +132,29 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
         return "\n".join(lines)
 
 
+class WebPoetNoToItemException(_WebPoetItem):
+    def runtest(self) -> None:
+        self.fixture.assert_no_toitem_exceptions()
+
+    def reportinfo(self):
+        return (
+            self._path,
+            0,
+            f"{self.fixture.short_name}: to_item doesn't raise an error",
+        )
+
+
 class WebPoetFieldItem(_WebPoetItem):
     def __init__(self, *, field_name: str, **kwargs) -> None:
         super().__init__(**kwargs)
         self.field_name = field_name
 
     def runtest(self) -> None:
+        if self.fixture.to_item_raised():
+            raise pytest.skip(
+                f"Skipping a test for item.{self.field_name} "
+                f"because to_item raised an exception"
+            )
         self.fixture.assert_field_correct(self.field_name)
 
     def reportinfo(self):
