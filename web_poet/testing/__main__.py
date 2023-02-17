@@ -10,7 +10,7 @@ def rerun(args):
     print(fixture.item_to_json(item))
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="python -m web_poet.testing",
         description="web-poet testing utilities",
@@ -26,8 +26,12 @@ if __name__ == "__main__":
     parser_rerun.add_argument("fixture_path", type=str, help="Path to a fixture")
     parser_rerun.set_defaults(func=rerun)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if hasattr(args, "func"):
         args.func(args)
     else:
         parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
