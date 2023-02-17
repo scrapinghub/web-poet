@@ -150,7 +150,7 @@ def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> Non
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, skipped=3)
-    result.stdout.fnmatch_lines("*TO_ITEM_DOESNT_RAISE - Exception*")
+    result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
 
 
 def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
