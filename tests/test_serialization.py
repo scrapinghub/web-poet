@@ -3,7 +3,15 @@ from typing import Type
 import attrs
 import pytest
 
-from web_poet import HttpResponse, HttpResponseBody, ResponseUrl, WebPage
+from web_poet import (
+    HttpClient,
+    HttpResponse,
+    HttpResponseBody,
+    Injectable,
+    PageParams,
+    ResponseUrl,
+    WebPage,
+)
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -59,13 +67,20 @@ def test_serialization_leaf_unsupported() -> None:
 
 def test_serialization(book_list_html_response) -> None:
     @attrs.define
+    class ResponseData(Injectable):
+        response: HttpResponse
+
+    @attrs.define
     class MyWebPage(WebPage):
         url: ResponseUrl
+        params: PageParams
+        data: ResponseData
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
+    page_params = PageParams(foo="bar")
 
-    serialized_deps = serialize([book_list_html_response, url])
+    serialized_deps = serialize([book_list_html_response, url, page_params])
     info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
@@ -80,11 +95,17 @@ def test_serialization(book_list_html_response) -> None:
         "ResponseUrl": {
             "txt": url_str.encode(),
         },
+        "PageParams": {
+            "json": b'{\n  "foo": "bar"\n}',
+        },
     }
 
-    po = MyWebPage(book_list_html_response, url)
+    po = MyWebPage(
+        book_list_html_response, url, page_params, ResponseData(book_list_html_response)
+    )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
+    assert deserialized_po.data is not None
 
 
 def test_serialization_injectable(book_list_html_response) -> None:
@@ -170,3 +191,15 @@ def test_extra_files(book_list_html_response, tmp_path) -> None:
     (directory / "bar.txt").touch()
     read_serialized_deps = storage.read()
     assert "HttpResponse" in read_serialized_deps
+
+
+def test_httpclient_empty(tmp_path) -> None:
+    directory = tmp_path / "ser"
+    directory.mkdir()
+    client = HttpClient()
+    storage = SerializedDataFileStorage(directory)
+    serialized_deps = serialize([client])
+    storage.write(serialized_deps)
+    assert (directory / "HttpClient.exists").exists()
+    read_serialized_deps = storage.read()
+    assert "HttpClient" in read_serialized_deps
