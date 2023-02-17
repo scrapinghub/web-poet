@@ -56,6 +56,7 @@ it, that contains data for Page Object inputs and output::
     └── my_project.po.MyItemPage
         ├── test-1
         │   ├── inputs
+            │   ├── HttpClient.exists
         │   │   ├── HttpResponse-body.html
         │   │   ├── HttpResponse-info.json
         │   │   └── ResponseUrl.txt
@@ -63,6 +64,7 @@ it, that contains data for Page Object inputs and output::
         │   └── output.json
         └─── test-2
             ├── inputs
+            │   ├── HttpClient.exists
             │   ├── HttpClient-0-HttpRequest.info.json
             │   ├── HttpClient-0-HttpResponse.body.html
             │   ├── HttpClient-0-HttpResponse.info.json
