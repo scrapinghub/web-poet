@@ -11,14 +11,14 @@ import time_machine
 from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
-from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage
+from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
-N_TESTS = len(attrs.fields(Product)) + 1
+N_TESTS = len(attrs.fields(Product)) + 2
 
 
 def test_save_fixture(book_list_html_response, tmp_path) -> None:
@@ -77,7 +77,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
         expected={"foo": "bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=3)
 
 
 def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> None:
@@ -88,7 +88,7 @@ def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> Non
         expected={"foo": "not bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=1)
+    result.assert_outcomes(failed=1, passed=2)
     result.stdout.fnmatch_lines("item.foo is not correct*")
 
 
@@ -100,7 +100,7 @@ def test_pytest_plugin_bad_field_value_None(pytester, book_list_html_response) -
         expected={"foo": "bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=1)
+    result.assert_outcomes(failed=1, passed=2)
     result.stdout.fnmatch_lines("item.foo is not correct*")
     result.stdout.fnmatch_lines("Expected: 'bar', got: None*")
 
@@ -113,7 +113,7 @@ def test_pytest_plugin_missing_field(pytester, book_list_html_response) -> None:
         expected={"foo": "bar", "foo2": "bar2"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=2)
+    result.assert_outcomes(failed=1, passed=3)
     result.stdout.fnmatch_lines("item.foo2 is missing*")
 
 
@@ -125,10 +125,32 @@ def test_pytest_plugin_extra_field(pytester, book_list_html_response) -> None:
         expected={"foo2": "bar2"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=2, passed=0)
+    result.assert_outcomes(failed=2, passed=1)
     result.stdout.fnmatch_lines("item.foo2 is missing*")
     result.stdout.fnmatch_lines("*unexpected fields*")
     result.stdout.fnmatch_lines("*foo = 'bar'*")
+
+
+class FieldExceptionPage(WebPage):
+    @field
+    def foo(self):
+        return "foo"
+
+    @field
+    def bar(self):
+        raise Exception
+
+
+def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=FieldExceptionPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "foo", "bar": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, skipped=3)
+    result.stdout.fnmatch_lines("*TO_ITEM_DOESNT_RAISE - Exception*")
 
 
 def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
@@ -286,7 +308,7 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     assert (input_dir / "HttpClient-0-HttpResponse.body.html").read_bytes() == b"body1"
     assert (input_dir / "HttpClient-1-HttpResponse.body.html").read_bytes() == b"body2"
     result = pytester.runpytest()
-    result.assert_outcomes(passed=3)
+    result.assert_outcomes(passed=4)
 
 
 def test_httpclient_no_response(pytester, book_list_html_response) -> None:
@@ -309,7 +331,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
         expected=item,
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=3)
+    result.assert_outcomes(failed=1, skipped=3)
 
 
 @attrs.define
@@ -345,4 +367,4 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
         expected=item,
     )
     result = pytester.runpytest()
-    result.assert_outcomes(passed=3)
+    result.assert_outcomes(passed=4)
