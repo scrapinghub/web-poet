@@ -122,6 +122,11 @@ class Fixture:
         else:
             return self._get_output()
 
+    @classmethod
+    def item_to_json(cls, item: Any) -> str:
+        """Convert an item to a JSON string."""
+        return json.dumps(ItemAdapter(item).asdict(), ensure_ascii=False, indent=4)
+
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
         """Return the saved output."""
@@ -207,12 +212,16 @@ class Fixture:
         fixture_dir = Path(base_directory, fixture_name)
         fixture = cls(fixture_dir)
         fixture.input_path.mkdir(parents=True)
+
         serialized_inputs = serialize(inputs)
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
+
         with fixture.output_path.open("w") as f:
-            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False, indent=4)
+            f.write(cls.item_to_json(item))
+
         if meta:
             with fixture.meta_path.open("w") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=4)
+
         return fixture
