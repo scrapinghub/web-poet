@@ -1,7 +1,14 @@
 import json
 from typing import Dict, List, Type
 
-from .. import HttpClient, HttpRequest, HttpRequestBody, HttpResponse, HttpResponseBody
+from .. import (
+    HttpClient,
+    HttpRequest,
+    HttpRequestBody,
+    HttpResponse,
+    HttpResponseBody,
+    PageParams,
+)
 from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
@@ -142,14 +149,16 @@ def _deserialize_HttpClient(
 register_serialization(_serialize_HttpClient, _deserialize_HttpClient)
 
 
-def _serialize_dict(o: dict) -> SerializedLeafData:
+def _serialize_PageParams(o: PageParams) -> SerializedLeafData:
     return {
         "json": json.dumps(o, ensure_ascii=False, sort_keys=True, indent=2).encode()
     }
 
 
-def _deserialize_dict(cls: Type[dict], data: SerializedLeafData) -> dict:
+def _deserialize_PageParams(
+    cls: Type[PageParams], data: SerializedLeafData
+) -> PageParams:
     return cls(json.loads(data["json"]))
 
 
-register_serialization(_serialize_dict, _deserialize_dict)
+register_serialization(_serialize_PageParams, _deserialize_PageParams)
