@@ -15,6 +15,7 @@ from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
+from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
@@ -66,7 +67,7 @@ class MyItemPage2(WebPage):
 
 def _save_fixture(pytester, page_cls, page_inputs, expected):
     base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
-    Fixture.save(base_dir, inputs=page_inputs, item=expected)
+    return Fixture.save(base_dir, inputs=page_inputs, item=expected)
 
 
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
@@ -368,3 +369,52 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
+
+
+class MyItemPage3(WebPage):
+    async def to_item(self) -> dict:  # noqa: D102
+        return {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun(pytester, book_list_html_response, capsys) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path)])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
+
+
+def test_cli_rerun_fields_unknown_names(
+    pytester, book_list_html_response, capsys
+) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
+    captured = capsys.readouterr()
+    assert (
+        "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
+        in captured.err
+    )
+    assert json.loads(captured.out) == {"foo": "bar"}
