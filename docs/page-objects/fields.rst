@@ -490,7 +490,7 @@ Exceptions caching
 
 Note that exceptions are not cached - neither by :func:`~.cached_method`,
 nor by `@field(cached=True)`, nor by :func:`functools.lru_cache`, nor by
- :func:`functools.cached_property`.
+:func:`functools.cached_property`.
 
 Usually it's not an issue, because an exception is usually propagated,
 and so there are no duplicate calls anyways. But, just in case, keep this
