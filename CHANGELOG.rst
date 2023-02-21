@@ -2,6 +2,46 @@
 Changelog
 =========
 
+0.8.0 (TBD)
+-----------
+
+This release contains many improvements to the web-poet testing framework,
+as well as some other improvements and bug fixes.
+
+Backwards-incomatible changes:
+
+* :func:`~.cached_method` no longer caches exceptions for ``async def`` methods.
+  This makes the behavior the same for sync and async methods, and also makes
+  it consistent with Python's stdlib caching (``lru_cache``,
+  ``cached_property``).
+* The testing framework now uses ``HttpResponse-info.json`` file name instead
+  of ``HttpResponse-other.json`` to store information about the HttpResponse.
+  To make tests generated with older web-poet work, rename these files on disk.
+
+Testing framework improvements:
+
+* Improved test reporting: better diffs an error messages.
+* By default, pytest plugin now generates a test per item attribute
+  (see :ref:`web-poet-testing-pytest`). There is also an option
+  (``--web-poet-test-per-item``) to run a test per item instead.
+* Page objects with the :class:`~.HttpClient` dependency are now supported
+  (see :ref:`web-poet-testing-additional-requests`).
+* Page objects with the :class:`~.PageParams` dependency are now supported.
+* Added a new ``python -m web_poet.testing rerun`` command
+  (see :ref:`web-poet-testing-tdd`).
+* Fixed support for nested (indirect) dependencies in page objects.
+  Previously they were not handled properly by the testing
+  framework.
+* Non-ascii output is now stored without escaping in the test fixtures,
+  for better readability.
+
+Other changes:
+
+* Testing and CI fixes.
+* Fixed a packaging issue: ``tests`` and ``tests_extra`` packages were
+  installed, not just ``web_poet``.
+
+
 0.7.2 (2023-02-01)
 ------------------
 
