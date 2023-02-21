@@ -1,7 +1,7 @@
 import inspect
 import weakref
 from collections.abc import Iterable
-from functools import lru_cache, wraps
+from functools import lru_cache, partial, wraps
 from types import MethodType
 from typing import Any, Callable, List, Optional, TypeVar, Union
 from warnings import warn
@@ -214,11 +214,14 @@ def _cached_method_async(method, cached_method_name: str):
     return inner
 
 
-def _alru_cache(**kwargs):
-    ver = packaging.version.parse(async_lru_version)
-    if ver.major < 2:
-        kwargs["cache_exceptions"] = False
-    return alru_cache(**kwargs)
+# async_lru >= 2.0.0 removed cache_exceptions argument, and changed
+# its default value. `_alru_cache` is a compatibility function which works with
+# all async_lru versions and uses the same approach for exception caching
+# as async_lru >= 2.0.0.
+_alru_cache = alru_cache
+_async_lru_version = packaging.version.parse(async_lru_version)
+if _async_lru_version.major < 2:
+    _alru_cache = partial(alru_cache, cache_exceptions=False)
 
 
 def as_list(value: Optional[Any]) -> List[Any]:
