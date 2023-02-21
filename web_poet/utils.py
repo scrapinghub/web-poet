@@ -218,7 +218,7 @@ def _cached_method_async(method, cached_method_name: str):
 # its default value. `_alru_cache` is a compatibility function which works with
 # all async_lru versions and uses the same approach for exception caching
 # as async_lru >= 2.0.0.
-_alru_cache = alru_cache
+_alru_cache: Callable = alru_cache
 _async_lru_version = packaging.version.parse(async_lru_version)
 if _async_lru_version.major < 2:
     _alru_cache = partial(alru_cache, cache_exceptions=False)
