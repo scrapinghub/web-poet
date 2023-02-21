@@ -1,4 +1,10 @@
-from .fields import SelectFields, field, item_from_fields, item_from_fields_sync
+from .fields import (
+    SelectFields,
+    field,
+    item_from_fields,
+    item_from_fields_sync,
+    item_from_select_fields,
+)
 from .page_inputs import (
     BrowserHtml,
     HttpClient,

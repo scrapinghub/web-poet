@@ -5,7 +5,7 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Mapping, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -191,7 +191,7 @@ async def item_from_fields(
     ``item_cls.__init__`` doesn't support them.
     """
     item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
-    field_names = list(item_dict.keys())
+    field_names = getattr(obj, "fields_to_extract", list(item_dict.keys()))
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
@@ -203,7 +203,7 @@ def item_from_fields_sync(
     obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = list(get_fields_dict(obj))
+    field_names = getattr(obj, "fields_to_extract", list(get_fields_dict(obj)))
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
@@ -220,11 +220,68 @@ def _without_unsupported_field_names(
 
 @attrs.define
 class SelectFields:
-    """This is used as a dependency in a page object to control which fields it
-    would populate the item class that it returns.
+    """This is used as a dependency in :class:`web_poet.pages.ItemPage` to
+    control which fields to populate its returned item class.
+
+    You can use this to enable some fields that were disabled by the
+    ``@field(disabled=True)`` decorator.
+
+    Some usage examples:
+
+    * ``SelectFields({"name": True})`` - select one specific field
+    * ``SelectFields({"*": True})`` - select all fields
+    * ``SelectFields({"*": False, "name": True})`` - unselect all fields
+      except one
+
     """
 
     #: Fields that the page object would use to populate its item class. It's a
     #: mapping of field names to boolean values to where ``True`` would indicate
     #: it being included in ``.to_item()`` calls.
     fields: Optional[Mapping[str, bool]] = None
+
+
+async def item_from_select_fields(page) -> Any:
+    """Return an item from the given page object instance.
+
+    When passing a page object that uses at the ``@field`` decorator, it's the
+    same as calling the original :meth:`web_poet.pages.ItemPage.to_item` method
+    of :class:`web_poet.pages.ItemPage`.
+
+    When passing a page object that *doesn't* use any ``@field`` decorators at
+    all and instead populates its item class by overriding the
+    :meth:`web_poet.pages.ItemPage.to_item` method, it would essentially call
+    the overridden ``.to_item()`` method and drop any fields specified in the
+    :class:`web_poet.fields.SelectFields` instance.
+
+    .. warning::
+
+        However, when passing a page object that partially uses the ``@field``
+        decorator where some fields are populated in an overridden
+        :meth:`web_poet.pages.ItemPage.to_item` method, the page object should
+        make sure that :meth:`web_poet.pages.ItemPage.fields_to_extract`
+        is taken into account when populating the fields.
+    """
+
+    # The page object uses @fields decorators
+    fields_to_extract = page.fields_to_extract
+    if fields_to_extract:
+        return await item_from_fields(
+            page, item_cls=page.item_cls, skip_nonitem_fields=page._skip_nonitem_fields
+        )
+
+    # The page object probably populates the item class fields inside an
+    # overridden `.to_item()` method.
+    item = await ensure_awaitable(page.to_item())
+    fields = page.select_fields.fields
+    if not fields:
+        return item
+
+    kwargs = {}
+    for k, v in ItemAdapter(item).items():
+        if fields.get(k) is False or (
+            fields.get("*") is False and fields.get(k) is not True
+        ):
+            continue
+        kwargs[k] = v
+    return item.__class__(**kwargs)
