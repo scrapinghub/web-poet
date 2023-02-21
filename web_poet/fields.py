@@ -5,7 +5,7 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Type, TypeVar
+from typing import Callable, Dict, List, Mapping, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -216,3 +216,15 @@ def _without_unsupported_field_names(
     if item_field_names is None:  # item_cls doesn't define field names upfront
         return field_names[:]
     return list(set(field_names) & set(item_field_names))
+
+
+@attrs.define
+class SelectFields:
+    """This is used as a dependency in a page object to control which fields it
+    would populate the item class that it returns.
+    """
+
+    #: Fields that the page object would use to populate its item class. It's a
+    #: mapping of field names to boolean values to where ``True`` would indicate
+    #: it being included in ``.to_item()`` calls.
+    fields: Optional[Mapping[str, bool]] = None

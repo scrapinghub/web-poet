@@ -110,7 +110,7 @@ def test_serialization(book_list_html_response) -> None:
 
 def test_serialization_injectable(book_list_html_response) -> None:
     with pytest.raises(ValueError, match=r"Injectable type .+ passed"):
-        serialize([WebPage(book_list_html_response)])
+        serialize([WebPage(response=book_list_html_response)])
 
 
 def test_serialization_httpresponse_encoding(book_list_html) -> None:
@@ -175,7 +175,7 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     ) == "http://example.com"
 
     read_serialized_deps = storage.read()
-    po = MyWebPage(book_list_html_response, url)
+    po = MyWebPage(response=book_list_html_response, url=url)
     deserialized_po = deserialize(MyWebPage, read_serialized_deps)
     assert type(deserialized_po) == MyWebPage
     _assert_webpages_equal(po, deserialized_po)

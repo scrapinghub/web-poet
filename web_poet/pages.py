@@ -1,10 +1,10 @@
 import abc
 import typing
 
-import attr
+import attrs
 
 from web_poet._typing import get_item_cls
-from web_poet.fields import FieldsMixin, item_from_fields
+from web_poet.fields import FieldsMixin, SelectFields, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import _create_deprecated_class
@@ -53,12 +53,14 @@ class Returns(typing.Generic[ItemT]):
 _NOT_SET = object()
 
 
+@attrs.define(kw_only=True)
 class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
-    _skip_nonitem_fields = _NOT_SET
+    select_fields: SelectFields = SelectFields()
+    _skip_nonitem_fields = typing.ClassVar[typing.Union[_NOT_SET, bool]]
 
     def _get_skip_nonitem_fields(self) -> bool:
         value = self._skip_nonitem_fields
@@ -81,7 +83,7 @@ class ItemPage(Injectable, Returns[ItemT]):
         )
 
 
-@attr.s(auto_attribs=True)
+@attrs.define(kw_only=True)
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`
     and provides XPath / CSS shortcuts.

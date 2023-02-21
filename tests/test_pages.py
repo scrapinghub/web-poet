@@ -41,7 +41,7 @@ def test_web_page_object(book_list_html_response) -> None:
                 "title": self.css("title::text").get("").strip(),
             }
 
-    page_object = MyWebPage(book_list_html_response)
+    page_object = MyWebPage(response=book_list_html_response)
     assert page_object.to_item() == {
         "url": "http://books.toscrape.com/index.html",
         "title": "All products | Books to Scrape - Sandbox",
@@ -97,7 +97,7 @@ async def test_web_page_fields() -> None:
         def name(self):
             return "name"
 
-    page = MyPage(HttpResponse(url="http://example.com", body=b""))
+    page = MyPage(response=HttpResponse(url="http://example.com", body=b""))
     assert page.item_cls is Item
     item = await page.to_item()
     assert isinstance(item, Item)
