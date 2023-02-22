@@ -405,7 +405,6 @@ async def test_cached_method_unhashable_async() -> None:
     assert await foo.meth() == 1
 
 
-@pytest.mark.xfail
 def test_cached_method_exception() -> None:
     class Error(Exception):
         pass
@@ -420,10 +419,10 @@ def test_cached_method_exception() -> None:
 
     foo = Foo()
 
-    for _ in range(2):
+    for idx in range(2):
         with pytest.raises(Error):
             foo.meth()
-        assert foo.n_called == 1
+        assert foo.n_called == idx + 1
 
 
 @pytest.mark.asyncio
@@ -441,10 +440,10 @@ async def test_cached_method_exception_async() -> None:
 
     foo = Foo()
 
-    for _ in range(2):
+    for idx in range(2):
         with pytest.raises(Error):
             await foo.meth()
-        assert foo.n_called == 1
+        assert foo.n_called == idx + 1
 
 
 @pytest.mark.asyncio

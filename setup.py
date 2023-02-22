@@ -13,7 +13,7 @@ setup(
     author="Zyte Group Ltd",
     author_email="opensource@zyte.com",
     url="https://github.com/scrapinghub/web-poet",
-    packages=find_packages(exclude=("tests",)),
+    packages=find_packages(include=["web_poet*"]),
     package_data={
         "web_poet": ["py.typed"],
     },
@@ -29,6 +29,7 @@ setup(
         "andi",
         "python-dateutil",
         "time-machine",
+        "packaging",
         "backports.zoneinfo; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[

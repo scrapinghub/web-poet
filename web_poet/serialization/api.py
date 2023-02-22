@@ -182,5 +182,12 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
         dep_type = load_class(dep_type_name)
         deps[dep_type] = deserialize_leaf(dep_type, dep_data)
 
-    plan = andi.plan(cls, is_injectable=is_injectable, externally_provided=deps.keys())
+    externally_provided = deps.keys()
+    plan = andi.plan(
+        cls, is_injectable=is_injectable, externally_provided=externally_provided
+    )
+    for fn_or_cls, kwargs_spec in plan[:-1]:
+        if fn_or_cls in externally_provided:
+            continue
+        deps[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(deps))
     return cls(**plan.final_kwargs(deps))

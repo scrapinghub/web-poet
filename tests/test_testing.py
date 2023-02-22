@@ -11,14 +11,15 @@ import time_machine
 from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
-from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage
+from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
+from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
-N_TESTS = len(attrs.fields(Product)) + 1
+N_TESTS = len(attrs.fields(Product)) + 2
 
 
 def test_save_fixture(book_list_html_response, tmp_path) -> None:
@@ -66,7 +67,7 @@ class MyItemPage2(WebPage):
 
 def _save_fixture(pytester, page_cls, page_inputs, expected):
     base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
-    Fixture.save(base_dir, inputs=page_inputs, item=expected)
+    return Fixture.save(base_dir, inputs=page_inputs, item=expected)
 
 
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
@@ -77,7 +78,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
         expected={"foo": "bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=3)
 
 
 def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> None:
@@ -88,7 +89,7 @@ def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> Non
         expected={"foo": "not bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=1)
+    result.assert_outcomes(failed=1, passed=2)
     result.stdout.fnmatch_lines("item.foo is not correct*")
 
 
@@ -100,7 +101,7 @@ def test_pytest_plugin_bad_field_value_None(pytester, book_list_html_response) -
         expected={"foo": "bar"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=1)
+    result.assert_outcomes(failed=1, passed=2)
     result.stdout.fnmatch_lines("item.foo is not correct*")
     result.stdout.fnmatch_lines("Expected: 'bar', got: None*")
 
@@ -113,7 +114,7 @@ def test_pytest_plugin_missing_field(pytester, book_list_html_response) -> None:
         expected={"foo": "bar", "foo2": "bar2"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=1, passed=2)
+    result.assert_outcomes(failed=1, passed=3)
     result.stdout.fnmatch_lines("item.foo2 is missing*")
 
 
@@ -125,10 +126,32 @@ def test_pytest_plugin_extra_field(pytester, book_list_html_response) -> None:
         expected={"foo2": "bar2"},
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=2, passed=0)
+    result.assert_outcomes(failed=2, passed=1)
     result.stdout.fnmatch_lines("item.foo2 is missing*")
     result.stdout.fnmatch_lines("*unexpected fields*")
     result.stdout.fnmatch_lines("*foo = 'bar'*")
+
+
+class FieldExceptionPage(WebPage):
+    @field
+    def foo(self):
+        return "foo"
+
+    @field
+    def bar(self):
+        raise Exception
+
+
+def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=FieldExceptionPage,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "foo", "bar": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, skipped=3)
+    result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
 
 
 def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
@@ -286,7 +309,7 @@ def test_httpclient(pytester, book_list_html_response) -> None:
     assert (input_dir / "HttpClient-0-HttpResponse.body.html").read_bytes() == b"body1"
     assert (input_dir / "HttpClient-1-HttpResponse.body.html").read_bytes() == b"body2"
     result = pytester.runpytest()
-    result.assert_outcomes(passed=3)
+    result.assert_outcomes(passed=4)
 
 
 def test_httpclient_no_response(pytester, book_list_html_response) -> None:
@@ -309,7 +332,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
         expected=item,
     )
     result = pytester.runpytest()
-    result.assert_outcomes(failed=3)
+    result.assert_outcomes(failed=1, skipped=3)
 
 
 @attrs.define
@@ -345,4 +368,53 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
         expected=item,
     )
     result = pytester.runpytest()
-    result.assert_outcomes(passed=3)
+    result.assert_outcomes(passed=4)
+
+
+class MyItemPage3(WebPage):
+    async def to_item(self) -> dict:  # noqa: D102
+        return {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun(pytester, book_list_html_response, capsys) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path)])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
+
+
+def test_cli_rerun_fields_unknown_names(
+    pytester, book_list_html_response, capsys
+) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=MyItemPage3,
+        page_inputs=[book_list_html_response],
+        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
+    captured = capsys.readouterr()
+    assert (
+        "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
+        in captured.err
+    )
+    assert json.loads(captured.out) == {"foo": "bar"}

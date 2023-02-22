@@ -1,11 +1,13 @@
 import inspect
 import weakref
 from collections.abc import Iterable
-from functools import lru_cache, wraps
+from functools import lru_cache, partial, wraps
 from types import MethodType
 from typing import Any, Callable, List, Optional, TypeVar, Union
 from warnings import warn
 
+import packaging.version
+from async_lru import __version__ as async_lru_version
 from async_lru import alru_cache
 from url_matcher import Patterns
 
@@ -203,13 +205,23 @@ def _cached_method_async(method, cached_method_name: str):
             # on a first call, create an alru_cache-wrapped method,
             # and store it on the instance
             bound_method = MethodType(method, self)
-            cached_meth = alru_cache(maxsize=None)(bound_method)
+            cached_meth = _alru_cache(maxsize=None)(bound_method)
             setattr(self, cached_method_name, cached_meth)
         else:
             cached_meth = getattr(self, cached_method_name)
         return await cached_meth(*args, **kwargs)
 
     return inner
+
+
+# async_lru >= 2.0.0 removed cache_exceptions argument, and changed
+# its default value. `_alru_cache` is a compatibility function which works with
+# all async_lru versions and uses the same approach for exception caching
+# as async_lru >= 2.0.0.
+_alru_cache: Callable = alru_cache
+_async_lru_version = packaging.version.parse(async_lru_version)
+if _async_lru_version.major < 2:
+    _alru_cache = partial(alru_cache, cache_exceptions=False)
 
 
 def as_list(value: Optional[Any]) -> List[Any]:

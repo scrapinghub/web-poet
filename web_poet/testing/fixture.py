@@ -53,6 +53,7 @@ class Fixture:
 
     def __init__(self, path: Path) -> None:
         self.path = path
+        self._output_error: Optional[Exception] = None
 
     @property
     def type_name(self) -> str:
@@ -113,14 +114,23 @@ class Fixture:
         Return the output from the recreated Page Object,
         taking frozen time in account.
         """
-        meta = self.get_meta()
-        frozen_time: Optional[str] = meta.get("frozen_time")
-        if frozen_time:
-            frozen_time_parsed = self._parse_frozen_time(frozen_time)
-            with time_machine.travel(frozen_time_parsed):
+        try:
+            meta = self.get_meta()
+            frozen_time: Optional[str] = meta.get("frozen_time")
+            if frozen_time:
+                frozen_time_parsed = self._parse_frozen_time(frozen_time)
+                with time_machine.travel(frozen_time_parsed):
+                    return self._get_output()
+            else:
                 return self._get_output()
-        else:
-            return self._get_output()
+        except Exception as e:
+            self._output_error = e
+            raise
+
+    @classmethod
+    def item_to_json(cls, item: Any) -> str:
+        """Convert an item to a JSON string."""
+        return json.dumps(ItemAdapter(item).asdict(), ensure_ascii=False, indent=4)
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
@@ -189,6 +199,16 @@ class Fixture:
         if extra_fields:
             raise FieldsUnexpected(extra_fields)
 
+    def to_item_raised(self) -> bool:
+        """Return True if to_item raised an error.
+        Note that if to_item hasn't been called yet, this method returns False.
+        """
+        return self._output_error is not None
+
+    def assert_no_toitem_exceptions(self):
+        """Assert that to_item() can be run (doesn't raise an error)"""
+        self.get_output()
+
     @classmethod
     def save(
         cls: Type[FixtureT],
@@ -207,12 +227,16 @@ class Fixture:
         fixture_dir = Path(base_directory, fixture_name)
         fixture = cls(fixture_dir)
         fixture.input_path.mkdir(parents=True)
+
         serialized_inputs = serialize(inputs)
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
+
         with fixture.output_path.open("w") as f:
-            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False, indent=4)
+            f.write(cls.item_to_json(item))
+
         if meta:
             with fixture.meta_path.open("w") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=4)
+
         return fixture
