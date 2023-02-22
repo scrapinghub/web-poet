@@ -59,7 +59,12 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls._skip_nonitem_fields = skip_nonitem_fields
+
+        if getattr(cls, "_skip_nonitem_fields", None) is True:
+            # See: https://github.com/scrapinghub/web-poet/issues/141
+            cls._skip_nonitem_fields = True
+        else:
+            cls._skip_nonitem_fields = skip_nonitem_fields
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
