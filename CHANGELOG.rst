@@ -8,21 +8,21 @@ Changelog
 This release contains many improvements to the web-poet testing framework,
 as well as some other improvements and bug fixes.
 
-Backwards-incompatible changes:
+Backward-incompatible changes:
 
 * :func:`~.cached_method` no longer caches exceptions for ``async def`` methods.
   This makes the behavior the same for sync and async methods, and also makes
-  it consistent with Python's stdlib caching (``lru_cache``,
-  ``cached_property``).
-* The testing framework now uses ``HttpResponse-info.json`` file name instead
+  it consistent with Python's stdlib caching (i.e. :func:`functools.lru_cache`,
+  :func:`functools.cached_property`).
+* The testing framework now uses the ``HttpResponse-info.json`` file name instead
   of ``HttpResponse-other.json`` to store information about HttpResponse
   instances. To make tests generated with older web-poet work, rename
   these files on disk.
 
 Testing framework improvements:
 
-* Improved test reporting: better diffs an error messages.
-* By default, pytest plugin now generates a test per item attribute
+* Improved test reporting: better diffs and error messages.
+* By default, the pytest plugin now generates a test per item attribute
   (see :ref:`web-poet-testing-pytest`). There is also an option
   (``--web-poet-test-per-item``) to run a test per item instead.
 * Page objects with the :class:`~.HttpClient` dependency are now supported
@@ -33,7 +33,7 @@ Testing framework improvements:
 * Fixed support for nested (indirect) dependencies in page objects.
   Previously they were not handled properly by the testing
   framework.
-* Non-ascii output is now stored without escaping in the test fixtures,
+* Non-ASCII output is now stored without escaping in the test fixtures,
   for better readability.
 
 Other changes:
