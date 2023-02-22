@@ -8,15 +8,16 @@ Changelog
 This release contains many improvements to the web-poet testing framework,
 as well as some other improvements and bug fixes.
 
-Backwards-incomatible changes:
+Backwards-incompatible changes:
 
 * :func:`~.cached_method` no longer caches exceptions for ``async def`` methods.
   This makes the behavior the same for sync and async methods, and also makes
   it consistent with Python's stdlib caching (``lru_cache``,
   ``cached_property``).
 * The testing framework now uses ``HttpResponse-info.json`` file name instead
-  of ``HttpResponse-other.json`` to store information about the HttpResponse.
-  To make tests generated with older web-poet work, rename these files on disk.
+  of ``HttpResponse-other.json`` to store information about HttpResponse
+  instances. To make tests generated with older web-poet work, rename
+  these files on disk.
 
 Testing framework improvements:
 
