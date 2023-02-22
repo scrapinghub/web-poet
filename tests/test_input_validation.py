@@ -17,7 +17,7 @@ EXPECTED_ITEM = Item(a="a")
 
 class BasePage(ItemPage[Item]):
     @field
-    def a(self):  # noqa: D102
+    def a(self):
         return "a"
 
 
@@ -25,7 +25,7 @@ class BasePage(ItemPage[Item]):
 
 
 class BaseValidInputPage(BasePage):
-    def validate_input(self):  # noqa: D102
+    def validate_input(self):
         pass
 
 
@@ -60,7 +60,7 @@ async def test_valid_input_async_field():
 
 
 class BaseRetryPage(BasePage):
-    def validate_input(self):  # noqa: D102
+    def validate_input(self):
         raise Retry()
 
 
@@ -103,7 +103,7 @@ async def test_retry_async_field():
 
 
 class BaseUseFallbackPage(BasePage):
-    def validate_input(self):  # noqa: D102
+    def validate_input(self):
         raise UseFallback()
 
 
@@ -149,7 +149,7 @@ INVALID_ITEM = Item(a="invalid")
 
 
 class BaseInvalidInputPage(BasePage):
-    def validate_input(self):  # noqa: D102
+    def validate_input(self):
         return INVALID_ITEM
 
 
@@ -216,7 +216,7 @@ async def test_unvalidated_input_async_field():
 class BaseCachingPage(BasePage):
     _raise = False
 
-    def validate_input(self):  # noqa: D102
+    def validate_input(self):
         if self._raise:
             raise UseFallback()
         self._raise = True

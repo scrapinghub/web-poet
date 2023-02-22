@@ -95,10 +95,9 @@ def field(
 
         @staticmethod
         def _process(value, page_object):
-            if hasattr(page_object, "validate_input"):
-                validation_item = page_object._validate_input()
-                if validation_item is not None:
-                    return getattr(validation_item, method.__name__)
+            validation_item = page_object._validate_input()
+            if validation_item is not None:
+                return getattr(validation_item, method.__name__)
             if out:
                 for processor in out:
                     value = processor(value)

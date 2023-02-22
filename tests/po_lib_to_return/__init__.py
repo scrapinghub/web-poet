@@ -1,7 +1,7 @@
 import attrs
 from url_matcher import Patterns
 
-from web_poet import Injectable, ItemPage, Returns, field, handle_urls, item_from_fields
+from web_poet import Injectable, ItemPage, Returns, field, handle_urls
 
 
 @attrs.define
@@ -184,13 +184,13 @@ class CustomProductPageDataTypeOnly(Injectable):
     expected_to_return = Product
     expected_meta = {}
 
-    @field
+    @property
     def name(self) -> str:
         return "name"
 
-    @field
+    @property
     def price(self) -> float:
         return 12.99
 
     async def to_item(self) -> Product:
-        return await item_from_fields(self, item_cls=Product)
+        return Product(name=self.name, price=self.price)

@@ -20,7 +20,6 @@ from tests.po_lib_to_return import (
 )
 from web_poet import (
     HttpResponse,
-    Injectable,
     ItemPage,
     field,
     item_from_fields,
@@ -40,11 +39,11 @@ class Page(ItemPage[Item]):
     response: HttpResponse
 
     @field
-    def name(self):  # noqa: D102
+    def name(self):
         return self.response.css("title ::text").get()
 
     @field
-    async def price(self):  # noqa: D102
+    async def price(self):
         await asyncio.sleep(0.01)
         return "$123"
 
@@ -54,11 +53,11 @@ class InvalidPage(ItemPage[Item]):
     response: HttpResponse
 
     @field
-    def name(self):  # noqa: D102
+    def name(self):
         return self.response.css("title ::text").get()
 
     @field
-    def unknown_attribute(self):  # noqa: D102
+    def unknown_attribute(self):
         return "foo"
 
 
@@ -94,10 +93,10 @@ def test_item_from_fields_sync() -> None:
     @attrs.define
     class Page(ItemPage):
         @field
-        def name(self):  # noqa: D102
+        def name(self):
             return "name"
 
-        def to_item(self):  # noqa: D102
+        def to_item(self):
             return item_from_fields_sync(self, dict)
 
     page = Page()
@@ -112,10 +111,10 @@ def test_field_non_callable() -> None:
             # https://github.com/python/mypy/issues/1362#issuecomment-438246775
             @field  # type: ignore
             @property
-            def name(self):  # noqa: D102
+            def name(self):
                 return "name"
 
-            def to_item(self):  # noqa: D102
+            def to_item(self):
                 return item_from_fields_sync(self, dict)
 
 
@@ -126,10 +125,10 @@ def test_field_classmethod() -> None:
         class Page(ItemPage):
             @field
             @classmethod
-            def name(cls):  # noqa: D102
+            def name(cls):
                 return "name"
 
-            def to_item(self):  # noqa: D102
+            def to_item(self):
                 return item_from_fields_sync(self, dict)
 
 
@@ -159,7 +158,7 @@ def test_field_decorator_no_arguments() -> None:
 
 
 def test_field_cache_sync() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called_1 = 0
         _n_called_2 = 0
 
@@ -187,7 +186,7 @@ def test_field_cache_sync() -> None:
 
 @pytest.mark.asyncio
 async def test_field_cache_async() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called_1 = 0
         _n_called_2 = 0
 
@@ -215,7 +214,7 @@ async def test_field_cache_async() -> None:
 
 @pytest.mark.asyncio
 async def test_field_cache_async_locked() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called = 0
 
         @field(cached=True)
@@ -257,18 +256,18 @@ async def test_skip_nonitem_fields_async() -> None:
 
 def test_skip_nonitem_fields() -> None:
     @attrs.define
-    class SyncPage(Injectable):
+    class SyncPage(ItemPage):
         response: HttpResponse
 
         @field
-        def name(self):  # noqa: D102
+        def name(self):
             return self.response.css("title ::text").get()
 
         @field
-        def price(self):  # noqa: D102
+        def price(self):
             return "$123"
 
-        def to_item(self):  # noqa: D102
+        def to_item(self) -> Item:  # type: ignore[override]
             return item_from_fields_sync(self, Item)
 
     class ExtendedPage(SyncPage):
@@ -281,7 +280,7 @@ def test_skip_nonitem_fields() -> None:
         page.to_item()
 
     class ExtendedPage2(ExtendedPage):
-        def to_item(self) -> Item:
+        def to_item(self) -> Item:  # type: ignore[override]
             return item_from_fields_sync(self, Item, skip_nonitem_fields=True)
 
     page = ExtendedPage2(response=EXAMPLE_RESPONSE)
@@ -483,7 +482,7 @@ def test_field_processors_sync() -> None:
     @attrs.define
     class Page(ItemPage):
         @field(out=[str.strip, proc1])
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
     page = Page()
@@ -498,7 +497,7 @@ async def test_field_processors_async() -> None:
     @attrs.define
     class Page(ItemPage):
         @field(out=[str.strip, proc1])
-        async def name(self):  # noqa: D102
+        async def name(self):
             return "  name\t "
 
     page = Page()

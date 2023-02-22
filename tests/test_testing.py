@@ -55,12 +55,12 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
 
 
 class MyItemPage(WebPage):
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         return {"foo": "bar"}
 
 
 class MyItemPage2(WebPage):
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         return {"foo": None}
 
 
@@ -177,7 +177,7 @@ def _get_product_item(date: datetime.datetime) -> Product:
 
 
 class DateItemPage(WebPage):
-    async def to_item(self) -> Item:  # noqa: D102
+    async def to_item(self) -> Item:
         date = datetime.datetime.now().astimezone()
         return _get_product_item(date)
 
@@ -252,7 +252,7 @@ def test_pytest_frozen_time_tz_windows_pass(pytester, book_list_html_response) -
 class ClientPage(WebPage):
     client: HttpClient
 
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         resp1 = await self.client.get("http://books.toscrape.com/1.html")
         resp2 = await self.client.post("http://books.toscrape.com/2.html", body=b"post")
         return {"foo": "bar", "additional": [resp1.body.decode(), resp2.body.decode()]}
@@ -316,7 +316,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
 class ClientExceptionPage(WebPage):
     client: HttpClient
 
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         msg = ""
         try:
             await self.client.get("http://books.toscrape.com/1.html")
