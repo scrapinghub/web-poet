@@ -1,6 +1,6 @@
 import abc
 import inspect
-from typing import Any, ClassVar, Generic, List, Type, TypeVar, Union
+from typing import Any, ClassVar, Generic, List, Optional, Type, TypeVar, Union
 
 import attrs
 
@@ -54,13 +54,17 @@ class Returns(Generic[ItemT]):
 _NOT_SET = object()
 
 
-@attrs.define(kw_only=True)
+@attrs.define
 class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
-    select_fields: SelectFields = SelectFields()
+    select_fields: Optional[SelectFields] = attrs.field(
+        converter=lambda x: SelectFields(x) if not isinstance(x, SelectFields) else x,
+        kw_only=True,
+        default=None,
+    )
     _skip_nonitem_fields = ClassVar[Union[_NOT_SET, bool]]
 
     def _get_skip_nonitem_fields(self) -> bool:
@@ -129,7 +133,7 @@ class ItemPage(Injectable, Returns[ItemT]):
         return fields_to_extract
 
 
-@attrs.define(kw_only=True)
+@attrs.define
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`
     and provides XPath / CSS shortcuts.

@@ -671,7 +671,7 @@ async def test_select_fields() -> None:
     response = HttpResponse("https://example.com", b"")
 
     # When SelectFields isn't set
-    page = BigPage(response=response)
+    page = BigPage(response)
     assert page.fields_to_extract == ["x", "y"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
@@ -679,21 +679,21 @@ async def test_select_fields() -> None:
 
     # If no field selection directive is given but SelectFields is set, it would
     # use the default fields that are not disabled.
-    page = BigPage(response=response, select_fields=SelectFields(None))
+    page = BigPage(response, select_fields=SelectFields(None))
     assert page.fields_to_extract == ["x", "y"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
     assert page.call_counter == {"x": 2, "y": 2}
 
     # Same case as above but given an empty dict
-    page = BigPage(response=response, select_fields=SelectFields({}))
+    page = BigPage(response, select_fields=SelectFields({}))
     assert page.fields_to_extract == ["x", "y"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
     assert page.call_counter == {"x": 2, "y": 2}
 
     # Select all fields
-    page = BigPage(response=response, select_fields=SelectFields({"*": True}))
+    page = BigPage(response, select_fields=SelectFields({"*": True}))
     assert page.fields_to_extract == ["x", "y", "z"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=3)
@@ -701,7 +701,7 @@ async def test_select_fields() -> None:
 
     # Don't select all fields; but in this case a TypeError is raised since
     # required fields aren't supplied to the item
-    page = BigPage(response=response, select_fields=SelectFields({"*": False}))
+    page = BigPage(response, select_fields=SelectFields({"*": False}))
     assert page.fields_to_extract == []
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await page.to_item()
@@ -710,18 +710,14 @@ async def test_select_fields() -> None:
     assert page.call_counter == {}
 
     # Exclude all but one (which is the required field in the item)
-    page = BigPage(
-        response=response, select_fields=SelectFields({"*": False, "x": True})
-    )
+    page = BigPage(response, select_fields=SelectFields({"*": False, "x": True}))
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=None, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=None, z=None)
     assert page.call_counter == {"x": 2}
 
     # Include all fields but one
-    page = BigPage(
-        response=response, select_fields=SelectFields({"*": True, "y": False})
-    )
+    page = BigPage(response, select_fields=SelectFields({"*": True, "y": False}))
     assert page.fields_to_extract == ["x", "z"]
     assert await page.to_item() == BigItem(x=1, y=None, z=3)
     assert await item_from_select_fields(page) == BigItem(x=1, y=None, z=3)
@@ -729,7 +725,7 @@ async def test_select_fields() -> None:
 
     # overlapping directives on the same field should be okay
     page = BigPage(
-        response=response,
+        response,
         select_fields=SelectFields({"*": True, "x": True, "y": True, "z": True}),
     )
     assert page.fields_to_extract == ["x", "y", "z"]
@@ -738,7 +734,7 @@ async def test_select_fields() -> None:
     assert page.call_counter == {"x": 2, "y": 2, "z": 2}
 
     # Excluding a required field throws an error
-    page = BigPage(response=response, select_fields=SelectFields({"x": False}))
+    page = BigPage(response, select_fields=SelectFields({"x": False}))
     assert page.fields_to_extract == ["y"]
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await page.to_item()
@@ -749,7 +745,7 @@ async def test_select_fields() -> None:
     # Boolean-like values are not supported. They are simply ignored and the
     # page would revert back to the default field directives.
     page = BigPage(
-        response=response,
+        response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
     assert page.fields_to_extract == ["x", "y"]
@@ -764,7 +760,7 @@ async def test_select_fields() -> None:
         r"test_fields.BigItem'> which has SelectFields\(fields={'x': True, "
         r"'not_existing': True}\)."
     )
-    page = BigPage(response=response, select_fields=SelectFields(fields))
+    page = BigPage(response, select_fields=SelectFields(fields))
     with pytest.raises(ValueError, match=expected_value_error_msg):
         assert page.fields_to_extract
     with pytest.raises(ValueError, match=expected_value_error_msg):
@@ -797,35 +793,33 @@ async def test_select_fields_but_to_item_only() -> None:
 
     # When SelectFields isn't set, it should simply extract the non-disabled
     # fields.
-    page = BigToItemOnlyPage(response=response)
+    page = BigToItemOnlyPage(response)
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
 
     # If no field selection directive is given but SelectFields is set, it would
     # use the default fields that are not disabled.
-    page = BigToItemOnlyPage(response=response, select_fields=SelectFields(None))
+    page = BigToItemOnlyPage(response, select_fields=SelectFields(None))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
 
     # Same case as above but given an empty dict
-    page = BigToItemOnlyPage(response=response, select_fields=SelectFields({}))
+    page = BigToItemOnlyPage(response, select_fields=SelectFields({}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
 
     # Select all fields
-    page = BigToItemOnlyPage(response=response, select_fields=SelectFields({"*": True}))
+    page = BigToItemOnlyPage(response, select_fields=SelectFields({"*": True}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
 
     # Don't select all fields; but in this case a TypeError is raised since
     # required fields aren't supplied to the item
-    page = BigToItemOnlyPage(
-        response=response, select_fields=SelectFields({"*": False})
-    )
+    page = BigToItemOnlyPage(response, select_fields=SelectFields({"*": False}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     with pytest.raises(TypeError, match=expected_type_error_msg):
@@ -833,7 +827,7 @@ async def test_select_fields_but_to_item_only() -> None:
 
     # Exclude all but one (which is the required field in the item)
     page = BigToItemOnlyPage(
-        response=response, select_fields=SelectFields({"*": False, "x": True})
+        response, select_fields=SelectFields({"*": False, "x": True})
     )
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
@@ -841,7 +835,7 @@ async def test_select_fields_but_to_item_only() -> None:
 
     # Include all fields but one
     page = BigToItemOnlyPage(
-        response=response, select_fields=SelectFields({"*": True, "y": False})
+        response, select_fields=SelectFields({"*": True, "y": False})
     )
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
@@ -849,7 +843,7 @@ async def test_select_fields_but_to_item_only() -> None:
 
     # overlapping directives on the same field should be okay
     page = BigToItemOnlyPage(
-        response=response,
+        response,
         select_fields=SelectFields({"*": True, "x": True, "y": True, "z": True}),
     )
     assert page.fields_to_extract == []
@@ -857,9 +851,7 @@ async def test_select_fields_but_to_item_only() -> None:
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
 
     # Excluding a required field throws an error
-    page = BigToItemOnlyPage(
-        response=response, select_fields=SelectFields({"x": False})
-    )
+    page = BigToItemOnlyPage(response, select_fields=SelectFields({"x": False}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     with pytest.raises(TypeError, match=expected_type_error_msg):
@@ -868,7 +860,7 @@ async def test_select_fields_but_to_item_only() -> None:
     # Boolean-like values are not supported. They are simply ignored and the
     # page would revert back to the default field directives.
     page = BigToItemOnlyPage(
-        response=response,
+        response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
     assert page.fields_to_extract == []
@@ -882,7 +874,7 @@ async def test_select_fields_but_to_item_only() -> None:
         r"test_fields.BigItem'> which has SelectFields\(fields={'x': True, "
         r"'not_existing': True}\)."
     )
-    page = BigToItemOnlyPage(response=response, select_fields=SelectFields(fields))
+    page = BigToItemOnlyPage(response, select_fields=SelectFields(fields))
     with pytest.raises(ValueError, match=expected_value_error_msg):
         assert page.fields_to_extract
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
@@ -925,7 +917,7 @@ async def test_select_fields_but_unreliable() -> None:
     response = HttpResponse("https://example.com", b"")
 
     # When SelectFields isn't set
-    page = BigUnreliablePage(response=response)
+    page = BigUnreliablePage(response)
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -934,7 +926,7 @@ async def test_select_fields_but_unreliable() -> None:
 
     # If no field selection directive is given but SelectFields is set, it would
     # use the default fields that are not disabled.
-    page = BigUnreliablePage(response=response, select_fields=SelectFields(None))
+    page = BigUnreliablePage(response, select_fields=SelectFields(None))
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -942,7 +934,7 @@ async def test_select_fields_but_unreliable() -> None:
     assert page.call_counter == {"x": 2, "z": 1}
 
     # Same case as above but given an empty dict
-    page = BigUnreliablePage(response=response, select_fields=SelectFields({}))
+    page = BigUnreliablePage(response, select_fields=SelectFields({}))
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -950,7 +942,7 @@ async def test_select_fields_but_unreliable() -> None:
     assert page.call_counter == {"x": 2, "z": 1}
 
     # Select all fields
-    page = BigUnreliablePage(response=response, select_fields=SelectFields({"*": True}))
+    page = BigUnreliablePage(response, select_fields=SelectFields({"*": True}))
     assert page.fields_to_extract == ["x", "z"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -959,9 +951,7 @@ async def test_select_fields_but_unreliable() -> None:
 
     # Don't select all fields; but in this case a TypeError is raised since
     # required fields aren't supplied to the item
-    page = BigUnreliablePage(
-        response=response, select_fields=SelectFields({"*": False})
-    )
+    page = BigUnreliablePage(response, select_fields=SelectFields({"*": False}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -971,7 +961,7 @@ async def test_select_fields_but_unreliable() -> None:
 
     # Exclude all but one (which is the required field in the item)
     page = BigUnreliablePage(
-        response=response, select_fields=SelectFields({"*": False, "x": True})
+        response, select_fields=SelectFields({"*": False, "x": True})
     )
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
@@ -981,7 +971,7 @@ async def test_select_fields_but_unreliable() -> None:
 
     # Include all fields but one
     page = BigUnreliablePage(
-        response=response, select_fields=SelectFields({"*": True, "z": False})
+        response, select_fields=SelectFields({"*": True, "z": False})
     )
     assert page.fields_to_extract == ["x"]
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
@@ -991,7 +981,7 @@ async def test_select_fields_but_unreliable() -> None:
 
     # overlapping directives on the same field should be okay
     page = BigUnreliablePage(
-        response=response,
+        response,
         select_fields=SelectFields({"*": True, "x": True, "y": True, "z": True}),
     )
     assert page.fields_to_extract == ["x", "z"]
@@ -1001,9 +991,7 @@ async def test_select_fields_but_unreliable() -> None:
     assert page.call_counter == {"x": 2, "z": 2}
 
     # Excluding a required field throws an error
-    page = BigUnreliablePage(
-        response=response, select_fields=SelectFields({"x": False})
-    )
+    page = BigUnreliablePage(response, select_fields=SelectFields({"x": False}))
     assert page.fields_to_extract == []
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 1, "z": 1}
@@ -1014,7 +1002,7 @@ async def test_select_fields_but_unreliable() -> None:
     # Boolean-like values are not supported. They are simply ignored and the
     # page would revert back to the default field directives.
     page = BigUnreliablePage(
-        response=response,
+        response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
     assert page.fields_to_extract == ["x"]
@@ -1030,7 +1018,7 @@ async def test_select_fields_but_unreliable() -> None:
         r"test_fields.BigItem'> which has SelectFields\(fields={'x': True, "
         r"'not_existing': True}\)."
     )
-    page = BigUnreliablePage(response=response, select_fields=SelectFields(fields))
+    page = BigUnreliablePage(response, select_fields=SelectFields(fields))
     with pytest.raises(ValueError, match=expected_value_error_msg):
         assert page.fields_to_extract
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
