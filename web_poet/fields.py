@@ -94,10 +94,7 @@ def field(
             return self.unbound_method(instance)
 
         @staticmethod
-        def _process(value, page_object):
-            validation_item = page_object._validate_input()
-            if validation_item is not None:
-                return getattr(validation_item, method.__name__)
+        def _process(value):
             if out:
                 for processor in out:
                     value = processor(value)
@@ -108,12 +105,18 @@ def field(
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs), args[0])
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                    return self._process(await method(*args, **kwargs))
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs), args[0])
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                    return self._process(method(*args, **kwargs))
 
             return wraps(method)(processed)
 

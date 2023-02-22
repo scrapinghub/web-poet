@@ -515,3 +515,27 @@ returns a dictionary, where keys are field names, and values are
 
     print(field_names)  # dict_keys(['my_field'])
     print(my_field_meta)  # {'expensive': True}
+
+
+Input validation
+----------------
+
+:ref:`Input validation <input-validation>`, if used, happens before field
+evaluation, and it may override the values of fields, preventing field
+evaluation from ever happening. For example:
+
+.. code-block:: python
+
+   class Page(ItemPage[Item]):
+       def validate_input(self):
+           return Item(foo="bar")
+
+       @field
+       def foo(self):
+           raise RuntimeError("This exception is never raised")
+
+    assert Page().foo == "bar"
+
+Field evaluation may still happen for a field if the field is used in the
+implementation of the ``validate_input`` method. Note, however, that only
+synchronous fields can be used from the ``validate_input`` method.

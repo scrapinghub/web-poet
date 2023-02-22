@@ -63,6 +63,21 @@ For example:
        if self.response.css('.product-list'):
            return Product(is_valid=False)
 
+You may use fields in your implementation of the ``validate_input`` method, but
+only synchronous fields are supported. For example:
+
+.. code-block:: python
+
+   class Page(WebPage[Item]):
+       def validate_input(self):
+           if not self.name:
+               raise UseFallback()
+
+       @field
+       def name(self):
+           return self.response.css(".product-name ::text")
+
+
 :exc:`~web_poet.exceptions.Retry` and :exc:`~web_poet.exceptions.UseFallback`
 may also be raised from the ``to_item`` method. This could come in handy, for
 example, if after you execute some asynchronous code, such as an

@@ -104,7 +104,12 @@ async def test_retry_async_field():
 
 class BaseUseFallbackPage(BasePage):
     def validate_input(self):
-        raise UseFallback()
+        if self.a is None:
+            raise UseFallback()
+
+    @field
+    def a(self):
+        return None
 
 
 def test_use_fallback_sync_to_item():
@@ -133,6 +138,10 @@ def test_use_fallback_sync_field():
 @pytest.mark.asyncio
 async def test_use_fallback_async_field():
     class Page(BaseUseFallbackPage):
+        def validate_input(self):
+            # Cannot use async self.a
+            raise UseFallback()
+
         @field
         async def a(self):
             return "a"
@@ -148,9 +157,13 @@ async def test_use_fallback_async_field():
 INVALID_ITEM = Item(a="invalid")
 
 
-class BaseInvalidInputPage(BasePage):
+class BaseInvalidInputPage(ItemPage[Item]):
     def validate_input(self):
         return INVALID_ITEM
+
+    @field
+    def a(self):
+        raise RuntimeError("This exception should never be raised")
 
 
 def test_invalid_input_sync_to_item():
@@ -175,7 +188,7 @@ async def test_invalid_input_async_field():
     class Page(BaseInvalidInputPage):
         @field
         async def a(self):
-            return "a"
+            raise RuntimeError("This exception should never be raised")
 
     assert await Page().a == "invalid"
 
