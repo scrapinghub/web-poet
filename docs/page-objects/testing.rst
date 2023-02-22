@@ -134,6 +134,8 @@ In this case there is going to be a single test per fixture: if the result
 is not fully correct, the test fails. So, following the previous example,
 it'd be 2 tests instead of 14.
 
+.. _web-poet-testing-tdd:
+
 Test-Driven Development
 =======================
 
@@ -286,6 +288,8 @@ Please also check the official Git LFS documentation for more information.
 
 .. _Git LFS: https://git-lfs.com/
 .. _implementations: https://github.com/git-lfs/git-lfs/wiki/Implementations
+
+.. _web-poet-testing-additional-requests:
 
 Additional requests support
 ===========================
