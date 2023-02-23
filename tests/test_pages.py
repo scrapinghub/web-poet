@@ -211,11 +211,11 @@ async def test_item_page_change_item_type_remove_fields() -> None:
         assert isinstance(item, Item)
         assert item == Item(name="hello")
 
-        # Item only contains "name", but not "price", but "price" should be passed
-        class SubclassStrict(BasePage, Returns[Item]):
-            pass
+    # Item only contains "name", but not "price", but "price" should be passed
+    class SubclassStrict(BasePage, Returns[Item]):
+        pass
 
-        page2 = SubclassStrict()
-        assert page2.item_cls is Item
-        with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
-            await page2.to_item()
+    page2 = SubclassStrict()
+    assert page2.item_cls is Item
+    with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
+        await page2.to_item()
