@@ -55,16 +55,22 @@ class ItemPage(Injectable, Returns[ItemT]):
     which supports web-poet fields.
     """
 
-    _skip_nonitem_fields: bool
+    __skip_nonitem_fields: bool
+    __skip_nonitem_fields_set: bool
+
+    @property
+    def _skip_nonitem_fields(self) -> bool:
+        return getattr(
+            self.__class__, f"_{self.__class__.__name__}__skip_nonitem_fields", None
+        )
 
     def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        if getattr(cls, "_skip_nonitem_fields", None) is True:
-            # See: https://github.com/scrapinghub/web-poet/issues/141
-            cls._skip_nonitem_fields = True
-        else:
-            cls._skip_nonitem_fields = skip_nonitem_fields
+        # See: https://github.com/scrapinghub/web-poet/issues/141
+        if not getattr(cls, f"_{cls.__name__}__skip_nonitem_fields_set", False):
+            setattr(cls, f"_{cls.__name__}__skip_nonitem_fields", skip_nonitem_fields)
+            setattr(cls, f"_{cls.__name__}__skip_nonitem_fields_set", True)
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
