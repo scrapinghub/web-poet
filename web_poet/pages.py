@@ -1,6 +1,6 @@
 import abc
 import inspect
-from typing import Any, ClassVar, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, ClassVar, Generic, List, Mapping, Optional, Type, TypeVar, Union
 
 import attrs
 
@@ -104,6 +104,11 @@ class ItemPage(Injectable, Returns[ItemT]):
 
         if fields is None or len(fields) == 0:
             return list(get_fields_dict(self))
+        elif not isinstance(fields, Mapping):
+            raise ValueError(
+                f"The select_fields.fields parameter is expecting a Mapping. "
+                f"Got {self.select_fields}."
+            )
 
         page_obj_fields = get_fields_dict(self, include_disabled=True)
 
@@ -117,6 +122,14 @@ class ItemPage(Injectable, Returns[ItemT]):
             raise ValueError(
                 f"The fields {fields_not_in_item} is not available in {self.item_cls} "
                 f"which has {self.select_fields}."
+            )
+
+        # Ignore the type since even though 'fields' has been checked above that
+        # it's not None, mypy loses track of that information at this point.
+        if any([not isinstance(v, bool) for v in self.select_fields.fields.values()]):  # type: ignore[union-attr]
+            raise ValueError(
+                f"SelectField only allows boolean values as keys. "
+                f"Got: {self.select_fields.fields}"
             )
 
         fields_to_extract = []

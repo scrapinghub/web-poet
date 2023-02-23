@@ -742,16 +742,39 @@ async def test_select_fields() -> None:
         await item_from_select_fields(page)
     assert page.call_counter == {"y": 2}
 
-    # Boolean-like values are not supported. They are simply ignored and the
-    # page would revert back to the default field directives.
+    # Boolean-like values are not supported.
+    expected_non_boolean_value_error_msg = (
+        "SelectField only allows boolean values as keys. "
+        "Got: {'x': 0, 'y': 0, 'z': 1}"
+    )
     page = BigPage(
         response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
-    assert page.fields_to_extract == ["x", "y"]
-    assert await page.to_item() == BigItem(x=1, y=2, z=None)
-    assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
-    assert page.call_counter == {"x": 2, "y": 2}
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        page.fields_to_extract
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        await page.to_item()
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        await item_from_select_fields(page)
+    assert page.call_counter == {}
+
+    # If an invalid SelectFields value was passed to `select_fields` parameter
+    expected_invalid_instance_value_error_msg = (
+        r"The select_fields.fields parameter is expecting a Mapping. "
+        r'Got SelectFields\(fields="not the instance it\'s expecting"\).'
+    )
+    page = BigPage(
+        response,
+        select_fields="not the instance it's expecting",  # type: ignore[arg-type]
+    )
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        page.fields_to_extract
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        await page.to_item()
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        await item_from_select_fields(page)
+    assert page.call_counter == {}
 
     # If the item class doesn't have a field, it would error out.
     fields = {"x": True, "not_existing": True}
@@ -857,15 +880,35 @@ async def test_select_fields_but_to_item_only() -> None:
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await item_from_select_fields(page)
 
-    # Boolean-like values are not supported. They are simply ignored and the
-    # page would revert back to the default field directives.
+    # Boolean-like values are not supported.
+    expected_non_boolean_value_error_msg = (
+        "SelectField only allows boolean values as keys. "
+        "Got: {'x': 0, 'y': 0, 'z': 1}"
+    )
     page = BigToItemOnlyPage(
         response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
-    assert page.fields_to_extract == []
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        page.fields_to_extract
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
-    assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        await item_from_select_fields(page)
+
+    # If an invalid SelectFields value was passed to `select_fields` parameter
+    expected_invalid_instance_value_error_msg = (
+        r"The select_fields.fields parameter is expecting a Mapping. "
+        r'Got SelectFields\(fields="not the instance it\'s expecting"\).'
+    )
+    page = BigToItemOnlyPage(
+        response,
+        select_fields="not the instance it's expecting",  # type: ignore[arg-type]
+    )
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        page.fields_to_extract
+    assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        await item_from_select_fields(page)
 
     # If the item class doesn't have a field, it would error out.
     fields = {"x": True, "not_existing": True}
@@ -999,17 +1042,37 @@ async def test_select_fields_but_unreliable() -> None:
         await item_from_select_fields(page)
     assert page.call_counter == {"x": 2, "z": 2}
 
-    # Boolean-like values are not supported. They are simply ignored and the
-    # page would revert back to the default field directives.
+    # Boolean-like values are not supported.
+    expected_non_boolean_value_error_msg = (
+        "SelectField only allows boolean values as keys. "
+        "Got: {'x': 0, 'y': 0, 'z': 1}"
+    )
     page = BigUnreliablePage(
         response,
         select_fields=SelectFields({"x": 0, "y": 0, "z": 1}),  # type: ignore[dict-item]
     )
-    assert page.fields_to_extract == ["x"]
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        page.fields_to_extract
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    with pytest.raises(ValueError, match=expected_non_boolean_value_error_msg):
+        await item_from_select_fields(page)
     assert page.call_counter == {"x": 1, "z": 1}
-    assert await item_from_select_fields(page) == BigItem(x=1, y=None, z=None)
-    assert page.call_counter == {"x": 2, "z": 1}
+
+    # If an invalid SelectFields value was passed to `select_fields` parameter
+    expected_invalid_instance_value_error_msg = (
+        r"The select_fields.fields parameter is expecting a Mapping. "
+        r'Got SelectFields\(fields="not the instance it\'s expecting"\).'
+    )
+    page = BigUnreliablePage(
+        response,
+        select_fields="not the instance it's expecting",  # type: ignore[arg-type]
+    )
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        page.fields_to_extract
+    assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    with pytest.raises(ValueError, match=expected_invalid_instance_value_error_msg):
+        await item_from_select_fields(page)
+    assert page.call_counter == {"x": 1, "z": 1}
 
     # If the item class doesn't have a field, it would error out.
     fields = {"x": True, "not_existing": True}
