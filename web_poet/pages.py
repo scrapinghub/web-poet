@@ -61,7 +61,7 @@ class ItemPage(Injectable, Returns[ItemT]):
     @property
     def _skip_nonitem_fields(self) -> bool:
         return getattr(
-            self.__class__, f"_{self.__class__.__name__}__skip_nonitem_fields", None
+            self.__class__, f"_{self.__class__.__name__}__skip_nonitem_fields", False
         )
 
     def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
