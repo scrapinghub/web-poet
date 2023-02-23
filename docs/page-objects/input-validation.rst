@@ -55,13 +55,13 @@ For example:
 .. code-block:: python
 
    def validate_input(self):
-       if self.response.css('.product-id::text') is not None:
+       if self.css('.product-id::text') is not None:
            return
-       if self.response.css('.http-503-error'):
+       if self.css('.http-503-error'):
            raise Retry()
-       if self.response.css('.product'):
+       if self.css('.product'):
            raise UseFallback()
-       if self.response.css('.product-list'):
+       if self.css('.product-list'):
            return Product(is_valid=False)
 
 You may use fields in your implementation of the ``validate_input`` method, but
@@ -76,7 +76,7 @@ only synchronous fields are supported. For example:
 
        @field(cached=True)
        def name(self):
-           return self.response.css(".product-name ::text")
+           return self.css(".product-name ::text")
 
 .. tip:: :ref:`Cache fields <field-caching>` used in the ``validate_input``
          method, so that when they are used from ``to_item`` they are not
