@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.8.0 (TBD)
------------
+0.8.0 (2023-02-23)
+------------------
 
 This release contains many improvements to the web-poet testing framework,
 as well as some other improvements and bug fixes.
