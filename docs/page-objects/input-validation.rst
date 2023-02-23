@@ -26,13 +26,14 @@ of the following:
     implementation should be tried instead.
 
     For example, imagine you have a page object for website commerce.example,
-    and that commerce.example is built with Shopify. You could have a generic
-    page object for products of Shopify-based websites, ``ShopifyProductPage``,
-    and a more specific page object for commerce.example,
-    ``EcommerceExampleProductPage``. If ``EcommerceExampleProductPage`` cannot
-    parse a product page, but it looks like it might be a valid product page,
-    you would raise :exc:`~web_poet.exceptions.UseFallback` to try to
-    parse the same product page with ``ShopifyProductPage``, in case it works.
+    and that commerce.example is built with a popular e-commerce web framework.
+    You could have a generic page object for products of websites using that
+    framework, ``FrameworkProductPage``, and a more specific page object for
+    commerce.example, ``EcommerceExampleProductPage``. If
+    ``EcommerceExampleProductPage`` cannot parse a product page, but it looks
+    like it might be a valid product page, you would raise
+    :exc:`~web_poet.exceptions.UseFallback` to try to parse the same product
+    page with ``FrameworkProductPage``, in case it works.
 
     .. note:: web-poet does not dictate how to define or use an alternative
               parsing implementation as fallback. It is up to web-poet
