@@ -7,9 +7,14 @@ Input validation
 Sometimes the data that your page object receives as input may be invalid.
 
 You can define a ``validate_input`` method in a page object class to check its
-input data and determine how to handle invalid input. ``validate_input``
-is a synchronous method that expects no parameters, and its outcome may be any
-of the following:
+input data and determine how to handle invalid input.
+
+``validate_input`` is called on the first execution of ``ItemPage.to_item()``
+or the first access to a :ref:`field <fields>`. In both cases validation
+happens early; in the case of fields, it happens before field evaluation.
+
+``validate_input`` is a synchronous method that expects no parameters, and its
+outcome may be any of the following:
 
 -   Return ``None``, indicating that the input is valid.
 
