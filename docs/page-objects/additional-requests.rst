@@ -800,7 +800,7 @@ times before giving up:
 
     import attrs
     from tenacity import retry, stop_after_attempt
-    from web_poet import HttpClient, HttpRequest, WebPage
+    from web_poet import HttpClient, WebPage
 
     @attrs.define
     class MyPage(WebPage):
@@ -808,8 +808,7 @@ times before giving up:
 
         @retry(stop=stop_after_attempt(3))
         async def get_data(self):
-            request = HttpRequest("https://toscrape.com/")
-            response = await self.http.execute(request)
+            response = await self.http.get("https://toscrape.com/")
             if not response.css(".expected"):
                 raise ValueError
             return response.css(".data").get()
