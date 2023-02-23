@@ -73,10 +73,13 @@ only synchronous fields are supported. For example:
            if not self.name:
                raise UseFallback()
 
-       @field
+       @field(cached=True)
        def name(self):
            return self.response.css(".product-name ::text")
 
+.. tip:: :ref:`Cache fields <field-caching>` used in the ``validate_input``
+         method, so that when they are used from ``to_item`` they are not
+         evaluated again.
 
 :exc:`~web_poet.exceptions.Retry` and :exc:`~web_poet.exceptions.UseFallback`
 may also be raised from the ``to_item`` method. This could come in handy, for

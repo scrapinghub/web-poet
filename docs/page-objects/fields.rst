@@ -379,6 +379,8 @@ To recap:
   to contain more ``@fields`` than defined in the item class, e.g. because
   Page Object is inherited from some other base Page Object.
 
+.. _field-caching:
+
 Caching
 -------
 
