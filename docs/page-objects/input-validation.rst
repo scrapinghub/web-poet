@@ -87,6 +87,16 @@ only synchronous fields are supported. For example:
          method, so that when they are used from ``to_item`` they are not
          evaluated again.
 
+If you implement a custom ``to_item`` method that does not call
+``ItemPage.to_item`` (e.g. does not use ``super().to_item``), you can include
+validation in your implementation as follows:
+
+.. code-block:: python
+
+    validation_item = self._validate_input()
+    if validation_item is not None:
+        return validation_item
+
 :exc:`~web_poet.exceptions.Retry` and :exc:`~web_poet.exceptions.UseFallback`
 may also be raised from the ``to_item`` method. This could come in handy, for
 example, if after you execute some asynchronous code, such as an
