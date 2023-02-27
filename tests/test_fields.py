@@ -674,6 +674,7 @@ async def test_select_fields() -> None:
     page = BigPage(response)
     assert page.fields_to_ignore == ["z"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    assert page.call_counter == {"x": 1, "y": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
     assert page.call_counter == {"x": 2, "y": 2}
 
@@ -682,6 +683,7 @@ async def test_select_fields() -> None:
     page = BigPage(response, select_fields=SelectFields(None))
     assert page.fields_to_ignore == ["z"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    assert page.call_counter == {"x": 1, "y": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
     assert page.call_counter == {"x": 2, "y": 2}
 
@@ -689,6 +691,7 @@ async def test_select_fields() -> None:
     page = BigPage(response, select_fields=SelectFields({}))
     assert page.fields_to_ignore == ["z"]
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    assert page.call_counter == {"x": 1, "y": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=None)
     assert page.call_counter == {"x": 2, "y": 2}
 
@@ -696,6 +699,7 @@ async def test_select_fields() -> None:
     page = BigPage(response, select_fields=SelectFields({"*": True}))
     assert page.fields_to_ignore == []
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 2, "y": 2, "z": 2}
 
@@ -713,6 +717,7 @@ async def test_select_fields() -> None:
     page = BigPage(response, select_fields=SelectFields({"*": False, "x": True}))
     assert page.fields_to_ignore == ["y", "z"]
     assert await page.to_item() == BigItem(x=1, y=None, z=None)
+    assert page.call_counter == {"x": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=None, z=None)
     assert page.call_counter == {"x": 2}
 
@@ -720,6 +725,7 @@ async def test_select_fields() -> None:
     page = BigPage(response, select_fields=SelectFields({"*": True, "y": False}))
     assert page.fields_to_ignore == ["y"]
     assert await page.to_item() == BigItem(x=1, y=None, z=3)
+    assert page.call_counter == {"x": 1, "z": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=None, z=3)
     assert page.call_counter == {"x": 2, "z": 2}
 
@@ -730,6 +736,7 @@ async def test_select_fields() -> None:
     )
     assert page.fields_to_ignore == []
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    assert page.call_counter == {"x": 1, "y": 1, "z": 1}
     assert await item_from_select_fields(page) == BigItem(x=1, y=2, z=3)
     assert page.call_counter == {"x": 2, "y": 2, "z": 2}
 
@@ -738,6 +745,7 @@ async def test_select_fields() -> None:
     assert page.fields_to_ignore == ["x", "z"]
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await page.to_item()
+    assert page.call_counter == {"y": 1}
     with pytest.raises(TypeError, match=expected_type_error_msg):
         await item_from_select_fields(page)
     assert page.call_counter == {"y": 2}
