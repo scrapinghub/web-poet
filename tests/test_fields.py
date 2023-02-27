@@ -505,6 +505,38 @@ async def test_field_processors_async() -> None:
     assert await page.name == "namex"
 
 
+def test_field_processors_default() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        default_processors = [str.strip, proc1]
+
+        @field
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert page.name == "namex"
+
+
+def test_field_processors_override_default() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        default_processors = [str.strip]
+
+        @field(out=[proc1])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert page.name == "  name\t x"
+
+
 def test_field_mixin() -> None:
     class A(ItemPage):
         @field

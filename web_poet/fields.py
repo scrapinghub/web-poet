@@ -77,11 +77,8 @@ def field(
                 raise TypeError(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
-            method = self._processed(method)
-            if cached:
-                self.unbound_method = cached_method(method)
-            else:
-                self.unbound_method = method
+            self.original_method = method
+            self.unbound_method = None
 
         def __set_name__(self, owner, name):
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
@@ -91,27 +88,37 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
+            if self.unbound_method is None:
+                processors = out or (
+                    owner and getattr(owner, "default_processors", None)
+                )
+                method = self._processed(self.original_method, processors)
+                if cached:
+                    self.unbound_method = cached_method(method)
+                else:
+                    self.unbound_method = method
+
             return self.unbound_method(instance)
 
         @staticmethod
-        def _process(value):
-            for processor in out:
+        def _process(value, processors):
+            for processor in processors:
                 value = processor(value)
             return value
 
-        def _processed(self, method):
+        def _processed(self, method, processors):
             """Returns a wrapper for method that calls processors on its result"""
-            if not out:
+            if not processors:
                 return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs))
+                    return self._process(await method(*args, **kwargs), processors)
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs))
+                    return self._process(method(*args, **kwargs), processors)
 
             return wraps(method)(processed)
 
