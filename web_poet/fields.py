@@ -2,6 +2,8 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
+from __future__ import annotations
+
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
@@ -10,6 +12,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar
 import attrs
 from itemadapter import ItemAdapter
 
+import web_poet
 from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
@@ -226,28 +229,30 @@ def _without_unsupported_field_names(
 
 @attrs.define
 class SelectFields:
-    """This is used as a dependency in :class:`web_poet.pages.ItemPage` to
-    control which fields to populate its returned item class.
+    """This is used as a dependency in :class:`~.ItemPage` to control which
+    fields to populate its returned item class.
 
-    You can use this to enable some fields that were disabled by the
-    ``@field(disabled=True)`` decorator.
+    You can also use this to enable some fields that were disabled by default
+    via the ``@field(disabled=True)`` decorator.
 
     Some usage examples:
 
-    * ``SelectFields({"name": True})`` - select one specific field
-    * ``SelectFields({"*": True})`` - select all fields
-    * ``SelectFields({"*": False, "name": True})`` - unselect all fields
-      except one
+    * ``SelectFields({"name": True})`` — select one field
+    * ``SelectFields({"name": False})`` — unselect one field
+    * ``SelectFields({"*": True})`` — select all fields
+    * ``SelectFields({"*": True, "name": False})`` — select all fields but one
+    * ``SelectFields({"*": False, "name": True})`` — unselect all fields but one
 
     """
 
-    #: Fields that the page object would use to populate its item class. It's a
-    #: mapping of field names to boolean values to where ``True`` would indicate
-    #: it being included in ``.to_item()`` calls.
+    #: Fields that the page object would use to populate the
+    #: :meth:`~.Returns.item_cls` it returns. It's a mapping of field names to
+    #: boolean values where ``True`` would indicate it being included when using
+    #: :meth:`~.ItemPage.to_item()` and :func:`~.item_from_select_fields`.
     fields: Mapping[str, bool] = attrs.field(converter=lambda x: x or {})
 
 
-def _validate_select_fields(page) -> None:
+def _validate_select_fields(page: web_poet.ItemPage) -> None:
     fields = page.select_fields.fields
 
     if fields is None or len(fields) == 0:
@@ -279,26 +284,14 @@ def _validate_select_fields(page) -> None:
         )
 
 
-async def item_from_select_fields(page) -> Any:
-    """Return an item from the given page object instance.
+async def item_from_select_fields(page: web_poet.ItemPage) -> Any:
+    """Returns an item produced by the given page object instance.
 
-    When passing a page object that uses at the ``@field`` decorator, it's the
-    same as calling the original :meth:`web_poet.pages.ItemPage.to_item` method
-    of :class:`web_poet.pages.ItemPage`.
-
-    When passing a page object that *doesn't* use any ``@field`` decorators at
-    all and instead populates its item class by overriding the
-    :meth:`web_poet.pages.ItemPage.to_item` method, it would essentially call
-    the overridden ``.to_item()`` method and drop any fields specified in the
-    :class:`web_poet.fields.SelectFields` instance.
-
-    .. warning::
-
-        However, when passing a page object that partially uses the ``@field``
-        decorator where some fields are populated in an overridden
-        :meth:`web_poet.pages.ItemPage.to_item` method, the page object should
-        make sure that :meth:`web_poet.pages.ItemPage.fields_to_ignore`
-        is taken into account when populating the fields.
+    This ensures that the fields specified inside the :class:`~.SelectFields`
+    instance are taken into account alongside any fields that are disabled by
+    default (i.e. ``@field(disabled=True)``. This is done by calling the
+    :meth:`~.ItemPage.to_item` method and simply dropping any field that should
+    not be included.
     """
 
     _validate_select_fields(page)
@@ -314,4 +307,4 @@ async def item_from_select_fields(page) -> Any:
         ):
             continue
         kwargs[k] = v
-    return item.__class__(**kwargs)
+    return page.item_cls(**kwargs)

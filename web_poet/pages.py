@@ -94,12 +94,12 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     @property
     def fields_to_ignore(self) -> List[str]:
-        """Returns an list of field names which should **NOT** populate the
-        designated ``item_cls``.
+        """Returns a list of field names which should **NOT** populate the
+        designated :meth:`~.Returns.item_cls`.
 
-        If :class:`web_poet.fields.SelectFields` is set, this takes into account
-        the fields that are marked as included or excluded alongside any field
-        that are marked as enabled/disabled by default.
+        This is takes into account the fields inside the :class:`~.SelectFields`
+        instance as well as fields that are marked as disabled by default (i.e.
+        ``@field(disabled=True)``).
         """
         _validate_select_fields(self)
 
