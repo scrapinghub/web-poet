@@ -1,11 +1,16 @@
 import abc
-import inspect
-from typing import Any, ClassVar, Generic, List, Mapping, Optional, Type, TypeVar, Union
+from typing import Any, ClassVar, Generic, List, Type, TypeVar, Union
 
 import attrs
 
 from web_poet._typing import get_item_cls
-from web_poet.fields import FieldsMixin, SelectFields, get_fields_dict, item_from_fields
+from web_poet.fields import (
+    FieldsMixin,
+    SelectFields,
+    _validate_select_fields,
+    get_fields_dict,
+    item_from_fields,
+)
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import _create_deprecated_class
@@ -60,7 +65,7 @@ class ItemPage(Injectable, Returns[ItemT]):
     which supports web-poet fields.
     """
 
-    select_fields: Optional[SelectFields] = attrs.field(
+    select_fields: SelectFields = attrs.field(
         converter=lambda x: SelectFields(x) if not isinstance(x, SelectFields) else x,
         kw_only=True,
         default=None,
@@ -88,62 +93,39 @@ class ItemPage(Injectable, Returns[ItemT]):
         )
 
     @property
-    def fields_to_extract(self) -> List[str]:
-        """Returns an list of field names which should populate the designated
-        ``item_cls``.
+    def fields_to_ignore(self) -> List[str]:
+        """Returns an list of field names which should **NOT** populate the
+        designated ``item_cls``.
 
         If :class:`web_poet.fields.SelectFields` is set, this takes into account
         the fields that are marked as included or excluded alongside any field
         that are marked as enabled/disabled by default.
         """
-
-        if self.select_fields is None:
-            return list(get_fields_dict(self))
+        _validate_select_fields(self)
 
         fields = self.select_fields.fields
-
-        if fields is None or len(fields) == 0:
-            return list(get_fields_dict(self))
-        elif not isinstance(fields, Mapping):
-            raise ValueError(
-                f"The select_fields.fields parameter is expecting a Mapping. "
-                f"Got {self.select_fields}."
-            )
-
         page_obj_fields = get_fields_dict(self, include_disabled=True)
 
-        # Doesn't raise an error even if the page object doesn't have the field,
-        # it just ignores it. However, it will error out if the field is not
-        # not available in the item.
-        unknown_fields = set(fields) - set(page_obj_fields.keys()).union({"*"})
-        fields_in_item = inspect.signature(self.item_cls).parameters.keys()
-        fields_not_in_item = unknown_fields - fields_in_item
-        if fields_not_in_item:
-            raise ValueError(
-                f"The fields {fields_not_in_item} is not available in {self.item_cls} "
-                f"which has {self.select_fields}."
-            )
-
-        # Ignore the type since even though 'fields' has been checked above that
-        # it's not None, mypy loses track of that information at this point.
-        if any([not isinstance(v, bool) for v in self.select_fields.fields.values()]):  # type: ignore[union-attr]
-            raise ValueError(
-                f"SelectField only allows boolean values as keys. "
-                f"Got: {self.select_fields.fields}"
-            )
-
-        fields_to_extract = []
+        fields_to_ignore = []
         for name, field_info in page_obj_fields.items():
-            if fields.get("*") is False and fields.get(name) is not True:
+            if fields.get("*") is True and fields.get(name) is not False:
                 continue
             if (
-                fields.get("*") is True
-                or fields.get(name) is True
-                or field_info.disabled is False
-            ) and fields.get(name) is not False:
-                fields_to_extract.append(name)
+                field_info.disabled is True
+                or fields.get(name) is False
+                or (fields.get("*") is False and fields.get(name) is not True)
+            ):
+                fields_to_ignore.append(name)
 
-        return fields_to_extract
+        for name in fields:
+            if (
+                fields.get(name) is False
+                and name != "*"
+                and name not in fields_to_ignore
+            ):
+                fields_to_ignore.append(name)
+
+        return fields_to_ignore
 
 
 @attrs.define

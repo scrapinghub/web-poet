@@ -191,7 +191,8 @@ async def item_from_fields(
     ``item_cls.__init__`` doesn't support them.
     """
     item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
-    field_names = getattr(obj, "fields_to_extract", list(item_dict.keys()))
+    fields_to_ignore = getattr(obj, "fields_to_ignore", [])
+    field_names = [f for f in item_dict if f not in fields_to_ignore]
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
@@ -203,7 +204,12 @@ def item_from_fields_sync(
     obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = getattr(obj, "fields_to_extract", list(get_fields_dict(obj)))
+    fields_to_ignore = getattr(obj, "fields_to_ignore", [])
+    field_names = [
+        f
+        for f in get_fields_dict(obj, include_disabled=True)
+        if f not in fields_to_ignore
+    ]
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
@@ -238,7 +244,39 @@ class SelectFields:
     #: Fields that the page object would use to populate its item class. It's a
     #: mapping of field names to boolean values to where ``True`` would indicate
     #: it being included in ``.to_item()`` calls.
-    fields: Optional[Mapping[str, bool]] = None
+    fields: Mapping[str, bool] = attrs.field(converter=lambda x: x or {})
+
+
+def _validate_select_fields(page) -> None:
+    fields = page.select_fields.fields
+
+    if fields is None or len(fields) == 0:
+        return None
+    elif not isinstance(fields, Mapping):
+        raise ValueError(
+            f"The select_fields.fields parameter is expecting a Mapping. "
+            f"Got {page.select_fields}."
+        )
+
+    page_obj_fields = get_fields_dict(page, include_disabled=True)
+
+    # Doesn't raise an error even if the page object doesn't have the field,
+    # it just ignores it. However, it will error out if the field is not
+    # not available in the item.
+    unknown_fields = set(fields) - set(page_obj_fields.keys()).union({"*"})
+    fields_in_item = inspect.signature(page.item_cls).parameters.keys()
+    fields_not_in_item = unknown_fields - fields_in_item
+    if fields_not_in_item:
+        raise ValueError(
+            f"The fields {fields_not_in_item} is not available in {page.item_cls} "
+            f"which has {page.select_fields}."
+        )
+
+    if any([not isinstance(v, bool) for v in page.select_fields.fields.values()]):
+        raise ValueError(
+            f"SelectField only allows boolean values as keys. "
+            f"Got: {page.select_fields.fields}"
+        )
 
 
 async def item_from_select_fields(page) -> Any:
@@ -259,27 +297,19 @@ async def item_from_select_fields(page) -> Any:
         However, when passing a page object that partially uses the ``@field``
         decorator where some fields are populated in an overridden
         :meth:`web_poet.pages.ItemPage.to_item` method, the page object should
-        make sure that :meth:`web_poet.pages.ItemPage.fields_to_extract`
+        make sure that :meth:`web_poet.pages.ItemPage.fields_to_ignore`
         is taken into account when populating the fields.
     """
 
-    # The page object uses @fields decorators
-    fields_to_extract = page.fields_to_extract
-    if fields_to_extract:
-        return await item_from_fields(
-            page, item_cls=page.item_cls, skip_nonitem_fields=page._skip_nonitem_fields
-        )
+    _validate_select_fields(page)
 
-    # The page object probably populates the item class fields inside an
-    # overridden `.to_item()` method.
     item = await ensure_awaitable(page.to_item())
-    fields = page.select_fields.fields
-    if not fields:
-        return item
+    fields = page.select_fields.fields or {}
+    fields_to_ignore = page.fields_to_ignore
 
     kwargs = {}
     for k, v in ItemAdapter(item).items():
-        if fields.get(k) is False or (
+        if k in fields_to_ignore or (
             fields.get("*") is False and fields.get(k) is not True
         ):
             continue
