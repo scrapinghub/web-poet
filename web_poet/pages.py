@@ -62,7 +62,7 @@ class ItemPage(Injectable, Returns[ItemT]):
 
     def _get_skip_nonitem_fields(self) -> bool:
         value = self._skip_nonitem_fields
-        return False if value is _NOT_SET else value
+        return False if value is _NOT_SET else bool(value)
 
     def __init_subclass__(cls, skip_nonitem_fields=_NOT_SET, **kwargs):
         super().__init_subclass__(**kwargs)
