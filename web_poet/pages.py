@@ -50,32 +50,34 @@ class Returns(typing.Generic[ItemT]):
         return get_item_cls(self.__class__, default=dict)
 
 
+_NOT_SET = object()
+
+
 class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
-    __skip_nonitem_fields: bool
-    __skip_nonitem_fields_set: bool
+    _skip_nonitem_fields = _NOT_SET
 
-    @property
-    def _skip_nonitem_fields(self) -> bool:
-        return getattr(
-            self.__class__, f"_{self.__class__.__name__}__skip_nonitem_fields", False
-        )
+    def _get_skip_nonitem_fields(self) -> bool:
+        value = self._skip_nonitem_fields
+        return False if value is _NOT_SET else bool(value)
 
-    def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
+    def __init_subclass__(cls, skip_nonitem_fields=_NOT_SET, **kwargs):
         super().__init_subclass__(**kwargs)
-
-        # See: https://github.com/scrapinghub/web-poet/issues/141
-        if not getattr(cls, f"_{cls.__name__}__skip_nonitem_fields_set", False):
-            setattr(cls, f"_{cls.__name__}__skip_nonitem_fields", skip_nonitem_fields)
-            setattr(cls, f"_{cls.__name__}__skip_nonitem_fields_set", True)
+        if skip_nonitem_fields is _NOT_SET:
+            # This is a workaround for attrs issue.
+            # See: https://github.com/scrapinghub/web-poet/issues/141
+            return
+        cls._skip_nonitem_fields = skip_nonitem_fields
 
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
         return await item_from_fields(
-            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+            self,
+            item_cls=self.item_cls,
+            skip_nonitem_fields=self._get_skip_nonitem_fields(),
         )
 
 
