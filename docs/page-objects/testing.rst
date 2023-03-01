@@ -243,6 +243,16 @@ the machine timezone should match the timezone in ``frozen_time``. Also, if
 items do not depend on the machine timezone (e.g. if all datetime-derived data
 they contain is in UTC), the tests for them should work everywhere.
 
+There is an additional limitation which we plan to fix in future versions. The
+time is set to the ``frozen_time`` value when the test generation (if using the
+``scrapy-poet`` command) or the test run starts, but it ticks during the
+generation/run itself, so if it takes more than 1 second (which is quite
+possible even in simple cases) the time fields will have values several seconds
+later than ``frozen_time``. For now we recommend to work around this problem by
+manually editing the ``output.json`` file to put the value equal to
+``frozen_time`` in these fields, as running the test shoudn't take more than 1
+second.
+
 .. _dateutil: https://github.com/dateutil/dateutil
 
 .. _git-lfs:
