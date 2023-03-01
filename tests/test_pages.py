@@ -3,7 +3,7 @@ from typing import Optional
 import attrs
 import pytest
 
-from web_poet import HttpResponse, field
+from web_poet import HttpResponse, PageParams, field
 from web_poet.pages import (
     Injectable,
     ItemPage,
@@ -199,11 +199,27 @@ async def test_item_page_change_item_type_remove_fields() -> None:
     class Subclass(BasePage, Returns[Item], skip_nonitem_fields=True):
         pass
 
-    page = Subclass()
+    # Same as above but a slotted attrs class with dependency.
+    # See: https://github.com/scrapinghub/web-poet/issues/141
+    @attrs.define
+    class SubclassWithDep(BasePage, Returns[Item], skip_nonitem_fields=True):
+        params: PageParams
+
+    # Check if flicking skip_nonitem_fields to False in the subclass works
+    @attrs.define
+    class SubclassSkipFalse(SubclassWithDep, Returns[Item], skip_nonitem_fields=False):
+        pass
+
+    for page in [Subclass(), SubclassWithDep(params=PageParams())]:
+        assert page.item_cls is Item
+        item = await page.to_item()
+        assert isinstance(item, Item)
+        assert item == Item(name="hello")
+
+    page = SubclassSkipFalse(params=PageParams())
     assert page.item_cls is Item
-    item = await page.to_item()
-    assert isinstance(item, Item)
-    assert item == Item(name="hello")
+    with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
+        await page.to_item()
 
     # Item only contains "name", but not "price", but "price" should be passed
     class SubclassStrict(BasePage, Returns[Item]):
