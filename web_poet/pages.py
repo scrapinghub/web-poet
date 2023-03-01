@@ -1,5 +1,5 @@
 import abc
-from typing import Any, ClassVar, Generic, List, Type, TypeVar, Union
+from typing import Any, Generic, List, Type, TypeVar
 
 import attrs
 
@@ -70,7 +70,7 @@ class ItemPage(Injectable, Returns[ItemT]):
         kw_only=True,
         default=None,
     )
-    _skip_nonitem_fields = ClassVar[Union[_NOT_SET, bool]]
+    _skip_nonitem_fields = _NOT_SET
 
     def _get_skip_nonitem_fields(self) -> bool:
         value = self._skip_nonitem_fields
