@@ -2,14 +2,17 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
+from __future__ import annotations
+
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
 
+import web_poet
 from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
@@ -190,12 +193,17 @@ async def item_from_fields(
     to ``item_cls.__init__``, possibly causing exceptions if
     ``item_cls.__init__`` doesn't support them.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
-    field_names = list(item_dict.keys())
+    adapter = ItemAdapter(
+        item_from_fields_sync(
+            obj, item_cls=item_cls, skip_nonitem_fields=skip_nonitem_fields
+        )
+    )
+    fields_to_ignore = getattr(obj, "fields_to_ignore", [])
+    field_names = [f for f in adapter if f not in fields_to_ignore]
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
-        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
+        **{name: await ensure_awaitable(adapter[name]) for name in field_names}
     )
 
 
@@ -203,7 +211,12 @@ def item_from_fields_sync(
     obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
-    field_names = list(get_fields_dict(obj))
+    fields_to_ignore = getattr(obj, "fields_to_ignore", [])
+    field_names = [
+        f
+        for f in get_fields_dict(obj, include_disabled=True)
+        if f not in fields_to_ignore
+    ]
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(**{name: getattr(obj, name) for name in field_names})
@@ -216,3 +229,95 @@ def _without_unsupported_field_names(
     if item_field_names is None:  # item_cls doesn't define field names upfront
         return field_names[:]
     return list(set(field_names) & set(item_field_names))
+
+
+@attrs.define
+class SelectFields:
+    """This is used as a dependency in :class:`~.ItemPage` to control which
+    fields to populate its returned item class.
+
+    You can also use this to enable some fields that were disabled by default
+    via the ``@field(disabled=True)`` decorator.
+
+    Some usage examples:
+
+    * ``SelectFields({"name": True})`` — select one field
+    * ``SelectFields({"name": False})`` — unselect one field
+    * ``SelectFields({"*": True})`` — select all fields
+    * ``SelectFields({"*": True, "name": False})`` — select all fields but one
+    * ``SelectFields({"*": False, "name": True})`` — unselect all fields but one
+
+    """
+
+    #: Fields that the page object would use to populate the
+    #: :meth:`~.Returns.item_cls` it returns. It's a mapping of field names to
+    #: boolean values where ``True`` would indicate it being included when using
+    #: :meth:`~.ItemPage.to_item()` and :func:`~.item_from_select_fields`.
+    fields: Mapping[str, bool] = attrs.field(converter=lambda x: x or {})
+
+
+def _validate_select_fields(page: web_poet.ItemPage) -> None:
+    fields = page.select_fields.fields
+
+    if fields is None or len(fields) == 0:
+        return None
+    elif not isinstance(fields, Mapping):
+        raise ValueError(
+            f"The select_fields.fields parameter is expecting a Mapping. "
+            f"Got {page.select_fields}."
+        )
+
+    page_obj_fields = get_fields_dict(page, include_disabled=True)
+
+    unknown_fields = set(fields) - set(page_obj_fields.keys()).union({"*"})
+    fields_in_item = inspect.signature(page.item_cls).parameters.keys()
+    unselected_fields = {k for k, v in fields.items() if v is False}
+
+    # Only raise an error if a field is selected but it's not present in the
+    # item class. It doesn't raise an error even if the page object doesn't
+    # have the field, it simply ignores it.
+    fields_not_in_item = unknown_fields - fields_in_item - unselected_fields
+    if fields_not_in_item:
+        raise ValueError(
+            f"The fields {fields_not_in_item} is not available in {page.item_cls} "
+            f"which has {page.select_fields}."
+        )
+
+    if any([not isinstance(v, bool) for v in page.select_fields.fields.values()]):
+        raise ValueError(
+            f"SelectField only allows boolean values as keys. "
+            f"Got: {page.select_fields.fields}"
+        )
+
+
+async def item_from_select_fields(page: web_poet.ItemPage) -> Any:
+    """Returns an item produced by the given page object instance.
+
+    This ensures that the fields specified inside the :class:`~.SelectFields`
+    instance are taken into account alongside any fields that are disabled by
+    default (i.e. ``@field(disabled=True)``. This is done by calling the
+    :meth:`~.ItemPage.to_item` method and simply dropping any field that should
+    not be included.
+    """
+
+    _validate_select_fields(page)
+
+    item = await ensure_awaitable(page.to_item())
+    fields = page.select_fields.fields or {}
+    fields_to_ignore = page.fields_to_ignore
+
+    kwargs = {}
+    for k, v in ItemAdapter(item).items():
+        if k in fields_to_ignore or (
+            fields.get("*") is False and fields.get(k) is not True
+        ):
+            continue
+        kwargs[k] = v
+
+    if page._get_skip_nonitem_fields():
+        field_names = _without_unsupported_field_names(
+            page.item_cls, list(kwargs.keys())
+        )
+        kwargs = {k: v for k, v in kwargs.items() if k in field_names}
+
+    return page.item_cls(**kwargs)

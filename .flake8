@@ -46,6 +46,7 @@ per-file-ignores =
     web_poet/testing/pytest.py:D102
     tests/po_lib_to_return/__init__.py:D102
     tests/test_testing.py:D102
+    tests/test_fields.py:D102
 
     # the suggestion makes the code worse
     tests/test_serialization.py:B028
