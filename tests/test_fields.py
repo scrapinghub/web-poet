@@ -24,6 +24,7 @@ from web_poet import (
     HttpResponse,
     Injectable,
     ItemPage,
+    Returns,
     SelectFields,
     WebPage,
     field,
@@ -643,6 +644,11 @@ class BigItem:
 
 
 @attrs.define
+class SmallItem:
+    y: Optional[int] = None
+
+
+@attrs.define
 class BigPage(WebPage[BigItem]):
     call_counter: DefaultDict = attrs.field(factory=lambda: defaultdict(int))
 
@@ -801,6 +807,58 @@ async def test_select_fields() -> None:
 
 
 @attrs.define
+class SmallPage(BigPage, Returns[SmallItem]):
+    pass
+
+
+@attrs.define
+class SmallPageSkip(BigPage, Returns[SmallItem], skip_nonitem_fields=True):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_select_fields_small_item() -> None:
+    expected_type_error_msg = r"__init__\(\) got an unexpected keyword argument 'x'"
+    response = HttpResponse("https://example.com", b"")
+
+    # Giving excess fields to a small item results in errors
+    page = SmallPage(response)
+    assert page.fields_to_ignore == ["z"]
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        await page.to_item()
+    assert page.call_counter == {"x": 1, "y": 1}
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        await item_from_select_fields(page)
+    assert page.call_counter == {"x": 2, "y": 2}
+
+    # The error should go away after unselecting the excess field
+    page = SmallPage(response, select_fields=SelectFields({"x": False}))
+    assert page.fields_to_ignore == ["x", "z"]
+    assert await page.to_item() == SmallItem(y=2)
+    assert page.call_counter == {"y": 1}
+    assert await item_from_select_fields(page) == SmallItem(y=2)
+    assert page.call_counter == {"y": 2}
+
+    # If the page object uses skip_nonitem_fields=True, it should work without
+    # any problems
+    page2 = SmallPageSkip(response)
+    assert page2.fields_to_ignore == ["z"]
+    assert await page2.to_item() == SmallItem(y=2)
+    assert page2.call_counter == {"y": 1}
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
+    assert page2.call_counter == {"y": 2}
+
+    # Declaring "x" as a field to ignore works the same but it's added to the
+    # ``.fields_to_ignore``
+    page2 = SmallPageSkip(response, select_fields=SelectFields({"x": False}))
+    assert page2.fields_to_ignore == ["x", "z"]
+    assert await page2.to_item() == SmallItem(y=2)
+    assert page2.call_counter == {"y": 1}
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
+    assert page2.call_counter == {"y": 2}
+
+
+@attrs.define
 class BigToItemOnlyPage(WebPage[BigItem]):
     async def to_item(self) -> BigItem:
         return BigItem(x=1, y=2)
@@ -931,6 +989,55 @@ async def test_select_fields_but_to_item_only() -> None:
     assert await page.to_item() == BigItem(x=1, y=2, z=None)
     with pytest.raises(ValueError, match=expected_value_error_msg):
         await item_from_select_fields(page)
+
+
+@attrs.define
+class SmallToItemOnlyPage(BigToItemOnlyPage, Returns[SmallItem]):
+    pass
+
+
+@attrs.define
+class SmallToItemOnlyPageSkip(
+    BigToItemOnlyPage, Returns[SmallItem], skip_nonitem_fields=True
+):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_select_fields_but_to_item_only_small_item() -> None:
+    expected_type_error_msg = r"__init__\(\) got an unexpected keyword argument 'x'"
+    response = HttpResponse("https://example.com", b"")
+
+    # Giving excess fields to a small item results in errors; except
+    # ``.to_item()`` since it doesn't call ``item_from_fields()`` or
+    # ``super().to_item()``
+    page = SmallToItemOnlyPage(response)
+    assert page.fields_to_ignore == []
+    assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        await item_from_select_fields(page)
+
+    # The error should go away after unselecting the excess field
+    page = SmallToItemOnlyPage(
+        response, select_fields=SelectFields({"x": False, "z": False})
+    )
+    assert page.fields_to_ignore == ["x", "z"]
+    assert await page.to_item() == BigItem(x=1, y=2, z=None)
+    assert await item_from_select_fields(page) == SmallItem(y=2)
+
+    # If the page object uses skip_nonitem_fields=True, it should work without
+    # any problems
+    page2 = SmallToItemOnlyPageSkip(response)
+    assert page2.fields_to_ignore == []
+    assert await page2.to_item() == BigItem(x=1, y=2, z=None)
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
+
+    # Declaring "x" as a field to ignore works the same but it's added to the
+    # ``.fields_to_ignore``
+    page2 = SmallToItemOnlyPageSkip(response, select_fields=SelectFields({"x": False}))
+    assert page2.fields_to_ignore == ["x"]
+    assert await page2.to_item() == BigItem(x=1, y=2, z=None)
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
 
 
 @attrs.define
@@ -1095,3 +1202,58 @@ async def test_select_fields_but_unreliable() -> None:
     assert await page.to_item() == BigItem(x=1, y=2, z=3)
     with pytest.raises(ValueError, match=expected_value_error_msg):
         await item_from_select_fields(page)
+
+
+@attrs.define
+class SmallUnreliablePage(BigUnreliablePage, Returns[SmallItem]):
+    pass
+
+
+@attrs.define
+class SmallUnreliablePageSkip(
+    BigUnreliablePage, Returns[SmallItem], skip_nonitem_fields=True
+):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_select_fields_but_unreliable_small_item() -> None:
+    expected_type_error_msg = r"__init__\(\) got an unexpected keyword argument 'x'"
+    response = HttpResponse("https://example.com", b"")
+
+    # Giving excess fields to a small item results in errors; except
+    # ``.to_item()`` since it's not calling ``item_from_fields()`` nor
+    # ``super().to_item()``
+    page = SmallUnreliablePage(response)
+    assert page.fields_to_ignore == ["z"]
+    assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    assert page.call_counter == {"x": 1, "z": 1}
+    with pytest.raises(TypeError, match=expected_type_error_msg):
+        await item_from_select_fields(page)
+    assert page.call_counter == {"x": 2, "z": 2}
+
+    # The error should go away after unselecting the excess field
+    page = SmallUnreliablePage(response, select_fields=SelectFields({"x": False}))
+    assert page.fields_to_ignore == ["x", "z"]
+    assert await page.to_item() == BigItem(x=1, y=2, z=3)
+    assert page.call_counter == {"x": 1, "z": 1}
+    assert await item_from_select_fields(page) == SmallItem(y=2)
+    assert page.call_counter == {"x": 2, "z": 2}
+
+    # If the page object uses skip_nonitem_fields=True, it should work without
+    # any problems
+    page2 = SmallUnreliablePageSkip(response)
+    assert page2.fields_to_ignore == ["z"]
+    assert await page2.to_item() == BigItem(x=1, y=2, z=3)
+    assert page2.call_counter == {"x": 1, "z": 1}
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
+    assert page2.call_counter == {"x": 2, "z": 2}
+
+    # Declaring "x" as a field to ignore works the same but it's added to the
+    # ``.fields_to_ignore``
+    page2 = SmallUnreliablePageSkip(response, select_fields=SelectFields({"x": False}))
+    assert page2.fields_to_ignore == ["x", "z"]
+    assert await page2.to_item() == BigItem(x=1, y=2, z=3)
+    assert page2.call_counter == {"x": 1, "z": 1}
+    assert await item_from_select_fields(page2) == SmallItem(y=2)
+    assert page2.call_counter == {"x": 2, "z": 2}

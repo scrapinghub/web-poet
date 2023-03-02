@@ -193,13 +193,17 @@ async def item_from_fields(
     to ``item_cls.__init__``, possibly causing exceptions if
     ``item_cls.__init__`` doesn't support them.
     """
-    item_dict = item_from_fields_sync(obj, item_cls=dict, skip_nonitem_fields=False)
+    adapter = ItemAdapter(
+        item_from_fields_sync(
+            obj, item_cls=item_cls, skip_nonitem_fields=skip_nonitem_fields
+        )
+    )
     fields_to_ignore = getattr(obj, "fields_to_ignore", [])
-    field_names = [f for f in item_dict if f not in fields_to_ignore]
+    field_names = [f for f in adapter if f not in fields_to_ignore]
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
     return item_cls(
-        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
+        **{name: await ensure_awaitable(adapter[name]) for name in field_names}
     )
 
 
@@ -265,12 +269,14 @@ def _validate_select_fields(page: web_poet.ItemPage) -> None:
 
     page_obj_fields = get_fields_dict(page, include_disabled=True)
 
-    # Doesn't raise an error even if the page object doesn't have the field,
-    # it just ignores it. However, it will error out if the field is not
-    # not available in the item.
     unknown_fields = set(fields) - set(page_obj_fields.keys()).union({"*"})
     fields_in_item = inspect.signature(page.item_cls).parameters.keys()
-    fields_not_in_item = unknown_fields - fields_in_item
+    unselected_fields = {k for k, v in fields.items() if v is False}
+
+    # Only raise an error if a field is selected but it's not present in the
+    # item class. It doesn't raise an error even if the page object doesn't
+    # have the field, it simply ignores it.
+    fields_not_in_item = unknown_fields - fields_in_item - unselected_fields
     if fields_not_in_item:
         raise ValueError(
             f"The fields {fields_not_in_item} is not available in {page.item_cls} "
@@ -307,4 +313,11 @@ async def item_from_select_fields(page: web_poet.ItemPage) -> Any:
         ):
             continue
         kwargs[k] = v
+
+    if page._get_skip_nonitem_fields():
+        field_names = _without_unsupported_field_names(
+            page.item_cls, list(kwargs.keys())
+        )
+        kwargs = {k: v for k, v in kwargs.items() if k in field_names}
+
     return page.item_cls(**kwargs)
