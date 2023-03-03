@@ -2,8 +2,8 @@
 Changelog
 =========
 
-TBR
----
+0.8.1 (2023-03-03)
+------------------
 
 * Fix the error when calling :meth:`.to_item() <web_poet.pages.ItemPage.to_item>`,
   :func:`item_from_fields_sync() <web_poet.fields.item_from_fields_sync>`, or
