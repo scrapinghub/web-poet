@@ -542,8 +542,9 @@ def test_field_processors_circular() -> None:
 
     page = Page()
     with pytest.raises(RecursionError):
-        assert page.a == "ab"
-        assert page.b == "ba"
+        page.a
+    with pytest.raises(RecursionError):
+        page.b
 
 
 def test_field_mixin() -> None:
