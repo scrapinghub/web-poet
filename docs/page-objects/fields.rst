@@ -187,7 +187,8 @@ run processors for it, and if two fields reference each other,
 :class:`RecursionError` will be raised.
 
 Note that while processors can be applied to async fields, they need to be
-sync functions themselves.
+sync functions themselves. This also means that only values of sync fields can
+be accessed in processors.
 
 It's also possible to implement field cleaning and processing in ``to_item``
 but in that case accessing a field directly will return the value without
