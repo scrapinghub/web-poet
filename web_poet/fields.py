@@ -5,7 +5,7 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 import attrs
 from itemadapter import ItemAdapter
@@ -77,11 +77,9 @@ def field(
                 raise TypeError(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
-            method = self._processed(method)
-            if cached:
-                self.unbound_method = cached_method(method)
-            else:
-                self.unbound_method = method
+            self.original_method = method
+            self.unbound_method = None
+            self.processors: List[Tuple[Callable, bool]] = []
 
         def __set_name__(self, owner, name):
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
@@ -91,27 +89,39 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
+            if self.unbound_method is None:
+                for processor in out or []:
+                    sig = inspect.signature(processor)
+                    self.processors.append((processor, "instance" in sig.parameters))
+                method = self._processed(self.original_method, instance)
+                if cached:
+                    self.unbound_method = cached_method(method)
+                else:
+                    self.unbound_method = method
+
             return self.unbound_method(instance)
 
-        @staticmethod
-        def _process(value):
-            for processor in out:
-                value = processor(value)
+        def _process(self, value, instance):
+            for processor, takes_instance in self.processors:
+                if takes_instance:
+                    value = processor(value, instance=instance)
+                else:
+                    value = processor(value)
             return value
 
-        def _processed(self, method):
+        def _processed(self, method, instance):
             """Returns a wrapper for method that calls processors on its result"""
-            if not out:
+            if not self.processors:
                 return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs))
+                    return self._process(await method(*args, **kwargs), instance)
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs))
+                    return self._process(method(*args, **kwargs), instance)
 
             return wraps(method)(processed)
 
