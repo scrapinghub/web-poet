@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import Optional
 
 import attrs
 import pytest
@@ -26,7 +27,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
-from web_poet.fields import get_fields_dict
+from web_poet.fields import FieldInfo, get_fields_dict
 
 
 @attrs.define
@@ -564,3 +565,110 @@ def test_field_mixin() -> None:
             return None
 
     assert set(get_fields_dict(B)) == {"a", "b", "mixin"}
+
+
+@pytest.mark.asyncio
+async def test_field_disabled() -> None:
+    @attrs.define
+    class Item:
+        x: int
+        y: Optional[int] = None
+        z: Optional[int] = None
+
+    class Page(ItemPage[Item]):
+        @field
+        def x(self) -> int:
+            return 1
+
+        @field(disabled=False)
+        def y(self) -> int:
+            return 2
+
+        @field(disabled=True)
+        def z(self) -> int:
+            return 3
+
+    page = Page()
+    assert await page.to_item() == Item(x=1, y=2)
+    assert page.x == 1
+    assert page.y == 2
+    assert page.z == 3
+
+    fields_dict_instance = get_fields_dict(page)
+    fields_dict_class = get_fields_dict(Page)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["x"] == FieldInfo(name="x", meta=None, out=None, disabled=False)
+        assert info["y"] == FieldInfo(name="y", meta=None, out=None, disabled=False)
+
+    fields_dict_instance = get_fields_dict(page, include_disabled=True)
+    fields_dict_class = get_fields_dict(Page, include_disabled=True)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["x"] == FieldInfo(name="x", meta=None, out=None, disabled=False)
+        assert info["y"] == FieldInfo(name="y", meta=None, out=None, disabled=False)
+        assert info["z"] == FieldInfo(name="z", meta=None, out=None, disabled=True)
+
+    # The subclass should properly reflect any changes to the ``disable`` value
+
+    class SubPage(Page):
+        """Flicks the switch for ``y`` and ``z``."""
+
+        @field(disabled=True)
+        def y(self) -> int:
+            return 2
+
+        @field(disabled=False)
+        def z(self) -> int:
+            return 3
+
+    subpage = SubPage()
+    assert await subpage.to_item() == Item(x=1, z=3)
+    assert subpage.x == 1
+    assert subpage.y == 2
+    assert subpage.z == 3
+
+    fields_dict_instance = get_fields_dict(subpage)
+    fields_dict_class = get_fields_dict(SubPage)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["x"] == FieldInfo(name="x", meta=None, out=None, disabled=False)
+        assert info["z"] == FieldInfo(name="z", meta=None, out=None, disabled=False)
+
+    fields_dict_instance = get_fields_dict(subpage, include_disabled=True)
+    fields_dict_class = get_fields_dict(SubPage, include_disabled=True)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["x"] == FieldInfo(name="x", meta=None, out=None, disabled=False)
+        assert info["y"] == FieldInfo(name="y", meta=None, out=None, disabled=True)
+        assert info["z"] == FieldInfo(name="z", meta=None, out=None, disabled=False)
+
+    # Disabling fields that are required in the item cls would error out.
+
+    class BadSubPage(Page):
+        @field(disabled=True)
+        def x(self) -> int:
+            return 1
+
+    badsubpage = BadSubPage()
+
+    with pytest.raises(TypeError):
+        await badsubpage.to_item()
+
+    assert badsubpage.x == 1
+    assert badsubpage.y == 2
+    assert badsubpage.z == 3
+
+    fields_dict_instance = get_fields_dict(badsubpage)
+    fields_dict_class = get_fields_dict(BadSubPage)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["y"] == FieldInfo(name="y", meta=None, out=None, disabled=False)
+
+    fields_dict_instance = get_fields_dict(badsubpage, include_disabled=True)
+    fields_dict_class = get_fields_dict(BadSubPage, include_disabled=True)
+
+    for info in [fields_dict_class, fields_dict_instance]:
+        assert info["x"] == FieldInfo(name="x", meta=None, out=None, disabled=True)
+        assert info["y"] == FieldInfo(name="y", meta=None, out=None, disabled=False)
+        assert info["z"] == FieldInfo(name="z", meta=None, out=None, disabled=True)
