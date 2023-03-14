@@ -80,8 +80,10 @@ def field(
             self.original_method = method
             self.unbound_method = None
             self.processors: List[Tuple[Callable, bool]] = []
+            self.name: Optional[str] = None
 
         def __set_name__(self, owner, name):
+            self.name = name
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
@@ -90,7 +92,13 @@ def field(
 
         def __get__(self, page, owner=None):
             if self.unbound_method is None:
-                for processor in out or []:
+                if out:
+                    processors = out
+                elif hasattr(page, "Processors"):
+                    processors = getattr(page.Processors, self.name, [])
+                else:
+                    processors = []
+                for processor in processors:
                     sig = inspect.signature(processor)
                     self.processors.append((processor, "page" in sig.parameters))
                 method = self._processed(self.original_method, page)

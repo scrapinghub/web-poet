@@ -547,6 +547,50 @@ def test_field_processors_circular() -> None:
         page.b
 
 
+def test_field_processors_default() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        class Processors:
+            name = [str.strip]
+
+        @field
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    page = Page()
+    assert page.name == "name"
+
+
+def test_field_processors_override() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class BasePage(ItemPage):
+        class Processors:
+            name = [str.strip]
+            description = [str.strip]
+
+        @field
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+        @field(out=[])
+        def description(self):  # noqa: D102
+            return "  description\t "
+
+    class Page(BasePage):
+        class Processors:
+            name = [proc1]
+
+    page = Page()
+    assert page.name == "  name\t x"
+    assert page.description == "  description\t "
+
+
 def test_field_mixin() -> None:
     class A(ItemPage):
         @field
