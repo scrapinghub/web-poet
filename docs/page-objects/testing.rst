@@ -1,7 +1,7 @@
 .. _web-poet-testing:
 
 ======================
-Tests for Page Objects
+Tests for page objects
 ======================
 
 Page Objects that inherit from :class:`~.ItemPage` can be tested by saving the

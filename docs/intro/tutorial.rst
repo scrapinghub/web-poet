@@ -1,5 +1,4 @@
 .. _intro-tutorial:
-.. _page-objects:
 
 ========
 Tutorial
@@ -182,6 +181,8 @@ In the code above:
     match ``Book.title``, so that during web data extraction the value that
     ``BookPage.title`` returns gets mapped to ``Book.title``.
 
+
+.. _tutorial-create-page-object:
 
 Use your page object class
 ==========================

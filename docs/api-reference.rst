@@ -1,13 +1,15 @@
 .. _api-reference:
 
 =============
-API Reference
+API reference
 =============
 
 .. _input:
 
 Page Inputs
 ===========
+
+.. module:: web_poet.page_inputs
 
 .. automodule:: web_poet.page_inputs.browser
    :members:

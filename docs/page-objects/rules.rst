@@ -1,6 +1,6 @@
 .. _rules-intro:
 
-Apply Rules
+Apply rules
 ===========
 
 Basic Usage
