@@ -5,8 +5,18 @@ Inputs
 ======
 
 :ref:`Page object classes <page-object-classes>`, in their ``__init__`` method,
-must define input parameters with type hints pointing to classes from the
-:mod:`web_poet.page_inputs` module.
+must define input parameters with type hints pointing to input classes.
+
+Those input classes may be:
+
+-   :ref:`Built-in web-poet input classes <built-in-inputs>`.
+
+-   :ref:`Custom input classes <custom-inputs>`.
+
+-   Other :ref:`page object classes <page-object-classes>`.
+
+-   :ref:`Item classes <items>`, when using a :ref:`framework <frameworks>`
+    that can provide item classes.
 
 Based on the target URL and parameter type hints, :ref:`frameworks
 <frameworks>` automatically build the required objects at run time, and pass
@@ -18,6 +28,8 @@ https://example.com, your framework would send an HTTP request to
 https://example.com, download the response, build an
 :class:`~web_poet.page_inputs.HttpResponse` object with the response data, and
 pass it to the ``__init__`` method of the page object class being used.
+
+.. _built-in-inputs:
 
 Built-in input classes
 ======================
@@ -40,6 +52,8 @@ define as inputs for a page object class, including:
 -   :class:`~web_poet.page_inputs.PageParams`, to receive data from the
     crawling code.
 
+
+.. _custom-inputs:
 
 Custom input classes
 ====================
