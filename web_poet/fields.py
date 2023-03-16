@@ -14,6 +14,7 @@ from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
+_FIELD_METHODS_ATTRIBUTE = "_web_poet_field_methods"
 
 
 @attrs.define
@@ -46,6 +47,7 @@ class FieldsMixin:
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
+        setattr(cls, _FIELD_METHODS_ATTRIBUTE, {})
 
 
 def field(
@@ -78,8 +80,6 @@ def field(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
             self.original_method = method
-            self.unbound_method = None
-            self.processors: List[Tuple[Callable, bool]] = []
             self.name: Optional[str] = None
 
         def __set_name__(self, owner, name):
@@ -91,45 +91,58 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, page, owner=None):
-            if self.unbound_method is None:
-                if out:
-                    processors = out
+            method = self._get_processed_method(owner, self.name)
+            if method is None:
+                if out is not None:
+                    processor_methods = out
                 elif hasattr(page, "Processors"):
-                    processors = getattr(page.Processors, self.name, [])
+                    processor_methods = getattr(page.Processors, self.name, [])
                 else:
-                    processors = []
-                for processor in processors:
-                    sig = inspect.signature(processor)
-                    self.processors.append((processor, "page" in sig.parameters))
-                method = self._processed(self.original_method, page)
+                    processor_methods = []
+                processors: List[Tuple[Callable, bool]] = []
+                for processor_method in processor_methods:
+                    sig = inspect.signature(processor_method)
+                    processors.append((processor_method, "page" in sig.parameters))
+                method = self._processed(self.original_method, page, processors)
                 if cached:
-                    self.unbound_method = cached_method(method)
-                else:
-                    self.unbound_method = method
+                    method = cached_method(method)
+                self._set_processed_method(owner, self.name, method)
 
-            return self.unbound_method(page)
+            return method(page)
 
-        def _process(self, value, page):
-            for processor, takes_page in self.processors:
+        @staticmethod
+        def _get_processed_method(cls, field_name):
+            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(field_name)
+
+        @staticmethod
+        def _set_processed_method(cls, field_name, method):
+            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[field_name] = method
+
+        @staticmethod
+        def _process(value, page, processors):
+            for processor, takes_page in processors:
                 if takes_page:
                     value = processor(value, page=page)
                 else:
                     value = processor(value)
             return value
 
-        def _processed(self, method, page):
+        @staticmethod
+        def _processed(method, page, processors):
             """Returns a wrapper for method that calls processors on its result"""
-            if not self.processors:
+            if not processors:
                 return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs), page)
+                    return _field._process(
+                        await method(*args, **kwargs), page, processors
+                    )
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs), page)
+                    return _field._process(method(*args, **kwargs), page, processors)
 
             return wraps(method)(processed)
 

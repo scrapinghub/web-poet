@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import Callable, List
 
 import attrs
 import pytest
@@ -505,6 +506,28 @@ async def test_field_processors_async() -> None:
     assert await page.name == "namex"
 
 
+def test_field_processors_inheritance() -> None:
+    def proc1(s):
+        return s + "x"
+
+    @attrs.define
+    class BasePage(ItemPage):
+        @field(out=[str.strip, proc1])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    @attrs.define
+    class Page(BasePage):
+        @field(out=[str.strip])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+    base_page = BasePage()
+    assert base_page.name == "namex"
+    page = Page()
+    assert page.name == "name"
+
+
 def test_field_processors_instance() -> None:
     def proc1(s, page):
         return page.prefix + s + "x"
@@ -548,11 +571,8 @@ def test_field_processors_circular() -> None:
 
 
 def test_field_processors_default() -> None:
-    def proc1(s):
-        return s + "x"
-
     @attrs.define
-    class Page(ItemPage):
+    class BasePage(ItemPage):
         class Processors:
             name = [str.strip]
 
@@ -560,8 +580,24 @@ def test_field_processors_default() -> None:
         def name(self):  # noqa: D102
             return "  name\t "
 
+    class Page(BasePage):
+        pass
+
+    @attrs.define
+    class AttrsPage(BasePage):
+        @field
+        def description(self):  # noqa: D102
+            return "  description\t "
+
+    base_page = BasePage()
+    assert base_page.name == "name"
+
     page = Page()
     assert page.name == "name"
+
+    attrs_page = AttrsPage()
+    assert attrs_page.name == "name"
+    assert attrs_page.description == "  description\t "
 
 
 def test_field_processors_override() -> None:
@@ -571,24 +607,55 @@ def test_field_processors_override() -> None:
     @attrs.define
     class BasePage(ItemPage):
         class Processors:
-            name = [str.strip]
-            description = [str.strip]
+            f1: List[Callable] = [str.strip]
+            f2 = [str.strip]
+            f3 = [str.strip]
+            f4: List[Callable] = [str.strip]
+            f5: List[Callable] = [str.strip]
 
         @field
-        def name(self):  # noqa: D102
-            return "  name\t "
+        def f1(self):  # noqa: D102
+            return "  f1\t "
 
         @field(out=[])
-        def description(self):  # noqa: D102
-            return "  description\t "
+        def f2(self):  # noqa: D102
+            return "  f2\t "
 
+        @field
+        def f3(self):  # noqa: D102
+            return "  f3\t "
+
+        @field
+        def f4(self):  # noqa: D102
+            return "  f4\t "
+
+        @field
+        def f5(self):  # noqa: D102
+            return "  f5\t "
+
+    @attrs.define
     class Page(BasePage):
-        class Processors:
-            name = [proc1]
+        class Processors(BasePage.Processors):
+            f1 = [proc1]
+            f4 = BasePage.Processors.f4 + [proc1]
+
+        @field(out=BasePage.Processors.f5 + [proc1])
+        def f5(self):  # noqa: D102
+            return "  f5\t "
+
+    base_page = BasePage()
+    assert base_page.f1 == "f1"
+    assert base_page.f2 == "  f2\t "
+    assert base_page.f3 == "f3"
+    assert base_page.f4 == "f4"
+    assert base_page.f5 == "f5"
 
     page = Page()
-    assert page.name == "  name\t x"
-    assert page.description == "  description\t "
+    assert page.f1 == "  f1\t x"
+    assert page.f2 == "  f2\t "
+    assert page.f3 == "f3"
+    assert page.f4 == "f4x"
+    assert page.f5 == "f5x"
 
 
 def test_field_mixin() -> None:
