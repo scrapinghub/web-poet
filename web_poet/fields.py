@@ -90,25 +90,25 @@ def field(
             field_info = FieldInfo(name=name, meta=meta, out=out)
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
-        def __get__(self, page, owner=None):
+        def __get__(self, instance, owner=None):
             method = self._get_processed_method(owner, self.name)
             if method is None:
                 if out is not None:
                     processor_methods = out
-                elif hasattr(page, "Processors"):
-                    processor_methods = getattr(page.Processors, self.name, [])
+                elif hasattr(instance, "Processors"):
+                    processor_methods = getattr(instance.Processors, self.name, [])
                 else:
                     processor_methods = []
                 processors: List[Tuple[Callable, bool]] = []
                 for processor_method in processor_methods:
                     sig = inspect.signature(processor_method)
                     processors.append((processor_method, "page" in sig.parameters))
-                method = self._processed(self.original_method, page, processors)
+                method = self._processed(self.original_method, instance, processors)
                 if cached:
                     method = cached_method(method)
                 self._set_processed_method(owner, self.name, method)
 
-            return method(page)
+            return method(instance)
 
         @staticmethod
         def _get_processed_method(cls, field_name):
