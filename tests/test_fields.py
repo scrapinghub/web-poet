@@ -159,7 +159,7 @@ def test_field_decorator_no_arguments() -> None:
 
 
 def test_field_cache_sync() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called_1 = 0
         _n_called_2 = 0
 
@@ -187,7 +187,7 @@ def test_field_cache_sync() -> None:
 
 @pytest.mark.asyncio
 async def test_field_cache_async() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called_1 = 0
         _n_called_2 = 0
 
@@ -215,7 +215,7 @@ async def test_field_cache_async() -> None:
 
 @pytest.mark.asyncio
 async def test_field_cache_async_locked() -> None:
-    class Page:
+    class Page(ItemPage):
         _n_called = 0
 
         @field(cached=True)
