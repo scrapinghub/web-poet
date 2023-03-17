@@ -23,6 +23,7 @@ from web_poet import (
     HttpResponse,
     Injectable,
     ItemPage,
+    WebPage,
     field,
     item_from_fields,
     item_from_fields_sync,
@@ -541,6 +542,27 @@ def test_field_processors_instance() -> None:
 
     page = Page()
     assert page.name == "prefix: namex"
+
+
+def test_field_processors_multiple_pages() -> None:
+    def proc(value, page):
+        return page.body + value
+
+    class Page(WebPage):
+        @field
+        def body(self):  # noqa: D102
+            return self.response.text
+
+        @field(out=[proc])
+        def processed(self):
+            return "suffix"
+
+    page1 = Page(response=HttpResponse("https://example.com", b"page1"))
+    page2 = Page(response=HttpResponse("https://example.com", b"page2"))
+    assert page1.body == "page1"
+    assert page1.processed == "page1suffix"
+    assert page2.body == "page2"
+    assert page2.processed == "page2suffix"
 
 
 def test_field_processors_circular() -> None:

@@ -103,7 +103,7 @@ def field(
                 for processor_method in processor_methods:
                     sig = inspect.signature(processor_method)
                     processors.append((processor_method, "page" in sig.parameters))
-                method = self._processed(self.original_method, instance, processors)
+                method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)
                 self._set_processed_method(owner, self.name, method)
@@ -128,21 +128,19 @@ def field(
             return value
 
         @staticmethod
-        def _processed(method, page, processors):
+        def _processed(method, processors):
             """Returns a wrapper for method that calls processors on its result"""
             if not processors:
                 return method
             if inspect.iscoroutinefunction(method):
 
-                async def processed(*args, **kwargs):
-                    return _field._process(
-                        await method(*args, **kwargs), page, processors
-                    )
+                async def processed(page):
+                    return _field._process(await method(page), page, processors)
 
             else:
 
-                def processed(*args, **kwargs):
-                    return _field._process(method(*args, **kwargs), page, processors)
+                def processed(page):
+                    return _field._process(method(page), page, processors)
 
             return wraps(method)(processed)
 
