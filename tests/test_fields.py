@@ -510,13 +510,11 @@ def test_field_processors_inheritance() -> None:
     def proc1(s):
         return s + "x"
 
-    @attrs.define
     class BasePage(ItemPage):
         @field(out=[str.strip, proc1])
         def name(self):  # noqa: D102
             return "  name\t "
 
-    @attrs.define
     class Page(BasePage):
         @field(out=[str.strip])
         def name(self):  # noqa: D102
@@ -532,7 +530,6 @@ def test_field_processors_instance() -> None:
     def proc1(s, page):
         return page.prefix + s + "x"
 
-    @attrs.define
     class Page(ItemPage):
         @field(out=[str.strip, proc1])
         def name(self):  # noqa: D102
@@ -553,7 +550,6 @@ def test_field_processors_circular() -> None:
     def proc2(s, page):
         return s + page.a
 
-    @attrs.define
     class Page(ItemPage):
         @field(out=[proc1])
         def a(self):  # noqa: D102
@@ -583,28 +579,17 @@ def test_field_processors_default() -> None:
     class Page(BasePage):
         pass
 
-    @attrs.define
-    class AttrsPage(BasePage):
-        @field
-        def description(self):  # noqa: D102
-            return "  description\t "
-
     base_page = BasePage()
     assert base_page.name == "name"
 
     page = Page()
     assert page.name == "name"
 
-    attrs_page = AttrsPage()
-    assert attrs_page.name == "name"
-    assert attrs_page.description == "  description\t "
-
 
 def test_field_processors_override() -> None:
     def proc1(s):
         return s + "x"
 
-    @attrs.define
     class BasePage(ItemPage):
         class Processors:
             f1: List[Callable] = [str.strip]
@@ -633,7 +618,6 @@ def test_field_processors_override() -> None:
         def f5(self):  # noqa: D102
             return "  f5\t "
 
-    @attrs.define
     class Page(BasePage):
         class Processors(BasePage.Processors):
             f1 = [proc1]
