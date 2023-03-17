@@ -194,6 +194,71 @@ It's also possible to implement field cleaning and processing in ``to_item``
 but in that case accessing a field directly will return the value without
 processing, so it's preferable to use field processors instead.
 
+Default processors
+~~~~~~~~~~~~~~~~~~
+
+You can also define processors on the page level by defining a nested class
+named ``Processors``:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, field
+
+    def clean_tabs(s):
+        return s.replace('\t', ' ')
+
+    @attrs.define
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        class Processors:
+            name = [clean_tabs, str.strip]
+
+        @field
+        def name(self):
+            return self.response.css(".name ::text").get()
+
+If ``Processors`` contains an attribute with the same name as a field, its
+value will be used as processors for that field unless the processors are
+specified in the ``out`` argument for it.
+
+You can also reuse and extend the processors defined in a base class by
+explicitly accessing or subclassing the ``Processors`` class:
+
+.. code-block:: python
+
+    from web_poet import ItemPage, HttpResponse, field
+
+    def clean_tabs(s):
+        return s.replace('\t', ' ')
+
+    @attrs.define
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        class Processors:
+            name = [str.strip]
+
+        @field
+        def name(self):
+            return self.response.css(".name ::text").get()
+
+    class MyPage2(MyPage):
+        class Processors(MyPage.Processors):
+            # name uses the processors in MyPage.Processors.name
+            # description now also uses them and also clean_tabs
+            description = MyPage.Processors.name + [clean_tabs]
+
+        @field
+        def description(self):
+            return self.response.css(".description ::text").get()
+
+        # brand uses the same processors as name
+        @field(out=MyPage.Processors.name)
+        def brand(self):
+            return self.response.css(".brand ::text").get()
+
+
 .. _item-classes:
 
 Item Classes
