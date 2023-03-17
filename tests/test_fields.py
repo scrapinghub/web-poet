@@ -26,7 +26,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
-from web_poet.fields import get_fields_dict
+from web_poet.fields import FieldsMixin, get_fields_dict
 
 
 @attrs.define
@@ -553,7 +553,7 @@ def test_field_mixin() -> None:
         def a(self):
             return None
 
-    class Mixin:
+    class Mixin(FieldsMixin):
         @field
         def mixin(self):
             return None
@@ -563,4 +563,11 @@ def test_field_mixin() -> None:
         def b(self):
             return None
 
+    class C(Mixin, A):
+        @field
+        def c(self):
+            return None
+
+    assert set(get_fields_dict(A)) == {"a"}
     assert set(get_fields_dict(B)) == {"a", "b", "mixin"}
+    assert set(get_fields_dict(C)) == {"a", "c", "mixin"}
