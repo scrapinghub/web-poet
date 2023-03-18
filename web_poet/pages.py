@@ -81,6 +81,25 @@ class ItemPage(Injectable, Returns[ItemT]):
         )
 
 
+class MultiLayoutPage(ItemPage[ItemT]):
+    """Base class for :ref:`multi-layout page object classes <multi-layout>`.
+
+    Subclasses must reimplement the :meth:`layout` method.
+    """
+
+    @abc.abstractmethod
+    async def get_layout(self) -> ItemPage[ItemT]:
+        """Return the :ref:`page object <page-objects>` to use based on the
+        received input (e.g. :class:`~.HttpResponse`)."""
+
+    async def to_item(self) -> ItemT:
+        """Return the output of the :meth:`~web_poet.pages.ItemPage.to_item`
+        method of the :ref:`page object <page-objects>` that :meth:`layout`
+        returns."""
+        page_object = await self.get_layout()
+        return await page_object.to_item()
+
+
 @attr.s(auto_attribs=True)
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """Base Page Object which requires :class:`~.HttpResponse`

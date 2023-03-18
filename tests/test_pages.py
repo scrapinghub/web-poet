@@ -9,6 +9,7 @@ from web_poet.pages import (
     ItemPage,
     ItemT,
     ItemWebPage,
+    MultiLayoutPage,
     Returns,
     WebPage,
     is_injectable,
@@ -31,6 +32,166 @@ def test_page_object() -> None:
     assert page_object.to_item() == {
         "foo": "bar",
     }
+
+
+@pytest.mark.asyncio
+async def test_multi_layout_page_object():
+    @attrs.define
+    class Header:
+        text: str
+
+    class H1Page(WebPage[Header]):
+        @field
+        def text(self) -> Optional[str]:
+            return self.css("h1::text").get()
+
+    class H2Page(WebPage[Header]):
+        @field
+        def text(self) -> Optional[str]:
+            return self.css("h2::text").get()
+
+    @attrs.define
+    class HeaderMultiLayoutPage(MultiLayoutPage[Header]):
+        response: HttpResponse
+        h1: H1Page
+        h2: H2Page
+
+        async def get_layout(self) -> ItemPage[Header]:
+            if self.response.css("h1::text"):
+                return self.h1
+            return self.h2
+
+    html_h1 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h1</title>
+        </head>
+        <body>
+            <h1>a</h1>
+        </body>
+    </html>
+    """
+    html_h2 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h2</title>
+        </head>
+        <body>
+            <h2>b</h2>
+        </body>
+    </html>
+    """
+
+    response1 = HttpResponse("https://example.com", body=html_h1)
+    h1_1 = H1Page(response=response1)
+    h2_1 = H2Page(response=response1)
+    response2 = HttpResponse("https://example.com", body=html_h2)
+    h1_2 = H1Page(response=response2)
+    h2_2 = H2Page(response=response2)
+
+    item1 = await HeaderMultiLayoutPage(response=response1, h1=h1_1, h2=h2_1).to_item()
+    item2 = await HeaderMultiLayoutPage(response=response2, h1=h1_2, h2=h2_2).to_item()
+
+    assert item1.text == "a"
+    assert item2.text == "b"
+
+
+@pytest.mark.asyncio
+async def test_multi_layout_page_object_shared_partial_layout():
+    """Scenario where a multi-layout page object acts as a switch for 2 or
+    more layout page objects that all inherit from some other page object class
+    that implements extraction for shared fields."""
+
+    @attrs.define
+    class PartialItem:
+        url: str
+
+    @attrs.define
+    class FullItem(PartialItem):
+        text: str
+
+    class PartialPage(WebPage[PartialItem]):
+        @field
+        async def url(self) -> str:
+            return str(self.response.url)
+
+    class FullPage1(PartialPage, Returns[FullItem]):
+        @field
+        async def text(self) -> Optional[str]:
+            return self.css("h1::text").get()
+
+    class FullPage2(PartialPage, Returns[FullItem]):
+        @field
+        async def text(self) -> Optional[str]:
+            return self.css("h2::text").get()
+
+    @attrs.define
+    class MyMultiLayoutPage(MultiLayoutPage[FullItem]):
+        response: HttpResponse
+        page1: FullPage1
+        page2: FullPage2
+
+        async def get_layout(self) -> ItemPage[FullItem]:
+            if self.response.css("h1::text"):
+                return self.page1  # type: ignore[return-value]
+            return self.page2  # type: ignore[return-value]
+
+    html1 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h1</title>
+        </head>
+        <body>
+            <h1>a</h1>
+        </body>
+    </html>
+    """
+    html2 = b"""
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>h2</title>
+        </head>
+        <body>
+            <h2>b</h2>
+        </body>
+    </html>
+    """
+
+    url = "https://example.com"
+    response1 = HttpResponse(url, body=html1)
+    page1_1 = FullPage1(response=response1)
+    page2_1 = FullPage2(response=response1)
+    response2 = HttpResponse(url, body=html2)
+    page1_2 = FullPage1(response=response2)
+    page2_2 = FullPage2(response=response2)
+
+    multilayoutpage1 = MyMultiLayoutPage(
+        response=response1, page1=page1_1, page2=page2_1
+    )
+    multilayoutpage2 = MyMultiLayoutPage(
+        response=response2, page1=page1_2, page2=page2_2
+    )
+
+    # To access page object fields, you must first get the underlying page
+    # object, and then access its fields:
+    layout1 = await multilayoutpage1.get_layout()
+    assert await layout1.url == url
+    assert await layout1.text == "a"
+    layout2 = await multilayoutpage2.get_layout()
+    assert await layout2.url == url
+    assert await layout2.text == "b"
+
+    # Returned items work as expected.
+    item1 = await multilayoutpage1.to_item()
+    assert item1.url == url
+    assert item1.text == "a"
+    item2 = await multilayoutpage2.to_item()
+    assert item2.url == url
+    assert item2.text == "b"
 
 
 def test_web_page_object(book_list_html_response) -> None:

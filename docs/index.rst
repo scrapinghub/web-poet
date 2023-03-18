@@ -25,6 +25,7 @@ web-poet
    page-objects/additional-requests
    page-objects/fields
    page-objects/rules
+   Webpage layouts <page-objects/layouts>
    page-objects/retries
    page-objects/page-params
    page-objects/testing
