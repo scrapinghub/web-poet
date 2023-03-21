@@ -75,13 +75,20 @@ class ItemPage(Injectable, Returns[ItemT]):
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
             return
-        if hasattr(self, "_validating_input"):
-            # We are in a recursive call, i.e. _validate_input is being called
-            # from _validate_input itself (likely through a @field method).
-            return
-        self._validating_input = True
+        try:
+            validating_input = self.__validating_input
+        except AttributeError:
+            pass
+        else:
+            if validating_input:
+                # We are in a recursive call, i.e. _validate_input is being
+                # called from _validate_input itself (likely through a @field
+                # method).
+                return
+
+        self.__validating_input = True
         validation_item = self.validate_input()  # type: ignore[attr-defined]
-        delattr(self, "_validating_input")
+        self.__validating_input = False
         return validation_item
 
 
