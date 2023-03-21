@@ -2,8 +2,17 @@
 Changelog
 =========
 
-0.8.0 (TBD)
------------
+0.8.1 (2023-03-03)
+------------------
+
+* Fix the error when calling :meth:`.to_item() <web_poet.pages.ItemPage.to_item>`,
+  :func:`item_from_fields_sync() <web_poet.fields.item_from_fields_sync>`, or
+  :func:`item_from_fields() <web_poet.fields.item_from_fields>` on page objects
+  defined as slotted attrs classes, while setting ``skip_nonitem_fields=True``.
+
+
+0.8.0 (2023-02-23)
+------------------
 
 This release contains many improvements to the web-poet testing framework,
 as well as some other improvements and bug fixes.

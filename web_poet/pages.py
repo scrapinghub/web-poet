@@ -1,5 +1,6 @@
 import abc
 import typing
+from contextlib import suppress
 
 import attr
 
@@ -50,15 +51,26 @@ class Returns(typing.Generic[ItemT]):
         return get_item_cls(self.__class__, default=dict)
 
 
+_NOT_SET = object()
+
+
 class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
     """
 
-    _skip_nonitem_fields: bool
+    _skip_nonitem_fields = _NOT_SET
 
-    def __init_subclass__(cls, skip_nonitem_fields: bool = False, **kwargs):
+    def _get_skip_nonitem_fields(self) -> bool:
+        value = self._skip_nonitem_fields
+        return False if value is _NOT_SET else bool(value)
+
+    def __init_subclass__(cls, skip_nonitem_fields=_NOT_SET, **kwargs):
         super().__init_subclass__(**kwargs)
+        if skip_nonitem_fields is _NOT_SET:
+            # This is a workaround for attrs issue.
+            # See: https://github.com/scrapinghub/web-poet/issues/141
+            return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
     async def to_item(self) -> ItemT:
@@ -67,7 +79,9 @@ class ItemPage(Injectable, Returns[ItemT]):
         if validation_item is not None:
             return validation_item
         return await item_from_fields(
-            self, item_cls=self.item_cls, skip_nonitem_fields=self._skip_nonitem_fields
+            self,
+            item_cls=self.item_cls,
+            skip_nonitem_fields=self._get_skip_nonitem_fields(),
         )
 
     @cached_method
@@ -75,18 +89,14 @@ class ItemPage(Injectable, Returns[ItemT]):
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
             return
-        try:
-            validating_input = self.__validating_input
-        except AttributeError:
-            pass
-        else:
-            if validating_input:
+        with suppress(AttributeError):
+            if self.__validating_input:
                 # We are in a recursive call, i.e. _validate_input is being
                 # called from _validate_input itself (likely through a @field
                 # method).
                 return
 
-        self.__validating_input = True
+        self.__validating_input: bool = True
         validation_item = self.validate_input()  # type: ignore[attr-defined]
         self.__validating_input = False
         return validation_item

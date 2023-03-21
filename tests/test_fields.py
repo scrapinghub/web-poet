@@ -25,7 +25,7 @@ from web_poet import (
     item_from_fields,
     item_from_fields_sync,
 )
-from web_poet.fields import get_fields_dict
+from web_poet.fields import FieldsMixin, get_fields_dict
 
 
 @attrs.define
@@ -504,13 +504,55 @@ async def test_field_processors_async() -> None:
     assert await page.name == "namex"
 
 
+def test_field_processors_instance() -> None:
+    def proc1(s, instance):
+        return instance.prefix + s + "x"
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[str.strip, proc1])
+        def name(self):  # noqa: D102
+            return "  name\t "
+
+        @field
+        def prefix(self):  # noqa: D102
+            return "prefix: "
+
+    page = Page()
+    assert page.name == "prefix: namex"
+
+
+def test_field_processors_circular() -> None:
+    def proc1(s, instance):
+        return s + instance.b
+
+    def proc2(s, instance):
+        return s + instance.a
+
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[proc1])
+        def a(self):  # noqa: D102
+            return "a"
+
+        @field(out=[proc2])
+        def b(self):  # noqa: D102
+            return "b"
+
+    page = Page()
+    with pytest.raises(RecursionError):
+        page.a
+    with pytest.raises(RecursionError):
+        page.b
+
+
 def test_field_mixin() -> None:
     class A(ItemPage):
         @field
         def a(self):
             return None
 
-    class Mixin:
+    class Mixin(FieldsMixin):
         @field
         def mixin(self):
             return None
@@ -520,4 +562,11 @@ def test_field_mixin() -> None:
         def b(self):
             return None
 
+    class C(Mixin, A):
+        @field
+        def c(self):
+            return None
+
+    assert set(get_fields_dict(A)) == {"a"}
     assert set(get_fields_dict(B)) == {"a", "b", "mixin"}
+    assert set(get_fields_dict(C)) == {"a", "c", "mixin"}
