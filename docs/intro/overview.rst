@@ -30,3 +30,5 @@ web-poet lets you :ref:`write data extraction code <page-objects>` that:
 -   Can be used with any Python web scraping framework or library that
     implements the :ref:`web-poet specification <spec>`, either directly
     or through a third-party plugin. See :ref:`frameworks`.
+
+To learn more about why and how web-poet came to be, see :ref:`from-ground-up`.

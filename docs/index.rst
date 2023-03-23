@@ -16,6 +16,7 @@ web-poet
    intro/overview
    intro/install
    intro/tutorial
+   intro/from-ground-up
 
 .. toctree::
    :caption: Writing page objects
