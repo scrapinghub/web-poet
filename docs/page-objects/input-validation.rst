@@ -87,15 +87,19 @@ only synchronous fields are supported. For example:
          method, so that when they are used from ``to_item`` they are not
          evaluated again.
 
-If you implement a custom ``to_item`` method that does not call
-``ItemPage.to_item`` (e.g. does not use ``super().to_item``), you can include
-validation in your implementation as follows:
+If you implement a custom ``to_item`` method, as long as you are inheriting
+from :class:`~web_poet.pages.ItemPage`, you can enable input validation
+decorating your custom ``to_item`` method it with
+:func:`web_poet.util.validate_input`:
 
 .. code-block:: python
 
-    validation_item = self._validate_input()
-    if validation_item is not None:
-        return validation_item
+    from web_poet import validate_input
+
+    class Page(ItemPage[Item]):
+        @validate_input
+        async def to_item(self):
+            ...
 
 :exc:`~web_poet.exceptions.Retry` and :exc:`~web_poet.exceptions.UseFallback`
 may also be raised from the ``to_item`` method. This could come in handy, for

@@ -39,6 +39,7 @@ This can be set using:
 
     import attrs
     import web_poet
+    from web_poet import validate_input
 
     async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
@@ -52,6 +53,7 @@ This can be set using:
     class SomePage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validate_input
         async def to_item(self):
             ...
 
@@ -89,6 +91,7 @@ when creating an :class:`~.HttpClient` instance:
 
     import attrs
     import web_poet
+    from web_poet import validate_input
 
     async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
         ...
@@ -101,6 +104,7 @@ when creating an :class:`~.HttpClient` instance:
     class SomePage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validate_input
         async def to_item(self):
             ...
 
@@ -161,18 +165,20 @@ like the ones above, then it would cause the code to look like:
 
 .. code-block:: python
 
-    import attrs
-    import web_poet
+    import urllib
 
     import aiohttp
+    import attrs
     import requests
-    import urllib
+    import web_poet
+    from web_poet import validate_input
 
 
     @attrs.define
     class SomePage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validate_input
         async def to_item(self):
             try:
                 response = await self.http.get("...")
@@ -196,12 +202,14 @@ This makes the code simpler:
 
     import attrs
     import web_poet
+    from web_poet import validate_input
 
 
     @attrs.define
     class SomePage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validate_input
         async def to_item(self):
             try:
                 response = await self.http.get("...")

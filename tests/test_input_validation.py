@@ -1,18 +1,20 @@
 """Test page object input validation scenarios."""
+from typing import Optional
 
 import attrs
 import pytest
 
-from web_poet import ItemPage, Returns, field
+from web_poet import ItemPage, Returns, field, validate_input
 from web_poet.exceptions import Retry, UseFallback
 
 
 @attrs.define
 class Item:
     a: str
+    is_valid: bool = True
 
 
-EXPECTED_ITEM = Item(a="a")
+EXPECTED_ITEM = Item(a="a", is_valid=True)
 
 
 class BasePage(ItemPage[Item]):
@@ -154,7 +156,7 @@ async def test_use_fallback_async_field():
 # Invalid input
 
 
-INVALID_ITEM = Item(a="invalid")
+INVALID_ITEM = Item(a="invalid", is_valid=False)
 
 
 class BaseInvalidInputPage(ItemPage[Item]):
@@ -168,6 +170,7 @@ class BaseInvalidInputPage(ItemPage[Item]):
 
 def test_invalid_input_sync_to_item():
     class Page(BaseInvalidInputPage):
+        @validate_input
         def to_item(self):
             return Item(a=self.a)
 
@@ -274,7 +277,7 @@ async def test_invalid_input_async_field_caching():
 async def test_invalid_input_cross_api_caching():
     @attrs.define
     class _Item(Item):
-        b: str
+        b: Optional[str] = None
 
     class Page(BaseCachingPage, Returns[_Item]):
         @field

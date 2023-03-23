@@ -265,3 +265,28 @@ def str_to_pattern(url_pattern: Union[str, Patterns]) -> Patterns:
     if isinstance(url_pattern, Patterns):
         return url_pattern
     return Patterns([url_pattern])
+
+
+def validate_input(to_item: CallableT) -> CallableT:
+    """Decorator to apply input validation to custom to_item method
+    implementations in :class:`~web_poet.pages.ItemPage` subclasses."""
+
+    if inspect.iscoroutinefunction(to_item):
+
+        @wraps(to_item)
+        async def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return await to_item(self, *args, **kwargs)
+
+    else:
+
+        @wraps(to_item)
+        def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return to_item(self, *args, **kwargs)
+
+    return _to_item  # type: ignore[return-value]

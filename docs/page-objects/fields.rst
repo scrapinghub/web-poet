@@ -206,7 +206,7 @@ attrs instances) instead of unstructured dicts to hold the data:
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse
+    from web_poet import ItemPage, HttpResponse, validate_input
 
     @attrs.define
     class Product:
@@ -217,6 +217,7 @@ attrs instances) instead of unstructured dicts to hold the data:
     @attrs.define
     class ProductPage(ItemPage):
         # ...
+        @validate_input
         def to_item(self) -> Product:
             return Product(
                 name=self.name,
@@ -406,12 +407,13 @@ attributes from this response:
 
 .. code-block:: python
 
-    from web_poet import ItemPage, HttpResponse, HttpClient
+    from web_poet import ItemPage, HttpResponse, HttpClient, validate_input
 
     class MyPage(ItemPage):
         response: HttpResponse
         http: HttpClient
 
+        @validate_input
         async def to_item(self):
             api_url = self.response.css("...").get()
             api_response = await self.http.get(api_url).json()

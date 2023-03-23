@@ -21,7 +21,7 @@ from .rules import (
     RulesRegistry,
     consume_modules,
 )
-from .utils import cached_method
+from .utils import cached_method, validate_input
 
 default_registry = RulesRegistry()
 handle_urls = default_registry.handle_urls
