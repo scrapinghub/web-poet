@@ -62,10 +62,9 @@ Other changes:
 0.7.1 (2023-02-01)
 ------------------
 
-* Updated the :ref:`tutorial <intro-tutorial>` to cover recent features and
-  focus on best practices. Also, a new module was added,
-  :mod:`web_poet.example`, that allows using page objects while following the
-  tutorial.
+* Updated the :ref:`tutorial <tutorial>` to cover recent features and focus on
+  best practices. Also, a new module was added, :mod:`web_poet.example`, that
+  allows using page objects while following the tutorial.
 
 * :ref:`web-poet-testing` now covers :ref:`Git LFS <git-lfs>` and
   :ref:`scrapy-poet <web-poet-testing-scrapy-poet>`, and recommends

@@ -1,4 +1,4 @@
-.. _intro-tutorial:
+.. _tutorial:
 
 ========
 Tutorial
