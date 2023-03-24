@@ -48,7 +48,7 @@ Controlling item values
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -57,7 +57,7 @@ Controlling item values
 
         default_tax_rate = 0.10
 
-        @validate_input
+        @validates_input
         def to_item(self):
             item = {
                 "url": self.url,
@@ -93,7 +93,7 @@ Let's try an example wherein :class:`~.PageParams` is able to control how
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -103,7 +103,7 @@ Let's try an example wherein :class:`~.PageParams` is able to control how
 
         default_max_pages = 5
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             return {"product_urls": await self.get_product_urls()}
 

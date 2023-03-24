@@ -289,14 +289,14 @@ Executing a HttpRequest instance
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -347,14 +347,14 @@ method on it.
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -394,14 +394,14 @@ Thus, additional requests inside the Page Object are typically needed for it:
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -485,7 +485,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -494,7 +494,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
         default_pagination_limit = 10
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -586,7 +586,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
     logger = logging.getLogger(__name__)
 
@@ -595,7 +595,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -668,7 +668,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
     import attrs
     import web_poet
-    from web_poet import validate_input
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -677,7 +677,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
         default_pagination_limit = 10
 
-        @validate_input
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -812,7 +812,7 @@ times before giving up:
 
     import attrs
     from tenacity import retry, stop_after_attempt
-    from web_poet import HttpClient, WebPage, validate_input
+    from web_poet import HttpClient, WebPage, validates_input
 
     @attrs.define
     class MyPage(WebPage):
@@ -825,7 +825,7 @@ times before giving up:
                 raise ValueError
             return response.css(".data").get()
 
-        @validate_input
+        @validates_input
         async def to_item(self) -> dict:
             try:
                 data = await self.get_data()

@@ -8,7 +8,7 @@ from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
-from web_poet.utils import _create_deprecated_class, cached_method, validate_input
+from web_poet.utils import _create_deprecated_class, cached_method, validates_input
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -73,7 +73,7 @@ class ItemPage(Injectable, Returns[ItemT]):
             return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
-    @validate_input
+    @validates_input
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
         return await item_from_fields(

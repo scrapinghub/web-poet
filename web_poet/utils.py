@@ -267,7 +267,7 @@ def str_to_pattern(url_pattern: Union[str, Patterns]) -> Patterns:
     return Patterns([url_pattern])
 
 
-def validate_input(to_item: CallableT) -> CallableT:
+def validates_input(to_item: CallableT) -> CallableT:
     """Decorator to apply input validation to custom to_item method
     implementations in :class:`~web_poet.pages.ItemPage` subclasses."""
 

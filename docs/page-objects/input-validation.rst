@@ -90,14 +90,14 @@ only synchronous fields are supported. For example:
 If you implement a custom ``to_item`` method, as long as you are inheriting
 from :class:`~web_poet.pages.ItemPage`, you can enable input validation
 decorating your custom ``to_item`` method with
-:func:`~web_poet.util.validate_input`:
+:func:`~web_poet.util.validates_input`:
 
 .. code-block:: python
 
-    from web_poet import validate_input
+    from web_poet import validates_input
 
     class Page(ItemPage[Item]):
-        @validate_input
+        @validates_input
         async def to_item(self):
             ...
 

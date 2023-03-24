@@ -4,7 +4,7 @@ from typing import Optional
 import attrs
 import pytest
 
-from web_poet import ItemPage, Returns, field, validate_input
+from web_poet import ItemPage, Returns, field, validates_input
 from web_poet.exceptions import Retry, UseFallback
 
 
@@ -170,7 +170,7 @@ class BaseInvalidInputPage(ItemPage[Item]):
 
 def test_invalid_input_sync_to_item():
     class Page(BaseInvalidInputPage):
-        @validate_input
+        @validates_input
         def to_item(self):
             return Item(a=self.a)
 
