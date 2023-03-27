@@ -357,6 +357,23 @@ def test_field_subclassing() -> None:
     assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
 
 
+def test_field_subclassing_super() -> None:
+    class Page(ItemPage):
+        @field
+        def field1(self):
+            return 1
+
+    class Page2(Page):
+        @field
+        def field1(self):
+            return super().field1 + 1
+
+    page = Page()
+    assert page.field1 == 1
+    page2 = Page2()
+    assert page2.field1 == 2
+
+
 def test_field_subclassing_from_to_item() -> None:
     # to_item() should be the same since it was not overridden from the
     # subclass.
@@ -662,6 +679,47 @@ def test_field_processors_override() -> None:
     assert page.f3 == "f3"
     assert page.f4 == "f4x"
     assert page.f5 == "f5x"
+
+
+def test_field_processors_super() -> None:
+    class BasePage(ItemPage):
+        class Processors:
+            name = [str.strip]
+            desc = [str.strip]
+
+        @field
+        def name(self):
+            return "name "
+
+        @field
+        def desc(self):
+            return "desc "
+
+    class Page(BasePage):
+        class Processors(BasePage.Processors):
+            name = []
+
+        @field
+        def name(self):
+            base_name = super().name
+            return base_name + "2 "
+
+    class Page2(Page):
+        class Processors(Page.Processors):
+            name = []
+            desc = []
+
+        @field
+        def desc(self):
+            base_desc = super().desc
+            return base_desc + "2 "
+
+    base_page = BasePage()
+    assert base_page.name == "name"
+    page = Page()
+    assert page.name == "name2 "
+    page2 = Page2()
+    assert page2.desc == "desc2 "
 
 
 def test_field_mixin() -> None:
