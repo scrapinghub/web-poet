@@ -697,7 +697,7 @@ def test_field_processors_super() -> None:
 
     class Page(BasePage):
         class Processors(BasePage.Processors):
-            name = []
+            name: List[Callable] = []
 
         @field
         def name(self):
@@ -706,8 +706,8 @@ def test_field_processors_super() -> None:
 
     class Page2(Page):
         class Processors(Page.Processors):
-            name = []
-            desc = []
+            name: List[Callable] = []
+            desc: List[Callable] = []
 
         @field
         def desc(self):
