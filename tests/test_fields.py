@@ -505,8 +505,8 @@ async def test_field_processors_async() -> None:
 
 
 def test_field_processors_instance() -> None:
-    def proc1(s, instance):
-        return instance.prefix + s + "x"
+    def proc1(s, page):
+        return page.prefix + s + "x"
 
     @attrs.define
     class Page(ItemPage):
@@ -523,11 +523,11 @@ def test_field_processors_instance() -> None:
 
 
 def test_field_processors_circular() -> None:
-    def proc1(s, instance):
-        return s + instance.b
+    def proc1(s, page):
+        return s + page.b
 
-    def proc2(s, instance):
-        return s + instance.a
+    def proc2(s, page):
+        return s + page.a
 
     @attrs.define
     class Page(ItemPage):

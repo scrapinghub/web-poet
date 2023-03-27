@@ -165,8 +165,8 @@ They will be applied to the field value before returning it:
     def clean_tabs(s):
         return s.replace('\t', ' ')
 
-    def add_brand(s, instance):
-        return f"{instance.brand} - {s}"
+    def add_brand(s, page):
+        return f"{page.brand} - {s}"
 
     class MyPage(ItemPage):
         response: HttpResponse
@@ -179,12 +179,12 @@ They will be applied to the field value before returning it:
         def brand(self):
             return self.response.css(".brand ::text").get()
 
-If a processor takes an argument named ``instance`` it will receive the page
-object instance in it so that values of other fields can be used. You should
-enable caching for fields accessed in processors to avoid unnecessary
-recomputations. Be careful of circular references, as accessing a field will
-run processors for it, and if two fields reference each other,
-:class:`RecursionError` will be raised.
+If a processor takes an argument named ``page`` it will receive the page object
+instance in it so that values of other fields can be used. You should enable
+caching for fields accessed in processors to avoid unnecessary recomputations.
+Be careful of circular references, as accessing a field will run processors for
+it, and if two fields reference each other, :class:`RecursionError` will be
+raised.
 
 Note that while processors can be applied to async fields, they need to be
 sync functions themselves. This also means that only values of sync fields can
