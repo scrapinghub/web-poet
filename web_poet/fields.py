@@ -95,7 +95,7 @@ def field(
             if self.unbound_method is None:
                 for processor in out or []:
                     sig = inspect.signature(processor)
-                    self.processors.append((processor, "instance" in sig.parameters))
+                    self.processors.append((processor, "page" in sig.parameters))
                 method = self._processed(self.original_method, instance)
                 if cached:
                     self.unbound_method = cached_method(method)
@@ -104,27 +104,27 @@ def field(
 
             return self.unbound_method(instance)
 
-        def _process(self, value, instance):
-            for processor, takes_instance in self.processors:
-                if takes_instance:
-                    value = processor(value, instance=instance)
+        def _process(self, value, page):
+            for processor, takes_page in self.processors:
+                if takes_page:
+                    value = processor(value, page=page)
                 else:
                     value = processor(value)
             return value
 
-        def _processed(self, method, instance):
+        def _processed(self, method, page):
             """Returns a wrapper for method that calls processors on its result"""
             if not self.processors:
                 return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs), instance)
+                    return self._process(await method(*args, **kwargs), page)
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs), instance)
+                    return self._process(method(*args, **kwargs), page)
 
             return wraps(method)(processed)
 
