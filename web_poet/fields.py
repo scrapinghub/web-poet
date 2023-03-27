@@ -41,9 +41,12 @@ class FieldsMixin:
         # the base class. This is done by making decorator write to a
         # temporary location, and then merging it all on subclass creation.
         this_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-        base_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, {})
-        if base_class_fields or this_class_fields:
-            fields = {**base_class_fields, **this_class_fields}
+        base_fields = {}
+        for base_class in cls.__bases__:
+            fields = getattr(base_class, _FIELDS_INFO_ATTRIBUTE_READ, {})
+            base_fields.update(fields)
+        if base_fields or this_class_fields:
+            fields = {**base_fields, **this_class_fields}
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
