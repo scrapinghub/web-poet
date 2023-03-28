@@ -208,9 +208,10 @@ and such fields will containt wrong data if these timezones don't match.
 Consider an example item::
 
     import datetime
-    from web_poet import WebPage
+    from web_poet import WebPage, validates_input
 
     class DateItemPage(WebPage):
+        @validates_input
         async def to_item(self) -> dict:
             # e.g. 2001-01-01 11:00:00 +00
             now = datetime.datetime.now(datetime.timezone.utc)

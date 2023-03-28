@@ -289,12 +289,14 @@ Executing a HttpRequest instance
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -345,12 +347,14 @@ method on it.
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -390,12 +394,14 @@ Thus, additional requests inside the Page Object are typically needed for it:
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
 
     @attrs.define
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -479,6 +485,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -487,6 +494,7 @@ list of :class:`~.HttpRequest` to be executed in batch using the
 
         default_pagination_limit = 10
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -578,6 +586,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
     logger = logging.getLogger(__name__)
 
@@ -586,6 +595,7 @@ from the previous subsection named: :ref:`httpclient-get-example`.
     class ProductPage(web_poet.WebPage):
         http: web_poet.HttpClient
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -658,6 +668,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
     import attrs
     import web_poet
+    from web_poet import validates_input
 
 
     @attrs.define
@@ -666,6 +677,7 @@ For this example, let's improve the code snippet from the previous subsection na
 
         default_pagination_limit = 10
 
+        @validates_input
         async def to_item(self):
             item = {
                 "url": self.url,
@@ -773,3 +785,54 @@ Here's an example:
 From the example above, we're now checking the list of responses to see if any
 exceptions are included in it. If so, we're simply logging it down and ignoring
 it. In this way, perfectly good responses can still be processed through.
+
+
+.. _retries-additional-requests:
+
+Retrying Additional Requests
+============================
+
+When the bad response data comes from :ref:`additional requests
+<additional-requests>`, you must handle retries on your own.
+
+The page object code is responsible for retrying additional requests until good
+response data is received, or until some maximum number of retries is exceeded.
+
+It is up to you to decide what the maximum number of retries should be for a
+given additional request, based on your experience with the target website.
+
+It is also up to you to decide how to implement retries of additional requests.
+
+One option would be tenacity_. For example, to try an additional request 3
+times before giving up:
+
+.. _tenacity: https://tenacity.readthedocs.io/en/latest/index.html
+
+.. code-block:: python
+
+    import attrs
+    from tenacity import retry, stop_after_attempt
+    from web_poet import HttpClient, WebPage, validates_input
+
+    @attrs.define
+    class MyPage(WebPage):
+        http: HttpClient
+
+        @retry(stop=stop_after_attempt(3))
+        async def get_data(self):
+            response = await self.http.get("https://toscrape.com/")
+            if not response.css(".expected"):
+                raise ValueError
+            return response.css(".data").get()
+
+        @validates_input
+        async def to_item(self) -> dict:
+            try:
+                data = await self.get_data()
+            except ValueError:
+                return {}
+            return {"data": data}
+
+If the reason your additional request fails is outdated or missing data from
+page object input, do not try to reproduce the request for that input as an
+additional request. :ref:`Request fresh input instead <retries-input>`.

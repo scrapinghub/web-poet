@@ -40,9 +40,12 @@ class FieldsMixin:
         # the base class. This is done by making decorator write to a
         # temporary location, and then merging it all on subclass creation.
         this_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-        base_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, {})
-        if base_class_fields or this_class_fields:
-            fields = {**base_class_fields, **this_class_fields}
+        base_fields = {}
+        for base_class in cls.__bases__:
+            fields = getattr(base_class, _FIELDS_INFO_ATTRIBUTE_READ, {})
+            base_fields.update(fields)
+        if base_fields or this_class_fields:
+            fields = {**base_fields, **this_class_fields}
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
@@ -92,7 +95,7 @@ def field(
             if self.unbound_method is None:
                 for processor in out or []:
                     sig = inspect.signature(processor)
-                    self.processors.append((processor, "instance" in sig.parameters))
+                    self.processors.append((processor, "page" in sig.parameters))
                 method = self._processed(self.original_method, instance)
                 if cached:
                     self.unbound_method = cached_method(method)
@@ -101,27 +104,31 @@ def field(
 
             return self.unbound_method(instance)
 
-        def _process(self, value, instance):
-            for processor, takes_instance in self.processors:
-                if takes_instance:
-                    value = processor(value, instance=instance)
+        def _process(self, value, page):
+            for processor, takes_page in self.processors:
+                if takes_page:
+                    value = processor(value, page=page)
                 else:
                     value = processor(value)
             return value
 
-        def _processed(self, method, instance):
+        def _processed(self, method, page):
             """Returns a wrapper for method that calls processors on its result"""
-            if not self.processors:
-                return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
-                    return self._process(await method(*args, **kwargs), instance)
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                    return self._process(await method(*args, **kwargs), page)
 
             else:
 
                 def processed(*args, **kwargs):
-                    return self._process(method(*args, **kwargs), instance)
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                    return self._process(method(*args, **kwargs), page)
 
             return wraps(method)(processed)
 

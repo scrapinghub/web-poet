@@ -29,6 +29,7 @@ web-poet
    page-objects/fields
    page-objects/additional-requests
    page-objects/retries
+   page-objects/input-validation
    page-objects/page-params
    page-objects/testing
    page-objects/frameworks
