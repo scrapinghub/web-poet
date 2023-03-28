@@ -133,16 +133,20 @@ def field(
         @staticmethod
         def _processed(method, processors):
             """Returns a wrapper for method that calls processors on its result"""
-            if not processors:
-                return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(page):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return _field._process(await method(page), page, processors)
 
             else:
 
                 def processed(page):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return _field._process(method(page), page, processors)
 
             return wraps(method)(processed)

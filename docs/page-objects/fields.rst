@@ -151,6 +151,8 @@ function when accessing the fields:
 Now any field can be converted from sync to async, or the other way around,
 and the code would keep working.
 
+.. _field-processors:
+
 Field processors
 ----------------
 
@@ -271,7 +273,7 @@ attrs instances) instead of unstructured dicts to hold the data:
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse
+    from web_poet import ItemPage, HttpResponse, validates_input
 
     @attrs.define
     class Product:
@@ -282,6 +284,7 @@ attrs instances) instead of unstructured dicts to hold the data:
     @attrs.define
     class ProductPage(ItemPage):
         # ...
+        @validates_input
         def to_item(self) -> Product:
             return Product(
                 name=self.name,
@@ -459,6 +462,8 @@ To recap:
   to contain more ``@fields`` than defined in the item class, e.g. because
   Page Object is inherited from some other base Page Object.
 
+.. _field-caching:
+
 Caching
 -------
 
@@ -469,12 +474,13 @@ attributes from this response:
 
 .. code-block:: python
 
-    from web_poet import ItemPage, HttpResponse, HttpClient
+    from web_poet import ItemPage, HttpResponse, HttpClient, validates_input
 
     class MyPage(ItemPage):
         response: HttpResponse
         http: HttpClient
 
+        @validates_input
         async def to_item(self):
             api_url = self.response.css("...").get()
             api_response = await self.http.get(api_url).json()
@@ -606,3 +612,27 @@ returns a dictionary, where keys are field names, and values are
 
     print(field_names)  # dict_keys(['my_field'])
     print(my_field_meta)  # {'expensive': True}
+
+
+Input validation
+----------------
+
+:ref:`Input validation <input-validation>`, if used, happens before field
+evaluation, and it may override the values of fields, preventing field
+evaluation from ever happening. For example:
+
+.. code-block:: python
+
+   class Page(ItemPage[Item]):
+       def validate_input(self):
+           return Item(foo="bar")
+
+       @field
+       def foo(self):
+           raise RuntimeError("This exception is never raised")
+
+    assert Page().foo == "bar"
+
+Field evaluation may still happen for a field if the field is used in the
+implementation of the ``validate_input`` method. Note, however, that only
+synchronous fields can be used from the ``validate_input`` method.

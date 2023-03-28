@@ -1,5 +1,8 @@
 import abc
+import inspect
 import typing
+from contextlib import suppress
+from functools import wraps
 
 import attr
 
@@ -7,7 +10,7 @@ from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
-from web_poet.utils import _create_deprecated_class
+from web_poet.utils import CallableT, _create_deprecated_class, cached_method
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -53,6 +56,31 @@ class Returns(typing.Generic[ItemT]):
 _NOT_SET = object()
 
 
+def validates_input(to_item: CallableT) -> CallableT:
+    """Decorator to apply input validation to custom to_item method
+    implementations in :class:`~web_poet.pages.ItemPage` subclasses."""
+
+    if inspect.iscoroutinefunction(to_item):
+
+        @wraps(to_item)
+        async def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return await to_item(self, *args, **kwargs)
+
+    else:
+
+        @wraps(to_item)
+        def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return to_item(self, *args, **kwargs)
+
+    return _to_item  # type: ignore[return-value]
+
+
 class ItemPage(Injectable, Returns[ItemT]):
     """Base Page Object, with a default :meth:`to_item` implementation
     which supports web-poet fields.
@@ -72,6 +100,7 @@ class ItemPage(Injectable, Returns[ItemT]):
             return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
+    @validates_input
     async def to_item(self) -> ItemT:
         """Extract an item from a web page"""
         return await item_from_fields(
@@ -79,6 +108,23 @@ class ItemPage(Injectable, Returns[ItemT]):
             item_cls=self.item_cls,
             skip_nonitem_fields=self._get_skip_nonitem_fields(),
         )
+
+    @cached_method
+    def _validate_input(self) -> None:
+        """Run self.validate_input if defined."""
+        if not hasattr(self, "validate_input"):
+            return
+        with suppress(AttributeError):
+            if self.__validating_input:
+                # We are in a recursive call, i.e. _validate_input is being
+                # called from _validate_input itself (likely through a @field
+                # method).
+                return
+
+        self.__validating_input: bool = True
+        validation_item = self.validate_input()  # type: ignore[attr-defined]
+        self.__validating_input = False
+        return validation_item
 
 
 @attr.s(auto_attribs=True)

@@ -178,10 +178,11 @@ Let's take a look at how the following code is structured:
 
 .. code-block:: python
 
-    from web_poet import handle_urls, WebPage
+    from web_poet import handle_urls, WebPage, validates_input
 
 
     class GenericProductPage(WebPage):
+        @validates_input
         def to_item(self) -> Product:
             return Product(product_title=self.css("title::text").get())
 
@@ -241,10 +242,11 @@ the following:
 
 .. code-block:: python
 
-    from web_poet import handle_urls, WebPage
+    from web_poet import handle_urls, WebPage, validates_input
 
 
     class GenericProductPage(WebPage[Product]):
+        @validates_input
         def to_item(self) -> Product:
             return Product(product_title=self.css("title::text").get())
 
@@ -312,10 +314,11 @@ either contexts of Page Objects and item classes.
 
 .. code-block:: python
 
-    from web_poet import handle_urls, WebPage
+    from web_poet import handle_urls, WebPage, validates_input
 
 
     class GenericProductPage(WebPage[Product]):
+        @validates_input
         def to_item(self) -> Product:
             return Product(product_title=self.css("title::text").get())
 
@@ -577,7 +580,7 @@ have the first approach as an example:
 
 .. code-block:: python
 
-    from web_poet import default_registry, consume_modules, handle_urls
+    from web_poet import default_registry, consume_modules, handle_urls, validates_input
     import ecommerce_page_objects, gadget_sites_page_objects
 
     consume_modules("ecommerce_page_objects", "gadget_sites_page_objects")
@@ -592,6 +595,7 @@ have the first approach as an example:
 
     @handle_urls("site_1.example", instead_of=ecommerce_page_objects.EcomGenericPage, priority=1000)
     class ImprovedEcomSite1(ecommerce_page_objects.site_1.EcomSite1):
+        @validates_input
         def to_item(self):
             ...  # call super().to_item() and improve on the item's shortcomings
 
@@ -692,11 +696,12 @@ Here's an example:
 
 .. code-block:: python
 
-    from web_poet import default_registry, consume_modules, handle_urls
+    from web_poet import default_registry, consume_modules, handle_urls, validates_input
     import ecommerce_page_objects, gadget_sites_page_objects, common_items
 
     @handle_urls("site_2.example", instead_of=common_items.ProductGenericPage, priority=1000)
     class EcomSite2Copy(ecommerce_page_objects.site_1.EcomSite1):
+        @validates_input
         def to_item(self):
             return super().to_item()
 
