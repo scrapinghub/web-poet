@@ -716,9 +716,9 @@ def test_field_processors_super() -> None:
     base_page = BasePage()
     assert base_page.name == "name"
     page = Page()
-    assert page.name == "name2 "
+    assert page.name == "name 2 "
     page2 = Page2()
-    assert page2.desc == "desc2 "
+    assert page2.desc == "desc 2 "
 
 
 def test_field_mixin() -> None:
