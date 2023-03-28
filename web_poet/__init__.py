@@ -12,7 +12,7 @@ from .page_inputs import (
     RequestUrl,
     ResponseUrl,
 )
-from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage
+from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage, validates_input
 from .requests import request_downloader_var
 from .rules import (
     ApplyRule,
@@ -21,7 +21,7 @@ from .rules import (
     RulesRegistry,
     consume_modules,
 )
-from .utils import cached_method, validates_input
+from .utils import cached_method
 
 default_registry = RulesRegistry()
 handle_urls = default_registry.handle_urls

@@ -1,6 +1,8 @@
 import abc
+import inspect
 import typing
 from contextlib import suppress
+from functools import wraps
 
 import attr
 
@@ -8,7 +10,7 @@ from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
-from web_poet.utils import _create_deprecated_class, cached_method, validates_input
+from web_poet.utils import CallableT, _create_deprecated_class, cached_method
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -52,6 +54,31 @@ class Returns(typing.Generic[ItemT]):
 
 
 _NOT_SET = object()
+
+
+def validates_input(to_item: CallableT) -> CallableT:
+    """Decorator to apply input validation to custom to_item method
+    implementations in :class:`~web_poet.pages.ItemPage` subclasses."""
+
+    if inspect.iscoroutinefunction(to_item):
+
+        @wraps(to_item)
+        async def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return await to_item(self, *args, **kwargs)
+
+    else:
+
+        @wraps(to_item)
+        def _to_item(self, *args, **kwargs):
+            validation_item = self._validate_input()
+            if validation_item is not None:
+                return validation_item
+            return to_item(self, *args, **kwargs)
+
+    return _to_item  # type: ignore[return-value]
 
 
 class ItemPage(Injectable, Returns[ItemT]):
