@@ -13,7 +13,10 @@ if TYPE_CHECKING:
 
 __all__ = [
     "RequestDownloaderVarError",
+    "PageObjectAction",
     "Retry",
+    "UseFallback",
+    "NoSavedHttpResponse",
 ]
 
 
@@ -25,17 +28,21 @@ class RequestDownloaderVarError(Exception):
     to learn more about this.
     """
 
-    pass
+
+class PageObjectAction(ValueError):
+    """Base class for exceptions that can be raised from a page object to
+    indicate something to be done about that page object."""
 
 
-class Retry(ValueError):
+class Retry(PageObjectAction):
     """The page object found that the input data is partial or empty, and a
-    request retry may provide better input.
+    request retry may provide better input."""
 
-    See :ref:`retries`.
-    """
 
-    pass
+class UseFallback(PageObjectAction):
+    """The page object cannot extract data from the input, but the input seems
+    valid, so an alternative data extraction implementation for the same item
+    type may succeed."""
 
 
 class NoSavedHttpResponse(AssertionError):

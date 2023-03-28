@@ -114,16 +114,20 @@ def field(
 
         def _processed(self, method, page):
             """Returns a wrapper for method that calls processors on its result"""
-            if not self.processors:
-                return method
             if inspect.iscoroutinefunction(method):
 
                 async def processed(*args, **kwargs):
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return self._process(await method(*args, **kwargs), page)
 
             else:
 
                 def processed(*args, **kwargs):
+                    validation_item = args[0]._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
                     return self._process(method(*args, **kwargs), page)
 
             return wraps(method)(processed)
