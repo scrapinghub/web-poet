@@ -2,6 +2,17 @@
 Changelog
 =========
 
+0.9.0 (to be released)
+----------------------
+
+* Standardized :ref:`input validation <input-validation>`.
+* :ref:`Field processors <field-processors>` can now opt in to receive the page
+  object whose field is being read.
+* :class:`web_poet.fields.FieldsMixin` now keeps fields from all base classes
+  when using multiple inheritance.
+* Fixed the documentation build.
+
+
 0.8.1 (2023-03-03)
 ------------------
 
