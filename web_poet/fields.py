@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, ensure_awaitable
+from web_poet.utils import cached_method, ensure_awaitable, get_fq_class_name
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -84,9 +84,11 @@ def field(
                 )
             self.original_method = method
             self.name: Optional[str] = None
+            self.full_name: Optional[str] = None
 
         def __set_name__(self, owner, name):
             self.name = name
+            self.full_name = f"{get_fq_class_name(owner)}.{name}"
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
@@ -94,12 +96,19 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
-            method = self._get_processed_method(owner, self.name)
+            # We use the original method and the out arg from the field and
+            # the Processors class from the instance class, so caching needs to
+            # take into account the instance class and the field object. The
+            # field object should be uniquely identified by its owner class and
+            # the field name, which can just be combined into the field fully
+            # qualified name. So we use it as a key when caching the method in
+            # the instance class.
+            method = self._get_processed_method(owner, self.full_name)
             if method is None:
                 if out is not None:
                     processor_methods = out
                 elif hasattr(instance, "Processors"):
-                    processor_methods = getattr(instance.Processors, self.name, [])
+                    processor_methods = getattr(owner.Processors, self.name, [])
                 else:
                     processor_methods = []
                 processors: List[Tuple[Callable, bool]] = []
@@ -109,17 +118,17 @@ def field(
                 method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)
-                self._set_processed_method(owner, self.name, method)
+                self._set_processed_method(owner, self.full_name, method)
 
             return method(instance)
 
         @staticmethod
-        def _get_processed_method(cls, field_name):
-            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(field_name)
+        def _get_processed_method(cls, key):
+            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(key)
 
         @staticmethod
-        def _set_processed_method(cls, field_name, method):
-            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[field_name] = method
+        def _set_processed_method(cls, key, method):
+            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
 
         @staticmethod
         def _process(value, page, processors):
