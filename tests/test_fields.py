@@ -543,7 +543,7 @@ def test_field_processors_inheritance() -> None:
     assert page.name == "name"
 
 
-def test_field_processors_instance() -> None:
+def test_field_processors_page() -> None:
     def proc1(s, page):
         return page.prefix + s + "x"
 
