@@ -14,6 +14,7 @@ from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
+_FIELD_METHODS_ATTRIBUTE = "_web_poet_field_methods"
 
 
 @attrs.define
@@ -49,6 +50,7 @@ class FieldsMixin:
             setattr(cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
+        setattr(cls, _FIELD_METHODS_ATTRIBUTE, {})
 
 
 def field(
@@ -81,10 +83,10 @@ def field(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
             self.original_method = method
-            self.unbound_method = None
-            self.processors: List[Tuple[Callable, bool]] = []
+            self.name: Optional[str] = None
 
         def __set_name__(self, owner, name):
+            self.name = name
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
@@ -92,43 +94,66 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
-            if self.unbound_method is None:
-                for processor in out or []:
-                    sig = inspect.signature(processor)
-                    self.processors.append((processor, "page" in sig.parameters))
-                method = self._processed(self.original_method, instance)
-                if cached:
-                    self.unbound_method = cached_method(method)
+            # We use the original method and the out arg from the field and
+            # the Processors class from the instance class, so caching needs to
+            # take into account the instance class and the field object. So we
+            # use the field object id() as a key when caching the method in
+            # the instance class.
+            cache_key = id(self)
+            method = self._get_processed_method(owner, cache_key)
+            if method is None:
+                if out is not None:
+                    processor_functions = out
+                elif hasattr(owner, "Processors"):
+                    processor_functions = getattr(owner.Processors, self.name, [])
                 else:
-                    self.unbound_method = method
+                    processor_functions = []
+                processors: List[Tuple[Callable, bool]] = []
+                for processor_function in processor_functions:
+                    sig = inspect.signature(processor_function)
+                    processors.append((processor_function, "page" in sig.parameters))
+                method = self._processed(self.original_method, processors)
+                if cached:
+                    method = cached_method(method)
+                self._set_processed_method(owner, cache_key, method)
 
-            return self.unbound_method(instance)
+            return method(instance)
 
-        def _process(self, value, page):
-            for processor, takes_page in self.processors:
+        @staticmethod
+        def _get_processed_method(cls, key):
+            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(key)
+
+        @staticmethod
+        def _set_processed_method(cls, key, method):
+            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
+
+        @staticmethod
+        def _process(value, page, processors):
+            for processor, takes_page in processors:
                 if takes_page:
                     value = processor(value, page=page)
                 else:
                     value = processor(value)
             return value
 
-        def _processed(self, method, page):
+        @staticmethod
+        def _processed(method, processors):
             """Returns a wrapper for method that calls processors on its result"""
             if inspect.iscoroutinefunction(method):
 
-                async def processed(*args, **kwargs):
-                    validation_item = args[0]._validate_input()
+                async def processed(page):
+                    validation_item = page._validate_input()
                     if validation_item is not None:
                         return getattr(validation_item, method.__name__)
-                    return self._process(await method(*args, **kwargs), page)
+                    return _field._process(await method(page), page, processors)
 
             else:
 
-                def processed(*args, **kwargs):
-                    validation_item = args[0]._validate_input()
+                def processed(page):
+                    validation_item = page._validate_input()
                     if validation_item is not None:
                         return getattr(validation_item, method.__name__)
-                    return self._process(method(*args, **kwargs), page)
+                    return _field._process(method(page), page, processors)
 
             return wraps(method)(processed)
 
