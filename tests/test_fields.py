@@ -529,12 +529,12 @@ def test_field_processors_inheritance() -> None:
 
     class BasePage(ItemPage):
         @field(out=[str.strip, proc1])
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
     class Page(BasePage):
         @field(out=[str.strip])
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
     base_page = BasePage()
@@ -549,11 +549,11 @@ def test_field_processors_instance() -> None:
 
     class Page(ItemPage):
         @field(out=[str.strip, proc1])
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
         @field
-        def prefix(self):  # noqa: D102
+        def prefix(self):
             return "prefix: "
 
     page = Page()
@@ -566,7 +566,7 @@ def test_field_processors_multiple_pages() -> None:
 
     class Page(WebPage):
         @field
-        def body(self):  # noqa: D102
+        def body(self):
             return self.response.text
 
         @field(out=[proc])
@@ -590,11 +590,11 @@ def test_field_processors_circular() -> None:
 
     class Page(ItemPage):
         @field(out=[proc1])
-        def a(self):  # noqa: D102
+        def a(self):
             return "a"
 
         @field(out=[proc2])
-        def b(self):  # noqa: D102
+        def b(self):
             return "b"
 
     page = Page()
@@ -611,7 +611,7 @@ def test_field_processors_default() -> None:
             name = [str.strip]
 
         @field
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
     class Page(BasePage):
@@ -637,23 +637,23 @@ def test_field_processors_override() -> None:
             f5: List[Callable] = [str.strip]
 
         @field
-        def f1(self):  # noqa: D102
+        def f1(self):
             return "  f1\t "
 
         @field(out=[])
-        def f2(self):  # noqa: D102
+        def f2(self):
             return "  f2\t "
 
         @field
-        def f3(self):  # noqa: D102
+        def f3(self):
             return "  f3\t "
 
         @field
-        def f4(self):  # noqa: D102
+        def f4(self):
             return "  f4\t "
 
         @field
-        def f5(self):  # noqa: D102
+        def f5(self):
             return "  f5\t "
 
     class Page(BasePage):
@@ -662,7 +662,7 @@ def test_field_processors_override() -> None:
             f4 = BasePage.Processors.f4 + [proc1]
 
         @field(out=BasePage.Processors.f5 + [proc1])
-        def f5(self):  # noqa: D102
+        def f5(self):
             return "  f5\t "
 
     base_page = BasePage()
