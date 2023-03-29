@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, ensure_awaitable, get_fq_class_name
+from web_poet.utils import cached_method, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -84,11 +84,9 @@ def field(
                 )
             self.original_method = method
             self.name: Optional[str] = None
-            self.full_name: Optional[str] = None
 
         def __set_name__(self, owner, name):
             self.name = name
-            self.full_name = f"{get_fq_class_name(owner)}.{name}"
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
 
@@ -98,12 +96,11 @@ def field(
         def __get__(self, instance, owner=None):
             # We use the original method and the out arg from the field and
             # the Processors class from the instance class, so caching needs to
-            # take into account the instance class and the field object. The
-            # field object should be uniquely identified by its owner class and
-            # the field name, which can just be combined into the field fully
-            # qualified name. So we use it as a key when caching the method in
+            # take into account the instance class and the field object. So we
+            # use the field object id() as a key when caching the method in
             # the instance class.
-            method = self._get_processed_method(owner, self.full_name)
+            cache_key = id(self)
+            method = self._get_processed_method(owner, cache_key)
             if method is None:
                 if out is not None:
                     processor_methods = out
@@ -118,7 +115,7 @@ def field(
                 method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)
-                self._set_processed_method(owner, self.full_name, method)
+                self._set_processed_method(owner, cache_key, method)
 
             return method(instance)
 
