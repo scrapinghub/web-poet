@@ -103,15 +103,15 @@ def field(
             method = self._get_processed_method(owner, cache_key)
             if method is None:
                 if out is not None:
-                    processor_methods = out
-                elif hasattr(instance, "Processors"):
-                    processor_methods = getattr(owner.Processors, self.name, [])
+                    processor_functions = out
+                elif hasattr(owner, "Processors"):
+                    processor_functions = getattr(owner.Processors, self.name, [])
                 else:
-                    processor_methods = []
+                    processor_functions = []
                 processors: List[Tuple[Callable, bool]] = []
-                for processor_method in processor_methods:
-                    sig = inspect.signature(processor_method)
-                    processors.append((processor_method, "page" in sig.parameters))
+                for processor_function in processor_functions:
+                    sig = inspect.signature(processor_function)
+                    processors.append((processor_function, "page" in sig.parameters))
                 method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)
