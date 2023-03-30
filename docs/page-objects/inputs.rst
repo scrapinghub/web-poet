@@ -18,6 +18,10 @@ Those input classes may be:
 -   :ref:`Item classes <items>`, when using a :ref:`framework <frameworks>`
     that can provide item classes.
 
+-   Any other class that subclasses :class:`~web_poet.pages.Injectable` or is
+    registered or decorated with :class:`Injectable.register
+    <web_poet.pages.Injectable.register>`.
+
 Based on the target URL and parameter type hints, :ref:`frameworks
 <frameworks>` automatically build the required objects at run time, and pass
 them to the ``__init__`` method of the corresponding page object class.
