@@ -38,6 +38,7 @@ Pages
 .. automodule:: web_poet.pages
 
 .. autoclass:: Injectable
+   :show-inheritance:
    :members:
    :no-special-members:
 

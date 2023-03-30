@@ -58,11 +58,11 @@ subclasses :class:`~web_poet.pages.Injectable` and provides an implementation of
 
 .. literalinclude:: code-examples/itempage.py
 
-If your page object class needs :class:`~web_poet.page_inputs.HttpResponse` as
-input, there is also :class:`~web_poet.pages.WebPage`, an
-:class:`~web_poet.pages.ItemPage` subclass that declares an
-:class:`~web_poet.page_inputs.HttpResponse` input and provides helper methods
-to use it:
+If your page object class needs
+:class:`~web_poet.page_inputs.http.HttpResponse` as input, there is also
+:class:`~web_poet.pages.WebPage`, an :class:`~web_poet.pages.ItemPage` subclass
+that declares an :class:`~web_poet.page_inputs.http.HttpResponse` input and
+provides helper methods to use it:
 
 .. literalinclude:: code-examples/webpage.py
 
