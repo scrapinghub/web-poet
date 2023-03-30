@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.9.0 (to be released)
-----------------------
+0.9.0 (2023-03-30)
+------------------
 
 * Standardized :ref:`input validation <input-validation>`.
 * :ref:`Field processors <field-processors>` can now also be defined through a
