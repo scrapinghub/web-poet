@@ -100,24 +100,14 @@ can call ``to_item`` yourself.
 
 However, there are drawbacks to this approach:
 
--   How you call ``to_item`` depends on whether the method is synchronous or
-    asynchronous:
+-   ``to_item`` can be synchronous or asynchronous, so you need to use
+    :func:`~web_poet.utils.ensure_awaitable`:
 
-    -   If the ``to_item`` method is synchronous:
+    .. code-block:: python
 
-        .. code-block:: python
+       from web_poet.utils import ensure_awaitable
 
-           item = foo_page.to_item()
-
-    -   If the ``to_item`` method is asynchronous:
-
-        .. code-block:: python
-
-           item = await foo_page.to_item()
-
-    This also means that, if the underlying page object class ever switches its
-    implementation from synchronous to asynchronous or the other way around,
-    your code will stop working.
+       item = await ensure_awaitable(foo_page.to_item())
 
 -   ``to_item`` may raise a :exc:`~web_poet.exceptions.core.Retry` exception
     which, depending on your :ref:`framework <frameworks>`, may not be handled
