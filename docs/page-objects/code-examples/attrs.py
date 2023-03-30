@@ -1,11 +1,12 @@
 from attrs import define
 
-from web_poet import HttpResponse, Injectable
+from web_poet import HttpResponse, ItemPage, field
 
 
 @define
-class FooPage(Injectable):
+class FooPage(ItemPage[dict]):
     response: HttpResponse
 
-    def to_item(self) -> dict:
-        return {"foo": self.response.css(".foo").get()}
+    @field
+    def foo(self) -> str:
+        return self.response.css(".foo").get()

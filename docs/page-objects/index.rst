@@ -18,25 +18,19 @@ Defining a page object class
 
 A page object class is a Python class that:
 
--   Subclasses :class:`~web_poet.pages.Injectable` or is registered or
-    decorated with :class:`Injectable.register
-    <web_poet.pages.Injectable.register>`.
-
-    .. note:: :class:`~web_poet.pages.Injectable` is the bare minimum a class
-              must inherit to be considered a page object class. However, in
-              practice, most page objects should inherit from
-              :class:`~web_poet.pages.ItemPage` instead to enjoy most web-poet
-              features, like :ref:`fields <fields>` or :ref:`input validation
-              <input-validation>`.
+-   Subclasses :class:`~web_poet.pages.ItemPage`.
 
 -   Declares :ref:`typed input parameters <inputs>` in its ``__init__`` method.
 
--   Implements a ``to_item`` method, which can be synchronous or asynchronous,
-    and returns the webpage content as an :ref:`item <items>`.
+-   Uses :ref:`fields <fields>`.
+
+    Alternatively, you can implement a ``to_item`` method, which can be
+    synchronous or asynchronous, and returns the webpage content as an
+    :ref:`item <items>`.
 
 For example:
 
-.. literalinclude:: code-examples/page.py
+.. literalinclude:: code-examples/itempage.py
 
 
 Minimizing boilerplate
@@ -51,12 +45,6 @@ method:
 .. _attrs: https://www.attrs.org/en/stable/index.html
 
 .. literalinclude:: code-examples/attrs.py
-
-Also, it is often best to subclass :class:`~web_poet.pages.ItemPage`, which
-subclasses :class:`~web_poet.pages.Injectable` and provides an implementation of the
-``to_item`` method based on :ref:`declared fields <fields>`:
-
-.. literalinclude:: code-examples/itempage.py
 
 If your page object class needs
 :class:`~web_poet.page_inputs.http.HttpResponse` as input, there is also

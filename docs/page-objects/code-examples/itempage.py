@@ -1,11 +1,9 @@
-from attrs import define
-
 from web_poet import HttpResponse, ItemPage, field
 
 
-@define
 class FooPage(ItemPage[dict]):
-    response: HttpResponse
+    def __init__(self, response: HttpResponse):
+        self.response = response
 
     @field
     def foo(self) -> str:
