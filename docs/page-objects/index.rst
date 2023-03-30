@@ -4,8 +4,8 @@
 Page objects
 ============
 
-A page object is a code wrapper for a webpage that implements the logic to
-parse the raw webpage data into structured data.
+A page object is a code wrapper for a webpage, or for a part of a webpage, that
+implements the logic to parse the raw webpage data into structured data.
 
 To use web-poet, :ref:`define page object classes <page-object-classes>` for
 your target websites, and :ref:`get the output item <output-item>` using a
