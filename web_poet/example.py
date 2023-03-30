@@ -36,6 +36,7 @@ def _get_http_response(url: str) -> HttpResponse:
     response = requests.get(url)
     return HttpResponse(
         response.url,
+        status=response.status_code,
         body=response.content,
         headers=response.headers,
     )
