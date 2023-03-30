@@ -187,9 +187,9 @@ can then refactor your ``BookPage`` class as follows:
 
 At this point you may be wondering why web-poet requires you to write a class
 with a ``to_item`` method rather than a function. The answer is flexibility.
-Classes can make it a easier to organize web scraping code. The use of a class
-instead of a function makes :ref:`fields <fields>` possible, for example, which
-make parsing code easier to read:
+
+For example, the use of a class instead of a function makes :ref:`fields
+<fields>` possible, which make parsing code easier to read:
 
 .. code-block:: python
 
@@ -212,6 +212,9 @@ output.
 .. note::
     The ``BookPage.to_item()`` method is ``async`` in the example above. See
     :ref:`fields` for more information.
+
+Using classes also makes it easy, for example, to implement dependency
+injection, which is how web-poet builds :ref:`inputs <inputs>`.
 
 
 Downloading with web-poet
