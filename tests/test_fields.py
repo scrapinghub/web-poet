@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import Callable, List
 
 import attrs
 import pytest
@@ -21,6 +22,7 @@ from tests.po_lib_to_return import (
 from web_poet import (
     HttpResponse,
     ItemPage,
+    WebPage,
     field,
     item_from_fields,
     item_from_fields_sync,
@@ -354,6 +356,23 @@ def test_field_subclassing() -> None:
     assert list(get_fields_dict(Page2)) == ["field1", "field3", "field2"]
 
 
+def test_field_subclassing_super() -> None:
+    class Page(ItemPage):
+        @field
+        def field1(self):
+            return 1
+
+    class Page2(Page):
+        @field
+        def field1(self):
+            return super().field1 + 1
+
+    page = Page()
+    assert page.field1 == 1
+    page2 = Page2()
+    assert page2.field1 == 2
+
+
 def test_field_subclassing_from_to_item() -> None:
     # to_item() should be the same since it was not overridden from the
     # subclass.
@@ -504,22 +523,62 @@ async def test_field_processors_async() -> None:
     assert await page.name == "namex"
 
 
-def test_field_processors_instance() -> None:
+def test_field_processors_inheritance() -> None:
+    def proc1(s):
+        return s + "x"
+
+    class BasePage(ItemPage):
+        @field(out=[str.strip, proc1])
+        def name(self):
+            return "  name\t "
+
+    class Page(BasePage):
+        @field(out=[str.strip])
+        def name(self):
+            return "  name\t "
+
+    base_page = BasePage()
+    assert base_page.name == "namex"
+    page = Page()
+    assert page.name == "name"
+
+
+def test_field_processors_page() -> None:
     def proc1(s, page):
         return page.prefix + s + "x"
 
-    @attrs.define
     class Page(ItemPage):
         @field(out=[str.strip, proc1])
-        def name(self):  # noqa: D102
+        def name(self):
             return "  name\t "
 
         @field
-        def prefix(self):  # noqa: D102
+        def prefix(self):
             return "prefix: "
 
     page = Page()
     assert page.name == "prefix: namex"
+
+
+def test_field_processors_multiple_pages() -> None:
+    def proc(value, page):
+        return page.body + value
+
+    class Page(WebPage):
+        @field
+        def body(self):
+            return self.response.text
+
+        @field(out=[proc])
+        def processed(self):
+            return "suffix"
+
+    page1 = Page(response=HttpResponse("https://example.com", b"page1"))
+    page2 = Page(response=HttpResponse("https://example.com", b"page2"))
+    assert page1.body == "page1"
+    assert page1.processed == "page1suffix"
+    assert page2.body == "page2"
+    assert page2.processed == "page2suffix"
 
 
 def test_field_processors_circular() -> None:
@@ -529,14 +588,13 @@ def test_field_processors_circular() -> None:
     def proc2(s, page):
         return s + page.a
 
-    @attrs.define
     class Page(ItemPage):
         @field(out=[proc1])
-        def a(self):  # noqa: D102
+        def a(self):
             return "a"
 
         @field(out=[proc2])
-        def b(self):  # noqa: D102
+        def b(self):
             return "b"
 
     page = Page()
@@ -544,6 +602,123 @@ def test_field_processors_circular() -> None:
         page.a
     with pytest.raises(RecursionError):
         page.b
+
+
+def test_field_processors_default() -> None:
+    @attrs.define
+    class BasePage(ItemPage):
+        class Processors:
+            name = [str.strip]
+
+        @field
+        def name(self):
+            return "  name\t "
+
+    class Page(BasePage):
+        pass
+
+    base_page = BasePage()
+    assert base_page.name == "name"
+
+    page = Page()
+    assert page.name == "name"
+
+
+def test_field_processors_override() -> None:
+    def proc1(s):
+        return s + "x"
+
+    class BasePage(ItemPage):
+        class Processors:
+            f1: List[Callable] = [str.strip]
+            f2 = [str.strip]
+            f3 = [str.strip]
+            f4: List[Callable] = [str.strip]
+            f5: List[Callable] = [str.strip]
+
+        @field
+        def f1(self):
+            return "  f1\t "
+
+        @field(out=[])
+        def f2(self):
+            return "  f2\t "
+
+        @field
+        def f3(self):
+            return "  f3\t "
+
+        @field
+        def f4(self):
+            return "  f4\t "
+
+        @field
+        def f5(self):
+            return "  f5\t "
+
+    class Page(BasePage):
+        class Processors(BasePage.Processors):
+            f1 = [proc1]
+            f4 = BasePage.Processors.f4 + [proc1]
+
+        @field(out=BasePage.Processors.f5 + [proc1])
+        def f5(self):
+            return "  f5\t "
+
+    base_page = BasePage()
+    assert base_page.f1 == "f1"
+    assert base_page.f2 == "  f2\t "
+    assert base_page.f3 == "f3"
+    assert base_page.f4 == "f4"
+    assert base_page.f5 == "f5"
+
+    page = Page()
+    assert page.f1 == "  f1\t x"
+    assert page.f2 == "  f2\t "
+    assert page.f3 == "f3"
+    assert page.f4 == "f4x"
+    assert page.f5 == "f5x"
+
+
+def test_field_processors_super() -> None:
+    class BasePage(ItemPage):
+        class Processors:
+            name = [str.strip]
+            desc = [str.strip]
+
+        @field
+        def name(self):
+            return "name "
+
+        @field
+        def desc(self):
+            return "desc "
+
+    class Page(BasePage):
+        class Processors(BasePage.Processors):
+            name: List[Callable] = []
+
+        @field
+        def name(self):
+            base_name = super().name
+            return base_name + "2 "
+
+    class Page2(Page):
+        class Processors(Page.Processors):
+            name: List[Callable] = []
+            desc: List[Callable] = []
+
+        @field
+        def desc(self):
+            base_desc = super().desc
+            return base_desc + "2 "
+
+    base_page = BasePage()
+    assert base_page.name == "name"
+    page = Page()
+    assert page.name == "name 2 "
+    page2 = Page2()
+    assert page2.desc == "desc 2 "
 
 
 def test_field_mixin() -> None:
