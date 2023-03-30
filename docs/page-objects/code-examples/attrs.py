@@ -4,7 +4,7 @@ from web_poet import HttpResponse, ItemPage, field
 
 
 @define
-class FooPage(ItemPage[dict]):
+class FooPage(ItemPage[MyItem]):
     response: HttpResponse
 
     @field

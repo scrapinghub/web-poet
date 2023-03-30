@@ -32,6 +32,9 @@ For example:
 
 .. literalinclude:: code-examples/itempage.py
 
+.. note:: ``MyItem`` in the code examples of this page is a placeholder for an
+          :ref:`item class <items>`.
+
 
 Minimizing boilerplate
 ----------------------

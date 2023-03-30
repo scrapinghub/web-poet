@@ -1,7 +1,7 @@
 from web_poet import HttpResponse, ItemPage, field
 
 
-class FooPage(ItemPage[dict]):
+class FooPage(ItemPage[MyItem]):
     def __init__(self, response: HttpResponse):
         self.response = response
 
