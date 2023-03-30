@@ -36,7 +36,7 @@ A page object class is a Python class that:
 
 For example:
 
-.. literalinclude:: page.py
+.. literalinclude:: code-examples/page.py
 
 
 Minimizing boilerplate
@@ -50,13 +50,13 @@ method:
 
 .. _attrs: https://www.attrs.org/en/stable/index.html
 
-.. literalinclude:: attrs.py
+.. literalinclude:: code-examples/attrs.py
 
 Also, it is often best to subclass :class:`~web_poet.pages.ItemPage`, which
 subclasses :class:`~web_poet.pages.Injectable` and provides an implementation of the
 ``to_item`` method based on :ref:`declared fields <fields>`:
 
-.. literalinclude:: itempage.py
+.. literalinclude:: code-examples/itempage.py
 
 If your page object class needs :class:`~web_poet.page_inputs.HttpResponse` as
 input, there is also :class:`~web_poet.pages.WebPage`, an
@@ -64,7 +64,7 @@ input, there is also :class:`~web_poet.pages.WebPage`, an
 :class:`~web_poet.page_inputs.HttpResponse` input and provides helper methods
 to use it:
 
-.. literalinclude:: webpage.py
+.. literalinclude:: code-examples/webpage.py
 
 
 .. _output-item:
@@ -75,7 +75,7 @@ Getting the output item
 You should :ref:`include your page object classes into a page object
 registry <rules-intro>`, e.g. decorate them with :func:`~.handle_urls`:
 
-.. literalinclude:: register.py
+.. literalinclude:: code-examples/register.py
 
 Then, provided your page object class code is imported (see
 :func:`~web_poet.rules.consume_modules`), your :ref:`framework <frameworks>`
@@ -126,4 +126,4 @@ While not recommended, it is possible to create a page object from a page
 object class passing its inputs as parameters. For example, to manually create
 an instance of the ``FooPage`` page object class defined above:
 
-.. literalinclude:: raw-create.py
+.. literalinclude:: code-examples/raw-create.py
