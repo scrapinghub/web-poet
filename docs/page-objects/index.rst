@@ -109,9 +109,11 @@ However, there are drawbacks to this approach:
 
        item = await ensure_awaitable(foo_page.to_item())
 
--   ``to_item`` may raise a :exc:`~web_poet.exceptions.core.Retry` exception
-    which, depending on your :ref:`framework <frameworks>`, may not be handled
-    automatically when getting a page object instead of an item.
+-   ``to_item`` may raise certain exceptions, like
+    :exc:`~web_poet.exceptions.core.Retry` or
+    :exc:`~web_poet.exceptions.core.UseFallback`, which, depending on your
+    :ref:`framework <frameworks>`, may not be handled automatically when
+    getting a page object instead of an item.
 
 
 Building a page object manually
