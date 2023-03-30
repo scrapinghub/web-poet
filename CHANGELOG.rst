@@ -6,6 +6,9 @@ Changelog
 ----------------------
 
 * Standardized :ref:`input validation <input-validation>`.
+* :ref:`Field processors <field-processors>` can now also be defined through a
+  nested ``Processors`` class, so that field redefinitions in subclasses can
+  inherit them. See :ref:`default-processors`.
 * :ref:`Field processors <field-processors>` can now opt in to receive the page
   object whose field is being read.
 * :class:`web_poet.fields.FieldsMixin` now keeps fields from all base classes

@@ -196,6 +196,8 @@ It's also possible to implement field cleaning and processing in ``to_item``
 but in that case accessing a field directly will return the value without
 processing, so it's preferable to use field processors instead.
 
+.. _default-processors:
+
 Default processors
 ~~~~~~~~~~~~~~~~~~
 
