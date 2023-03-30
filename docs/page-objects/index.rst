@@ -119,8 +119,12 @@ However, there are drawbacks to this approach:
 Building a page object manually
 -------------------------------
 
-While not recommended, it is possible to create a page object from a page
-object class passing its inputs as parameters. For example, to manually create
-an instance of the ``FooPage`` page object class defined above:
+It is possible to create a page object from a page object class passing its
+inputs as parameters. For example, to manually create an instance of the
+``FooPage`` page object class defined above:
 
 .. literalinclude:: code-examples/raw-create.py
+
+However, your code will break if the page object class changes its :ref:`inputs
+<inputs>`. Building page objects using :ref:`frameworks  <frameworks>` prevents
+that.
