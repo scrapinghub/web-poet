@@ -85,7 +85,12 @@ the tutorial <tutorial-create-page-object>`.
 
 Your framework chooses the right page object class based on your input
 parameters, downloads the required data, builds a page object, and calls the
-``to_item`` method of that page object. All transparently to you.
+``to_item`` method of that page object.
+
+Note that, while the examples above use :class:`dict` as an output item for
+simplicity, using less generic :ref:`item classes <items>` is recommended. That
+way, you can use different page object classes, with different output items,
+for the same website.
 
 Getting a page object
 ---------------------
