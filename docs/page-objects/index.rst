@@ -18,8 +18,16 @@ Defining a page object class
 
 A page object class is a Python class that:
 
--   Subclasses :class:`~web_poet.pages.Injectable` or is registered or decorated
-    with :class:`Injectable.register <web_poet.pages.Injectable.register>`.
+-   Subclasses :class:`~web_poet.pages.Injectable` or is registered or
+    decorated with :class:`Injectable.register
+    <web_poet.pages.Injectable.register>`.
+
+    .. note:: :class:`~web_poet.pages.Injectable` is the bare minimum a class
+              must inherit to be considered a page object class. However, in
+              practice, most page objects should inherit from
+              :class:`~web_poet.pages.ItemPage` instead to enjoy most web-poet
+              features, like :ref:`fields <fields>` or :ref:`input validation
+              <input-validation>`.
 
 -   Declares :ref:`typed input parameters <inputs>` in its ``__init__`` method.
 
