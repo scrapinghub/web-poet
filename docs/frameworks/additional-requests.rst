@@ -1,8 +1,7 @@
-.. _frameworks:
 .. _framework-additional-requests:
 
 ==============================
-Supporting Additional Requests
+Supporting additional requests
 ==============================
 
 To support :ref:`additional requests <additional-requests>`, your framework must

@@ -48,3 +48,7 @@ per-file-ignores =
 
     # the suggestion makes the code worse
     tests/test_serialization.py:B028
+
+    # Documentation examples may miss docstrings and include undefined, example
+    # names.
+    docs/*:D102,F821

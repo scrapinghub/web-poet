@@ -11,7 +11,7 @@ web-poet
 
 .. toctree::
    :caption: Getting started
-   :hidden:
+   :maxdepth: 1
 
    intro/overview
    intro/install
@@ -20,25 +20,30 @@ web-poet
 
 .. toctree::
    :caption: Writing page objects
-   :hidden:
+   :maxdepth: 1
 
-   page-objects/additional-requests
-   page-objects/fields
+   page-objects/index
+   page-objects/inputs
+   page-objects/items
    page-objects/rules
+   page-objects/fields
+   page-objects/additional-requests
    page-objects/input-validation
    page-objects/page-params
    page-objects/testing
+   page-objects/frameworks
 
 .. toctree::
    :caption: Writing frameworks
-   :hidden:
+   :maxdepth: 1
 
-   Additional Requests <frameworks/additional-requests>
+   frameworks/index
+   Additional requests <frameworks/additional-requests>
    Retries <frameworks/retries>
 
 .. toctree::
    :caption: Reference
-   :hidden:
+   :maxdepth: 1
 
    api-reference
    contributing

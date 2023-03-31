@@ -1,7 +1,7 @@
 .. _additional-requests:
 
 ===================
-Additional Requests
+Additional requests
 ===================
 
 Websites nowadays needs a lot of page interactions to display or load some key
