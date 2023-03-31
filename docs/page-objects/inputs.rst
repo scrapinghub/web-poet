@@ -38,6 +38,9 @@ and pass it to the ``__init__`` method of the page object class being used.
 Built-in input classes
 ======================
 
+.. warning:: Not all :ref:`frameworks <frameworks>` support all web-poet
+             built-in input classes.
+
 The :mod:`web_poet.page_inputs` module defines multiple classes that you can
 define as inputs for a page object class, including:
 
@@ -55,6 +58,11 @@ define as inputs for a page object class, including:
 
 -   :class:`~web_poet.page_inputs.page_params.PageParams`, to receive data from
     the crawling code.
+
+-   :class:`~web_poet.page_inputs.browser.BrowserHtml`, an HTML rendering of
+    the `Document Object Model`_ of a web page.
+
+    .. _Document Object Model: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
 
 
 .. _custom-inputs:
