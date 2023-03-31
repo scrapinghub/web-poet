@@ -106,8 +106,23 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
-utils
+
+Utils
 =====
 
 .. automodule:: web_poet.utils
+    :members:
+
+
+Example framework
+=================
+
+The :mod:`web_poet.example` module is a simplified, incomplete example of a
+web-poet framework, written as support material for the :ref:`tutorial
+<tutorial>`.
+
+No part of the :mod:`web_poet.example` module is intended for production use,
+and it may change in a backward-incompatible way at any point in the future.
+
+.. automodule:: web_poet.example
     :members:
