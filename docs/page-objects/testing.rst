@@ -163,7 +163,7 @@ whitespace normalization rules which you need to apply.
 In this case, it may be more convenient to implement the extraction first,
 and only then populate the ``output.json`` file with the correct value.
 
-You can use ``python -m web-poet.testing rerun <fixture_path>`` command
+You can use ``python -m web_poet.testing rerun <fixture_path>`` command
 in this case, to re-run the page object using the inputs saved in a fixture.
 This command prints output of the page object, as JSON; you can then copy-paste
 relevant parts to the ``output.json`` file. It's also possible to make
@@ -171,7 +171,7 @@ the command print only some of the fields. For example, you might run the
 following command after implementing extraction for "description" and
 "descriptionHtml" fields in ``my_project.pages.MyItemPage``::
 
-    python -m web-poet.testing rerun \
+    python -m web_poet.testing rerun \
         fixtures/my_project.pages.MyItemPage/test-1 \
         --fields description,descriptionHtml
 
