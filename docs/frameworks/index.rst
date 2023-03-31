@@ -21,25 +21,21 @@ Design principles
 Minimum requirements
 ====================
 
-A web-poet framework must meet the following minimum requirements:
+A web-poet framework must support building a :ref:`page object <page-objects>`
+given a page object class.
 
--   Support returning a :ref:`page object <page-objects>` given a target URL
-    and a desired :ref:`output item type <items>`, using
-    ``web_poet.default_registry`` to determine the right :ref:`page
-    object class <page-object-classes>` to use.
+It must be able to build :ref:`input objects <inputs>` for a page object based
+on type hints on the page object class, i.e. dependency injection, and
+additional input data required by those input objects, such as a target URL or
+a dictionary of :ref:`page parameters <page-params>`.
 
--   Support building :ref:`input objects <inputs>` based on type hints, i.e.
-    dependency injection.
+You can implement dependency injection with the andi_ library, which handles
+signature inspection, :class:`~typing.Optional` and :class:`~typing.Union`
+annotations, as well as indirect dependencies. For practical examples, see the
+source code of scrapy-poet_ and of the :mod:`web_poet.example` module.
 
-    You can use the andi_ library for that. For practical examples, see the
-    source code of scrapy-poet_ and of the :mod:`web_poet.example` module.
-
-    .. _andi: https://github.com/scrapinghub/andi
-    .. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
-
-    In addition to signature inspection, andi_ also handles
-    :class:`~typing.Optional` and :class:`~typing.Union` annotations, as well
-    as indirect dependencies.
+.. _andi: https://github.com/scrapinghub/andi
+.. _scrapy-poet: https://github.com/scrapinghub/scrapy-poet
 
 
 Additional features
@@ -50,6 +46,11 @@ framework further to:
 
 -   Support as many input classes from the :mod:`web_poet.page_inputs`
     module as possible.
+
+-   Support returning a :ref:`page object <page-objects>` given a target URL
+    and a desired :ref:`output item type <items>`, using
+    ``web_poet.default_registry`` to determine the right :ref:`page
+    object class <page-object-classes>` to use.
 
 -   Allow users to request an :ref:`output item <items>` directly, instead of
     requesting a page object just to call its ``to_item`` method.
