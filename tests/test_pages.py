@@ -1,12 +1,14 @@
-from typing import Optional
+from typing import List, Optional
 
 import attrs
 import pytest
+from parsel import Selector
 
 from web_poet import HttpResponse, PageParams, field
 from web_poet.pages import (
     Injectable,
     ItemPage,
+    ItemPartial,
     ItemT,
     ItemWebPage,
     Returns,
@@ -229,3 +231,35 @@ async def test_item_page_change_item_type_remove_fields() -> None:
     assert page2.item_cls is Item
     with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
         await page2.to_item()
+
+
+@pytest.mark.asyncio
+async def test_partial(book_list_html_response) -> None:
+    @attrs.define
+    class ListItem:
+        books: List[Item]
+
+    @attrs.define
+    class MyPage(ItemPage[ListItem]):
+        response: HttpResponse
+
+        @field
+        async def books(self):
+            books = []
+            for book in self.response.css("article"):
+                item = await BookPartial(book).to_item()
+                books.append(item)
+            return books
+
+    @attrs.define
+    class BookPartial(ItemPartial[Item]):
+        sel: Selector
+
+        @field(out=[str.lower])
+        def name(self):
+            return self.sel.css("img.thumbnail::attr(alt)").get()
+
+    page = MyPage(book_list_html_response)
+    item = await page.to_item()
+    assert len(item.books) == 20
+    assert item.books[0].name == "a light in the attic"

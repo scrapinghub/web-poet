@@ -81,10 +81,9 @@ def validates_input(to_item: CallableT) -> CallableT:
     return _to_item  # type: ignore[return-value]
 
 
-class ItemPage(Injectable, Returns[ItemT]):
-    """Base Page Object, with a default :meth:`to_item` implementation
-    which supports web-poet fields.
-    """
+class ItemBase(Returns[ItemT]):
+    """The base class for ItemPage and ItemPartial, providing support
+    for fields."""
 
     _skip_nonitem_fields = _NOT_SET
 
@@ -125,6 +124,18 @@ class ItemPage(Injectable, Returns[ItemT]):
         validation_item = self.validate_input()  # type: ignore[attr-defined]
         self.__validating_input = False
         return validation_item
+
+
+class ItemPage(ItemBase[ItemT], Injectable):
+    """Base Page Object, with a default :meth:`to_item` implementation
+    which supports web-poet fields.
+    """
+
+
+class ItemPartial(ItemBase[ItemT], FieldsMixin):
+    """Base class for partial objects."""
+
+    pass
 
 
 @attr.s(auto_attribs=True)

@@ -12,7 +12,15 @@ from .page_inputs import (
     RequestUrl,
     ResponseUrl,
 )
-from .pages import Injectable, ItemPage, ItemWebPage, Returns, WebPage, validates_input
+from .pages import (
+    Injectable,
+    ItemPage,
+    ItemPartial,
+    ItemWebPage,
+    Returns,
+    WebPage,
+    validates_input,
+)
 from .requests import request_downloader_var
 from .rules import (
     ApplyRule,

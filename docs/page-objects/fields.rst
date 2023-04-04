@@ -206,6 +206,7 @@ named ``Processors``:
 
 .. code-block:: python
 
+    import attrs
     from web_poet import ItemPage, HttpResponse, field
 
     def clean_tabs(s):
@@ -231,6 +232,7 @@ explicitly accessing or subclassing the ``Processors`` class:
 
 .. code-block:: python
 
+    import attrs
     from web_poet import ItemPage, HttpResponse, field
 
     def clean_tabs(s):
@@ -261,6 +263,42 @@ explicitly accessing or subclassing the ``Processors`` class:
         @field(out=MyPage.Processors.name)
         def brand(self):
             return self.response.css(".brand ::text").get()
+
+
+Processors for nested fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some item fields contain nested items (e.g. a product can contain a list of
+variants) and it's useful to have processors for fields of these nested items.
+You can use the same logic for them as for normal fields if you define a
+"partial page object" class that produces these nested items. Such classes
+should inherit from :class:`~.ItemPartial`:
+
+.. code-block:: python
+
+    import attrs
+    from parsel import Selector
+    from web_poet import ItemPage, HttpResponse, field
+
+    @attrs.define
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        @field
+        async def variants(self):
+            variants = []
+            for color in self.response.css(".color"):
+                variant = await VariantPartial(color).to_item()
+                variants.append(variant)
+            return variants
+
+    @attrs.define
+    class VariantPartial(ItemPartial):
+        sel: Selector
+
+        @field(out=[str.strip])
+        def color(self):
+            return self.sel.css(".name::text")
 
 
 .. _item-classes:
