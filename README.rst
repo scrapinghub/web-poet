@@ -12,11 +12,11 @@ web-poet
 
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml
-   :alt: Ubuntu
+   :alt: Tox Ubuntu
    
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml
-   :alt: Windows
+   :alt: Tox Windows
 
 .. image:: https://codecov.io/github/scrapinghub/web-poet/coverage.svg?branch=master
    :target: https://codecov.io/gh/scrapinghub/web-poet
