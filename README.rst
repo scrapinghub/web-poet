@@ -10,9 +10,13 @@ web-poet
    :target: https://pypi.python.org/pypi/web-poet
    :alt: Supported Python Versions
 
-.. image:: https://github.com/scrapinghub/web-poet/actions/workflows/test.yml/badge.svg
-   :target: https://github.com/scrapinghub/web-poet/actions/workflows/test.yml
-   :alt: Build Status
+.. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml/badge.svg
+   :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml
+   :alt: Tox Ubuntu
+   
+.. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml/badge.svg
+   :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml
+   :alt: Tox Windows
 
 .. image:: https://codecov.io/github/scrapinghub/web-poet/coverage.svg?branch=master
    :target: https://codecov.io/gh/scrapinghub/web-poet
