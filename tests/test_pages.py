@@ -2,16 +2,15 @@ from typing import List, Optional
 
 import attrs
 import pytest
-from parsel import Selector
 
 from web_poet import HttpResponse, PageParams, field
 from web_poet.pages import (
-    Extractor,
     Injectable,
     ItemPage,
     ItemT,
     ItemWebPage,
     Returns,
+    SelectorExtractor,
     WebPage,
     is_injectable,
 )
@@ -251,13 +250,10 @@ async def test_extractor(book_list_html_response) -> None:
                 books.append(item)
             return books
 
-    @attrs.define
-    class BookExtractor(Extractor[Item]):
-        sel: Selector
-
+    class BookExtractor(SelectorExtractor[Item]):
         @field(out=[str.lower])
         def name(self):
-            return self.sel.css("img.thumbnail::attr(alt)").get()
+            return self.css("img.thumbnail::attr(alt)").get()
 
     page = MyPage(book_list_html_response)
     item = await page.to_item()
