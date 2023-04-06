@@ -6,9 +6,9 @@ from parsel import Selector
 
 from web_poet import HttpResponse, PageParams, field
 from web_poet.pages import (
+    Extractor,
     Injectable,
     ItemPage,
-    ItemPartial,
     ItemT,
     ItemWebPage,
     Returns,
@@ -234,7 +234,7 @@ async def test_item_page_change_item_type_remove_fields() -> None:
 
 
 @pytest.mark.asyncio
-async def test_partial(book_list_html_response) -> None:
+async def test_extractor(book_list_html_response) -> None:
     @attrs.define
     class ListItem:
         books: List[Item]
@@ -247,12 +247,12 @@ async def test_partial(book_list_html_response) -> None:
         async def books(self):
             books = []
             for book in self.response.css("article"):
-                item = await BookPartial(book).to_item()
+                item = await BookExtractor(book).to_item()
                 books.append(item)
             return books
 
     @attrs.define
-    class BookPartial(ItemPartial[Item]):
+    class BookExtractor(Extractor[Item]):
         sel: Selector
 
         @field(out=[str.lower])

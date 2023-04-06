@@ -81,8 +81,8 @@ def validates_input(to_item: CallableT) -> CallableT:
     return _to_item  # type: ignore[return-value]
 
 
-class ItemBase(Returns[ItemT]):
-    """The base class for ItemPage and ItemPartial, providing support
+class Extractor(Returns[ItemT], FieldsMixin):
+    """The base class for page objects and other extractors, providing support
     for fields."""
 
     _skip_nonitem_fields = _NOT_SET
@@ -99,14 +99,22 @@ class ItemBase(Returns[ItemT]):
             return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
-    @validates_input
+    def _validate_input(self) -> None:
+        return None
+
     async def to_item(self) -> ItemT:
-        """Extract an item from a web page"""
+        """Extract an item"""
         return await item_from_fields(
             self,
             item_cls=self.item_cls,
             skip_nonitem_fields=self._get_skip_nonitem_fields(),
         )
+
+
+class ItemPage(Extractor[ItemT], Injectable):
+    """Base Page Object, with a default :meth:`to_item` implementation
+    which supports web-poet fields.
+    """
 
     @cached_method
     def _validate_input(self) -> None:
@@ -125,17 +133,10 @@ class ItemBase(Returns[ItemT]):
         self.__validating_input = False
         return validation_item
 
-
-class ItemPage(ItemBase[ItemT], Injectable):
-    """Base Page Object, with a default :meth:`to_item` implementation
-    which supports web-poet fields.
-    """
-
-
-class ItemPartial(ItemBase[ItemT], FieldsMixin):
-    """Base class for partial objects."""
-
-    pass
+    @validates_input
+    async def to_item(self) -> ItemT:
+        """Extract an item from a web page"""
+        return await super().to_item()
 
 
 @attr.s(auto_attribs=True)

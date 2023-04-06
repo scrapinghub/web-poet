@@ -13,9 +13,9 @@ from .page_inputs import (
     ResponseUrl,
 )
 from .pages import (
+    Extractor,
     Injectable,
     ItemPage,
-    ItemPartial,
     ItemWebPage,
     Returns,
     WebPage,

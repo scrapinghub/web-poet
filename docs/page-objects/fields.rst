@@ -270,15 +270,15 @@ Processors for nested fields
 
 Some item fields contain nested items (e.g. a product can contain a list of
 variants) and it's useful to have processors for fields of these nested items.
-You can use the same logic for them as for normal fields if you define a
-"partial page object" class that produces these nested items. Such classes
-should inherit from :class:`~.ItemPartial`:
+You can use the same logic for them as for normal fields if you define an
+extractor class that produces these nested items. Such classes should inherit
+from :class:`~.Extractor`:
 
 .. code-block:: python
 
     import attrs
     from parsel import Selector
-    from web_poet import ItemPage, HttpResponse, field
+    from web_poet import Extractor, ItemPage, HttpResponse, field
 
     @attrs.define
     class MyPage(ItemPage):
@@ -287,13 +287,13 @@ should inherit from :class:`~.ItemPartial`:
         @field
         async def variants(self):
             variants = []
-            for color in self.response.css(".color"):
-                variant = await VariantPartial(color).to_item()
+            for color_sel in self.response.css(".color"):
+                variant = await VariantExtractor(color_sel).to_item()
                 variants.append(variant)
             return variants
 
     @attrs.define
-    class VariantPartial(ItemPartial):
+    class VariantExtractor(Extractor):
         sel: Selector
 
         @field(out=[str.strip])
