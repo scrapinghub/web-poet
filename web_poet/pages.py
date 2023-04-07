@@ -100,9 +100,6 @@ class Extractor(Returns[ItemT], FieldsMixin):
             return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
-    def _validate_input(self) -> None:
-        return None
-
     async def to_item(self) -> ItemT:
         """Extract an item"""
         return await item_from_fields(
