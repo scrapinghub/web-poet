@@ -316,6 +316,7 @@ dictionaries with some data:
 
 .. code-block:: python
 
+    @attrs.define
     class VariantExtractor(Extractor):
         variant_data: dict
 
