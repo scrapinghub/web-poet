@@ -272,7 +272,8 @@ Some item fields contain nested items (e.g. a product can contain a list of
 variants) and it's useful to have processors for fields of these nested items.
 You can use the same logic for them as for normal fields if you define an
 extractor class that produces these nested items. Such classes should inherit
-from :class:`~.Extractor`:
+from :class:`~.Extractor`. In simplest cases you need to pass a selector to
+them:
 
 .. code-block:: python
 
@@ -299,6 +300,28 @@ from :class:`~.Extractor`:
         @field(out=[str.strip])
         def color(self):
             return self.sel.css(".name::text")
+
+In such cases you can also use :class:`~.SelectorExtractor` as a shortcut that
+provides ``css()`` and ``xpath()``:
+
+.. code-block:: python
+
+    class VariantExtractor(SelectorExtractor):
+        @field(out=[str.strip])
+        def color(self):
+            return self.css(".name::text")
+
+You can also pass other data in addition to, or instead of, selectors, such as
+dictionaries with some data:
+
+.. code-block:: python
+
+    class VariantExtractor(Extractor):
+        variant_data: dict
+
+        @field(out=[str.strip])
+        def color(self):
+            return self.variant_data["color"]
 
 
 .. _item-classes:
