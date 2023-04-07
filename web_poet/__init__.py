@@ -18,6 +18,7 @@ from .pages import (
     ItemPage,
     ItemWebPage,
     Returns,
+    SelectorExtractor,
     WebPage,
     validates_input,
 )
