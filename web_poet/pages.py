@@ -9,7 +9,7 @@ import parsel
 
 from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
-from web_poet.mixins import ResponseShortcutsMixin
+from web_poet.mixins import CssXpathMixin, ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import CallableT, _create_deprecated_class, cached_method
 
@@ -150,17 +150,9 @@ ItemWebPage = _create_deprecated_class("ItemWebPage", WebPage, warn_once=False)
 
 
 @attr.s(auto_attribs=True)
-class SelectorExtractor(Extractor[ItemT]):
+class SelectorExtractor(Extractor[ItemT], CssXpathMixin):
     """Extractor that takes a :class:`parsel.Selector` and provides
     XPath / CSS shortcuts.
     """
 
     selector: parsel.Selector
-
-    def xpath(self, query, **kwargs) -> parsel.SelectorList:
-        """A shortcut to ``.selector.xpath()``."""
-        return self.selector.xpath(query, **kwargs)
-
-    def css(self, query) -> parsel.SelectorList:
-        """A shortcut to ``.selector.css()``."""
-        return self.selector.css(query)
