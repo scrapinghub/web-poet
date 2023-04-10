@@ -5,7 +5,7 @@ import parsel
 from w3lib.html import get_base_url
 
 
-class CssXpathMixin(abc.ABC):
+class CssXpathMixin:
     def xpath(self, query, **kwargs) -> parsel.SelectorList:
         """A shortcut to ``.selector.xpath()``."""
         return self.selector.xpath(query, **kwargs)  # type: ignore[attr-defined]
@@ -15,7 +15,7 @@ class CssXpathMixin(abc.ABC):
         return self.selector.css(query)  # type: ignore[attr-defined]
 
 
-class SelectableMixin(CssXpathMixin):
+class SelectableMixin(abc.ABC, CssXpathMixin):
     """
     Inherit from this mixin, implement ``._selector_input`` method,
     get ``.selector`` property and ``.xpath`` / ``.css`` methods.
