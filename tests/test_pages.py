@@ -235,8 +235,13 @@ async def test_item_page_change_item_type_remove_fields() -> None:
 @pytest.mark.asyncio
 async def test_extractor(book_list_html_response) -> None:
     @attrs.define
+    class BookItem:
+        name: str
+        price: str
+
+    @attrs.define
     class ListItem:
-        books: List[Item]
+        books: List[BookItem]
 
     @attrs.define
     class MyPage(ItemPage[ListItem]):
@@ -250,12 +255,17 @@ async def test_extractor(book_list_html_response) -> None:
                 books.append(item)
             return books
 
-    class BookExtractor(SelectorExtractor[Item]):
+    class BookExtractor(SelectorExtractor[BookItem]):
         @field(out=[str.lower])
         def name(self):
             return self.css("img.thumbnail::attr(alt)").get()
+
+        @field
+        def price(self):
+            return self.xpath(".//p[@class='price_color']/text()").get()
 
     page = MyPage(book_list_html_response)
     item = await page.to_item()
     assert len(item.books) == 20
     assert item.books[0].name == "a light in the attic"
+    assert item.books[0].price == "£51.77"
