@@ -23,3 +23,25 @@ class. For example:
 
 Because itemadapter_ allows implementing support for arbitrary types,
 any kind of Python object can potentially work as an item.
+
+Best practices for item types
+=============================
+
+To keep your code maintainable, we recommend you to:
+
+-   Reuse item types.
+
+    For example, if you want to extract product details data from 2 e-commerce
+    websites, try to use the same item type for both of them. Or at least try
+    to define a base item type with shared fields, and only keep
+    website-specific fields in website-specific items.
+
+-   Keep item types as logic-free as possible.
+
+    For example, any parsing and field cleanup logic is better handled through
+    :ref:`page object classes <page-object-classes>`, e.g. using :ref:`field
+    processors <field-processors>`.
+
+If you are looking for ready-made item types, check out `zyte-common-items`_.
+
+.. _zyte-common-items: https://zyte-common-items.readthedocs.io/en/latest/index.html
