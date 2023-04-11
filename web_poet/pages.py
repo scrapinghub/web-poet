@@ -83,8 +83,7 @@ def validates_input(to_item: CallableT) -> CallableT:
 
 
 class Extractor(Returns[ItemT], FieldsMixin):
-    """The base class for page objects and other extractors, providing support
-    for fields."""
+    """Base class for field support."""
 
     _skip_nonitem_fields = _NOT_SET
 
@@ -110,9 +109,7 @@ class Extractor(Returns[ItemT], FieldsMixin):
 
 
 class ItemPage(Extractor[ItemT], Injectable):
-    """Base Page Object, with a default :meth:`to_item` implementation
-    which supports web-poet fields.
-    """
+    """Base class for page objects."""
 
     @cached_method
     def _validate_input(self) -> None:
@@ -151,8 +148,7 @@ ItemWebPage = _create_deprecated_class("ItemWebPage", WebPage, warn_once=False)
 
 @attr.s(auto_attribs=True)
 class SelectorExtractor(Extractor[ItemT], CssXpathMixin):
-    """Extractor that takes a :class:`parsel.Selector` and provides
-    XPath / CSS shortcuts.
-    """
+    """Extractor that takes a :class:`parsel.Selector` and provides shortcuts 
+    for its methods."""
 
     selector: parsel.Selector

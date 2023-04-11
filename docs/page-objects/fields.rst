@@ -272,7 +272,7 @@ Some item fields contain nested items (e.g. a product can contain a list of
 variants) and it's useful to have processors for fields of these nested items.
 You can use the same logic for them as for normal fields if you define an
 extractor class that produces these nested items. Such classes should inherit
-from :class:`~.Extractor`. In simplest cases you need to pass a selector to
+from :class:`~.Extractor`. In the simplest cases you need to pass a selector to
 them:
 
 .. code-block:: python
