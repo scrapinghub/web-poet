@@ -12,7 +12,7 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
-from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions import HttpResponseError, Retry
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
@@ -418,3 +418,19 @@ def test_cli_rerun_fields_unknown_names(
         in captured.err
     )
     assert json.loads(captured.out) == {"foo": "bar"}
+
+
+@pytest.mark.xfail(reason="This is not implemented yet")
+def test_page_object_exception(pytester, book_list_html_response) -> None:
+    class ErrorItemPage(WebPage):
+        async def to_item(self):
+            raise Retry
+
+    _save_fixture(
+        pytester,
+        page_cls=ErrorItemPage,
+        page_inputs=[book_list_html_response],
+        expected_exception=Retry(),  # type: ignore[call-arg]
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
