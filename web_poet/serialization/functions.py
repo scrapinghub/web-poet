@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 from .. import (
     HttpClient,
@@ -167,6 +167,7 @@ def _deserialize_HttpClient(
             response = deserialize_leaf(HttpResponse, serialized_response)
         else:
             response = None
+        exception: Optional[HttpError]
         if serialized_exception:
             exc_type = load_class(serialized_exception_types[key])
             exception = deserialize_leaf(exc_type, serialized_exception)
