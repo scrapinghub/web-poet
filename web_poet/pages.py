@@ -5,10 +5,11 @@ from contextlib import suppress
 from functools import wraps
 
 import attr
+import parsel
 
 from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
-from web_poet.mixins import ResponseShortcutsMixin
+from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 from web_poet.utils import CallableT, _create_deprecated_class, cached_method
 
@@ -81,10 +82,8 @@ def validates_input(to_item: CallableT) -> CallableT:
     return _to_item  # type: ignore[return-value]
 
 
-class ItemPage(Injectable, Returns[ItemT]):
-    """Base Page Object, with a default :meth:`to_item` implementation
-    which supports web-poet fields.
-    """
+class Extractor(Returns[ItemT], FieldsMixin):
+    """Base class for field support."""
 
     _skip_nonitem_fields = _NOT_SET
 
@@ -100,14 +99,17 @@ class ItemPage(Injectable, Returns[ItemT]):
             return
         cls._skip_nonitem_fields = skip_nonitem_fields
 
-    @validates_input
     async def to_item(self) -> ItemT:
-        """Extract an item from a web page"""
+        """Extract an item"""
         return await item_from_fields(
             self,
             item_cls=self.item_cls,
             skip_nonitem_fields=self._get_skip_nonitem_fields(),
         )
+
+
+class ItemPage(Extractor[ItemT], Injectable):
+    """Base class for page objects."""
 
     @cached_method
     def _validate_input(self) -> None:
@@ -126,6 +128,11 @@ class ItemPage(Injectable, Returns[ItemT]):
         self.__validating_input = False
         return validation_item
 
+    @validates_input
+    async def to_item(self) -> ItemT:
+        """Extract an item from a web page"""
+        return await super().to_item()
+
 
 @attr.s(auto_attribs=True)
 class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
@@ -137,3 +144,11 @@ class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
 
 
 ItemWebPage = _create_deprecated_class("ItemWebPage", WebPage, warn_once=False)
+
+
+@attr.s(auto_attribs=True)
+class SelectorExtractor(Extractor[ItemT], SelectorShortcutsMixin):
+    """Extractor that takes a :class:`parsel.Selector` and provides shortcuts
+    for its methods."""
+
+    selector: parsel.Selector
