@@ -12,7 +12,7 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
-from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions import HttpRequestError, HttpResponseError
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
@@ -336,7 +336,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
 
 
 @attrs.define
-class ClientExceptionPage(WebPage):
+class ClientResponseErrorPage(WebPage):
     client: HttpClient
 
     async def to_item(self) -> dict:
@@ -348,7 +348,7 @@ class ClientExceptionPage(WebPage):
         return {"foo": "bar", "exception": msg}
 
 
-def test_httpclient_exception(pytester, book_list_html_response) -> None:
+def test_httpclient_response_exception(pytester, book_list_html_response) -> None:
     url = "http://books.toscrape.com/1.html"
     request = HttpRequest(url)
     response = HttpResponse(url=url, body=b"body1", status=404, encoding="utf-8")
@@ -363,10 +363,51 @@ def test_httpclient_exception(pytester, book_list_html_response) -> None:
     }
     _save_fixture(
         pytester,
-        page_cls=ClientExceptionPage,
+        page_cls=ClientResponseErrorPage,
         page_inputs=[book_list_html_response, client],
         expected=item,
     )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=4)
+
+
+@attrs.define
+class ClientRequestErrorPage(WebPage):
+    client: HttpClient
+
+    async def to_item(self) -> dict:
+        msg = ""
+        try:
+            await self.client.get("http://books.toscrape.com/1.html")
+        except HttpRequestError as ex:
+            msg = ex.args[0]
+        return {"foo": "bar", "exception": msg}
+
+
+def test_httpclient_request_exception(pytester, book_list_html_response) -> None:
+    url = "http://books.toscrape.com/1.html"
+    request = HttpRequest(url)
+    exception = HttpRequestError("Bad Request", request)
+    responses = [
+        _SavedResponseData(request, None, exception),
+    ]
+    client = HttpClient(responses=responses)
+
+    item = {
+        "foo": "bar",
+        "exception": "Bad Request",
+    }
+    fixture = _save_fixture(
+        pytester,
+        page_cls=ClientRequestErrorPage,
+        page_inputs=[book_list_html_response, client],
+        expected=item,
+    )
+    assert (fixture.input_path / "HttpClient-0-exception_type.txt").exists()
+    assert (fixture.input_path / "HttpClient-0-exception.msg.txt").exists()
+    assert (
+        fixture.input_path / "HttpClient-0-exception.HttpRequest.info.json"
+    ).exists()
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Callable, Dict, Iterable, List, Optional, Union
 
-from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
 from web_poet.page_inputs.http import (
     HttpRequest,
@@ -30,7 +30,8 @@ class _SavedResponseData:
     """Class for storing a request and its result."""
 
     request: HttpRequest
-    response: HttpResponse
+    response: Optional[HttpResponse]
+    exception: Optional[HttpError] = None
 
     def fingerprint(self) -> str:
         """Return the request fingeprint."""
@@ -195,6 +196,8 @@ class HttpClient:
         if self.return_only_saved_responses:
             for fp, saved_data in self._saved_responses.items():
                 if request_fingerprint(request) == fp:
+                    if saved_data.exception:
+                        raise saved_data.exception
                     self._handle_status(
                         saved_data.response,
                         saved_data.request,
@@ -203,7 +206,15 @@ class HttpClient:
                     return saved_data.response
             raise NoSavedHttpResponse(request=request)
 
-        response = await self._request_downloader(request)
+        try:
+            response = await self._request_downloader(request)
+        except HttpError as ex:
+            if self.save_responses:
+                self._saved_responses[
+                    request_fingerprint(request)
+                ] = _SavedResponseData(request, None, ex)
+            raise
+
         if self.save_responses:
             self._saved_responses[request_fingerprint(request)] = _SavedResponseData(
                 request, response
