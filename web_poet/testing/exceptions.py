@@ -12,3 +12,7 @@ class FieldsUnexpected(AssertionError):
 
 class ItemValueIncorrect(AssertionError):
     pass
+
+
+class ExpectedExceptionNotRaised(AssertionError):
+    pass

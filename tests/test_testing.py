@@ -65,9 +65,13 @@ class MyItemPage2(WebPage):
         return {"foo": None}
 
 
-def _save_fixture(pytester, page_cls, page_inputs, expected):
+def _save_fixture(
+    pytester, page_cls, page_inputs, *, expected=None, expected_exception=None
+):
     base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
-    return Fixture.save(base_dir, inputs=page_inputs, item=expected)
+    return Fixture.save(
+        base_dir, inputs=page_inputs, item=expected, exception=expected_exception
+    )
 
 
 def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
@@ -420,17 +424,18 @@ def test_cli_rerun_fields_unknown_names(
     assert json.loads(captured.out) == {"foo": "bar"}
 
 
-@pytest.mark.xfail(reason="This is not implemented yet")
-def test_page_object_exception(pytester, book_list_html_response) -> None:
-    class ErrorItemPage(WebPage):
-        async def to_item(self):
-            raise Retry
+class RetryItemPage(WebPage):
+    async def to_item(self):
+        raise Retry
 
-    _save_fixture(
+
+def test_page_object_exception(pytester, book_list_html_response) -> None:
+    fixture = _save_fixture(
         pytester,
-        page_cls=ErrorItemPage,
+        page_cls=RetryItemPage,
         page_inputs=[book_list_html_response],
-        expected_exception=Retry(),  # type: ignore[call-arg]
+        expected_exception=Retry(),
     )
+    assert fixture.exception_path.exists()
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)

@@ -10,7 +10,7 @@ from web_poet.testing.exceptions import (
     FieldValueIncorrect,
     ItemValueIncorrect,
 )
-from web_poet.testing.fixture import OUTPUT_FILE_NAME, Fixture
+from web_poet.testing.fixture import EXCEPTION_FILE_NAME, OUTPUT_FILE_NAME, Fixture
 from web_poet.testing.utils import comparison_error_message
 
 # https://github.com/pytest-dev/pytest/discussions/10261
@@ -57,6 +57,12 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:
         """Return a list of children (items and collectors) for this
         collection node."""
+        if self.fixture.exception_path.exists():
+            return [
+                WebPoetExpectedException.from_parent(
+                    parent=self, name="TO_ITEM_RAISES", fixture=self.fixture
+                )
+            ]
         if self.config.getoption("WEB_POET_TEST_PER_ITEM", default=False):
             return [
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
@@ -144,6 +150,18 @@ class WebPoetNoToItemException(_WebPoetItem):
         )
 
 
+class WebPoetExpectedException(_WebPoetItem):
+    def runtest(self) -> None:
+        self.fixture.assert_toitem_exception()
+
+    def reportinfo(self):
+        return (
+            self._path,
+            0,
+            f"{self.fixture.short_name}: to_item raises {self.fixture.get_expected_exception().__class__.__name__}",
+        )
+
+
 class WebPoetFieldItem(_WebPoetItem):
     def __init__(self, *, field_name: str, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -183,7 +201,7 @@ _found_type_dirs: Set[Path] = set()
 def collect_file_hook(
     file_path: Path, parent: pytest.Collector
 ) -> Optional[pytest.Collector]:
-    if file_path.name == OUTPUT_FILE_NAME:
+    if file_path.name in {OUTPUT_FILE_NAME, EXCEPTION_FILE_NAME}:
         testcase_dir = file_path.parent
         type_dir = testcase_dir.parent
         fixture = Fixture(testcase_dir)
