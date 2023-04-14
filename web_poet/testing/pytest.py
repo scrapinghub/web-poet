@@ -5,13 +5,16 @@ from typing import Iterable, List, Optional, Set, Union
 import pytest
 
 from web_poet.testing.exceptions import (
+    ExceptionNotRaised,
     FieldMissing,
     FieldsUnexpected,
     FieldValueIncorrect,
     ItemValueIncorrect,
+    WrongExceptionRaised,
 )
 from web_poet.testing.fixture import EXCEPTION_FILE_NAME, OUTPUT_FILE_NAME, Fixture
 from web_poet.testing.utils import comparison_error_message
+from web_poet.utils import get_fq_class_name
 
 # https://github.com/pytest-dev/pytest/discussions/10261
 _version_tuple = getattr(pytest, "version_tuple", None)
@@ -160,6 +163,26 @@ class WebPoetExpectedException(_WebPoetItem):
             0,
             f"{self.fixture.short_name}: to_item raises {self.fixture.get_expected_exception().__class__.__name__}",
         )
+
+    def repr_failure(self, excinfo, style=None):
+        expected = self.fixture.get_expected_exception()
+        if isinstance(excinfo.value, ExceptionNotRaised):
+            return (
+                f"to_item() didn't raise an exception."
+                f" {get_fq_class_name(type(expected))} was expected."
+            )
+        if isinstance(excinfo.value, WrongExceptionRaised):
+            got = excinfo.value.__cause__
+            inner_excinfo = pytest.ExceptionInfo.from_exc_info(
+                (type(got), got, got.__traceback__)
+            )
+            return (
+                f"to_item() raised a wrong exception. Expected"
+                f" {get_fq_class_name(type(expected))}, got"
+                f" {get_fq_class_name(type(got))}.\n\n"
+                + str(super().repr_failure(inner_excinfo, style))
+            )
+        return super().repr_failure(excinfo, style)
 
 
 class WebPoetFieldItem(_WebPoetItem):

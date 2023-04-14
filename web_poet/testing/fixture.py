@@ -22,11 +22,12 @@ from web_poet.serialization import (
 from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
 
 from .exceptions import (
-    ExpectedExceptionNotRaised,
+    ExceptionNotRaised,
     FieldMissing,
     FieldsUnexpected,
     FieldValueIncorrect,
     ItemValueIncorrect,
+    WrongExceptionRaised,
 )
 
 logger = logging.getLogger(__name__)
@@ -229,10 +230,13 @@ class Fixture:
         """Assert that to_item() raises an exception of the expected type"""
         try:
             self.get_output()
-        except type(self.get_expected_exception()):  # noqa: B030
-            pass
+        except Exception as ex:
+            received_type = type(ex)
+            expected_type = type(self.get_expected_exception())
+            if received_type != expected_type:
+                raise WrongExceptionRaised() from ex
         else:
-            raise ExpectedExceptionNotRaised()
+            raise ExceptionNotRaised()
 
     @classmethod
     def save(

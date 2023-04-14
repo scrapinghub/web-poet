@@ -14,5 +14,9 @@ class ItemValueIncorrect(AssertionError):
     pass
 
 
-class ExpectedExceptionNotRaised(AssertionError):
+class ExceptionNotRaised(AssertionError):
+    pass
+
+
+class WrongExceptionRaised(AssertionError):
     pass
