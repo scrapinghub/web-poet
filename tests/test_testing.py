@@ -12,7 +12,7 @@ from itemadapter import ItemAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
-from web_poet.exceptions import HttpResponseError, Retry
+from web_poet.exceptions import HttpResponseError, Retry, UseFallback
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
@@ -429,7 +429,7 @@ class RetryItemPage(WebPage):
         raise Retry
 
 
-def test_page_object_exception(pytester, book_list_html_response) -> None:
+def test_page_object_exception_pass(pytester, book_list_html_response) -> None:
     fixture = _save_fixture(
         pytester,
         page_cls=RetryItemPage,
@@ -439,3 +439,27 @@ def test_page_object_exception(pytester, book_list_html_response) -> None:
     assert fixture.exception_path.exists()
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_page_object_exception_wrong(pytester, book_list_html_response) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=RetryItemPage,
+        page_inputs=[book_list_html_response],
+        expected_exception=UseFallback(),
+    )
+    assert fixture.exception_path.exists()
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
+
+
+def test_page_object_exception_none(pytester, book_list_html_response) -> None:
+    fixture = _save_fixture(
+        pytester,
+        page_cls=WebPage,
+        page_inputs=[book_list_html_response],
+        expected_exception=Retry(),
+    )
+    assert fixture.exception_path.exists()
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
