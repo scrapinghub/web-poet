@@ -173,7 +173,11 @@ class WebPoetExpectedException(_WebPoetItem):
             )
         if isinstance(excinfo.value, WrongExceptionRaised):
             got = excinfo.value.__cause__
-            inner_excinfo = pytest.ExceptionInfo.from_exc_info(
+            if _new_pytest:
+                from pytest import ExceptionInfo
+            else:
+                from _pytest._code import ExceptionInfo
+            inner_excinfo = ExceptionInfo.from_exc_info(
                 (type(got), got, got.__traceback__)
             )
             return (
