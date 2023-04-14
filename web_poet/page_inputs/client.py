@@ -79,7 +79,7 @@ class HttpClient:
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
         allow_all_status = any(
-            [True for s in allow_status_normalized if "*" == s.strip()]
+            True for s in allow_status_normalized if "*" == s.strip()
         )
 
         if (

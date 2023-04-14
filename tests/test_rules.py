@@ -180,7 +180,7 @@ def test_list_page_objects_all() -> None:
     #   - web_poet.consume_modules("tests_extra")
     # Merely having `import tests_extra` won't work since the subpackages and
     # modules needs to be traversed and imported as well.
-    assert all(["po_lib_sub_not_imported" not in po.__module__ for po in page_objects])
+    assert all("po_lib_sub_not_imported" not in po.__module__ for po in page_objects)
 
     # Ensure that ALL Override Rules are returned as long as the given
     # registry's @handle_urls decorator was used.
@@ -225,7 +225,7 @@ def test_registry_get_overrides_deprecation() -> None:
 
     # but the rules from ``.get_overrides()`` should return ``ApplyRule`` and
     # not the old ``OverrideRule``.
-    assert all([r for r in rules if isinstance(r, ApplyRule)])
+    assert all(r for r in rules if isinstance(r, ApplyRule))
 
 
 def test_consume_module_not_existing() -> None:
@@ -240,7 +240,7 @@ def test_list_page_objects_all_consume() -> None:
     consume_modules("tests_extra")
     rules = default_registry.get_rules()
     page_objects = {po.use for po in rules}
-    assert any(["po_lib_sub_not_imported" in po.__module__ for po in page_objects])
+    assert any("po_lib_sub_not_imported" in po.__module__ for po in page_objects)
 
 
 def test_registry_search() -> None:
