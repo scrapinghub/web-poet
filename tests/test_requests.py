@@ -182,7 +182,7 @@ async def test_http_client_batch_execute(async_mock) -> None:
     ]
     responses = await client.batch_execute(*requests)
 
-    assert all([isinstance(response, HttpResponse) for response in responses])
+    assert all(isinstance(response, HttpResponse) for response in responses)
 
 
 @pytest.fixture
@@ -275,7 +275,7 @@ async def test_http_client_batch_execute_allow_status(
             and isinstance(r.request, HttpRequest)
             and isinstance(r.response, HttpResponse)
         )
-    assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
+    assert all(str(r).startswith("400 BAD_REQUEST response for") for r in responses)
 
     responses = await client.batch_execute(
         *requests, return_exceptions=True, allow_status=408
@@ -286,7 +286,7 @@ async def test_http_client_batch_execute_allow_status(
             and isinstance(r.request, HttpRequest)
             and isinstance(r.response, HttpResponse)
         )
-    assert all([str(r).startswith("400 BAD_REQUEST response for") for r in responses])
+    assert all(str(r).startswith("400 BAD_REQUEST response for") for r in responses)
 
     # These have no assertions since they're used to see if mypy raises an
     # error against them.
