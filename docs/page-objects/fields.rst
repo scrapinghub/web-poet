@@ -206,6 +206,7 @@ named ``Processors``:
 
 .. code-block:: python
 
+    import attrs
     from web_poet import ItemPage, HttpResponse, field
 
     def clean_tabs(s):
@@ -231,6 +232,7 @@ explicitly accessing or subclassing the ``Processors`` class:
 
 .. code-block:: python
 
+    import attrs
     from web_poet import ItemPage, HttpResponse, field
 
     def clean_tabs(s):
@@ -261,6 +263,66 @@ explicitly accessing or subclassing the ``Processors`` class:
         @field(out=MyPage.Processors.name)
         def brand(self):
             return self.response.css(".brand ::text").get()
+
+
+Processors for nested fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some item fields contain nested items (e.g. a product can contain a list of
+variants) and it's useful to have processors for fields of these nested items.
+You can use the same logic for them as for normal fields if you define an
+extractor class that produces these nested items. Such classes should inherit
+from :class:`~.Extractor`. In the simplest cases you need to pass a selector to
+them:
+
+.. code-block:: python
+
+    import attrs
+    from parsel import Selector
+    from web_poet import Extractor, ItemPage, HttpResponse, field
+
+    @attrs.define
+    class MyPage(ItemPage):
+        response: HttpResponse
+
+        @field
+        async def variants(self):
+            variants = []
+            for color_sel in self.response.css(".color"):
+                variant = await VariantExtractor(color_sel).to_item()
+                variants.append(variant)
+            return variants
+
+    @attrs.define
+    class VariantExtractor(Extractor):
+        sel: Selector
+
+        @field(out=[str.strip])
+        def color(self):
+            return self.sel.css(".name::text")
+
+In such cases you can also use :class:`~.SelectorExtractor` as a shortcut that
+provides ``css()`` and ``xpath()``:
+
+.. code-block:: python
+
+    class VariantExtractor(SelectorExtractor):
+        @field(out=[str.strip])
+        def color(self):
+            return self.css(".name::text")
+
+You can also pass other data in addition to, or instead of, selectors, such as
+dictionaries with some data:
+
+.. code-block:: python
+
+    @attrs.define
+    class VariantExtractor(Extractor):
+        variant_data: dict
+
+        @field(out=[str.strip])
+        def color(self):
+            return self.variant_data["color"]
 
 
 .. _item-classes:

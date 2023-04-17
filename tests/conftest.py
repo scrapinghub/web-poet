@@ -9,7 +9,7 @@ pytest_plugins = ["pytester"]
 
 def read_fixture(path):
     path = os.path.join(os.path.dirname(__file__), path)
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 

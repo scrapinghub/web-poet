@@ -5,7 +5,17 @@ import parsel
 from w3lib.html import get_base_url
 
 
-class SelectableMixin(abc.ABC):
+class SelectorShortcutsMixin:
+    def xpath(self, query, **kwargs) -> parsel.SelectorList:
+        """A shortcut to ``.selector.xpath()``."""
+        return self.selector.xpath(query, **kwargs)  # type: ignore[attr-defined]
+
+    def css(self, query) -> parsel.SelectorList:
+        """A shortcut to ``.selector.css()``."""
+        return self.selector.css(query)  # type: ignore[attr-defined]
+
+
+class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
     """
     Inherit from this mixin, implement ``._selector_input`` method,
     get ``.selector`` property and ``.xpath`` / ``.css`` methods.
@@ -28,14 +38,6 @@ class SelectableMixin(abc.ABC):
         sel = parsel.Selector(text=self._selector_input())
         self.__cached_selector = sel
         return sel
-
-    def xpath(self, query, **kwargs) -> parsel.SelectorList:
-        """A shortcut to ``.selector.xpath()``."""
-        return self.selector.xpath(query, **kwargs)
-
-    def css(self, query) -> parsel.SelectorList:
-        """A shortcut to ``.selector.css()``."""
-        return self.selector.css(query)
 
 
 # TODO: when dropping Python 3.7 support,
