@@ -123,11 +123,14 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
             for k, v in serialized_response.items():
                 serialized_data[f"{i}-HttpResponse.{k}"] = v
         if data.exception:
-            serialized_exception = serialize_leaf(data.exception)
-            for k, v in serialized_exception.items():
-                exc_type_name = _get_name_for_class(type(data.exception))
-                serialized_data[f"{i}-exception_type.txt"] = exc_type_name.encode()
-                serialized_data[f"{i}-exception.{k}"] = v
+            # the request attribute is currently not saved
+            exc_data = {
+                "type_name": _get_name_for_class(type(data.exception)),
+                "msg": data.exception.args[0] or "",
+            }
+            serialized_data[f"{i}-exception.json"] = json.dumps(
+                exc_data, ensure_ascii=False, sort_keys=True, indent=2
+            ).encode()
     return serialized_data
 
 
@@ -139,21 +142,17 @@ def _deserialize_HttpClient(
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
     serialized_exceptions: Dict[str, SerializedLeafData] = {}
-    serialized_exception_types: Dict[str, str] = {}
     for k, v in data.items():
         if k == "exists":
             continue
         # k is number-("HttpRequest"|"HttpResponse").("body"|"info").ext
-        # or number-"exception_type".txt
-        # or number-"exception".("msg"|("HttpRequest".("body"|"info")).ext
+        # or number-"exception.json"
         key, type_suffix = k.split("-", 1)
         type_name, suffix = type_suffix.split(".", 1)
         if type_name == "HttpRequest":
             serialized_requests.setdefault(key, {})[suffix] = v
         elif type_name == "HttpResponse":
             serialized_responses.setdefault(key, {})[suffix] = v
-        elif type_name == "exception_type":
-            serialized_exception_types[key] = v.decode()
         elif type_name == "exception":
             serialized_exceptions.setdefault(key, {})[suffix] = v
 
@@ -169,8 +168,9 @@ def _deserialize_HttpClient(
             response = None
         exception: Optional[HttpError]
         if serialized_exception:
-            exc_type = load_class(serialized_exception_types[key])
-            exception = deserialize_leaf(exc_type, serialized_exception)
+            exc_data = json.loads(serialized_exception["json"])
+            exc_cls = load_class(exc_data["type_name"])
+            exception = exc_cls(exc_data["msg"])
         else:
             exception = None
         responses.append(_SavedResponseData(request, response, exception))
@@ -194,31 +194,3 @@ def _deserialize_PageParams(
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
-
-
-def _serialize_HttpError(o: HttpError) -> SerializedLeafData:
-    serialized_data: SerializedLeafData = {
-        "msg.txt": (o.args[0] or "").encode(),
-    }
-    if o.request:
-        serialized_request = serialize_leaf(o.request)
-        for k, v in serialized_request.items():
-            serialized_data[f"HttpRequest.{k}"] = v
-    return serialized_data
-
-
-def _deserialize_HttpError(cls: Type[HttpError], data: SerializedLeafData) -> HttpError:
-    serialized_request: SerializedLeafData = {}
-    for k, v in data.items():
-        type_name, suffix = k.split(".", 1)
-        if type_name == "HttpRequest":
-            serialized_request[suffix] = v
-    if serialized_request:
-        request = deserialize_leaf(HttpRequest, serialized_request)
-    else:
-        request = None
-    msg = data["msg.txt"].decode()
-    return cls(msg, request)
-
-
-register_serialization(_serialize_HttpError, _deserialize_HttpError)

@@ -403,11 +403,7 @@ def test_httpclient_request_exception(pytester, book_list_html_response) -> None
         page_inputs=[book_list_html_response, client],
         expected=item,
     )
-    assert (fixture.input_path / "HttpClient-0-exception_type.txt").exists()
-    assert (fixture.input_path / "HttpClient-0-exception.msg.txt").exists()
-    assert (
-        fixture.input_path / "HttpClient-0-exception.HttpRequest.info.json"
-    ).exists()
+    assert (fixture.input_path / "HttpClient-0-exception.json").exists()
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
 
