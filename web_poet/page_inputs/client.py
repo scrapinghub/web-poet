@@ -198,8 +198,7 @@ class HttpClient:
                 if request_fingerprint(request) == fp:
                     if saved_data.exception:
                         raise saved_data.exception
-                    if not saved_data.response:
-                        continue
+                    assert saved_data.response
                     self._handle_status(
                         saved_data.response,
                         saved_data.request,
