@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.10.0 (YYYY-MM-DD)
+0.10.0 (2023-04-19)
 -------------------
 
 * New class :class:`~.Extractor` can be used for easier extraction of nested
