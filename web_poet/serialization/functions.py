@@ -202,7 +202,7 @@ def _exception_to_dict(ex: Exception) -> Dict[str, Any]:
     """
     return {
         "type_name": _get_name_for_class(type(ex)),
-        "msg": ex.args[0] or "",
+        "msg": ex.args[0] if ex.args else None,
     }
 
 

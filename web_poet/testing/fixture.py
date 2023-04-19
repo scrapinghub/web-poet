@@ -19,8 +19,9 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
+from web_poet.utils import ensure_awaitable, memoizemethod_noargs
 
+from ..serialization.functions import _exception_from_dict, _exception_to_dict
 from .exceptions import (
     ExceptionNotRaised,
     FieldMissing,
@@ -151,8 +152,7 @@ class Fixture:
     def get_expected_exception(self) -> Exception:
         """Return the saved exception."""
         data = json.loads(self.exception_path.read_bytes())
-        cls = load_class(data["type_name"])
-        return cls()
+        return _exception_from_dict(data)
 
     @staticmethod
     def _parse_frozen_time(meta_value: str) -> datetime.datetime:
@@ -272,9 +272,7 @@ class Fixture:
 
         if exception:
             with fixture.exception_path.open("w") as f:
-                exc_data = {
-                    "type_name": get_fq_class_name(type(exception)),
-                }
+                exc_data = _exception_to_dict(exception)
                 json.dump(exc_data, f, ensure_ascii=False, indent=4)
 
         return fixture
