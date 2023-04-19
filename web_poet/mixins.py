@@ -14,6 +14,14 @@ class SelectorShortcutsMixin:
         """A shortcut to ``.selector.css()``."""
         return self.selector.css(query)  # type: ignore[attr-defined]
 
+    def jmespath(self, query: str, **kwargs) -> parsel.SelectorList:
+        """A shortcut to ``.selector.jmespath()``."""
+        if not hasattr(self.selector, "jmespath"):  # type: ignore[attr-defined]
+            raise AttributeError(
+                "Please install parsel >= 1.8.1 to get jmespath support"
+            )
+        return self.selector.jmespath(query, **kwargs)  # type: ignore[attr-defined]
+
 
 class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
     """
