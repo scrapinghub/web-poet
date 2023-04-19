@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.10.0 (YYYY-MM-DD)
+-------------------
+
+* New class :class:`~.Extractor` can be used for easier extraction of nested
+  fields (see :ref:`default-processors-nested`).
+* Exceptions raised while getting a response for an additional request are now
+  saved in :ref:`test fixtures <web-poet-testing-additional-requests>`.
+* Multiple documentation improvements and fixes.
+* Add a ``twine check`` CI check.
+
 0.9.0 (2023-03-30)
 ------------------
 
