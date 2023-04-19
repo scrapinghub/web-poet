@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 from .. import (
     HttpClient,
@@ -9,11 +9,14 @@ from .. import (
     HttpResponseBody,
     PageParams,
 )
+from ..exceptions import HttpError
 from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
+    _get_name_for_class,
     deserialize_leaf,
+    load_class,
     register_serialization,
     serialize_leaf,
 )
@@ -115,9 +118,19 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
         serialized_request = serialize_leaf(data.request)
         for k, v in serialized_request.items():
             serialized_data[f"{i}-HttpRequest.{k}"] = v
-        serialized_response = serialize_leaf(data.response)
-        for k, v in serialized_response.items():
-            serialized_data[f"{i}-HttpResponse.{k}"] = v
+        if data.response:
+            serialized_response = serialize_leaf(data.response)
+            for k, v in serialized_response.items():
+                serialized_data[f"{i}-HttpResponse.{k}"] = v
+        if data.exception:
+            # the request attribute is currently not saved
+            exc_data = {
+                "type_name": _get_name_for_class(type(data.exception)),
+                "msg": data.exception.args[0] or "",
+            }
+            serialized_data[f"{i}-exception.json"] = json.dumps(
+                exc_data, ensure_ascii=False, sort_keys=True, indent=2
+            ).encode()
     return serialized_data
 
 
@@ -128,24 +141,39 @@ def _deserialize_HttpClient(
 
     serialized_requests: Dict[str, SerializedLeafData] = {}
     serialized_responses: Dict[str, SerializedLeafData] = {}
+    serialized_exceptions: Dict[str, SerializedLeafData] = {}
     for k, v in data.items():
         if k == "exists":
             continue
         # k is number-("HttpRequest"|"HttpResponse").("body"|"info").ext
+        # or number-"exception.json"
         key, type_suffix = k.split("-", 1)
         type_name, suffix = type_suffix.split(".", 1)
         if type_name == "HttpRequest":
             serialized_requests.setdefault(key, {})[suffix] = v
         elif type_name == "HttpResponse":
             serialized_responses.setdefault(key, {})[suffix] = v
+        elif type_name == "exception":
+            serialized_exceptions.setdefault(key, {})[suffix] = v
 
     for key, serialized_request in serialized_requests.items():
         serialized_response = serialized_responses.get(key)
-        if not serialized_response:
+        serialized_exception = serialized_exceptions.get(key)
+        if not serialized_response and not serialized_exception:
             continue
         request = deserialize_leaf(HttpRequest, serialized_request)
-        response = deserialize_leaf(HttpResponse, serialized_response)
-        responses.append(_SavedResponseData(request, response))
+        if serialized_response:
+            response = deserialize_leaf(HttpResponse, serialized_response)
+        else:
+            response = None
+        exception: Optional[HttpError]
+        if serialized_exception:
+            exc_data = json.loads(serialized_exception["json"])
+            exc_cls = load_class(exc_data["type_name"])
+            exception = exc_cls(exc_data["msg"])
+        else:
+            exception = None
+        responses.append(_SavedResponseData(request, response, exception))
 
     return cls(return_only_saved_responses=True, responses=responses)
 
