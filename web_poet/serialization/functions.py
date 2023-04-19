@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, cast
 
 from .. import (
     HttpClient,
@@ -124,10 +124,7 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
                 serialized_data[f"{i}-HttpResponse.{k}"] = v
         if data.exception:
             # the request attribute is currently not saved
-            exc_data = {
-                "type_name": _get_name_for_class(type(data.exception)),
-                "msg": data.exception.args[0] or "",
-            }
+            exc_data = _exception_to_dict(data.exception)
             serialized_data[f"{i}-exception.json"] = json.dumps(
                 exc_data, ensure_ascii=False, sort_keys=True, indent=2
             ).encode()
@@ -169,8 +166,7 @@ def _deserialize_HttpClient(
         exception: Optional[HttpError]
         if serialized_exception:
             exc_data = json.loads(serialized_exception["json"])
-            exc_cls = load_class(exc_data["type_name"])
-            exception = exc_cls(exc_data["msg"])
+            exception = cast(HttpError, _exception_from_dict(exc_data))
         else:
             exception = None
         responses.append(_SavedResponseData(request, response, exception))
@@ -194,3 +190,26 @@ def _deserialize_PageParams(
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
+
+
+# these functions are helpers that don't conform to the register_serialization API
+
+
+def _exception_to_dict(ex: Exception) -> Dict[str, Any]:
+    """Serialize an exception.
+
+    Only the exception type and the first argument are saved.
+    """
+    return {
+        "type_name": _get_name_for_class(type(ex)),
+        "msg": ex.args[0] or "",
+    }
+
+
+def _exception_from_dict(data: Dict[str, Any]) -> Exception:
+    """Deserialize an exception.
+
+    Only the exception type and the first argument are restored.
+    """
+    exc_cls = load_class(data["type_name"])
+    return exc_cls(data["msg"])
