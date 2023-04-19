@@ -307,9 +307,9 @@ Additional requests support
 
 If the page object uses the :class:`~.HttpClient` dependency to make
 :ref:`additional requests <additional-requests>`, the generated fixtures will
-contain these requests and their responses. When the test runs,
-:class:`~.HttpClient` will return the saved responses without doing actual
-requests.
+contain these requests and their responses (or exceptions raised when the
+response is not received). When the test runs, :class:`~.HttpClient` will
+return the saved responses without doing actual requests.
 
 Currently requests are compared by their URL, method, headers and body, so if a
 page object makes requests that differ between runs, the test won't be able to

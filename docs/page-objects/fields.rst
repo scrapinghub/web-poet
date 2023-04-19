@@ -264,6 +264,7 @@ explicitly accessing or subclassing the ``Processors`` class:
         def brand(self):
             return self.response.css(".brand ::text").get()
 
+.. _default-processors-nested:
 
 Processors for nested fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
