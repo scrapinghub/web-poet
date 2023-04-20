@@ -66,11 +66,11 @@ class MyItemPage2(WebPage):
 
 
 def _save_fixture(
-    pytester, page_cls, page_inputs, *, expected=None, expected_exception=None
+    pytester, page_cls, page_inputs, *, expected_output=None, expected_exception=None
 ):
     base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
     return Fixture.save(
-        base_dir, inputs=page_inputs, item=expected, exception=expected_exception
+        base_dir, inputs=page_inputs, item=expected_output, exception=expected_exception
     )
 
 
@@ -79,7 +79,7 @@ def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar"},
+        expected_output={"foo": "bar"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=3)
@@ -90,7 +90,7 @@ def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> Non
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "not bar"},
+        expected_output={"foo": "not bar"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, passed=2)
@@ -102,7 +102,7 @@ def test_pytest_plugin_bad_field_value_None(pytester, book_list_html_response) -
         pytester,
         page_cls=MyItemPage2,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar"},
+        expected_output={"foo": "bar"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, passed=2)
@@ -115,7 +115,7 @@ def test_pytest_plugin_missing_field(pytester, book_list_html_response) -> None:
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar", "foo2": "bar2"},
+        expected_output={"foo": "bar", "foo2": "bar2"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, passed=3)
@@ -127,7 +127,7 @@ def test_pytest_plugin_extra_field(pytester, book_list_html_response) -> None:
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo2": "bar2"},
+        expected_output={"foo2": "bar2"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=2, passed=1)
@@ -151,7 +151,7 @@ def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> Non
         pytester,
         page_cls=FieldExceptionPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "foo", "bar": "bar"},
+        expected_output={"foo": "foo", "bar": "bar"},
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, skipped=3)
@@ -163,7 +163,7 @@ def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar"},
+        expected_output={"foo": "bar"},
     )
     result = pytester.runpytest("--web-poet-test-per-item")
     result.assert_outcomes(passed=1)
@@ -174,7 +174,7 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
         pytester,
         page_cls=MyItemPage,
         page_inputs=[book_list_html_response],
-        expected={"foo": "not bar"},
+        expected_output={"foo": "not bar"},
     )
     result = pytester.runpytest("--web-poet-test-per-item")
     result.assert_outcomes(passed=0, failed=1)
@@ -333,7 +333,7 @@ def test_httpclient_no_response(pytester, book_list_html_response) -> None:
         pytester,
         page_cls=ClientPage,
         page_inputs=[book_list_html_response, client],
-        expected=item,
+        expected_output=item,
     )
     result = pytester.runpytest()
     result.assert_outcomes(failed=1, skipped=3)
@@ -369,7 +369,7 @@ def test_httpclient_response_exception(pytester, book_list_html_response) -> Non
         pytester,
         page_cls=ClientResponseErrorPage,
         page_inputs=[book_list_html_response, client],
-        expected=item,
+        expected_output=item,
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
@@ -405,7 +405,7 @@ def test_httpclient_request_exception(pytester, book_list_html_response) -> None
         pytester,
         page_cls=ClientRequestErrorPage,
         page_inputs=[book_list_html_response, client],
-        expected=item,
+        expected_output=item,
     )
     assert (fixture.input_path / "HttpClient-0-exception.json").exists()
     result = pytester.runpytest()
@@ -422,7 +422,7 @@ def test_cli_rerun(pytester, book_list_html_response, capsys) -> None:
         pytester,
         page_cls=MyItemPage3,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
     cli_main(["rerun", str(fixture.path)])
     captured = capsys.readouterr()
@@ -435,7 +435,7 @@ def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
         pytester,
         page_cls=MyItemPage3,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
     cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
     captured = capsys.readouterr()
@@ -450,7 +450,7 @@ def test_cli_rerun_fields_unknown_names(
         pytester,
         page_cls=MyItemPage3,
         page_inputs=[book_list_html_response],
-        expected={"foo": "bar2", "egg": "spam", "hello": "world"},
+        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
     cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
     captured = capsys.readouterr()
