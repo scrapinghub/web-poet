@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Dict, List, Optional, Type, cast
 
 from .. import (
     HttpClient,
@@ -14,12 +14,11 @@ from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
-    _get_name_for_class,
     deserialize_leaf,
-    load_class,
     register_serialization,
     serialize_leaf,
 )
+from .utils import _exception_from_dict, _exception_to_dict
 
 
 def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
@@ -190,26 +189,3 @@ def _deserialize_PageParams(
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
-
-
-# these functions are helpers that don't conform to the register_serialization API
-
-
-def _exception_to_dict(ex: Exception) -> Dict[str, Any]:
-    """Serialize an exception.
-
-    Only the exception type and the first argument are saved.
-    """
-    return {
-        "type_name": _get_name_for_class(type(ex)),
-        "msg": ex.args[0] if ex.args else None,
-    }
-
-
-def _exception_from_dict(data: Dict[str, Any]) -> Exception:
-    """Deserialize an exception.
-
-    Only the exception type and the first argument are restored.
-    """
-    exc_cls = load_class(data["type_name"])
-    return exc_cls(data["msg"])
