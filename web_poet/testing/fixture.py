@@ -21,11 +21,14 @@ from web_poet.serialization import (
 )
 from web_poet.utils import ensure_awaitable, memoizemethod_noargs
 
+from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
+    ExceptionNotRaised,
     FieldMissing,
     FieldsUnexpected,
     FieldValueIncorrect,
     ItemValueIncorrect,
+    WrongExceptionRaised,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 INPUT_DIR_NAME = "inputs"
 OUTPUT_FILE_NAME = "output.json"
+EXCEPTION_FILE_NAME = "exception.json"
 META_FILE_NAME = "meta.json"
 
 
@@ -81,13 +85,20 @@ class Fixture:
         return self.path / OUTPUT_FILE_NAME
 
     @property
+    def exception_path(self) -> Path:
+        """The exception file path."""
+        return self.path / EXCEPTION_FILE_NAME
+
+    @property
     def meta_path(self) -> Path:
         """The metadata file path."""
         return self.path / META_FILE_NAME
 
     def is_valid(self) -> bool:
         """Return True if the fixture file structure is correct, False otherwise."""
-        return self.input_path.is_dir() and self.output_path.is_file()
+        return self.input_path.is_dir() and (
+            self.output_path.is_file() or self.exception_path.is_file()
+        )
 
     def get_page(self) -> ItemPage:
         """Return the page object created from the saved input."""
@@ -130,12 +141,18 @@ class Fixture:
     @classmethod
     def item_to_json(cls, item: Any) -> str:
         """Convert an item to a JSON string."""
-        return json.dumps(ItemAdapter(item).asdict(), ensure_ascii=False, indent=4)
+        return _format_json(ItemAdapter(item).asdict())
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
         """Return the saved output."""
         return json.loads(self.output_path.read_bytes())
+
+    @memoizemethod_noargs
+    def get_expected_exception(self) -> Exception:
+        """Return the saved exception."""
+        data = json.loads(self.exception_path.read_bytes())
+        return _exception_from_dict(data)
 
     @staticmethod
     def _parse_frozen_time(meta_value: str) -> datetime.datetime:
@@ -209,13 +226,26 @@ class Fixture:
         """Assert that to_item() can be run (doesn't raise an error)"""
         self.get_output()
 
+    def assert_toitem_exception(self) -> None:
+        """Assert that to_item() raises an exception of the expected type"""
+        try:
+            self.get_output()
+        except Exception as ex:
+            received_type = type(ex)
+            expected_type = type(self.get_expected_exception())
+            if received_type != expected_type:
+                raise WrongExceptionRaised() from ex
+        else:
+            raise ExceptionNotRaised()
+
     @classmethod
     def save(
         cls: Type[FixtureT],
         base_directory: Union[str, os.PathLike],
         *,
         inputs: Iterable[Any],
-        item: Any,
+        item: Any = None,
+        exception: Optional[Exception] = None,
         meta: Optional[dict] = None,
         fixture_name=None,
     ) -> FixtureT:
@@ -232,11 +262,15 @@ class Fixture:
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
 
-        with fixture.output_path.open("w") as f:
-            f.write(cls.item_to_json(item))
+        if item is not None:
+            with fixture.output_path.open("w") as f:
+                f.write(cls.item_to_json(item))
 
         if meta:
-            with fixture.meta_path.open("w") as f:
-                json.dump(meta, f, ensure_ascii=False, indent=4)
+            fixture.meta_path.write_text(_format_json(meta))
+
+        if exception:
+            exc_data = _exception_to_dict(exception)
+            fixture.exception_path.write_text(_format_json(exc_data))
 
         return fixture
