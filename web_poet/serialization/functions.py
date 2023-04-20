@@ -18,7 +18,7 @@ from .api import (
     register_serialization,
     serialize_leaf,
 )
-from .utils import _exception_from_dict, _exception_to_dict
+from .utils import _exception_from_dict, _exception_to_dict, _format_json
 
 
 def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
@@ -28,9 +28,7 @@ def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
         "headers": list(o.headers.items()),
     }
     result: SerializedLeafData = {
-        "info.json": json.dumps(
-            info, ensure_ascii=False, sort_keys=True, indent=2
-        ).encode(),
+        "info.json": _format_json(info).encode(),
     }
     if o.body:
         result["body.txt"] = bytes(o.body)
@@ -62,9 +60,7 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
     }
     return {
         "body.html": bytes(o.body),
-        "info.json": json.dumps(
-            info, ensure_ascii=False, sort_keys=True, indent=2
-        ).encode(),
+        "info.json": _format_json(info).encode(),
     }
 
 
@@ -124,9 +120,7 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
         if data.exception:
             # the request attribute is currently not saved
             exc_data = _exception_to_dict(data.exception)
-            serialized_data[f"{i}-exception.json"] = json.dumps(
-                exc_data, ensure_ascii=False, sort_keys=True, indent=2
-            ).encode()
+            serialized_data[f"{i}-exception.json"] = _format_json(exc_data).encode()
     return serialized_data
 
 
@@ -177,9 +171,7 @@ register_serialization(_serialize_HttpClient, _deserialize_HttpClient)
 
 
 def _serialize_PageParams(o: PageParams) -> SerializedLeafData:
-    return {
-        "json": json.dumps(o, ensure_ascii=False, sort_keys=True, indent=2).encode()
-    }
+    return {"json": _format_json(o).encode()}
 
 
 def _deserialize_PageParams(

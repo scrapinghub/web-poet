@@ -21,7 +21,7 @@ from web_poet.serialization import (
 )
 from web_poet.utils import ensure_awaitable, memoizemethod_noargs
 
-from ..serialization.functions import _exception_from_dict, _exception_to_dict
+from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
     ExceptionNotRaised,
     FieldMissing,
@@ -141,7 +141,7 @@ class Fixture:
     @classmethod
     def item_to_json(cls, item: Any) -> str:
         """Convert an item to a JSON string."""
-        return json.dumps(ItemAdapter(item).asdict(), ensure_ascii=False, indent=4)
+        return _format_json(ItemAdapter(item).asdict())
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
@@ -267,12 +267,10 @@ class Fixture:
                 f.write(cls.item_to_json(item))
 
         if meta:
-            with fixture.meta_path.open("w") as f:
-                json.dump(meta, f, ensure_ascii=False, indent=4)
+            fixture.meta_path.write_text(_format_json(meta))
 
         if exception:
-            with fixture.exception_path.open("w") as f:
-                exc_data = _exception_to_dict(exception)
-                json.dump(exc_data, f, ensure_ascii=False, indent=4)
+            exc_data = _exception_to_dict(exception)
+            fixture.exception_path.write_text(_format_json(exc_data))
 
         return fixture

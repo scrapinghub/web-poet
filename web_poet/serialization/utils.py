@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 
 from web_poet.serialization.api import _get_name_for_class, load_class
@@ -21,3 +22,8 @@ def _exception_from_dict(data: Dict[str, Any]) -> Exception:
     """
     exc_cls = load_class(data["type_name"])
     return exc_cls(data["msg"])
+
+
+def _format_json(data: Any) -> str:
+    """Produce a formatted JSON string with preset options."""
+    return json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2)
