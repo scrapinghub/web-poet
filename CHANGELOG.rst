@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.11.0 (YYYY-MM-DD)
+0.11.0 (2023-04-24)
 -------------------
 
 * JMESPath_ support is now available: you can use :meth:`.WebPage.jmespath` and
