@@ -201,7 +201,7 @@ intersphinx_mapping = {
         None,
     ),
     "url-matcher": (
-        "https://url-matcher.readthedocs.io/en/stable/",
+        "https://url-matcher.readthedocs.io/en/latest/",
         None,
     ),
     "parsel": (

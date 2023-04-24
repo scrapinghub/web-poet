@@ -64,7 +64,7 @@ Getting the output item
 =======================
 
 You should :ref:`include your page object classes into a page object
-registry <rules-intro>`, e.g. decorate them with :func:`~.handle_urls`:
+registry <rules>`, e.g. decorate them with :func:`~.handle_urls`:
 
 .. literalinclude:: code-examples/register.py
 

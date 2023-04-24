@@ -48,9 +48,9 @@ framework further to:
     module as possible.
 
 -   Support returning a :ref:`page object <page-objects>` given a target URL
-    and a desired :ref:`output item type <items>`, using
-    ``web_poet.default_registry`` to determine the right :ref:`page
-    object class <page-object-classes>` to use.
+    and a desired :ref:`output item type <items>`, determining the right
+    :ref:`page object class <page-object-classes>` to use based on :ref:`rules
+    <framework-rules>`.
 
 -   Allow users to request an :ref:`output item <items>` directly, instead of
     requesting a page object just to call its ``to_item`` method.
