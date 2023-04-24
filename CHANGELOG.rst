@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.11.0 (YYYY-MM-DD)
+-------------------
+
+* JMESPath_ support is now available: you can use :meth:`.WebPage.jmespath` and
+  :meth:`.HttpResponse.jmespath` to run queries on JSON responses.
+* The testing framework now supports page objects that raise exceptions from
+  the ``to_item`` method.
+
+.. _JMESPath: https://jmespath.org/
+
 0.10.0 (2023-04-19)
 -------------------
 
