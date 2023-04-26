@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Optional, Type, TypeVar, Union
+from typing import Any, Iterable, Optional, Type, TypeVar, Union, cast
 
 import dateutil.parser
 import dateutil.tz
@@ -30,6 +30,7 @@ from .exceptions import (
     ItemValueIncorrect,
     WrongExceptionRaised,
 )
+from .itemadapter import WebPoetTestItemAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -114,10 +115,16 @@ class Fixture:
             return {}
         return json.loads(self.meta_path.read_bytes())
 
+    def _get_adapter_cls(self) -> Type[ItemAdapter]:
+        type_name = self.get_meta().get("adapter_type_name")
+        if not type_name:
+            return WebPoetTestItemAdapter
+        return cast(Type[ItemAdapter], load_class(type_name))
+
     def _get_output(self) -> dict:
         page = self.get_page()
         item = asyncio.run(ensure_awaitable(page.to_item()))
-        return ItemAdapter(item).asdict()
+        return self._get_adapter_cls()(item).asdict()
 
     @memoizemethod_noargs
     def get_output(self) -> dict:
@@ -138,10 +145,9 @@ class Fixture:
             self._output_error = e
             raise
 
-    @classmethod
-    def item_to_json(cls, item: Any) -> str:
+    def item_to_json(self, item: Any) -> str:
         """Convert an item to a JSON string."""
-        return _format_json(ItemAdapter(item).asdict())
+        return _format_json(self._get_adapter_cls()(item).asdict())
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
@@ -262,12 +268,12 @@ class Fixture:
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
 
-        if item is not None:
-            with fixture.output_path.open("w") as f:
-                f.write(cls.item_to_json(item))
-
         if meta:
             fixture.meta_path.write_text(_format_json(meta))
+
+        if item is not None:
+            with fixture.output_path.open("w") as f:
+                f.write(fixture.item_to_json(item))
 
         if exception:
             exc_data = _exception_to_dict(exception)

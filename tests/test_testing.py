@@ -1,14 +1,16 @@
 import datetime
 import json
 import sys
+from collections import deque
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import attrs
 import dateutil.tz
 import pytest
 import time_machine
 from itemadapter import ItemAdapter
+from itemadapter.adapter import DictAdapter
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
@@ -63,6 +65,36 @@ class MyItemPage(WebPage):
 class MyItemPage2(WebPage):
     async def to_item(self) -> dict:
         return {"foo": None}
+
+
+class CapitalizingDictAdapter(DictAdapter):
+    def __getitem__(self, field_name: str) -> Any:
+        item = super().__getitem__(field_name)
+        if isinstance(item, str):
+            return item.capitalize()
+        return item
+
+
+class CustomItemAdapter(ItemAdapter):
+    ADAPTER_CLASSES = deque([CapitalizingDictAdapter])
+
+
+def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
+    item = {"foo": "bar"}
+    meta = {"adapter_type_name": get_fq_class_name(CustomItemAdapter)}
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage)
+
+    fixture = Fixture.save(
+        base_dir, inputs=[book_list_html_response], item=item, meta=meta
+    )
+    saved_output = json.loads(fixture.output_path.read_bytes())
+    assert saved_output["foo"] == "Bar"
+
+    loaded_fixture = Fixture(base_dir / "test-1")
+    loaded_output = loaded_fixture.get_output()
+    assert loaded_output["foo"] == "Bar"
+    actual_output = loaded_fixture.get_expected_output()
+    assert actual_output["foo"] == "Bar"
 
 
 def _save_fixture(
