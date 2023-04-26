@@ -25,7 +25,7 @@ setup(
         "multidict",
         "w3lib >= 1.22.0",
         "async-lru >= 1.0.3",
-        "itemadapter >= 0.7.0",
+        "itemadapter >= 0.8.0",
         "andi",
         "python-dateutil",
         "time-machine",
