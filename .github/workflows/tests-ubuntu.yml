@@ -21,7 +21,7 @@ jobs:
         include:
           - python-version: '3.11'
             env:
-              TOXENV: oldpytest
+              TOXENV: old
 
     steps:
     - uses: actions/checkout@v3
@@ -49,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.11']
-        tox-job: ["mypy", "docs", "linters", "types"]
+        tox-job: ["mypy", "docs", "linters", "types", "twinecheck"]
 
     steps:
     - uses: actions/checkout@v3

@@ -67,6 +67,7 @@ Mixins
 
 .. autoclass:: web_poet.mixins.ResponseShortcutsMixin
    :members:
+   :inherited-members:
    :no-special-members:
 
 Requests

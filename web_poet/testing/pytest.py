@@ -5,13 +5,16 @@ from typing import Iterable, List, Optional, Set, Union
 import pytest
 
 from web_poet.testing.exceptions import (
+    ExceptionNotRaised,
     FieldMissing,
     FieldsUnexpected,
     FieldValueIncorrect,
     ItemValueIncorrect,
+    WrongExceptionRaised,
 )
-from web_poet.testing.fixture import OUTPUT_FILE_NAME, Fixture
+from web_poet.testing.fixture import EXCEPTION_FILE_NAME, OUTPUT_FILE_NAME, Fixture
 from web_poet.testing.utils import comparison_error_message
+from web_poet.utils import get_fq_class_name
 
 # https://github.com/pytest-dev/pytest/discussions/10261
 _version_tuple = getattr(pytest, "version_tuple", None)
@@ -57,6 +60,12 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
     def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:
         """Return a list of children (items and collectors) for this
         collection node."""
+        if self.fixture.exception_path.exists():
+            return [
+                WebPoetExpectedException.from_parent(
+                    parent=self, name="TO_ITEM_RAISES", fixture=self.fixture
+                )
+            ]
         if self.config.getoption("WEB_POET_TEST_PER_ITEM", default=False):
             return [
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
@@ -144,6 +153,42 @@ class WebPoetNoToItemException(_WebPoetItem):
         )
 
 
+class WebPoetExpectedException(_WebPoetItem):
+    def runtest(self) -> None:
+        self.fixture.assert_toitem_exception()
+
+    def reportinfo(self):
+        return (
+            self._path,
+            0,
+            f"{self.fixture.short_name}: to_item raises {self.fixture.get_expected_exception().__class__.__name__}",
+        )
+
+    def repr_failure(self, excinfo, style=None):
+        expected = self.fixture.get_expected_exception()
+        if isinstance(excinfo.value, ExceptionNotRaised):
+            return (
+                f"to_item() didn't raise an exception."
+                f" {get_fq_class_name(type(expected))} was expected."
+            )
+        if isinstance(excinfo.value, WrongExceptionRaised):
+            got = excinfo.value.__cause__
+            if _new_pytest:
+                from pytest import ExceptionInfo
+            else:
+                from _pytest._code import ExceptionInfo
+            inner_excinfo = ExceptionInfo.from_exc_info(
+                (type(got), got, got.__traceback__)
+            )
+            return (
+                f"to_item() raised a wrong exception. Expected"
+                f" {get_fq_class_name(type(expected))}, got"
+                f" {get_fq_class_name(type(got))}.\n\n"
+                + str(super().repr_failure(inner_excinfo, style))
+            )
+        return super().repr_failure(excinfo, style)
+
+
 class WebPoetFieldItem(_WebPoetItem):
     def __init__(self, *, field_name: str, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -183,7 +228,7 @@ _found_type_dirs: Set[Path] = set()
 def collect_file_hook(
     file_path: Path, parent: pytest.Collector
 ) -> Optional[pytest.Collector]:
-    if file_path.name == OUTPUT_FILE_NAME:
+    if file_path.name in {OUTPUT_FILE_NAME, EXCEPTION_FILE_NAME}:
         testcase_dir = file_path.parent
         type_dir = testcase_dir.parent
         fixture = Fixture(testcase_dir)
