@@ -322,3 +322,42 @@ The coverage for page object code is reported correctly if tools such as
 `coverage`_ are used when running web-poet tests.
 
 .. _coverage: https://coverage.readthedocs.io/
+
+Item adapters
+=============
+
+The testing framework uses the itemadapter_ library to convert items to dicts
+when storing them in fixtures and when comparing the expected and the actual
+output. As adapters may influence the resulting dicts, it's important to use
+the same adapter in both cases and it may be useful to use a different adapter
+in tests and in production (for example, you may want to omit empty fields in
+production but be able to distinguish between empty and absent fields in
+tests). For this you can set the ``adapter_type_name`` field in the metadata
+dictionary to the type name of a class that inherits from
+:class:`itemadapter.ItemAdapter` and has the adapter(s) you want to use in
+tests in its ``ADAPTER_CLASSES`` attribute (see `the relevant itemadapter
+docs`_ for more information). An example::
+
+    from collections import deque
+
+    from itemadapter import ItemAdapter
+    from itemadapter.adapter import DictAdapter
+
+
+    class MyAdapter(DictAdapter):
+        # any needed customization
+        ...
+
+    class MyItemAdapter(ItemAdapter):
+        ADAPTER_CLASSES = deque([MyAdapter])
+
+You can then put the fully qualified name of ``MyItemAdapter`` into
+``adapter_type_name`` and it will be used by the testing framework.
+
+If ``adapter_type_name`` is not set,
+:class:`~web_poet.testing.itemadapter.WebPoetTestItemAdapter` will be used.
+It works like :class:`itemadapter.ItemAdapter` but doesn't change behavior when
+:attr:`itemadapter.ItemAdapter.ADAPTER_CLASSES` is modified.
+
+.. _itemadapter: https://github.com/scrapy/itemadapter
+.. _the relevant itemadapter docs: https://github.com/scrapy/itemadapter/#multiple-adapter-classes
