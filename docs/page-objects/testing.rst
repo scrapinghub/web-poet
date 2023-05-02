@@ -78,14 +78,16 @@ it, that contains data for Page Object inputs and output::
             ├── meta.json
             └── output.json
 
+.. _fixture-save:
+
 :func:`web_poet.testing.Fixture.save` can be used to create a fixture inside a
 Page Object directory from an iterable of dependencies, an output item and an
 optional metadata dictionary. It can optionally take a name for the fixture
 directory. By default it uses incrementing names "test-1", "test-2" etc.
 
 .. note::
-    ``output.json`` contains a result of
-    ``ItemAdapter(page_object.to_item()).asdict()`` saved as JSON.
+    ``output.json`` contains a result of ``page_object.to_item()`` converted to
+    a dict using the itemadapter_ library and saved as JSON.
 
 After generating a fixture you can edit ``output.json`` to modify expected
 field values and add new fields, which is useful when creating tests for code
@@ -194,9 +196,10 @@ Handling time fields
 Sometimes output of a page object might depend on the current time. For
 example, the item may contain the scraping datetime, or a current timestamp may
 be used to build some URLs. When a test runs at a different time it will break.
-To avoid this the metadata dictionary can contain a ``frozen_time`` field set
-to the time value used when generating the test. This will instruct the test
-runner to use the same time value so that field comparisons are still correct.
+To avoid this :ref:`the metadata dictionary <fixture-save>` can contain a
+``frozen_time`` field set to the time value used when generating the test. This
+will instruct the test runner to use the same time value so that field
+comparisons are still correct.
 
 The value can be any string understood by `dateutil`_. If it doesn't include
 timezone information, the local time of the machine will be assumed. If it
@@ -322,3 +325,47 @@ The coverage for page object code is reported correctly if tools such as
 `coverage`_ are used when running web-poet tests.
 
 .. _coverage: https://coverage.readthedocs.io/
+
+.. _web-poet-testing-adapters:
+
+Item adapters
+=============
+
+The testing framework uses the itemadapter_ library to convert items to dicts
+when storing them in fixtures and when comparing the expected and the actual
+output. As adapters may influence the resulting dicts, it's important to use
+the same adapter when generating and running the tests.
+
+It may also be useful to use different adapters in tests and in production. For
+example, you may want to omit empty fields in production, but be able to
+distinguish between empty and absent fields in tests.
+
+For this you can set the ``adapter`` field in :ref:`the metadata dictionary
+<fixture-save>` to the class that inherits from
+:class:`itemadapter.ItemAdapter` and has the adapter(s) you want to use in
+tests in its ``ADAPTER_CLASSES`` attribute (see `the relevant itemadapter
+docs`_ for more information). An example::
+
+    from collections import deque
+
+    from itemadapter import ItemAdapter
+    from itemadapter.adapter import DictAdapter
+
+
+    class MyAdapter(DictAdapter):
+        # any needed customization
+        ...
+
+    class MyItemAdapter(ItemAdapter):
+        ADAPTER_CLASSES = deque([MyAdapter])
+
+You can then put the ``MyItemAdapter`` class object into ``adapter`` and it
+will be used by the testing framework.
+
+If ``adapter`` is not set,
+:class:`~web_poet.testing.itemadapter.WebPoetTestItemAdapter` will be used.
+It works like :class:`itemadapter.ItemAdapter` but doesn't change behavior when
+:attr:`itemadapter.ItemAdapter.ADAPTER_CLASSES` is modified.
+
+.. _itemadapter: https://github.com/scrapy/itemadapter
+.. _the relevant itemadapter docs: https://github.com/scrapy/itemadapter/#multiple-adapter-classes
