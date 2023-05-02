@@ -81,7 +81,7 @@ class CustomItemAdapter(ItemAdapter):
 
 def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
     item = {"foo": "bar"}
-    meta = {"adapter_type_name": get_fq_class_name(CustomItemAdapter)}
+    meta = {"adapter": CustomItemAdapter}
     base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage)
 
     fixture = Fixture.save(

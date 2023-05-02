@@ -338,8 +338,8 @@ It may also be useful to use different adapters in tests and in production. For
 example, you may want to omit empty fields in production, but be able to
 distinguish between empty and absent fields in tests.
 
-For this you can set the ``adapter_type_name`` field in :ref:`the metadata
-dictionary <fixture-save>` to the type name of a class that inherits from
+For this you can set the ``adapter`` field in :ref:`the metadata dictionary
+<fixture-save>` to the class that inherits from
 :class:`itemadapter.ItemAdapter` and has the adapter(s) you want to use in
 tests in its ``ADAPTER_CLASSES`` attribute (see `the relevant itemadapter
 docs`_ for more information). An example::
@@ -357,10 +357,10 @@ docs`_ for more information). An example::
     class MyItemAdapter(ItemAdapter):
         ADAPTER_CLASSES = deque([MyAdapter])
 
-You can then put the fully qualified name of ``MyItemAdapter`` into
-``adapter_type_name`` and it will be used by the testing framework.
+You can then put the ``MyItemAdapter`` class object into ``adapter`` and it
+will be used by the testing framework.
 
-If ``adapter_type_name`` is not set,
+If ``adapter`` is not set,
 :class:`~web_poet.testing.itemadapter.WebPoetTestItemAdapter` will be used.
 It works like :class:`itemadapter.ItemAdapter` but doesn't change behavior when
 :attr:`itemadapter.ItemAdapter.ADAPTER_CLASSES` is modified.

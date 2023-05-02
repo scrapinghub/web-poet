@@ -19,7 +19,7 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable, memoizemethod_noargs
+from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
 
 from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
@@ -113,13 +113,16 @@ class Fixture:
         """Return the test metadata."""
         if not self.meta_path.exists():
             return {}
-        return json.loads(self.meta_path.read_bytes())
+        meta_dict = json.loads(self.meta_path.read_bytes())
+        if meta_dict.get("adapter"):
+            meta_dict["adapter"] = load_class(meta_dict["adapter"])
+        return meta_dict
 
     def _get_adapter_cls(self) -> Type[ItemAdapter]:
-        type_name = self.get_meta().get("adapter_type_name")
-        if not type_name:
+        cls = self.get_meta().get("adapter")
+        if not cls:
             return WebPoetTestItemAdapter
-        return cast(Type[ItemAdapter], load_class(type_name))
+        return cast(Type[ItemAdapter], cls)
 
     def _get_output(self) -> dict:
         page = self.get_page()
@@ -269,6 +272,8 @@ class Fixture:
         storage.write(serialized_inputs)
 
         if meta:
+            if meta.get("adapter"):
+                meta["adapter"] = get_fq_class_name(meta["adapter"])
             fixture.meta_path.write_text(_format_json(meta))
 
         if item is not None:
