@@ -326,6 +326,8 @@ The coverage for page object code is reported correctly if tools such as
 
 .. _coverage: https://coverage.readthedocs.io/
 
+.. _web-poet-testing-adapters:
+
 Item adapters
 =============
 
