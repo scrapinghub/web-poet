@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, ensure_awaitable
+from web_poet.utils import cached_method, callable_has_parameter, ensure_awaitable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -110,8 +110,8 @@ def field(
                     processor_functions = []
                 processors: List[Tuple[Callable, bool]] = []
                 for processor_function in processor_functions:
-                    sig = inspect.signature(processor_function)
-                    processors.append((processor_function, "page" in sig.parameters))
+                    takes_page = callable_has_parameter(processor_function, "page")
+                    processors.append((processor_function, takes_page))
                 method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)
