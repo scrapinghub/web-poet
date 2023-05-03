@@ -143,7 +143,7 @@ tie as follows:
 
     .. code-block:: python
 
-        @handle_urls("example.com", priority=501)
+        @handle_urls("example.com", priority=510)
         class PriorityPage(ItemPage[MyItem]):
             ...
 
@@ -234,7 +234,7 @@ to solve the conflict:
         from package1 import A
         from web_poet import handle_urls
 
-        @handle_urls(..., priority=501)
+        @handle_urls(..., priority=510)
         class NewA(A):
             pass
 
