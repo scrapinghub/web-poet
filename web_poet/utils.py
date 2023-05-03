@@ -12,6 +12,15 @@ from async_lru import alru_cache
 from url_matcher import Patterns
 
 
+def callable_has_argument(obj, kwarg):
+    try:
+        sig = inspect.signature(obj)
+    except ValueError:  # built-in, e.g. int
+        return False
+    else:
+        return kwarg in sig.parameters
+
+
 def get_fq_class_name(cls: type) -> str:
     """Return the fully qualified name for a type.
 
