@@ -110,8 +110,13 @@ def field(
                     processor_functions = []
                 processors: List[Tuple[Callable, bool]] = []
                 for processor_function in processor_functions:
-                    sig = inspect.signature(processor_function)
-                    processors.append((processor_function, "page" in sig.parameters))
+                    try:
+                        sig = inspect.signature(processor_function)
+                    except ValueError:
+                        takes_page = False
+                    else:
+                        takes_page = "page" in sig.parameters
+                    processors.append((processor_function, takes_page))
                 method = self._processed(self.original_method, processors)
                 if cached:
                     method = cached_method(method)

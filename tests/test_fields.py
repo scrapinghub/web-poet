@@ -721,6 +721,17 @@ def test_field_processors_super() -> None:
     assert page2.desc == "desc 2 "
 
 
+def test_field_processors_builtin() -> None:
+    @attrs.define
+    class Page(ItemPage):
+        @field(out=[int])
+        def value(self):
+            return "1"
+
+    page = Page()
+    assert page.value == 1
+
+
 def test_field_mixin() -> None:
     class A(ItemPage):
         @field
