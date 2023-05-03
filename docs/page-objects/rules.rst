@@ -9,9 +9,10 @@ object class <page-object-classes>` to use based on user input, i.e. the target
 URL and an output class (a :ref:`page object class <page-object-classes>` or an
 :ref:`item class <items>`).
 
-Rules are necessary to enable using an item class as output class, and can also
-be useful as documentation or to get information about page object classes
-programmatically.
+Rules are necessary if you want to use an item class as output class, because
+they indicate which page object class to use to generate a given item class.
+Rules can also be useful as documentation or to get information about page
+object classes programmatically.
 
 :ref:`Rule precedence <rule-precedence>` can also be useful. For example, to
 implement generic page object classes that you can override for specific
