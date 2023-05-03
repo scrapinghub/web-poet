@@ -83,8 +83,8 @@ For details and more examples, see the :ref:`url-matcher documentation
 When using the :func:`~handle_urls` decorator, its ``include``, ``exclude``,
 and ``priority`` parameters are used to create a :class:`~url_matcher.Patterns`
 object. When creating an :class:`~.ApplyRule` object manually, you must create
-a :class:`~url_matcher.Patterns` object and pass it to the ``for_patterns``
-parameter of :class:`~.ApplyRule`.
+a :class:`~url_matcher.Patterns` object yourself and pass it to the
+``for_patterns`` parameter of :class:`~.ApplyRule`.
 
 
 .. _rule-precedence:
