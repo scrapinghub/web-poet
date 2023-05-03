@@ -181,8 +181,8 @@ can then refactor your ``BookPage`` class as follows:
     class BookPage(WebPage):
         def to_item(self) -> dict:
             return {
-                "url": self.response.url,
-                "title": self.response.css("h1").get(),
+                "url": self..url,
+                "title": self.css("h1").get(),
             }
 
 At this point you may be wondering why web-poet requires you to write a class
@@ -224,11 +224,13 @@ What about the implementation of the ``download`` function? How would you
 implement that in web-poet? Well, ideally, you wouldn’t.
 
 To parse data from a web page using web-poet, you would only need to write the
-parsing part, e.g. the ``BookPage`` page object class above.
+parsing part, e.g. the ``BookPage`` :ref:`page object class
+<page-object-classes>` above.
 
 Then, you let a :ref:`web-poet framework <frameworks>` handle the download part
-for you. You pass that framework the ``BookPage`` class and the URL of a web
-page to parse, and that's it:
+for you. You pass that framework the URL of a web page to parse, and either a
+page object class (the ``BookPage`` class here) or an :ref:`item class
+<items>`, and that's it:
 
 .. code-block:: python
 
@@ -236,8 +238,8 @@ page to parse, and that's it:
 
 web-poet does *not* provide any framework, beyond :ref:`an example one featured
 in the tutorial <tutorial-create-page-object>` and not intended for production.
-The role of web-poet is to define a standard on how to write parsing logic so
-that it can be reused with different frameworks.
+The role of web-poet is to define a specification on how to write parsing logic
+so that it can be reused with different frameworks.
 
 :ref:`Page object classes <page-object-classes>` should be flexible enough to
 be used with very different frameworks, including:

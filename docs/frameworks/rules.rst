@@ -6,7 +6,7 @@ Supporting rules
 
 Ideally, a framework should support returning the right :ref:`page object
 <page-objects>` or :ref:`output item <items>` given a target URL and a desired
-:ref:`output item type <items>` when :ref:`rules <rules>` are used.
+:ref:`output item class <items>` when :ref:`rules <rules>` are used.
 
 To provide basic support for rules in your framework, use the
 :class:`~.RulesRegistry` object at ``web_poet.default_registry`` to choose

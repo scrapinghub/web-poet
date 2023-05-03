@@ -70,9 +70,9 @@ registry <rules>`, e.g. decorate them with :func:`~.handle_urls`:
 
 Then, provided your page object class code is imported (see
 :func:`~web_poet.rules.consume_modules`), your :ref:`framework <frameworks>`
-can build the output item after you provide the required input, such as the
-target URL and the desired :ref:`output item class <items>`, as :ref:`shown in
-the tutorial <tutorial-create-page-object>`.
+can build the output item after you provide the target URL and the desired
+:ref:`output item class <items>`, as :ref:`shown in the tutorial
+<tutorial-create-page-object>`.
 
 Your framework chooses the right page object class based on your input
 parameters, downloads the required data, builds a page object, and calls the
