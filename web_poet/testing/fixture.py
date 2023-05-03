@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Optional, Type, TypeVar, Union
+from typing import Any, Iterable, Optional, Type, TypeVar, Union, cast
 
 import dateutil.parser
 import dateutil.tz
@@ -19,7 +19,7 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable, memoizemethod_noargs
+from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
 
 from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
@@ -30,6 +30,7 @@ from .exceptions import (
     ItemValueIncorrect,
     WrongExceptionRaised,
 )
+from .itemadapter import WebPoetTestItemAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -112,12 +113,21 @@ class Fixture:
         """Return the test metadata."""
         if not self.meta_path.exists():
             return {}
-        return json.loads(self.meta_path.read_bytes())
+        meta_dict = json.loads(self.meta_path.read_bytes())
+        if meta_dict.get("adapter"):
+            meta_dict["adapter"] = load_class(meta_dict["adapter"])
+        return meta_dict
+
+    def _get_adapter_cls(self) -> Type[ItemAdapter]:
+        cls = self.get_meta().get("adapter")
+        if not cls:
+            return WebPoetTestItemAdapter
+        return cast(Type[ItemAdapter], cls)
 
     def _get_output(self) -> dict:
         page = self.get_page()
         item = asyncio.run(ensure_awaitable(page.to_item()))
-        return ItemAdapter(item).asdict()
+        return self._get_adapter_cls()(item).asdict()
 
     @memoizemethod_noargs
     def get_output(self) -> dict:
@@ -138,10 +148,9 @@ class Fixture:
             self._output_error = e
             raise
 
-    @classmethod
-    def item_to_json(cls, item: Any) -> str:
+    def item_to_json(self, item: Any) -> str:
         """Convert an item to a JSON string."""
-        return _format_json(ItemAdapter(item).asdict())
+        return _format_json(self._get_adapter_cls()(item).asdict())
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
@@ -262,12 +271,14 @@ class Fixture:
         storage = SerializedDataFileStorage(fixture.input_path)
         storage.write(serialized_inputs)
 
+        if meta:
+            if meta.get("adapter"):
+                meta["adapter"] = get_fq_class_name(meta["adapter"])
+            fixture.meta_path.write_text(_format_json(meta))
+
         if item is not None:
             with fixture.output_path.open("w") as f:
-                f.write(cls.item_to_json(item))
-
-        if meta:
-            fixture.meta_path.write_text(_format_json(meta))
+                f.write(fixture.item_to_json(item))
 
         if exception:
             exc_data = _exception_to_dict(exception)
