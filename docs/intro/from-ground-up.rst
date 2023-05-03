@@ -181,7 +181,21 @@ can then refactor your ``BookPage`` class as follows:
     class BookPage(WebPage):
         def to_item(self) -> dict:
             return {
-                "url": self..url,
+                "url": self.response.url,
+                "title": self.response.css("h1").get(),
+            }
+
+:class:`~.WebPage` even provides shortcuts for some response attributes and
+methods:
+
+.. code-block:: python
+
+    from web_poet import WebPage
+
+    class BookPage(WebPage):
+        def to_item(self) -> dict:
+            return {
+                "url": self.url,
                 "title": self.css("h1").get(),
             }
 
