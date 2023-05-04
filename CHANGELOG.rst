@@ -2,6 +2,14 @@
 Changelog
 =========
 
+0.12.0 (to be released)
+-----------------------
+
+* The :ref:`testing framework <web-poet-testing>` now allows defining a
+  :ref:`custom item adapter <web-poet-testing-adapters>`.
+* Fixed built-in Python types, e.g. ``int``, not working as :ref:`field
+  processors <field-processors>`.
+
 0.11.0 (2023-04-24)
 -------------------
 
