@@ -59,6 +59,9 @@ define as inputs for a page object class, including:
 -   :class:`~web_poet.page_inputs.page_params.PageParams`, to receive data from
     the crawling code.
 
+-   :class:`~web_poet.page_inputs.stats.Stats`, to write key-value data pairs
+    during parsing that you can inspect later, e.g. for debugging purposes.
+
 -   :class:`~web_poet.page_inputs.browser.BrowserHtml`, an HTML rendering of
     the `Document Object Model`_ of a web page.
 
