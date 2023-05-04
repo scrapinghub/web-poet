@@ -111,8 +111,8 @@ def test_serialization(book_list_html_response) -> None:
         book_list_html_response,
         url,
         page_params,
-        stats,
         ResponseData(book_list_html_response),
+        stats,
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
