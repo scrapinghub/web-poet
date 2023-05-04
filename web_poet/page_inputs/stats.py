@@ -1,7 +1,8 @@
+from abc import ABC
 from typing import Any
 
 
-class Stats:
+class Stats(ABC):
     """Stat collector."""
 
     def __init__(self):
