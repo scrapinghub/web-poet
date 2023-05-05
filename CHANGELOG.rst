@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.12.0 (to be released)
------------------------
+0.12.0 (2023-05-05)
+-------------------
 
 * The :ref:`testing framework <web-poet-testing>` now allows defining a
   :ref:`custom item adapter <web-poet-testing-adapters>`.
