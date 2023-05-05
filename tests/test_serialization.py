@@ -10,7 +10,6 @@ from web_poet import (
     Injectable,
     PageParams,
     ResponseUrl,
-    Stats,
     WebPage,
 )
 from web_poet.page_inputs.url import _Url
@@ -76,15 +75,12 @@ def test_serialization(book_list_html_response) -> None:
         url: ResponseUrl
         params: PageParams
         data: ResponseData
-        stats: Stats
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
     page_params = PageParams(foo="bar")
-    stats = Stats()
-    stats.set("foo", "bar")
 
-    serialized_deps = serialize([book_list_html_response, url, page_params, stats])
+    serialized_deps = serialize([book_list_html_response, url, page_params])
     info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
@@ -102,17 +98,10 @@ def test_serialization(book_list_html_response) -> None:
         "PageParams": {
             "json": b'{\n  "foo": "bar"\n}',
         },
-        "Stats": {
-            "json": b'{\n  "foo": "bar"\n}',
-        },
     }
 
     po = MyWebPage(
-        book_list_html_response,
-        url,
-        page_params,
-        ResponseData(book_list_html_response),
-        stats,
+        book_list_html_response, url, page_params, ResponseData(book_list_html_response)
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)

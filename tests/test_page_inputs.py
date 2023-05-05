@@ -15,7 +15,6 @@ from web_poet.page_inputs import (
     HttpResponse,
     HttpResponseBody,
     HttpResponseHeaders,
-    Stats,
 )
 from web_poet.page_inputs.http import request_fingerprint
 
@@ -608,29 +607,3 @@ def test_request_fingerprint() -> None:
     req10 = HttpRequest(url="http://toscrape.com/1", headers=[("a", "b"), ("a", "c")])
     assert request_fingerprint(req1) != request_fingerprint(req10)
     assert request_fingerprint(req8) != request_fingerprint(req10)
-
-
-def test_stats() -> None:
-    stats = Stats()
-
-    stats.set("a", "foo")
-    stats.set("b", None)
-    c = object()
-    stats.set("c", c)
-
-    stats.inc("d")
-    stats.inc("e", 5)
-    stats.inc("f")
-    stats.inc("f")
-    stats.inc("g")
-    stats.inc("g", 2)
-
-    assert stats._stats == {
-        "a": "foo",
-        "b": None,
-        "c": c,
-        "d": 1,
-        "e": 5,
-        "f": 2,
-        "g": 3,
-    }
