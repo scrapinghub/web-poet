@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Any
 
+from web_poet.pages import Injectable
 
-class Stats(ABC):
+
+class Stats(Injectable):
     """Stat collector."""
 
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Type
 
 import attrs
 import pytest
@@ -10,9 +10,9 @@ from web_poet import (
     Injectable,
     PageParams,
     ResponseUrl,
+    Stats,
+    WebPage,
 )
-from web_poet import Stats as WebPoetStats
-from web_poet import WebPage
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -23,7 +23,7 @@ from web_poet.serialization import (
     serialize,
     serialize_leaf,
 )
-from web_poet.serialization.functions import _DummyStats
+from web_poet.serialization.dummies import DummyStats
 
 
 def _assert_webpages_equal(p1: WebPage, p2: WebPage) -> None:
@@ -72,26 +72,18 @@ def test_serialization(book_list_html_response) -> None:
     class ResponseData(Injectable):
         response: HttpResponse
 
-    class FrameworkStats(WebPoetStats):
-        def set(self, key: str, value: Any) -> None:
-            pass
-
-        def inc(self, key: str, value: int = 1) -> None:
-            pass
-
     @attrs.define
     class MyWebPage(WebPage):
         url: ResponseUrl
         params: PageParams
         data: ResponseData
-        stats: WebPoetStats
+        stats: Stats
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
     page_params = PageParams(foo="bar")
-    stats = FrameworkStats()
 
-    serialized_deps = serialize([book_list_html_response, url, page_params, stats])
+    serialized_deps = serialize([book_list_html_response, url, page_params])
     info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
@@ -109,7 +101,6 @@ def test_serialization(book_list_html_response) -> None:
         "PageParams": {
             "json": b'{\n  "foo": "bar"\n}',
         },
-        "Stats": {},
     }
 
     po = MyWebPage(
@@ -117,7 +108,7 @@ def test_serialization(book_list_html_response) -> None:
         url,
         page_params,
         ResponseData(book_list_html_response),
-        _DummyStats(),
+        DummyStats(),
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
