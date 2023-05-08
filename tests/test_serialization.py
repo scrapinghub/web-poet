@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Any, Type
 
 import attrs
 import pytest
@@ -10,8 +10,9 @@ from web_poet import (
     Injectable,
     PageParams,
     ResponseUrl,
-    WebPage,
 )
+from web_poet import Stats as WebPoetStats
+from web_poet import WebPage
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -22,6 +23,7 @@ from web_poet.serialization import (
     serialize,
     serialize_leaf,
 )
+from web_poet.serialization.functions import _DummyStats
 
 
 def _assert_webpages_equal(p1: WebPage, p2: WebPage) -> None:
@@ -70,17 +72,26 @@ def test_serialization(book_list_html_response) -> None:
     class ResponseData(Injectable):
         response: HttpResponse
 
+    class FrameworkStats(WebPoetStats):
+        def set(self, key: str, value: Any) -> None:
+            pass
+
+        def inc(self, key: str, value: int = 1) -> None:
+            pass
+
     @attrs.define
     class MyWebPage(WebPage):
         url: ResponseUrl
         params: PageParams
         data: ResponseData
+        stats: WebPoetStats
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
     page_params = PageParams(foo="bar")
+    stats = FrameworkStats()
 
-    serialized_deps = serialize([book_list_html_response, url, page_params])
+    serialized_deps = serialize([book_list_html_response, url, page_params, stats])
     info_json = f"""{{
   "_encoding": "utf-8",
   "headers": [],
@@ -98,10 +109,15 @@ def test_serialization(book_list_html_response) -> None:
         "PageParams": {
             "json": b'{\n  "foo": "bar"\n}',
         },
+        "Stats": {},
     }
 
     po = MyWebPage(
-        book_list_html_response, url, page_params, ResponseData(book_list_html_response)
+        book_list_html_response,
+        url,
+        page_params,
+        ResponseData(book_list_html_response),
+        _DummyStats(),
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)

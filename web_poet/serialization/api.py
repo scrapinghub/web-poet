@@ -8,6 +8,7 @@ import andi
 
 import web_poet
 from web_poet import Injectable
+from web_poet.page_inputs.stats import Stats
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
 
@@ -19,6 +20,10 @@ T = TypeVar("T")
 InjectableT = TypeVar("InjectableT", bound=Injectable)
 SerializeFunction = Callable[[Any], SerializedLeafData]
 DeserializeFunction = Callable[[Type[T], SerializedLeafData], T]
+
+# List of abstract base classes that are replaced with dummy implementations
+# during test runs.
+_DUMMY_ABC_LIST = [Stats]
 
 
 class SerializedDataFileStorage:
@@ -126,6 +131,9 @@ def _get_name_for_class(cls: type) -> str:
     """
     if getattr(web_poet, cls.__name__, None) == cls:
         return cls.__name__
+    for dummy_abc in _DUMMY_ABC_LIST:
+        if issubclass(cls, dummy_abc):
+            return dummy_abc.__name__
     return get_fq_class_name(cls)
 
 

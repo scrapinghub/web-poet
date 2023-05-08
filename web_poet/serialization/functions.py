@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Optional, Type, cast
+from typing import Any, Dict, List, Optional, Type, cast
 
 from .. import (
     HttpClient,
@@ -8,6 +8,7 @@ from .. import (
     HttpResponse,
     HttpResponseBody,
     PageParams,
+    Stats,
 )
 from ..exceptions import HttpError
 from ..page_inputs.client import _SavedResponseData
@@ -181,3 +182,22 @@ def _deserialize_PageParams(
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
+
+
+def _serialize_Stats(o: Stats) -> SerializedLeafData:
+    return {}
+
+
+class _DummyStats(Stats):
+    def set(self, key: str, value: Any) -> None:
+        pass
+
+    def inc(self, key: str, value: int = 1) -> None:
+        pass
+
+
+def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:
+    return _DummyStats()
+
+
+register_serialization(_serialize_Stats, _deserialize_Stats)
