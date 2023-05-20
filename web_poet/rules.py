@@ -74,7 +74,7 @@ class ApplyRule:
     If there are multiple rules which match a certain URL, the rule
     to apply is picked based on the priorities set in ``for_patterns``.
 
-    More information regarding its usage in :ref:`rules-intro`.
+    More information regarding its usage in :ref:`rules`.
 
     .. tip::
 
@@ -118,12 +118,10 @@ class RulesRegistry:
 
         It is encouraged to use the ``web_poet.default_registry`` instead of
         creating your own :class:`~.RulesRegistry` instance. Using multiple
-        registries would be unwieldy in most cases (see :ref:`rules-custom-registry`).
+        registries would be unwieldy in most cases.
 
         However, it might be applicable in certain scenarios like storing custom
-        rules to separate it from the ``default_registry``. This :ref:`example
-        <rules-custom-registry>` from the tutorial section may provide some
-        context.
+        rules to separate it from the ``default_registry``.
     """
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
@@ -229,16 +227,14 @@ class RulesRegistry:
         more information about them.
 
         This decorator is able to derive the item class returned by the Page
-        Object (see :ref:`rules-item-class-example` section for some examples). This is
-        important since it marks what type of item the Page Object is capable of
-        returning for the given URL patterns. For certain advanced cases, you can
-        pass a ``to_return`` parameter which replaces any derived values (though
-        this isn't generally recommended).
+        Object. This is important since it marks what type of item the Page
+        Object is capable of returning for the given URL patterns. For certain
+        advanced cases, you can pass a ``to_return`` parameter which replaces
+        any derived values (though this isn't generally recommended).
 
         Passing another Page Object into the ``instead_of`` parameter indicates
         that the decorated Page Object will be used instead of that for the given
-        set of URL patterns. This is the concept of **overrides** (see the
-        :ref:`rules-intro-overrides` section for more info`).
+        set of URL patterns. See :ref:`rule-precedence`.
 
         Any extra parameters are stored as meta information that can be later used.
 
@@ -247,7 +243,7 @@ class RulesRegistry:
         :param to_return: The item class holding the data returned by the Page Object.
             This could be omitted as it could be derived from the ``Returns[ItemClass]``
             or ``ItemPage[ItemClass]`` declaration of the Page Object. See
-            :ref:`item-classes` section. Code example in :ref:`rules-combination` subsection.
+            :ref:`item-classes` section.
         :param exclude: The URLs for which the Page Object should **not** be applied.
         :param priority: The resolution priority in case of `conflicting` rules.
             A conflict happens when the ``include``, ``override``, and ``exclude``
@@ -377,10 +373,7 @@ class RulesRegistry:
     ) -> Mapping[Type[ItemPage], Type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the page object that is
-        **overridden** by the page object in 'value'.
-
-        See example: :ref:`rules-overrides_for-example`.
-        """
+        **overridden** by the page object in 'value'."""
         result: Dict[Type[ItemPage], Type[ItemPage]] = {}
         for replaced_page, matcher in self._overrides_matchers.items():
             if replaced_page is None:
@@ -394,10 +387,7 @@ class RulesRegistry:
         self, url: Union[_Url, str], item_cls: Type
     ) -> Optional[Type]:
         """Return the page object class associated with the given URL that's able
-        to produce the given ``item_cls``.
-
-        See example: :ref:`rules-page_cls_for_item-example`.
-        """
+        to produce the given ``item_cls``."""
         if item_cls is None:
             return None
         matcher = self._item_matchers.get(item_cls)

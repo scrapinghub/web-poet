@@ -4,8 +4,8 @@
 Tutorial
 ========
 
-In this tutorial you will learn to use web-poet as you write web data
-extraction code for book detail pages from `books.toscrape.com`_.
+In this tutorial you will learn to use web-poet as you write web scraping code
+for book detail pages from `books.toscrape.com`_.
 
 .. _books.toscrape.com: http://books.toscrape.com/
 
@@ -18,8 +18,8 @@ To follow this tutorial you must first be familiar with Python_ and have
 Create a project directory
 ==========================
 
-web-poet does not limit how you structure your web-poet web data extraction
-code, beyond the limitations of Python itself.
+web-poet does not limit how you structure your web-poet web scraping code,
+beyond the limitations of Python itself.
 
 However, in this tutorial you will use a specific project directory structure
 designed with web-poet best practices in mind. Consider using a similar project
@@ -30,9 +30,9 @@ First create your project directory: ``tutorial-project/``.
 Within the ``tutorial-project`` directory, create:
 
 -   A ``run.py`` file, a file specific to this tutorial where you will put code
-    to test the execution of your web data extraction code.
+    to test the execution of your web scraping code.
 
--   A ``tutorial`` directory, where you will place your web data extraction code.
+-   A ``tutorial`` directory, where you will place your web scraping code.
 
 Within the ``tutorial-project/tutorial`` directory, create:
 
@@ -110,9 +110,9 @@ many different websites that provide data with a similar data schema.
 Create a page object class
 ==========================
 
-To write web data extraction code with web-poet, you write :ref:`page object
-classes <page-objects>`, Python classes that define how to extract data from a
-given type of input, usually some type of webpage from a specific website.
+To write web parsing code with web-poet, you write :ref:`page object classes
+<page-objects>`, Python classes that define how to extract data from a given
+type of input, usually some type of webpage from a specific website.
 
 In this tutorial you will write a page object class for webpages of
 `books.toscrape.com`_ that show details about a book, such as these:
@@ -147,7 +147,7 @@ In the code above:
         :meth:`~web_poet.pages.WebPage.css`,
         :meth:`~web_poet.pages.WebPage.urljoin`, and
         :meth:`~web_poet.pages.WebPage.xpath`, that make it easier to write
-        web data extraction code.
+        parsing code.
 
 -   ``BookPage`` declares ``Book`` as its return type.
 
@@ -178,7 +178,7 @@ In the code above:
     on the input HTTP response.
 
     Here, ``title`` is not an arbitrary name. It was chosen specifically to
-    match ``Book.title``, so that during web data extraction the value that
+    match ``Book.title``, so that during parsing the value that
     ``BookPage.title`` returns gets mapped to ``Book.title``.
 
 
@@ -212,14 +212,17 @@ And the ``print(item)`` statement should output the following:
    Book(title='The Exiled')
 
 In this tutorial you use ``web_poet.example.get_item``, which is a simple,
-incomplete implementation of the web-poet standard, built specifically for this
-tutorial, for demonstration purposes. In real projects, use instead an actual
-web-poet framework, like `scrapy-poet`_.
+incomplete implementation of the web-poet specification, built specifically for
+this tutorial, for demonstration purposes. In real projects, use instead an
+actual :ref:`web-poet framework <frameworks>`.
 
 ``web_poet.example.get_item`` serves to illustrate the power of web-poet: once
 you have defined your page object class, a web-poet framework only needs 2
-inputs from you: the URL from which you want to extract data, and the desired
-output item class.
+inputs from you:
+
+-   the URL from which you want to extract data, and
+-   the desired output, either a :ref:`page object class <page-object-classes>`
+    or, in this case, an :ref:`item class <items>`.
 
 Notice that you must also call :func:`~web_poet.rules.consume_modules` once
 before your first call to ``get_item``. ``consume_modules`` ensures that the
@@ -253,8 +256,6 @@ Your web-poet framework can take care of everything else:
     from :class:`~web_poet.pages.ItemPage`, which in turn uses all fields of
     ``BookPage`` to create an instance of ``Book``, which you declared as the
     return type of ``BookPage``.
-
-.. _scrapy-poet: https://scrapy-poet.readthedocs.io
 
 
 Extend and override your code
@@ -401,17 +402,17 @@ You may notice that the execution takes longer now. That is because
 ``CategorizedBookPage`` now requires 2 or more requests, to find the value of
 the ``category_rank`` attribute.
 
-If you use ``CategorizedBookPage`` as part of a web data extraction project
-that targets a single book URL, it cannot be helped. If you want to extract the
+If you use ``CategorizedBookPage`` as part of a web scraping project that
+targets a single book URL, it cannot be helped. If you want to extract the
 ``category_rank`` attribute, you need those additional requests. Your only
 option to avoid additional requests is to stop extracting the ``category_rank``
 attribute.
 
-However, if your web data extraction project is targeting all book URLs from
-one or more categories by visiting those category URLs, extracting book URLs
-from them, and then using ``CategorizedBookPage`` with those book URLs as
-input, there is something you can change to save many requests: keep track of
-the positions where you find books as you visit their categories, and pass that
+However, if your web scraping project is targeting all book URLs from one or
+more categories by visiting those category URLs, extracting book URLs from
+them, and then using ``CategorizedBookPage`` with those book URLs as input,
+there is something you can change to save many requests: keep track of the
+positions where you find books as you visit their categories, and pass that
 position to ``CategorizedBookPage`` as additional input.
 
 Extend ``CategorizedBookPage`` in
