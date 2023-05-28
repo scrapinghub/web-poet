@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import abc
-from typing import Union
+from typing import TYPE_CHECKING, Union
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
-from web_poet import RequestUrl, ResponseUrl
+if TYPE_CHECKING:
+    from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
 class SelectorShortcutsMixin:
@@ -63,7 +66,7 @@ class UrlShortcutsMixin:
     def _base_url(self) -> str:
         if self._cached_base_url is None:
             text = self._url_shortcuts_input()[:4096]
-            self._cached_base_url = get_base_url(text, str(self.url))
+            self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
         return self._cached_base_url
 
     def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
@@ -71,6 +74,8 @@ class UrlShortcutsMixin:
 
         If *url* is relative, it is made absolute relative to the base URL of
         *self*."""
+        from web_poet.page_inputs.url import RequestUrl
+
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
@@ -103,7 +108,12 @@ class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
     def _url_shortcuts_input(self) -> str:
         return self.html
 
-    def urljoin(self, url: str) -> str:
+    @property
+    def base_url(self) -> str:
+        """Return the base url of the given response"""
+        return self._base_url
+
+    def urljoin(self, url: str) -> str:  # type: ignore[override]
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
         return str(super().urljoin(url))
