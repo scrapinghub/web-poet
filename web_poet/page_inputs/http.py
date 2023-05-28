@@ -237,9 +237,6 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
     def _selector_input(self) -> str:
         return self.text
 
-    def _url_shortcuts_input(self) -> str:
-        return self.text
-
     @property
     def encoding(self) -> Optional[str]:
         """Encoding of the response"""

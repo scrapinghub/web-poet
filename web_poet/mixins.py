@@ -58,9 +58,8 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
 class UrlShortcutsMixin:
     _cached_base_url = None
 
-    @abc.abstractmethod
     def _url_shortcuts_input(self) -> str:
-        raise NotImplementedError()  # pragma: nocover
+        return self._selector_input()  # type: ignore[attr-defined]
 
     @property
     def _base_url(self) -> str:
@@ -103,9 +102,6 @@ class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
         return self.response.text
 
     def _selector_input(self) -> str:
-        return self.html
-
-    def _url_shortcuts_input(self) -> str:
         return self.html
 
     @property
