@@ -8,7 +8,7 @@ import parsel
 from w3lib.html import get_base_url
 
 if TYPE_CHECKING:
-    from web_poet.page_inputs.url import RequestUrl, ResponseUrl
+    from web_poet.page_inputs.url import RequestUrl, ResponseUrl  # pragma: nocover
 
 
 class SelectorShortcutsMixin:
