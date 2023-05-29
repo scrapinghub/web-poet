@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import abc
+from typing import TYPE_CHECKING, Union
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
+
+if TYPE_CHECKING:
+    from web_poet.page_inputs.url import RequestUrl, ResponseUrl  # pragma: nocover
 
 
 class SelectorShortcutsMixin:
@@ -49,11 +55,34 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
         return sel
 
 
+class UrlShortcutsMixin:
+    _cached_base_url = None
+
+    def _url_shortcuts_input(self) -> str:
+        return self._selector_input()  # type: ignore[attr-defined]
+
+    @property
+    def _base_url(self) -> str:
+        if self._cached_base_url is None:
+            text = self._url_shortcuts_input()[:4096]
+            self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
+        return self._cached_base_url
+
+    def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
+        """Return *url* as an absolute URL.
+
+        If *url* is relative, it is made absolute relative to the base URL of
+        *self*."""
+        from web_poet.page_inputs.url import RequestUrl
+
+        return RequestUrl(urljoin(self._base_url, str(url)))
+
+
 # TODO: when dropping Python 3.7 support,
 # fix untyped ResponseShortcutsMixin.response using typing.Protocol
 
 
-class ResponseShortcutsMixin(SelectableMixin):
+class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 
@@ -78,12 +107,9 @@ class ResponseShortcutsMixin(SelectableMixin):
     @property
     def base_url(self) -> str:
         """Return the base url of the given response"""
-        if self._cached_base_url is None:
-            text = self.html[:4096]
-            self._cached_base_url = get_base_url(text, self.url)
-        return self._cached_base_url
+        return self._base_url
 
-    def urljoin(self, url: str) -> str:
+    def urljoin(self, url: str) -> str:  # type: ignore[override]
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
-        return urljoin(self.base_url, url)
+        return str(super().urljoin(url))

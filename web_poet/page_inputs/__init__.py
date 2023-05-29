@@ -1,4 +1,4 @@
-from .browser import BrowserHtml
+from .browser import BrowserHtml, BrowserResponse
 from .client import HttpClient
 from .http import (
     HttpRequest,

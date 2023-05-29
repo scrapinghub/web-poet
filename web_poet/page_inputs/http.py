@@ -11,11 +11,10 @@ from w3lib.encoding import (
     read_bom,
     resolve_encoding,
 )
-from w3lib.html import get_base_url
 from w3lib.url import canonicalize_url
 
 from web_poet._base import _HttpHeaders
-from web_poet.mixins import SelectableMixin
+from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
 from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
@@ -185,7 +184,7 @@ class HttpRequest:
 
 
 @attrs.define(auto_attribs=False, slots=False, eq=False)
-class HttpResponse(SelectableMixin):
+class HttpResponse(SelectableMixin, UrlShortcutsMixin):
     """A container for the contents of a response, downloaded directly using an
     HTTP client.
 
@@ -216,7 +215,6 @@ class HttpResponse(SelectableMixin):
     _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
 
     _DEFAULT_ENCODING = "ascii"
-    _cached_base_url: Optional[str] = None
     _cached_text: Optional[str] = None
 
     @property
@@ -254,20 +252,6 @@ class HttpResponse(SelectableMixin):
     def json(self) -> Any:
         """Deserialize a JSON document to a Python object."""
         return self.body.json()
-
-    @property
-    def _base_url(self) -> str:
-        if self._cached_base_url is None:
-            text = self.text[:4096]
-            self._cached_base_url = get_base_url(text, str(self.url))
-        return self._cached_base_url
-
-    def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:
-        """Return *url* as an absolute URL.
-
-        If *url* is relative, it is made absolute relative to the base URL of
-        *self*."""
-        return _RequestUrl(urljoin(self._base_url, str(url)))
 
     @memoizemethod_noargs
     def _body_bom_encoding(self) -> Optional[str]:
