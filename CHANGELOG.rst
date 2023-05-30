@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.13.0 (YYYY-MM-DD)
+-------------------
+
+* A new dependency :class:`~.BrowserResponse` has been added. It contains a
+  browser-rendered page URL, status code and HTML.
+* The :ref:`rules` documentation section has been rewritten.
+
 0.12.0 (2023-05-05)
 -------------------
 
