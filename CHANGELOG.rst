@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.13.1 (2023-05-30)
+-------------------
+
+* Fixed an issue with :class:`~.HttpClient` which happens when a response with
+  a non-standard status code is received.
+
 0.13.0 (2023-05-30)
 -------------------
 
