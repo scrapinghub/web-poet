@@ -29,7 +29,7 @@ setup(
         "andi",
         "python-dateutil",
         "time-machine",
-        "packaging",
+        "packaging >= 20.0",
         "backports.zoneinfo; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[
