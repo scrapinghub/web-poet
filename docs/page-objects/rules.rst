@@ -9,7 +9,7 @@ object class <page-object-classes>` to use based on user input, i.e. the target
 URL and the requested output class (a :ref:`page object class
 <page-object-classes>` or an :ref:`item class <items>`).
 
-Rules are necessary if you want to request an item class, because rules tell
+Rules are necessary if you want to request an item instance, because rules tell
 web-poet which page object class to use to generate your item class. Rules can
 also be useful as documentation or to get information about page object classes
 programmatically.
