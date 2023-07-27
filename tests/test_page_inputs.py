@@ -231,7 +231,6 @@ def test_http_response_headers_from_bytes_dict() -> None:
 
 
 def test_http_response_headers_from_bytes_dict_err() -> None:
-
     with pytest.raises(ValueError):
         HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
 
