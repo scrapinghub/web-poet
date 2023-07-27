@@ -1,9 +1,10 @@
 import inspect
 import weakref
+from collections import deque
 from collections.abc import Iterable
 from functools import lru_cache, partial, wraps
 from types import MethodType
-from typing import Any, Callable, List, Optional, TypeVar, Union
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, get_args
 from warnings import warn
 
 import packaging.version
@@ -273,3 +274,25 @@ def str_to_pattern(url_pattern: Union[str, Patterns]) -> Patterns:
     if isinstance(url_pattern, Patterns):
         return url_pattern
     return Patterns([url_pattern])
+
+
+def get_generic_param(
+    cls: type, expected: Union[type, Tuple[type, ...]]
+) -> Optional[type]:
+    """Search the base classes recursively breadth-first for a generic class and return its param.
+
+    Returns the param of the first found class that is a subclass of ``expected``.
+    """
+    visited = set()
+    queue = deque([cls])
+    while queue:
+        node = queue.popleft()
+        visited.add(node)
+        for base in getattr(node, "__orig_bases__", []):
+            origin = getattr(base, "__origin__", None)
+            if origin and issubclass(origin, expected):
+                result = get_args(base)[0]
+                if not isinstance(result, TypeVar):
+                    return result
+            queue.append(base)
+    return None
