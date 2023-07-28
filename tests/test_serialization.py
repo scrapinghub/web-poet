@@ -72,7 +72,7 @@ def test_serialization(book_list_html_response) -> None:
 
     @attrs.define
     class MyWebPage(WebPage):
-        url: ResponseUrl
+        url_: ResponseUrl
         params: PageParams
         data: ResponseData
 
@@ -155,7 +155,7 @@ def test_custom_functions() -> None:
 def test_write_data(book_list_html_response, tmp_path) -> None:
     @attrs.define
     class MyWebPage(WebPage):
-        url: ResponseUrl
+        url_: ResponseUrl
 
     url = ResponseUrl("http://example.com")
 

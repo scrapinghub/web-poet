@@ -8,6 +8,7 @@ import parsel
 from w3lib.html import get_base_url
 
 if TYPE_CHECKING:
+    from web_poet.page_inputs.http import HttpResponse  # pragma: nocover
     from web_poet.page_inputs.url import RequestUrl, ResponseUrl  # pragma: nocover
 
 
@@ -78,10 +79,6 @@ class UrlShortcutsMixin:
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
-# TODO: when dropping Python 3.7 support,
-# fix untyped ResponseShortcutsMixin.response using typing.Protocol
-
-
 class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
@@ -89,15 +86,16 @@ class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
     It requires "response" attribute to be present.
     """
 
+    response: HttpResponse
     _cached_base_url = None
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Shortcut to HTML Response's URL, as a string."""
         return str(self.response.url)
 
     @property
-    def html(self):
+    def html(self) -> str:
         """Shortcut to HTML Response's content."""
         return self.response.text
 
