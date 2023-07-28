@@ -456,7 +456,6 @@ def test_field_with_other_decorators() -> None:
 
 @pytest.mark.asyncio
 async def test_field_with_handle_urls() -> None:
-
     page = ProductPage()
     assert page.name == "name"
     assert page.price == 12.99

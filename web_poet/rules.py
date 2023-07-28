@@ -252,7 +252,6 @@ class RulesRegistry:
         """
 
         def wrapper(cls):
-
             if overrides is not None:
                 msg = (
                     "The 'overrides' parameter in @handle_urls is deprecated. "

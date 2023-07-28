@@ -148,7 +148,6 @@ def test_apply_rule_converter_on_pattern() -> None:
 
 
 def test_apply_rule_kwargs_only() -> None:
-
     params = {
         "use": POTopLevel1,
         "instead_of": POTopLevelOverriden2,
