@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Protocol, Union
 from urllib.parse import urljoin
 
 import parsel
@@ -79,14 +79,17 @@ class UrlShortcutsMixin:
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
-class ResponseShortcutsMixin(SelectableMixin, UrlShortcutsMixin):
+class ResponseProtocol(Protocol):
+    response: HttpResponse
+
+
+class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 
     It requires "response" attribute to be present.
     """
 
-    response: HttpResponse
     _cached_base_url = None
 
     @property
