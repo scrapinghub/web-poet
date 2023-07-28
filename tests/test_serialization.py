@@ -8,6 +8,7 @@ from web_poet import (
     HttpResponse,
     HttpResponseBody,
     Injectable,
+    ItemPage,
     PageParams,
     ResponseUrl,
     WebPage,
@@ -24,7 +25,7 @@ from web_poet.serialization import (
 )
 
 
-def _assert_webpages_equal(p1: WebPage, p2: WebPage) -> None:
+def _assert_pages_equal(p1, p2) -> None:
     assert type(p1) == type(p2)
     assert type(p1.response) == type(p2.response)  # noqa: E721
     assert type(p1.response.body) == type(p2.response.body)  # noqa: E721
@@ -71,8 +72,9 @@ def test_serialization(book_list_html_response) -> None:
         response: HttpResponse
 
     @attrs.define
-    class MyWebPage(WebPage):
-        url_: ResponseUrl
+    class MyWebPage(ItemPage):
+        response: HttpResponse
+        url: ResponseUrl
         params: PageParams
         data: ResponseData
 
@@ -104,7 +106,7 @@ def test_serialization(book_list_html_response) -> None:
         book_list_html_response, url, page_params, ResponseData(book_list_html_response)
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
-    _assert_webpages_equal(po, deserialized_po)
+    _assert_pages_equal(po, deserialized_po)
     assert deserialized_po.data is not None
 
 
@@ -154,8 +156,9 @@ def test_custom_functions() -> None:
 
 def test_write_data(book_list_html_response, tmp_path) -> None:
     @attrs.define
-    class MyWebPage(WebPage):
-        url_: ResponseUrl
+    class MyWebPage(ItemPage):
+        response: HttpResponse
+        url: ResponseUrl
 
     url = ResponseUrl("http://example.com")
 
@@ -178,7 +181,7 @@ def test_write_data(book_list_html_response, tmp_path) -> None:
     po = MyWebPage(book_list_html_response, url)
     deserialized_po = deserialize(MyWebPage, read_serialized_deps)
     assert type(deserialized_po) == MyWebPage
-    _assert_webpages_equal(po, deserialized_po)
+    _assert_pages_equal(po, deserialized_po)
 
 
 def test_extra_files(book_list_html_response, tmp_path) -> None:
