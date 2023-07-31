@@ -42,6 +42,12 @@ To keep your code maintainable, we recommend you to:
     :ref:`page object classes <page-object-classes>`, e.g. using :ref:`field
     processors <field-processors>`.
 
+    Having code that makes item field values different from their input values
+    could hinder the use of future web-poet features, such as `field subset
+    selection`_.
+
+    .. _field subset selection: https://github.com/scrapinghub/web-poet/issues/115
+
 If you are looking for ready-made item classes, check out `zyte-common-items`_.
 
 .. _zyte-common-items: https://zyte-common-items.readthedocs.io/en/latest/index.html
