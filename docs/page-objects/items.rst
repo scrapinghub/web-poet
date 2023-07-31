@@ -42,9 +42,10 @@ To keep your code maintainable, we recommend you to:
     :ref:`page object classes <page-object-classes>`, e.g. using :ref:`field
     processors <field-processors>`.
 
-    Having code that makes item field values different from their input values
-    could hinder the use of future web-poet features, such as `field subset
-    selection`_.
+    Having code that makes item field values different from their counterpart
+    page object field values can subvert the expectations of users of your
+    code, which might need to access page object fields directly, for example
+    for `field subset selection`_.
 
     .. _field subset selection: https://github.com/scrapinghub/web-poet/issues/115
 
