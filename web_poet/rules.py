@@ -22,9 +22,8 @@ from typing import (
 import attrs
 from url_matcher import Patterns, URLMatcher
 
-from web_poet._typing import get_item_cls
 from web_poet.page_inputs.url import _Url
-from web_poet.pages import ItemPage
+from web_poet.pages import ItemPage, get_item_cls
 from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]

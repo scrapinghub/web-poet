@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Generic, List, Optional, TypeVar
 
 import attrs
 import pytest
@@ -230,6 +230,31 @@ async def test_item_page_change_item_type_remove_fields() -> None:
     assert page2.item_cls is Item
     with pytest.raises(TypeError, match="unexpected keyword argument 'price'"):
         await page2.to_item()
+
+
+def test_returns_inheritance() -> None:
+    @attrs.define
+    class MyItem:
+        name: str
+
+    class BasePage(ItemPage[MyItem]):
+        @field
+        def name(self):
+            return "hello"
+
+    MetadataT = TypeVar("MetadataT")
+
+    class HasMetadata(Generic[MetadataT]):
+        pass
+
+    class DummyMetadata:
+        pass
+
+    class Page(BasePage, HasMetadata[DummyMetadata]):
+        pass
+
+    page = Page()
+    assert page.item_cls is MyItem
 
 
 @pytest.mark.asyncio
