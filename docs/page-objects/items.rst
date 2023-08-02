@@ -42,6 +42,11 @@ To keep your code maintainable, we recommend you to:
     :ref:`page object classes <page-object-classes>`, e.g. using :ref:`field
     processors <field-processors>`.
 
+    Having code that makes item field values different from their counterpart
+    page object field values can subvert the expectations of users of your
+    code, which might need to access page object fields directly, for example
+    for field subset selection.
+
 If you are looking for ready-made item classes, check out `zyte-common-items`_.
 
 .. _zyte-common-items: https://zyte-common-items.readthedocs.io/en/latest/index.html
