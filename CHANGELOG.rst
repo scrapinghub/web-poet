@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.14.0 (YYYY-MM-DD)
+0.14.0 (2023-08-03)
 -------------------
 
 * Dropped Python 3.7 support.
