@@ -5,10 +5,10 @@ Changelog
 0.14.0 (YYYY-MM-DD)
 -------------------
 
+* Dropped Python 3.7 support.
 * Now requires ``packaging >= 20.0``.
 * Fixed detection of the :class:`~.Returns` base class.
 * Improved docs.
-* Dropped Python 3.7 support.
 * Updated type hints.
 * Updated CI tools.
 
