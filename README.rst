@@ -28,8 +28,8 @@ web-poet
 
 .. intro starts
 
-``web-poet`` is a Python 3.7+ implementation of the `page object pattern`_ for
-web scraping. It enables writing portable, reusable web data extraction code.
+``web-poet`` is a Python 3.8+ implementation of the `page object pattern`_ for
+web scraping. It enables writing portable, reusable web parsing code.
 
 .. _page object pattern: https://martinfowler.com/bliki/PageObject.html
 

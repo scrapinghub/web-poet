@@ -29,7 +29,7 @@ author = "Zyte Group Ltd"
 # The short X.Y version
 version = ""
 # The full version, including alpha/beta/rc tags
-release = "0.11.0"
+release = "0.14.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -201,7 +201,7 @@ intersphinx_mapping = {
         None,
     ),
     "url-matcher": (
-        "https://url-matcher.readthedocs.io/en/stable/",
+        "https://url-matcher.readthedocs.io/en/latest/",
         None,
     ),
     "parsel": (

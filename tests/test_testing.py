@@ -220,13 +220,18 @@ class MetadataLocalTime(Metadata):
     dateDownloadedLocal: Optional[str] = None
 
 
-def _get_product_item(date: datetime.datetime) -> Product:
+@attrs.define(kw_only=True)
+class ProductLocalTime(Product):
+    metadata: Optional[MetadataLocalTime]
+
+
+def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
     if date.tzinfo is None:
         # convert to the aware object so that date_local_str always includes the offset
         date = date.astimezone()
     date_str = date.astimezone(dateutil.tz.UTC).strftime("%Y-%M-%dT%H:%M:%SZ")
     date_local_str = date.strftime("%Y-%M-%dT%H:%M:%S%z")
-    return Product(
+    return ProductLocalTime(
         url="http://example.com",
         name="foo",
         metadata=MetadataLocalTime(

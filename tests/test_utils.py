@@ -2,12 +2,17 @@ import asyncio
 import inspect
 import random
 import warnings
-from typing import Any
+from typing import Any, Generic, TypeVar
 from unittest import mock
 
 import pytest
 
-from web_poet.utils import _create_deprecated_class, cached_method, ensure_awaitable
+from web_poet.utils import (
+    _create_deprecated_class,
+    cached_method,
+    ensure_awaitable,
+    get_generic_param,
+)
 
 
 class SomeBaseClass:
@@ -466,3 +471,72 @@ async def test_cached_method_async_race() -> None:
         foo.n_called(),
     )
     assert results == [1, 1, 1, 1, 1]
+
+
+ItemT = TypeVar("ItemT")
+
+
+class Item:
+    pass
+
+
+class Item2:
+    pass
+
+
+class MyGeneric(Generic[ItemT]):
+    pass
+
+
+class MyGeneric2(Generic[ItemT]):
+    pass
+
+
+class Base(MyGeneric[ItemT]):
+    pass
+
+
+class BaseSpecialized(MyGeneric[Item]):
+    pass
+
+
+class BaseAny(MyGeneric):
+    pass
+
+
+class Derived(Base):
+    pass
+
+
+class Specialized(BaseSpecialized):
+    pass
+
+
+class SpecializedAdditionalClass(BaseSpecialized, Item2):
+    pass
+
+
+class SpecializedTwice(BaseSpecialized, Base[Item2]):
+    pass
+
+
+class SpecializedTwoGenerics(MyGeneric2[Item2], BaseSpecialized):
+    pass
+
+
+@pytest.mark.parametrize(
+    ["cls", "param"],
+    [
+        (MyGeneric, None),
+        (Base, None),
+        (BaseAny, None),
+        (Derived, None),
+        (BaseSpecialized, Item),
+        (Specialized, Item),
+        (SpecializedAdditionalClass, Item),
+        (SpecializedTwice, Item2),
+        (SpecializedTwoGenerics, Item),
+    ],
+)
+def test_get_generic_param(cls, param) -> None:
+    assert get_generic_param(cls, expected=MyGeneric) == param

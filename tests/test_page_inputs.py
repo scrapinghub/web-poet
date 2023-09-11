@@ -6,7 +6,7 @@ import parsel
 import pytest
 import requests
 
-from web_poet import RequestUrl, ResponseUrl
+from web_poet import BrowserResponse, RequestUrl, ResponseUrl
 from web_poet.page_inputs import (
     BrowserHtml,
     HttpRequest,
@@ -231,7 +231,6 @@ def test_http_response_headers_from_bytes_dict() -> None:
 
 
 def test_http_response_headers_from_bytes_dict_err() -> None:
-
     with pytest.raises(ValueError):
         HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
 
@@ -497,6 +496,16 @@ def test_browser_html() -> None:
     assert html.xpath("//p/text()").getall() == ["Hello, ", "world!"]
     assert html.css("p::text").getall() == ["Hello, ", "world!"]
     assert isinstance(html.selector, parsel.Selector)
+
+
+def test_browser_response() -> None:
+    html = "<html><body><p>Hello, </p><p>world!</p></body></html>"
+    response = BrowserResponse(url="http://example.com", html=html, status=200)
+    assert response.xpath("//p/text()").getall() == ["Hello, ", "world!"]
+    assert response.css("p::text").getall() == ["Hello, ", "world!"]
+    assert isinstance(response.selector, parsel.Selector)
+    assert isinstance(response.html, BrowserHtml)
+    assert str(response.urljoin("products")) == "http://example.com/products"
 
 
 @pytest.mark.parametrize(

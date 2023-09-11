@@ -6,7 +6,7 @@ with open("README.rst") as f:
 
 setup(
     name="web-poet",
-    version="0.11.0",
+    version="0.14.0",
     description="Zyte's Page Object pattern for web scraping",
     long_description=long_description,
     long_description_content_type="text/x-rst",
@@ -29,7 +29,7 @@ setup(
         "andi",
         "python-dateutil",
         "time-machine",
-        "packaging",
+        "packaging >= 20.0",
         "backports.zoneinfo; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[
@@ -39,7 +39,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

@@ -90,8 +90,8 @@ class HttpClient:
         ):
             return
 
-        status = HTTPStatus(response.status)
-        msg = f"{response.status} {status.name} response for {response.url}"
+        status_name = _http_status_name(response.status)
+        msg = f"{response.status} {status_name} response for {response.url}"
         raise HttpResponseError(msg, request=request, response=response)
 
     async def request(
@@ -265,3 +265,18 @@ class HttpClient:
     def get_saved_responses(self) -> Iterable[_SavedResponseData]:
         """Return saved requests and responses."""
         return self._saved_responses.values()
+
+
+def _http_status_name(status: int):
+    """
+    >>> _http_status_name(200)
+    'OK'
+    >>> _http_status_name(404)
+    'NOT_FOUND'
+    >>> _http_status_name(999)
+    'UNKNOWN'
+    """
+    try:
+        return HTTPStatus(status).name
+    except ValueError:
+        return "UNKNOWN"

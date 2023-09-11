@@ -38,6 +38,7 @@ web-poet
    :maxdepth: 1
 
    frameworks/index
+   Rules <frameworks/rules>
    Additional requests <frameworks/additional-requests>
    Retries <frameworks/retries>
 

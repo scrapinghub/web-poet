@@ -2,6 +2,39 @@
 Changelog
 =========
 
+0.14.0 (2023-08-03)
+-------------------
+
+* Dropped Python 3.7 support.
+* Now requires ``packaging >= 20.0``.
+* Fixed detection of the :class:`~.Returns` base class.
+* Improved docs.
+* Updated type hints.
+* Updated CI tools.
+
+0.13.1 (2023-05-30)
+-------------------
+
+* Fixed an issue with :class:`~.HttpClient` which happens when a response with
+  a non-standard status code is received.
+
+0.13.0 (2023-05-30)
+-------------------
+
+* A new dependency :class:`~.BrowserResponse` has been added. It contains a
+  browser-rendered page URL, status code and HTML.
+* The :ref:`rules` documentation section has been rewritten.
+
+0.12.0 (2023-05-05)
+-------------------
+
+* The :ref:`testing framework <web-poet-testing>` now allows defining a
+  :ref:`custom item adapter <web-poet-testing-adapters>`.
+* We have made a backward-incompatible change on test fixture serialization: 
+  the ``type_name`` field of exceptions has been renamed to ``import_path``.
+* Fixed built-in Python types, e.g. ``int``, not working as :ref:`field
+  processors <field-processors>`.
+
 0.11.0 (2023-04-24)
 -------------------
 

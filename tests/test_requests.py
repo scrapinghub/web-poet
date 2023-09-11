@@ -28,7 +28,6 @@ def async_mock():
 
 @pytest.mark.asyncio
 async def test_perform_request_from_httpclient(async_mock) -> None:
-
     url = "http://example.com"
     client = HttpClient()
 
@@ -203,7 +202,6 @@ def client_that_errs(async_mock) -> HttpClient:
 
 @pytest.mark.asyncio
 async def test_http_client_batch_execute_with_exception(client_that_errs) -> None:
-
     requests = [
         HttpRequest("url-1"),
         HttpRequest("url-get", method="GET"),

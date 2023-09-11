@@ -1,17 +1,21 @@
 import abc
 import inspect
-import typing
 from contextlib import suppress
 from functools import wraps
+from typing import Any, Generic, Optional, TypeVar, overload
 
 import attr
 import parsel
 
-from web_poet._typing import get_item_cls
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
 from web_poet.page_inputs import HttpResponse
-from web_poet.utils import CallableT, _create_deprecated_class, cached_method
+from web_poet.utils import (
+    CallableT,
+    _create_deprecated_class,
+    cached_method,
+    get_generic_param,
+)
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -35,23 +39,38 @@ class Injectable(abc.ABC, FieldsMixin):
 Injectable.register(type(None))
 
 
-def is_injectable(cls: typing.Any) -> bool:
+def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
     return isinstance(cls, type) and issubclass(cls, Injectable)
 
 
-ItemT = typing.TypeVar("ItemT")
+ItemT = TypeVar("ItemT")
 
 
-class Returns(typing.Generic[ItemT]):
+class Returns(Generic[ItemT]):
     """Inherit from this generic mixin to change the item class used by
     :class:`~.ItemPage`"""
 
     @property
-    def item_cls(self) -> typing.Type[ItemT]:
+    def item_cls(self) -> type:
         """Item class"""
         return get_item_cls(self.__class__, default=dict)
+
+
+@overload
+def get_item_cls(cls: type, default: type) -> type:
+    ...
+
+
+@overload
+def get_item_cls(cls: type, default: None) -> Optional[type]:
+    ...
+
+
+def get_item_cls(cls: type, default: Optional[type] = None) -> Optional[type]:
+    param = get_generic_param(cls, Returns)
+    return param or default
 
 
 _NOT_SET = object()

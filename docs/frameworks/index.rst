@@ -48,9 +48,9 @@ framework further to:
     module as possible.
 
 -   Support returning a :ref:`page object <page-objects>` given a target URL
-    and a desired :ref:`output item type <items>`, using
-    ``web_poet.default_registry`` to determine the right :ref:`page
-    object class <page-object-classes>` to use.
+    and a desired :ref:`output item class <items>`, determining the right
+    :ref:`page object class <page-object-classes>` to use based on :ref:`rules
+    <framework-rules>`.
 
 -   Allow users to request an :ref:`output item <items>` directly, instead of
     requesting a page object just to call its ``to_item`` method.
@@ -63,4 +63,5 @@ framework further to:
 
 -   Support :ref:`retries <framework-retries>`.
 
--   Let users set their own :class:`~web_poet.rules.RulesRegistry` object.
+-   Let users set their own :ref:`rules <rules>`, e.g. to :ref:`solve conflicts
+    <rule-conflicts>`.
