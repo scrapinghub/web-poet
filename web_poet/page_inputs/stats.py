@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
-StatNum = int | float
+StatNum = Union[int, float]
 
 
 class StatCollector(ABC):
@@ -31,7 +31,7 @@ class DummyStatCollector(StatCollector):
 
     def inc(self, key: str, value: StatNum = 1) -> None:  # noqa: D102
         if key in self._stats:
-            assert isinstance(self._stats[key], StatNum)  # type: ignore[arg-type,misc]
+            assert isinstance(self._stats[key], (int, float))
             self._stats[key] += value
         else:
             self._stats[key] = value
