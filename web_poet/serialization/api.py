@@ -2,7 +2,7 @@ import os
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 import andi
 
@@ -10,8 +10,6 @@ import web_poet
 from web_poet import Injectable
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
-
-from .dummies import DUMMY_MAP
 
 # represents a leaf dependency of any type serialized as a set of files
 SerializedLeafData = Dict[str, bytes]
@@ -191,9 +189,5 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
     for fn_or_cls, kwargs_spec in plan[:-1]:
         if fn_or_cls in externally_provided:
             continue
-        fn_or_cls = cast(Type[Injectable], fn_or_cls)
-        if fn_or_cls in DUMMY_MAP:
-            deps[fn_or_cls] = DUMMY_MAP[fn_or_cls]()
-            continue
-        deps[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(deps))  # type: ignore
+        deps[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(deps))
     return cls(**plan.final_kwargs(deps))

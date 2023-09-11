@@ -10,7 +10,6 @@ from web_poet import (
     Injectable,
     PageParams,
     ResponseUrl,
-    Stats,
     WebPage,
 )
 from web_poet.page_inputs.url import _Url
@@ -23,7 +22,6 @@ from web_poet.serialization import (
     serialize,
     serialize_leaf,
 )
-from web_poet.serialization.dummies import DummyStats
 
 
 def _assert_webpages_equal(p1: WebPage, p2: WebPage) -> None:
@@ -77,7 +75,6 @@ def test_serialization(book_list_html_response) -> None:
         url: ResponseUrl
         params: PageParams
         data: ResponseData
-        stats: Stats
 
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)
@@ -108,7 +105,6 @@ def test_serialization(book_list_html_response) -> None:
         url,
         page_params,
         ResponseData(book_list_html_response),
-        DummyStats(),
     )
     deserialized_po = deserialize(MyWebPage, serialized_deps)
     _assert_webpages_equal(po, deserialized_po)
