@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.15.0 (to be released)
+-----------------------
+
+* A new dependency, :class:`~.Stats`, has been added. It allows storing
+  key-value data pairs for different purposes. See :ref:`stats`.
+
 0.14.0 (2023-08-03)
 -------------------
 
