@@ -9,4 +9,5 @@ from .http import (
     HttpResponseHeaders,
 )
 from .page_params import PageParams
+from .stats import Stats
 from .url import RequestUrl, ResponseUrl

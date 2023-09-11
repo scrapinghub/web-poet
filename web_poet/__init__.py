@@ -12,6 +12,7 @@ from .page_inputs import (
     PageParams,
     RequestUrl,
     ResponseUrl,
+    Stats,
 )
 from .pages import (
     Extractor,

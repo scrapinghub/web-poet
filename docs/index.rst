@@ -30,6 +30,7 @@ web-poet
    page-objects/additional-requests
    page-objects/input-validation
    page-objects/page-params
+   page-objects/stats
    page-objects/testing
    page-objects/frameworks
 
@@ -41,6 +42,7 @@ web-poet
    Rules <frameworks/rules>
    Additional requests <frameworks/additional-requests>
    Retries <frameworks/retries>
+   Frameworks <frameworks/stats>
 
 .. toctree::
    :caption: Reference

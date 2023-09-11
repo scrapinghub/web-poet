@@ -8,6 +8,7 @@ from .. import (
     HttpResponse,
     HttpResponseBody,
     PageParams,
+    Stats,
 )
 from ..exceptions import HttpError
 from ..page_inputs.client import _SavedResponseData
@@ -181,3 +182,14 @@ def _deserialize_PageParams(
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
+
+
+def _serialize_Stats(o: Stats) -> SerializedLeafData:
+    return {}
+
+
+def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:
+    return cls()
+
+
+register_serialization(_serialize_Stats, _deserialize_Stats)
