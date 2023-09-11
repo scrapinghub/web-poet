@@ -185,7 +185,7 @@ register_serialization(_serialize_PageParams, _deserialize_PageParams)
 
 
 def _serialize_Stats(o: Stats) -> SerializedLeafData:
-    return None
+    return {}
 
 
 def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:

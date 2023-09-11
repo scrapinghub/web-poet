@@ -103,7 +103,7 @@ def test_serialization(book_list_html_response) -> None:
         "PageParams": {
             "json": b'{\n  "foo": "bar"\n}',
         },
-        "Stats": None,
+        "Stats": {},
     }
 
     po = MyWebPage(
