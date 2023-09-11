@@ -3,10 +3,10 @@ from typing import Any, Dict, Protocol
 
 class StatCollectorProtocol(Protocol):
     def set(self, key: str, value: Any) -> None:  # noqa: D102
-        pass
+        pass  # pragma: no cover
 
     def inc(self, key: str, value: int = 1) -> None:  # noqa: D102
-        pass
+        pass  # pragma: no cover
 
 
 class DummyStatCollector:
