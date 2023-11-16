@@ -210,7 +210,14 @@ def test_http_request_init_with_response_url() -> None:
     assert str(req.url) == str(resp.url)
 
 
-def test_http_response_headers_from_bytes_dict() -> None:
+@pytest.mark.parametrize(
+    "cls",
+    (
+        HttpRequestHeaders,
+        HttpResponseHeaders,
+    ),
+)
+def test_http_headers_from_bytes_dict(cls) -> None:
     raw_headers = {
         b"Content-Length": [b"316"],
         b"Content-Encoding": [b"gzip", b"br"],
@@ -219,7 +226,7 @@ def test_http_response_headers_from_bytes_dict() -> None:
         "X-missing": None,
         "X-tuple": (b"x", "y"),
     }
-    headers = HttpResponseHeaders.from_bytes_dict(raw_headers)
+    headers = cls.from_bytes_dict(raw_headers)
 
     assert headers.get("content-length") == "316"
     assert headers.get("content-encoding") == "gzip"
@@ -231,12 +238,19 @@ def test_http_response_headers_from_bytes_dict() -> None:
     assert headers.getall("x-tuple") == ["x", "y"]
 
 
-def test_http_response_headers_from_bytes_dict_err() -> None:
+@pytest.mark.parametrize(
+    "cls",
+    (
+        HttpRequestHeaders,
+        HttpResponseHeaders,
+    ),
+)
+def test_http_response_headers_from_bytes_dict_err(cls) -> None:
     with pytest.raises(ValueError):
-        HttpResponseHeaders.from_bytes_dict({b"Content-Length": [316]})
+        cls.from_bytes_dict({b"Content-Length": [316]})
 
     with pytest.raises(ValueError):
-        HttpResponseHeaders.from_bytes_dict({b"Content-Length": 316})
+        cls.from_bytes_dict({b"Content-Length": 316})
 
 
 def test_http_response_headers_init_requests() -> None:

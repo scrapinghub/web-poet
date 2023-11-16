@@ -3,10 +3,11 @@
 In general, users shouldn't import and use the contents of this module.
 """
 
-from typing import Dict, List, Type, TypeVar
+from typing import AnyStr, Dict, List, Tuple, Type, TypeVar, Union
 
 from multidict import CIMultiDict
 
+_AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
 T_headers = TypeVar("T_headers", bound="_HttpHeaders")
 
 
@@ -31,3 +32,44 @@ class _HttpHeaders(CIMultiDict):
         <_HttpHeaders('Content-Encoding': 'gzip', 'content-length': '648')>
         """
         return cls([(pair["name"], pair["value"]) for pair in arg])
+
+    @classmethod
+    def from_bytes_dict(
+        cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
+    ) -> T_headers:
+        """An alternative constructor for instantiation where the header-value
+        pairs could be in raw bytes form.
+
+        This supports multiple header values in the form of ``List[bytes]`` and
+        ``Tuple[bytes]]`` alongside a plain ``bytes`` value. A value in ``str``
+        also works and wouldn't break the decoding process at all.
+
+        By default, it converts the ``bytes`` value using "utf-8". However, this
+        can easily be overridden using the ``encoding`` parameter.
+
+        >>> raw_values = {
+        ...     b"Content-Encoding": [b"gzip", b"br"],
+        ...     b"Content-Type": [b"text/html"],
+        ...     b"content-length": b"648",
+        ... }
+        >>> headers = _HttpHeaders.from_bytes_dict(raw_values)
+        >>> headers
+        <_HttpHeaders('Content-Encoding': 'gzip', 'Content-Encoding': 'br', 'Content-Type': 'text/html', 'content-length': '648')>
+        """
+
+        def _norm(data):
+            if isinstance(data, str) or data is None:
+                return data
+            elif isinstance(data, bytes):
+                return data.decode(encoding)
+            raise ValueError(f"Expecting str or bytes. Received {type(data)}")
+
+        converted = []
+
+        for header, value in arg.items():
+            if isinstance(value, list) or isinstance(value, tuple):
+                converted.extend([(_norm(header), _norm(v)) for v in value])
+            else:
+                converted.append((_norm(header), _norm(value)))
+
+        return cls(converted)
