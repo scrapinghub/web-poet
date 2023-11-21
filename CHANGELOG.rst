@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.15.1 (unreleased)
+-------------------
+
+* ``HttpRequestHeaders`` now has a ``from_bytes_dict`` class method, like
+  ``HttpResponseHeaders``.
+
 0.15.0 (2023-09-11)
 -------------------
 
