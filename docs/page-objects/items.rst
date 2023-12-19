@@ -43,7 +43,7 @@ To change the item class of a subclass that does not directly inherit from
 .. code-block:: python
 
     @attrs.define
-    class MyOtherPage(MyPage, Returns[MyItem]):
+    class MyOtherPage(MyPage, Returns[MyOtherItem]):
         ...
 
 :class:`~.ItemPage.to_item` builds an instance of the specified item class
