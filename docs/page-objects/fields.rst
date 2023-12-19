@@ -99,9 +99,8 @@ To create a page object class that is very similar to another, subclassing the
 former page object class is often a good approach to maximize code reuse.
 
 In a subclass of a :ref:`page object class <page-objects>` you can
-:ref:`reimplement fields <reimplement-field>` and :ref:`add fields
-<add-field>`. To rename or remove fields, consider using :ref:`composition
-<composition>` instead.
+:ref:`reimplement fields <reimplement-field>`, :ref:`add fields <add-field>`,
+:ref:`remove fields <remove-field>`, or :ref:`rename fields <rename-field>`.
 
 .. _reimplement-field:
 
@@ -167,6 +166,102 @@ For example:
             ...
 
 
+.. _remove-field:
+
+Removing a field
+----------------
+
+To remove a field from a :ref:`page object class <page-objects>` when
+subclassing:
+
+#.  Define a new :ref:`item class <items>` that defines all fields but the one
+    being removed.
+
+#.  In your new page object class, subclass the original page object class,
+    :class:`~.Returns` with the new item class between brackets, and set
+    ``skip_nonitem_fields=True``.
+
+    When building an item, page object class fields without a matching item
+    class field will now be ignored, rather than raising an exception.
+
+Your new page object class will still define the field, but the resulting item
+will not.
+
+For example:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import Returns
+
+    from my_library import BasePage
+
+    @attrs.define
+    class CustomItem:
+        kept_field: str
+
+    @attrs.define
+    class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
+        pass
+
+Alternatively, you can consider :ref:`composition <composition>` for removing
+fields. Composition is more verbose than subclassing, because you need to
+define every field in your page object class, but it can catch some mismatches
+between page object class fields and item class fields that would otherwise be
+hidden by ``skip_nonitem_fields``.
+
+
+.. _rename-field:
+
+Renaming a field
+----------------
+
+To rename a field from a :ref:`page object class <page-objects>` when
+subclassing:
+
+#.  Define a new :ref:`item class <items>` that defines all fields, including
+    the renamed field.
+
+#.  In your new page object class, subclass the original page object class,
+    :class:`~.Returns` with the new item class between brackets, and set
+    ``skip_nonitem_fields=True``.
+
+    When building an item, page object class fields without a matching item
+    class field will now be ignored, rather than raising an exception.
+
+#.  Define a field for the new field name that returns the value from the old
+    field name.
+
+Your new page object class will still define the old field name, but the
+resulting item will not.
+
+For example:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import Returns
+
+    from my_library import BasePage
+
+    @attrs.define
+    class CustomItem:
+        new_field: str
+
+    @attrs.define
+    class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
+
+        @field
+        async def new_field(self):
+            return ensure_awaitable(self.old_field)
+
+Alternatively, you can consider :ref:`composition <composition>` for renaming
+fields. Composition is more verbose than subclassing, because you need to
+define every field in your page object class, but it can catch some mismatches
+between page object class fields and item class fields that would otherwise be
+hidden by ``skip_nonitem_fields``.
+
+
 .. _composition:
 
 Composition
@@ -174,10 +269,12 @@ Composition
 
 You can reuse a page object class from another page object class using
 composition instead of :ref:`inheritance <inheritance>` by using the original
-page object class as a dependency.
+page object class as a dependency in a brand new page object class returning a
+brand new item class.
 
 This is a good approach when you want to reuse code but the page object classes
-are very different.
+are very different, or when you want to remove or rename fields without relying
+on ``skip_nonitem_fields``.
 
 For example:
 
@@ -202,49 +299,6 @@ For example:
             name = await ensure_awaitable(self.base.name)
             brand = await ensure_awaitable(self.base.brand)
             return f"{brand}: {name}"
-
-..
-    Removing fields (as well as renaming) is a bit more tricky.
-
-    The caveat is that by default :class:`~.ItemPage` uses all fields
-    defined as ``@field`` to produce an item, passing all these values to
-    item's ``__init__`` method. So, if you follow the previous example, and
-    inherit from the "base", "standard" Page Object, there could be a ``@field``
-    from the base class which is not present in the ``CustomItem``.
-    It'd be still passed to ``CustomItem.__init__``, causing an exception.
-
-    One way to solve it is to make the original Page Object a dependency
-    instead of inheriting from it, as explained in the beginning.
-
-    Alternatively, you can use ``skip_nonitem_fields=True`` class argument - it tells
-    :meth:`~.ItemPage.to_item` to skip ``@fields`` which are not defined
-    in the item:
-
-    .. code-block:: python
-
-        @attrs.define
-        class CustomItem:
-            # let's pick only 1 attribute from BaseItem, nothing more
-            name: str
-
-        class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
-            pass
-
-
-    Here, ``CustomPage.to_item`` only uses ``name`` field of the ``BasePage``, ignoring
-    all other fields defined in ``BasePage``, because ``skip_nonitem_fields=True``
-    is passed, and ``name`` is the only field ``CustomItem`` supports.
-
-    To recap:
-
-    * Use ``Returns[NewItemType]`` to change the item class in a subclass.
-    * Don't use ``skip_nonitem_fields=True`` when your Page Object corresponds
-    to an item exactly, or when you're only adding fields. This is a safe
-    approach, which allows to detect typos in field names, even for optional
-    fields.
-    * Use ``skip_nonitem_fields=True`` when it's possible for the Page Object
-    to contain more ``@fields`` than defined in the item class, e.g. because
-    Page Object is inherited from some other base Page Object.
 
 
 .. _field-processors:
@@ -530,6 +584,7 @@ it unsuitable here:
 1. It doesn't work properly on methods, because ``self`` is used as a part of the
    cache key. It means a reference to an instance is kept in the cache,
    and so created page objects are never deallocated, causing a memory leak.
+
 2. :func:`functools.lru_cache` doesn't work on ``async def`` methods, so you
    can't cache e.g. results of API calls using :func:`functools.lru_cache`.
 
@@ -540,8 +595,8 @@ with async versions of ``@property`` and ``@cached_property`` decorators; unlike
 
 .. _async_property: https://github.com/ryananguiano/async_property
 
-Exceptions caching
-------------------
+Exception caching
+-----------------
 
 Note that exceptions are not cached - neither by :func:`~.cached_method`,
 nor by `@field(cached=True)`, nor by :func:`functools.lru_cache`, nor by
@@ -554,7 +609,7 @@ in mind.
 Field metadata
 ==============
 
-``web-poet`` allows to store arbitrary information for each field, using
+``web-poet`` allows to store arbitrary information for each field using the
 ``meta`` keyword argument:
 
 .. code-block:: python
