@@ -37,15 +37,6 @@ between brackets:
     class MyPage(ItemPage[MyItem]):
         ...
 
-To change the item class of a subclass that does not directly inherit from
-:class:`~.ItemPage`, use :class:`~.Returns`:
-
-.. code-block:: python
-
-    @attrs.define
-    class MyOtherPage(MyPage, Returns[MyOtherItem]):
-        ...
-
 :class:`~.ItemPage.to_item` builds an instance of the specified item class
 based on the page object class :ref:`fields <fields>`.
 
@@ -54,6 +45,30 @@ based on the page object class :ref:`fields <fields>`.
     page = MyPage(...)
     item = await page.to_item()
     assert isinstance(item, MyItem)
+
+You can also define :class:`~.ItemPage` subclasses that are not meant to be
+used, only subclassed, and not annotate :class:`~.ItemPage` in them. You can
+then annotate those classes when subclassing them:
+
+.. code-block:: python
+
+    @attrs.define
+    class MyBasePage(ItemPage):
+        ...
+
+    @attrs.define
+    class MyPage(MyBasePage[MyItem]):
+        ...
+
+To change the item class of a subclass that has already defined its item class,
+use :class:`~.Returns`:
+
+.. code-block:: python
+
+    @attrs.define
+    class MyOtherPage(MyPage, Returns[MyOtherItem]):
+        ...
+        ...
 
 
 Best practices for item classes
