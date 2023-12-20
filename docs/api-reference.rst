@@ -60,14 +60,19 @@ Pages
    :inherited-members:
    :no-special-members:
 
+.. autoclass:: Returns
+   :show-inheritance:
+   :members:
+
 .. autoclass:: Extractor
    :show-inheritance:
    :members:
    :no-special-members:
 
-.. autoclass:: Returns
+.. autoclass:: SelectorExtractor
    :show-inheritance:
    :members:
+   :no-special-members:
 
 Mixins
 ======
