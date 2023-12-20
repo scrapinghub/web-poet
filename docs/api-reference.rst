@@ -64,6 +64,16 @@ Pages
    :show-inheritance:
    :members:
 
+.. autoclass:: Extractor
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
+.. autoclass:: SelectorExtractor
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
 Mixins
 ======
 
