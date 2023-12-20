@@ -60,6 +60,11 @@ Pages
    :inherited-members:
    :no-special-members:
 
+.. autoclass:: Extractor
+   :show-inheritance:
+   :members:
+   :no-special-members:
+
 .. autoclass:: Returns
    :show-inheritance:
    :members:
