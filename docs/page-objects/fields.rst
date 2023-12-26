@@ -46,11 +46,11 @@ Asynchronous fields make sense, for example, when sending
         http: HttpClient
 
         @field
-        def name(self):
+        def name(self) -> str:
             return self.response.css(".name").get()
 
         @field
-        async def price(self):
+        async def price(self) -> str:
             resp = await self.http.get("...")
             return resp.json()['price']
 
@@ -252,7 +252,7 @@ For example:
     class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
 
         @field
-        async def new_field(self):
+        async def new_field(self) -> str:
             return ensure_awaitable(self.old_field)
 
 Alternatively, you can consider :ref:`composition <composition>` for renaming
@@ -295,7 +295,7 @@ For example:
         base: BasePage
 
         @field
-        async def new_name(self):
+        async def new_name(self) -> str:
             name = await ensure_awaitable(self.base.name)
             brand = await ensure_awaitable(self.base.brand)
             return f"{brand}: {name}"
@@ -315,21 +315,21 @@ returning it:
 
     from web_poet import ItemPage, HttpResponse, field
 
-    def clean_tabs(s):
+    def clean_tabs(s: str) -> str:
         return s.replace('\t', ' ')
 
-    def add_brand(s, page):
+    def add_brand(s: str, page: ItemPage) -> str:
         return f"{page.brand} - {s}"
 
     class MyPage(ItemPage):
         response: HttpResponse
 
         @field(out=[clean_tabs, str.strip, add_brand])
-        def name(self):
+        def name(self) -> str:
             return self.response.css(".name ::text").get()
 
         @field(cached=True)
-        def brand(self):
+        def brand(self) -> str:
             return self.response.css(".brand ::text").get()
 
 .. _processor-page:
@@ -365,7 +365,7 @@ class named ``Processors``:
     import attrs
     from web_poet import ItemPage, HttpResponse, field
 
-    def clean_tabs(s):
+    def clean_tabs(s: str) -> str:
         return s.replace('\t', ' ')
 
     @attrs.define
@@ -376,7 +376,7 @@ class named ``Processors``:
             name = [clean_tabs, str.strip]
 
         @field
-        def name(self):
+        def name(self) -> str:
             return self.response.css(".name ::text").get()
 
 If ``Processors`` contains an attribute with the same name as a field, the
@@ -392,7 +392,7 @@ explicitly accessing or subclassing the ``Processors`` class:
     import attrs
     from web_poet import ItemPage, HttpResponse, field
 
-    def clean_tabs(s):
+    def clean_tabs(s: str) -> str:
         return s.replace('\t', ' ')
 
     @attrs.define
@@ -403,7 +403,7 @@ explicitly accessing or subclassing the ``Processors`` class:
             name = [str.strip]
 
         @field
-        def name(self):
+        def name(self) -> str:
             return self.response.css(".name ::text").get()
 
     class MyPage2(MyPage):
@@ -413,12 +413,12 @@ explicitly accessing or subclassing the ``Processors`` class:
             description = MyPage.Processors.name + [clean_tabs]
 
         @field
-        def description(self):
+        def description(self) -> str:
             return self.response.css(".description ::text").get()
 
         # brand uses the same processors as name
         @field(out=MyPage.Processors.name)
-        def brand(self):
+        def brand(self) -> str:
             return self.response.css(".brand ::text").get()
 
 .. _default-processors-nested:
@@ -437,6 +437,8 @@ In the simplest cases you need to pass a selector to them:
 
 .. code-block:: python
 
+    from typing import Any, Dict, List
+
     import attrs
     from parsel import Selector
     from web_poet import Extractor, ItemPage, HttpResponse, field
@@ -446,7 +448,7 @@ In the simplest cases you need to pass a selector to them:
         response: HttpResponse
 
         @field
-        async def variants(self):
+        async def variants(self) -> List[Dict[str, Any]]:
             variants = []
             for color_sel in self.response.css(".color"):
                 variant = await VariantExtractor(color_sel).to_item()
@@ -458,8 +460,8 @@ In the simplest cases you need to pass a selector to them:
         sel: Selector
 
         @field(out=[str.strip])
-        def color(self):
-            return self.sel.css(".name::text")
+        def color(self) -> str:
+            return self.sel.css(".name::text").get()
 
 In such cases you can also use :class:`~.SelectorExtractor` as a shortcut that
 provides ``css()`` and ``xpath()``:
@@ -468,8 +470,8 @@ provides ``css()`` and ``xpath()``:
 
     class VariantExtractor(SelectorExtractor):
         @field(out=[str.strip])
-        def color(self):
-            return self.css(".name::text")
+        def color(self) -> str:
+            return self.css(".name::text").get()
 
 You can also pass other data in addition to, or instead of, selectors, such as
 dictionaries with some data:
@@ -481,7 +483,7 @@ dictionaries with some data:
         variant_data: dict
 
         @field(out=[str.strip])
-        def color(self):
+        def color(self) -> str:
             return self.variant_data["color"]
 
 
@@ -497,6 +499,8 @@ attributes from this response:
 
 .. code-block:: python
 
+    from typing import Dict
+
     from web_poet import ItemPage, HttpResponse, HttpClient, validates_input
 
     class MyPage(ItemPage):
@@ -504,7 +508,7 @@ attributes from this response:
         http: HttpClient
 
         @validates_input
-        async def to_item(self):
+        async def to_item(self) -> Dict[str, str]:
             api_url = self.response.css("...").get()
             api_response = await self.http.get(api_url).json()
             return {
@@ -519,6 +523,8 @@ extracting the heavy operation to a method, and caching the results:
 
 .. code-block:: python
 
+    from typing import Dict
+
     from web_poet import ItemPage, HttpResponse, HttpClient, field, cached_method
 
     class MyPage(ItemPage):
@@ -526,21 +532,21 @@ extracting the heavy operation to a method, and caching the results:
         http: HttpClient
 
         @cached_method
-        async def api_response(self):
+        async def api_response(self) -> Dict[str, str]:
             api_url = self.response.css("...").get()
             return await self.http.get(api_url).json()
 
         @field
-        def name(self):
+        def name(self) -> str:
             return self.response.css(".name ::text").get()
 
         @field
-        async def price(self):
+        async def price(self) -> str:
             api_response = await self.api_response()
             return api_response["price"]
 
         @field
-        async def sku(self):
+        async def sku(self) -> str:
             api_response = await self.api_response()
             return api_response["sku"]
 
@@ -648,7 +654,7 @@ evaluation from ever happening. For example:
 .. code-block:: python
 
    class Page(ItemPage[Item]):
-       def validate_input(self):
+       def validate_input(self) -> Item:
            return Item(foo="bar")
 
        @field
