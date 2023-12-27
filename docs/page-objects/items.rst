@@ -68,7 +68,6 @@ use :class:`~.Returns`:
     @attrs.define
     class MyOtherPage(MyPage, Returns[MyOtherItem]):
         ...
-        ...
 
 
 Best practices for item classes
