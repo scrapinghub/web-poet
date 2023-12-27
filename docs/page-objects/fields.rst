@@ -13,6 +13,8 @@ For example:
 
 .. code-block:: python
 
+    from typing import Optional
+
     import attrs
     from web_poet import ItemPage, HttpResponse, field
 
@@ -22,7 +24,7 @@ For example:
         response: HttpResponse
 
         @field
-        def foo(self) -> str:
+        def foo(self) -> Optional[str]:
             return self.response.css(".foo").get()
 
 
@@ -36,6 +38,8 @@ Asynchronous fields make sense, for example, when sending
 
 .. code-block:: python
 
+    from typing import Optional
+
     import attrs
     from web_poet import ItemPage, HttpClient, HttpResponse, field
 
@@ -46,13 +50,13 @@ Asynchronous fields make sense, for example, when sending
         http: HttpClient
 
         @field
-        def name(self) -> str:
+        def name(self) -> Optional[str]:
             return self.response.css(".name").get()
 
         @field
-        async def price(self) -> str:
+        async def price(self) -> Optional[str]:
             resp = await self.http.get("...")
-            return resp.json()['price']
+            return resp.json().get("price")
 
 Unlike the values of synchronous fields, the values of asynchronous fields need
 to be awaited:
@@ -326,11 +330,11 @@ returning it:
 
         @field(out=[clean_tabs, str.strip, add_brand])
         def name(self) -> str:
-            return self.response.css(".name ::text").get()
+            return self.response.css(".name ::text").get() or ""
 
         @field(cached=True)
         def brand(self) -> str:
-            return self.response.css(".brand ::text").get()
+            return self.response.css(".brand ::text").get() or ""
 
 .. _processor-page:
 
@@ -377,7 +381,7 @@ class named ``Processors``:
 
         @field
         def name(self) -> str:
-            return self.response.css(".name ::text").get()
+            return self.response.css(".name ::text").get() or ""
 
 If ``Processors`` contains an attribute with the same name as a field, the
 value of that attribute is used as a list of default processors for the field,
@@ -404,7 +408,7 @@ explicitly accessing or subclassing the ``Processors`` class:
 
         @field
         def name(self) -> str:
-            return self.response.css(".name ::text").get()
+            return self.response.css(".name ::text").get() or ""
 
     class MyPage2(MyPage):
         class Processors(MyPage.Processors):
@@ -414,12 +418,12 @@ explicitly accessing or subclassing the ``Processors`` class:
 
         @field
         def description(self) -> str:
-            return self.response.css(".description ::text").get()
+            return self.response.css(".description ::text").get() or ""
 
         # brand uses the same processors as name
         @field(out=MyPage.Processors.name)
         def brand(self) -> str:
-            return self.response.css(".brand ::text").get()
+            return self.response.css(".brand ::text").get() or ""
 
 .. _default-processors-nested:
 
@@ -461,7 +465,7 @@ In the simplest cases you need to pass a selector to them:
 
         @field(out=[str.strip])
         def color(self) -> str:
-            return self.sel.css(".name::text").get()
+            return self.sel.css(".name::text").get() or ""
 
 In such cases you can also use :class:`~.SelectorExtractor` as a shortcut that
 provides ``css()`` and ``xpath()``:
@@ -471,7 +475,7 @@ provides ``css()`` and ``xpath()``:
     class VariantExtractor(SelectorExtractor):
         @field(out=[str.strip])
         def color(self) -> str:
-            return self.css(".name::text").get()
+            return self.css(".name::text").get() or ""
 
 You can also pass other data in addition to, or instead of, selectors, such as
 dictionaries with some data:
@@ -484,7 +488,7 @@ dictionaries with some data:
 
         @field(out=[str.strip])
         def color(self) -> str:
-            return self.variant_data["color"]
+            return self.variant_data.get("color") or ""
 
 
 .. _field-caching:
@@ -499,7 +503,7 @@ attributes from this response:
 
 .. code-block:: python
 
-    from typing import Dict
+    from typing import Dict, Optional
 
     from web_poet import ItemPage, HttpResponse, HttpClient, validates_input
 
@@ -508,13 +512,13 @@ attributes from this response:
         http: HttpClient
 
         @validates_input
-        async def to_item(self) -> Dict[str, str]:
+        async def to_item(self) -> Dict[str, Optional[str]]:
             api_url = self.response.css("...").get()
             api_response = await self.http.get(api_url).json()
             return {
                 'name': self.response.css(".name ::text").get(),
-                'price': api_response["price"],
-                'sku': api_response["sku"],
+                'price': api_response.get("price"),
+                'sku': api_response.get("sku"),
             }
 
 When converting such Page Objects to use fields, be careful not to make an
@@ -538,17 +542,17 @@ extracting the heavy operation to a method, and caching the results:
 
         @field
         def name(self) -> str:
-            return self.response.css(".name ::text").get()
+            return self.response.css(".name ::text").get() or ""
 
         @field
         async def price(self) -> str:
             api_response = await self.api_response()
-            return api_response["price"]
+            return api_response.get("price") or ""
 
         @field
         async def sku(self) -> str:
             api_response = await self.api_response()
-            return api_response["sku"]
+            return api_response.get("sku") or ""
 
 As you can see, ``web-poet`` provides :func:`~.cached_method` decorator,
 which allows to memoize the function results. It supports both sync and
