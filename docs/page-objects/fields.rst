@@ -27,6 +27,7 @@ For example:
         def foo(self) -> Optional[str]:
             return self.response.css(".foo").get()
 
+.. _fields-sync-async:
 
 Synchronous and asynchronous fields
 ===================================
@@ -285,7 +286,7 @@ For example:
 .. code-block:: python
 
     import attrs
-    from web_poet import ItemPage, HttpResponse, field, ensure_awaitable
+    from web_poet import ItemPage, field, ensure_awaitable
 
     from my_library import BasePage
 
@@ -295,7 +296,6 @@ For example:
 
     @attrs.define
     class CustomPage(ItemPage[CustomItem]):
-        response: HttpResponse
         base: BasePage
 
         @field
@@ -303,6 +303,38 @@ For example:
             name = await ensure_awaitable(self.base.name)
             brand = await ensure_awaitable(self.base.brand)
             return f"{brand}: {name}"
+
+Instead of a page object, it is possible to declare the :ref:`item <items>` it
+returns as a dependency in your new page object class. For example:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import ItemPage, field
+
+    from my_library import BaseItem
+
+    @attrs.define
+    class CustomItem:
+        name: str
+
+    @attrs.define
+    class CustomPage(ItemPage[CustomItem]):
+        base: BaseItem
+
+        @field
+        def new_name(self) -> str:
+            return f"{self.base.brand}: {self.base.name}"
+
+
+This gives you the flexibility to use :ref:`rules <rules>` to set the page
+object class to use when building the item. Also, item fields can be read from
+synchronous methods even if the source page object fields were
+:ref:`asynchronous <fields-sync-async>`.
+
+On the other hand, all fields of the source page object class will always be
+called to build the entire item, which may be a waste of resources if you only
+need to access some of the item fields.
 
 
 .. _field-processors:
