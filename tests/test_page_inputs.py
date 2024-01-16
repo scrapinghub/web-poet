@@ -9,6 +9,7 @@ import requests
 from web_poet import BrowserResponse, RequestUrl, ResponseUrl
 from web_poet.page_inputs import (
     BrowserHtml,
+    HttpOrBrowserResponse,
     HttpRequest,
     HttpRequestBody,
     HttpRequestHeaders,
@@ -642,3 +643,26 @@ def test_stats() -> None:
     stats.inc("c")
 
     assert stats._stats._stats == {"a": "1", "b": 8, "c": 1}
+
+
+def test_http_or_browser_response() -> None:
+    url = "http://example.com"
+    html = "<html><body><p>Hello, </p><p>world!</p></body></html>"
+
+    browser_response = BrowserResponse(url=url, html=html, status=200)
+    response_1 = HttpOrBrowserResponse(response=browser_response)
+
+    assert isinstance(response_1.response, BrowserResponse)
+    assert response_1.response == browser_response
+    assert isinstance(response_1.url, ResponseUrl)
+    assert str(response_1.url) == url
+    assert response_1.text == html
+
+    http_response = HttpResponse(url, html.encode())
+    response_2 = HttpOrBrowserResponse(response=http_response)
+
+    assert isinstance(response_2.response, HttpResponse)
+    assert response_2.response == http_response
+    assert isinstance(response_2.url, ResponseUrl)
+    assert str(response_2.url) == url
+    assert response_2.text == html

@@ -3,6 +3,7 @@ from .page_inputs import (
     BrowserHtml,
     BrowserResponse,
     HttpClient,
+    HttpOrBrowserResponse,
     HttpRequest,
     HttpRequestBody,
     HttpRequestHeaders,
