@@ -162,7 +162,7 @@ def test_apply_rule_kwargs_only() -> None:
             ApplyRule(
                 "example.com",
                 *[params[r] for r in remove],
-                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]
+                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]  # noqa: B038
             )
 
 
