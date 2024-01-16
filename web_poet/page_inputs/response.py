@@ -8,7 +8,7 @@ from web_poet.page_inputs.url import ResponseUrl
 
 
 @attrs.define
-class HttpOrBrowserResponse:
+class AnyResponse:
     """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse.`"""
 
     response: Union[BrowserResponse, HttpResponse]

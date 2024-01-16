@@ -8,8 +8,8 @@ import requests
 
 from web_poet import BrowserResponse, RequestUrl, ResponseUrl
 from web_poet.page_inputs import (
+    AnyResponse,
     BrowserHtml,
-    HttpOrBrowserResponse,
     HttpRequest,
     HttpRequestBody,
     HttpRequestHeaders,
@@ -650,7 +650,7 @@ def test_http_or_browser_response() -> None:
     html = "<html><body><p>Hello, </p><p>world!</p></body></html>"
 
     browser_response = BrowserResponse(url=url, html=html, status=200)
-    response_1 = HttpOrBrowserResponse(response=browser_response)
+    response_1 = AnyResponse(response=browser_response)
 
     assert isinstance(response_1.response, BrowserResponse)
     assert response_1.response == browser_response
@@ -659,7 +659,7 @@ def test_http_or_browser_response() -> None:
     assert response_1.text == html
 
     http_response = HttpResponse(url, html.encode())
-    response_2 = HttpOrBrowserResponse(response=http_response)
+    response_2 = AnyResponse(response=http_response)
 
     assert isinstance(response_2.response, HttpResponse)
     assert response_2.response == http_response
