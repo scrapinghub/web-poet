@@ -2,13 +2,14 @@ from typing import Union
 
 import attrs
 
+from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
 from web_poet.page_inputs.browser import BrowserResponse
 from web_poet.page_inputs.http import HttpResponse
 from web_poet.page_inputs.url import ResponseUrl
 
 
 @attrs.define
-class AnyResponse:
+class AnyResponse(SelectableMixin, UrlShortcutsMixin):
     """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse.`"""
 
     response: Union[BrowserResponse, HttpResponse]
@@ -24,3 +25,6 @@ class AnyResponse:
         if isinstance(self.response, BrowserResponse):
             return self.response.html
         return self.response.text
+
+    def _selector_input(self) -> str:
+        return self.text

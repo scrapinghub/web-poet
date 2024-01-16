@@ -651,18 +651,19 @@ def test_http_or_browser_response() -> None:
 
     browser_response = BrowserResponse(url=url, html=html, status=200)
     response_1 = AnyResponse(response=browser_response)
-
     assert isinstance(response_1.response, BrowserResponse)
     assert response_1.response == browser_response
-    assert isinstance(response_1.url, ResponseUrl)
-    assert str(response_1.url) == url
-    assert response_1.text == html
 
     http_response = HttpResponse(url, html.encode())
     response_2 = AnyResponse(response=http_response)
-
     assert isinstance(response_2.response, HttpResponse)
     assert response_2.response == http_response
-    assert isinstance(response_2.url, ResponseUrl)
-    assert str(response_2.url) == url
-    assert response_2.text == html
+
+    for response in [response_1, response_2]:
+        assert isinstance(response.url, ResponseUrl)
+        assert str(response.url) == url
+        assert response.text == html
+        assert response.xpath("//p/text()").getall() == ["Hello, ", "world!"]
+        assert response.css("p::text").getall() == ["Hello, ", "world!"]
+        assert isinstance(response.selector, parsel.Selector)
+        assert str(response.urljoin("products")) == "http://example.com/products"
