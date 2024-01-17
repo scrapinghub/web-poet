@@ -10,7 +10,7 @@ from web_poet.page_inputs.url import ResponseUrl
 
 @attrs.define
 class AnyResponse(SelectableMixin, UrlShortcutsMixin):
-    """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse.`"""
+    """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse`."""
 
     response: Union[BrowserResponse, HttpResponse]
 
@@ -21,7 +21,7 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
 
     @property
     def text(self) -> str:
-        """Contents of the response."""
+        """Text or HTML contents of the response."""
         if isinstance(self.response, BrowserResponse):
             return self.response.html
         return self.response.text

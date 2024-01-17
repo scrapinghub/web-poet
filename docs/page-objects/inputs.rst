@@ -66,6 +66,11 @@ define as inputs for a page object class, including:
     status code and :class:`~web_poet.page_inputs.browser.BrowserHtml`
     of a rendered web page.
 
+-   :class:`~web_poet.page_inputs.response.AnyResponse`, which either holds
+    :class:`~web_poet.page_inputs.browser.BrowserResponse` or
+    :class:`~web_poet.page_inputs.http.HttpResponse` as the ``.response``
+    instance, depending on which one is available or is more appropriate.
+
     .. _Document Object Model: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
 
 

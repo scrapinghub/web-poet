@@ -27,6 +27,12 @@ Page Inputs
    :inherited-members: str,bytes,MultiDict
    :show-inheritance:
 
+.. automodule:: web_poet.page_inputs.response
+   :members:
+   :undoc-members:
+   :inherited-members: str
+   :show-inheritance:
+
 .. automodule:: web_poet.page_inputs.page_params
    :members:
    :undoc-members:
