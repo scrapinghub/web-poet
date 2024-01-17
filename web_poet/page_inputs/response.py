@@ -29,9 +29,7 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
     @property
     def status(self) -> Optional[int]:
         """The int status code of the HTTP response, if available."""
-        if getattr(self.response, "status", None):
-            return self.response.status
-        return None
+        return self.response.status
 
     def _selector_input(self) -> str:
         return self.text
