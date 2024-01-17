@@ -672,5 +672,7 @@ def test_http_or_browser_response() -> None:
     response = AnyResponse(response=BrowserResponse(url=url, html=html, status=200))
     assert response.status == 200
 
-    response = AnyResponse(response=HttpResponse(url=url, body=html.encode(), status=200))
+    response = AnyResponse(
+        response=HttpResponse(url=url, body=html.encode(), status=200)
+    )
     assert response.status == 200
