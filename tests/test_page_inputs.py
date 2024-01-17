@@ -649,12 +649,12 @@ def test_http_or_browser_response() -> None:
     url = "http://example.com"
     html = "<html><body><p>Hello, </p><p>world!</p></body></html>"
 
-    browser_response = BrowserResponse(url=url, html=html, status=200)
+    browser_response = BrowserResponse(url=url, html=html)
     response_1 = AnyResponse(response=browser_response)
     assert isinstance(response_1.response, BrowserResponse)
     assert response_1.response == browser_response
 
-    http_response = HttpResponse(url, html.encode())
+    http_response = HttpResponse(url=url, body=html.encode())
     response_2 = AnyResponse(response=http_response)
     assert isinstance(response_2.response, HttpResponse)
     assert response_2.response == http_response
@@ -667,3 +667,10 @@ def test_http_or_browser_response() -> None:
         assert response.css("p::text").getall() == ["Hello, ", "world!"]
         assert isinstance(response.selector, parsel.Selector)
         assert str(response.urljoin("products")) == "http://example.com/products"
+        assert response.status is None
+
+    response = AnyResponse(response=BrowserResponse(url=url, html=html, status=200))
+    assert response.status == 200
+
+    response = AnyResponse(response=HttpResponse(url=url, body=html.encode(), status=200))
+    assert response.status == 200

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import attrs
 
@@ -25,6 +25,13 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
         if isinstance(self.response, BrowserResponse):
             return self.response.html
         return self.response.text
+
+    @property
+    def status(self) -> Optional[int]:
+        """The int status code of the HTTP response, if available."""
+        if getattr(self.response, "status", None):
+            return self.response.status
+        return None
 
     def _selector_input(self) -> str:
         return self.text
