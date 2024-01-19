@@ -302,7 +302,7 @@ For example:
         base: BasePage
 
         @field
-        async def new_name(self) -> str:
+        async def name(self) -> str:
             name = await ensure_awaitable(self.base.name)
             brand = await ensure_awaitable(self.base.brand)
             return f"{brand}: {name}"
@@ -326,7 +326,7 @@ returns as a dependency in your new page object class. For example:
         base: BaseItem
 
         @field
-        def new_name(self) -> str:
+        def name(self) -> str:
             return f"{self.base.brand}: {self.base.name}"
 
 
