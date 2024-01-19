@@ -129,7 +129,7 @@ Reimplementing a field when subclassing a :ref:`page object class
     class CustomPage(BasePage):
 
         @field
-        def foo(self) -> str:
+        async def foo(self) -> str:
             base_foo = await ensure_awaitable(super().foo)
             return f"{base_foo} (modified)"
 
