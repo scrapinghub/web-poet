@@ -5,9 +5,12 @@ Fields
 ======
 
 A field is a read-only property in a :ref:`page object class <page-objects>`
-that is decorated with :meth:`@field <web_poet.fields.field>`, is named after a
-key of the :ref:`item <items>` that the page object class returns, and returns
-the value for that item key based on :ref:`inputs <inputs>`.
+decorated with :meth:`@field <web_poet.fields.field>` instead of
+:func:`@property <property>`.
+
+Each field is named after a key of the :ref:`item <items>` that the page object
+class returns. A field uses the :ref:`inputs <inputs>` of its page object class
+to return the right value for the matching item key.
 
 For example:
 
