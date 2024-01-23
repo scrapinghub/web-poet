@@ -192,6 +192,10 @@ autodoc_member_order = "bysource"
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
+    "attrs": (
+        "https://www.attrs.org/en/stable/",
+        None,
+    ),
     "python": (
         "https://docs.python.org/3",
         None,

@@ -1,3 +1,4 @@
+.. _item-classes:
 .. _items:
 
 =====
@@ -24,10 +25,59 @@ class. For example:
 Because itemadapter_ allows implementing support for arbitrary classes,
 any kind of Python object can potentially work as an item.
 
+Defining the item class of a page object class
+==============================================
+
+When inheriting from :class:`~.ItemPage`, indicate the item class to return
+between brackets:
+
+.. code-block:: python
+
+    @attrs.define
+    class MyPage(ItemPage[MyItem]):
+        ...
+
+:class:`~.ItemPage.to_item` builds an instance of the specified item class
+based on the page object class :ref:`fields <fields>`.
+
+.. code-block:: python
+
+    page = MyPage(...)
+    item = await page.to_item()
+    assert isinstance(item, MyItem)
+
+You can also define :class:`~.ItemPage` subclasses that are not meant to be
+used, only subclassed, and not annotate :class:`~.ItemPage` in them. You can
+then annotate those classes when subclassing them:
+
+.. code-block:: python
+
+    @attrs.define
+    class MyBasePage(ItemPage):
+        ...
+
+    @attrs.define
+    class MyPage(MyBasePage[MyItem]):
+        ...
+
+To change the item class of a subclass that has already defined its item class,
+use :class:`~.Returns`:
+
+.. code-block:: python
+
+    @attrs.define
+    class MyOtherPage(MyPage, Returns[MyOtherItem]):
+        ...
+
+
 Best practices for item classes
 ===============================
 
 To keep your code maintainable, we recommend you to:
+
+-   Instead of :class:`dict`, use proper item classes based on
+    :mod:`dataclasses` or :doc:`attrs <attrs:index>`, to make it easier to
+    detect issues like field name typos or missing required fields.
 
 -   Reuse item classes.
 
