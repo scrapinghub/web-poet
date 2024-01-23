@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.16.0 (YYYY-MM-DD)
+0.16.0 (2024-01-23)
 -------------------
 
 * Added new :class:`~.AnyResponse` which holds either :class:`~.BrowserResponse`,
