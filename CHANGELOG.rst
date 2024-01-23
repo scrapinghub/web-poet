@@ -7,6 +7,7 @@ Changelog
 
 * Added new :class:`~.AnyResponse` which holds either :class:`~.BrowserResponse`,
   or :class:`~.HttpResponse`.
+* Documentation improvements.
 
 0.15.1 (2023-11-21)
 -------------------
