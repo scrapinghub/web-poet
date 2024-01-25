@@ -140,10 +140,10 @@ syntax.
 Exception Handling
 ------------------
 
-In the previous :ref:`exception-handling` section, we can see how Page Object
-developers could use the exception classes built inside **web-poet** to handle
-various ways additional requests MAY fail. In this section, we'll see the
-rationale and ways the framework MUST be able to do that.
+Page Object developers could use the exception classes built inside
+**web-poet** to handle various ways additional requests MAY fail. In this
+section, we'll see the rationale and ways the framework MUST be able to do
+that.
 
 Rationale
 *********
