@@ -12,9 +12,7 @@ JavaScript.
 To extract such data, reproduce those requests using :class:`~.HttpClient`.
 Include :class:`~.HttpClient` among the :ref:`inputs <inputs>` of your
 :ref:`page object <page-objects>`, and use an asynchronous :ref:`field
-<fields-sync-async>` or method to call one of its methods. For example, you can
-call :meth:`HttpClient.execute <.HttpClient.execute>` with an
-:class:`~.HttpRequest` as input to get an :class:`~.HttpResponse` as output.
+<fields-sync-async>` or method to call one of its methods.
 
 For example, simulating a click on a button that loads product images could
 look like:
