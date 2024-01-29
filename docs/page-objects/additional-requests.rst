@@ -51,8 +51,8 @@ look like:
 
 .. note::
 
-    :meth:`HttpClient.execute <~.HttpClient.execute>` is expected to follow any
-    redirection except when the request method is ``HEAD``. This means that the
+    :class:`~.HttpClient` methods are expected to follow any redirection except
+    when the request method is ``HEAD``. This means that the
     :class:`~.HttpResponse` that you get is already the end of any redirection
     trail.
 
