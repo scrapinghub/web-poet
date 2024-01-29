@@ -6,6 +6,8 @@ These are exceptions pertaining to common issues faced when executing HTTP
 operations.
 """
 
+from typing import Optional
+
 from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
 
@@ -24,7 +26,7 @@ class HttpError(IOError):
 
     def __init__(self, msg: str = None, request: HttpRequest = None):
         #: Request that triggered the exception.
-        self.request: HttpRequest = request
+        self.request: Optional[HttpRequest] = request
         if msg is None:
             msg = f"An Error ocurred when executing this HTTP Request: {self.request}"
         super().__init__(msg)
@@ -69,7 +71,7 @@ class HttpResponseError(HttpError):
         request: HttpRequest = None,
     ):
         #: Response that triggered the exception.
-        self.response: HttpResponse = response
+        self.response: Optional[HttpResponse] = response
         if msg is None:
             msg = f"Unexpected HTTP Response received: {self.response}"
         super().__init__(msg, request=request)
