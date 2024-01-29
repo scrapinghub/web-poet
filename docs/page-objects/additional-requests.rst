@@ -57,10 +57,11 @@ Making a request
 
 .. code-block:: python
 
-    http.get(url)
-    http.post(url)
-    http.request(url, method="...")
-    http.execute(HttpRequest(url, method="..."))
+    http = HtpClient()
+    response = await http.get(url)
+    response = await http.post(url, body=b"...")
+    response = await http.request(url, method="...")
+    response = await http.execute(HttpRequest(url, method="..."))
 
 Request methods also accept custom headers and body, for example:
 
