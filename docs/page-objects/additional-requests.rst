@@ -68,12 +68,12 @@ instances (and :class:`~.HttpError` instances when using
 .. code-block:: python
 
     import attrs
-    from web_poet import HttpClient, HttpError, HttpRequest, WebPage, field
-    from zyte_common_items import Product, ProductVariant
+    from web_poet import HttpClient, HttpError, HttpRequest, field
+    from zyte_common_items import Image, ProductPage, ProductVariant
 
 
     @attrs.define
-    class ProductPage(WebPage[Product]):
+    class MyProductPage(ProductPage):
         http: HttpClient
 
         max_variants = 10
@@ -126,12 +126,12 @@ times before giving up:
 
     import attrs
     from tenacity import retry, stop_after_attempt
-    from web_poet import HttpClient, HttpError, WebPage, field
-    from zyte_common_items import Product
+    from web_poet import HttpClient, HttpError, field
+    from zyte_common_items import ProductPage
 
 
     @attrs.define
-    class ProductPage(WebPage[Product]):
+    class MyProductPage(ProductPage):
         http: HttpClient
 
         @field
@@ -149,7 +149,8 @@ times before giving up:
             except HttpError:
                 return []
             else:
-                return response.css(".product-images img::attr(src)").getall()
+                urls = response.css(".product-images img::attr(src)").getall()
+                return [Image(url=url) for url in urls]
 
 If the reason your additional request fails is outdated or missing data from
 page object input, do not try to reproduce the request for that input as an
