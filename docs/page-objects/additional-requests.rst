@@ -20,12 +20,12 @@ look like:
 .. code-block:: python
 
     import attrs
-    from web_poet import HttpClient, HttpError, WebPage, field
-    from zyte_common_items import Product
+    from web_poet import HttpClient, HttpError, field
+    from zyte_common_items import Image, ProductPage
 
 
     @attrs.define
-    class ProductPage(WebPage[Product]):
+    class MyProductPage(ProductPage]):
         http: HttpClient
 
         @field
@@ -40,7 +40,8 @@ look like:
             except HttpError:
                 return []
             else:
-                return response.css(".product-images img::attr(src)").getall()
+                urls = response.css(".product-images img::attr(src)").getall()
+                return [Image(url=url) for url in urls]
 
 .. warning::
 
