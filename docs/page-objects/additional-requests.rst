@@ -34,9 +34,9 @@ look like:
 
         @field
         async def images(self):
-            api_url = f"https://api.example.com/v2/images?id={self.productId}"
+            url = f"https://api.example.com/v2/images?id={self.productId}"
             try:
-                response = await self.http.get(api_url)
+                response = await self.http.get(url)
             except HttpError:
                 return []
             else:
@@ -49,12 +49,39 @@ look like:
     mentioned above. Using :class:`~.HttpClient` for crawling logic would
     defeat :ref:`the purpose of web-poet <overview>`.
 
+
+Making a request
+================
+
+:class:`~.HttpClient` provides multiple asynchronous request methods, such as:
+
+.. code-block:: python
+
+    http.get(url)
+    http.post(url)
+    http.request(url, method="...")
+    http.execute(HttpRequest(url, method="..."))
+
+Request methods also accept custom headers and body, for example:
+
+.. code-block:: python
+
+    http.post(
+        url,
+        headers={"Content-Type": "application/json;charset=UTF-8"},
+        body=json.dumps({"foo": "bar"}).encode("utf-8"),
+    )
+
+Request methods may either raise an :class:`~.HttpError` or return an
+:class:`~.HttpResponse`. See :ref:`httpresponse`.
+
 .. note::
 
     :class:`~.HttpClient` methods are expected to follow any redirection except
     when the request method is ``HEAD``. This means that the
     :class:`~.HttpResponse` that you get is already the end of any redirection
     trail.
+
 
 Concurrent requests
 ===================
@@ -98,6 +125,22 @@ instances (and :class:`~.HttpError` instances when using
 You can alternatively use :mod:`asyncio` together with :class:`~.HttpClient` to
 handle multiple requests. For example, you can use :func:`asyncio.as_completed`
 to process the first response from a group of requests as early as possible.
+
+
+Error handling
+==============
+
+:class:`~.HttpClient` methods may raise an exception of type
+:class:`~.HttpError` or a subclass.
+
+If the response HTTP status code (:attr:`response.status
+<.HttpResponse.status>`) is 400 or higher, :class:`~.HttpResponseError` is
+raised. In case of connection errors, TLS errors and similar,
+:class:`~.HttpRequestError` is raised.
+
+:class:`~.HttpError` provides access to the offending
+:attr:`~.HttpError.request`, and :class:`~.HttpResponseError` also provides
+access to the offending :attr:`~.HttpResponseError.response`.
 
 
 .. _retries-additional-requests:

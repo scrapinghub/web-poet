@@ -18,12 +18,13 @@ class HttpError(IOError):
     For more specific errors, it would be better to use :class:`.HttpRequestError`
     and :class:`.HttpResponseError`.
 
-    :param request: The :class:`~.HttpRequest` instance that was used.
+    :param request: Request that triggered the exception.
     :type request: HttpRequest
     """
 
     def __init__(self, msg: str = None, request: HttpRequest = None):
-        self.request = request
+        #: Request that triggered the exception.
+        self.request: HttpRequest = request
         if msg is None:
             msg = f"An Error ocurred when executing this HTTP Request: {self.request}"
         super().__init__(msg)
@@ -55,11 +56,9 @@ class HttpResponseError(HttpError):
         This exception is raised by web-poet itself, based on ``allow_status``
         parameter found in the methods of :class:`~.HttpClient`.
 
-    :param request: The :class:`~.HttpRequest` instance that was used.
+    :param request: Request that got the response that triggered the exception.
     :type request: HttpRequest
-    :param response: The :class:`~.HttpResponse` instance that was received, if
-        any. Note that this wouldn't exist if the problem ocurred when executing
-        the :class:`~.HttpRequest`.
+    :param response: Response that triggered the exception.
     :type response: HttpResponse
     """
 
@@ -69,7 +68,8 @@ class HttpResponseError(HttpError):
         response: HttpResponse = None,
         request: HttpRequest = None,
     ):
-        self.response = response
+        #: Response that triggered the exception.
+        self.response: HttpResponse = response
         if msg is None:
             msg = f"Unexpected HTTP Response received: {self.response}"
         super().__init__(msg, request=request)
