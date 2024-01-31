@@ -46,7 +46,7 @@ define as inputs for a page object class, including:
 
 -   :class:`~web_poet.page_inputs.http.HttpResponse`, a complete HTTP response,
     including URL, headers, and body. This is the most common input for a page
-    object class.
+    object class. See :ref:`httpresponse`.
 
 -   :class:`~web_poet.page_inputs.client.HttpClient`, to send  :ref:`additional
     requests <additional-requests>`.
@@ -72,6 +72,41 @@ define as inputs for a page object class, including:
     instance, depending on which one is available or is more appropriate.
 
     .. _Document Object Model: https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
+
+
+.. _httpresponse:
+
+Working with HttpResponse
+=========================
+
+:class:`~.HttpResponse` has many attributes and methods.
+
+To get the entire response body, you can use :attr:`~.HttpResponse.body` for
+the raw :class:`bytes`, :attr:`~.HttpResponse.text` for the :class:`str`
+(decoded with the detected :attr:`~.HttpResponse.encoding`), or :meth:`json()
+<.HttpResponse.json>` to load a JSON response as a Python data structure:
+
+.. code-block:: python
+
+    >>> response.body
+    b'{"foo": "bar"}'
+    >>> response.text
+    '{"foo": "bar"}'
+    >>> response.json()
+    {'foo': 'bar'}
+
+There are also methods to select content from responses: :meth:`jmespath()
+<.HttpResponse.jmespath>` for JSON and :meth:`css() <.HttpResponse.css>` and
+:meth:`xpath() <.HttpResponse.xpath>` for HTML and XML:
+
+.. code-block:: python
+
+    >>> response.jmespath("foo")
+    [<Selector query='foo' data='bar'>]
+    >>> response.css("h1::text")
+    [<Selector query='descendant-or-self::h1/text()' data='Title'>]
+    >>> response.xpath("//h1/text()")
+    [<Selector query='//h1/text()' data='Title'>]
 
 
 .. _custom-inputs:
