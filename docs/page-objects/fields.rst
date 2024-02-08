@@ -212,11 +212,11 @@ For example:
     class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
         pass
 
-Alternatively, you can consider :ref:`composition <composition>` for removing
-fields. Composition is more verbose than subclassing, because you need to
-define every field in your page object class, but it can catch some mismatches
-between page object class fields and item class fields that would otherwise be
-hidden by ``skip_nonitem_fields``.
+Alternatively, you can consider :ref:`using a page object as input
+<composition-input>` for removing fields. It is more verbose than subclassing,
+because you need to define every field in your page object class, but it can
+catch some mismatches between page object class fields and item class fields
+that would otherwise be hidden by ``skip_nonitem_fields``.
 
 
 .. _rename-field:
@@ -263,17 +263,26 @@ For example:
         async def new_field(self) -> str:
             return ensure_awaitable(self.old_field)
 
-Alternatively, you can consider :ref:`composition <composition>` for renaming
-fields. Composition is more verbose than subclassing, because you need to
-define every field in your page object class, but it can catch some mismatches
-between page object class fields and item class fields that would otherwise be
-hidden by ``skip_nonitem_fields``.
+Alternatively, you can consider :ref:`using a page object as input
+<composition-input>` for renaming fields. It is more verbose than subclassing,
+because you need to define every field in your page object class, but it can
+catch some mismatches between page object class fields and item class fields
+that would otherwise be hidden by ``skip_nonitem_fields``.
 
 
 .. _composition:
 
 Composition
 ===========
+
+There are 2 forms of composition that you can use when writing a page object:
+:ref:`using a page object as input <composition-input>`, and :ref:`using a
+field mixing <field-mixins>`.
+
+.. _composition-input:
+
+Using a page object as input
+----------------------------
 
 You can reuse a page object class from another page object class using
 composition instead of :ref:`inheritance <inheritance>` by using the original
@@ -338,6 +347,45 @@ synchronous methods even if the source page object fields were
 On the other hand, all fields of the source page object class will always be
 called to build the entire item, which may be a waste of resources if you only
 need to access some of the item fields.
+
+.. _field-mixins:
+
+Field mixins
+------------
+
+You can subclass :class:`web_poet.fields.FieldsMixin` to create a mixin_ to
+reuse field definitions across multiple, otherwise-unrelated classes. For
+example:
+
+.. _mixin: https://en.wikipedia.org/wiki/Mixin
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import ItemPage, field
+    from web_poet.fields import FieldsMixin
+
+    from my_library import BaseItem1, BaseItem2
+
+    @attrs.define
+    class CustomItem:
+        name: str
+
+
+    class NameMixin(FieldsMixin):
+        @field
+        def name(self) -> str:
+            return f"{self.base.brand}: {self.base.name}"
+
+
+    @attrs.define
+    class CustomPage1(NameMixin, ItemPage[CustomItem]):
+        base: BaseItem1
+
+
+    @attrs.define
+    class CustomPage2(NameMixin, ItemPage[CustomItem]):
+        base: BaseItem2
 
 
 .. _field-processors:
