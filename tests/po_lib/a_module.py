@@ -4,8 +4,7 @@ from tests.po_lib import POBase
 from web_poet import ItemPage, handle_urls
 
 
-class POModuleOverriden(ItemPage):
-    ...
+class POModuleOverriden(ItemPage): ...
 
 
 @handle_urls("example.com", instead_of=POModuleOverriden, extra_arg="foo")

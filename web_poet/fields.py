@@ -2,6 +2,7 @@
 ``web_poet.fields`` is a module with helpers for putting extraction logic
 into separate Page Object methods / properties.
 """
+
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps

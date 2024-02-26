@@ -249,7 +249,7 @@ class DateItemPage(WebPage):
 
 def _assert_frozen_item(
     frozen_time: datetime.datetime,
-    pytester: pytest.Pytester,
+    pytester: "pytest.Pytester",
     response: HttpResponse,
     *,
     outcomes: dict = None,

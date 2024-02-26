@@ -125,9 +125,9 @@ class RulesRegistry:
 
     def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
         self._rules: Dict[int, ApplyRule] = {}
-        self._overrides_matchers: DefaultDict[
-            Optional[Type[ItemPage]], URLMatcher
-        ] = defaultdict(URLMatcher)
+        self._overrides_matchers: DefaultDict[Optional[Type[ItemPage]], URLMatcher] = (
+            defaultdict(URLMatcher)
+        )
         self._item_matchers: DefaultDict[Optional[Type], URLMatcher] = defaultdict(
             URLMatcher
         )
