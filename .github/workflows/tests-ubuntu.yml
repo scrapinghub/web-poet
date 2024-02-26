@@ -19,9 +19,9 @@ jobs:
         env:
           - TOXENV: py
         include:
-          - python-version: '3.12'
+          - python-version: '3.8'
             env:
-              TOXENV: old
+              TOXENV: pinned
 
     steps:
     - uses: actions/checkout@v4
