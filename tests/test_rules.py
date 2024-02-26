@@ -465,8 +465,7 @@ def test_handle_urls_deprecation() -> None:
     with pytest.warns(DeprecationWarning, match=msg):
 
         @handle_urls("example.com", overrides=CustomProductPage)
-        class PageWithDeprecatedOverrides:
-            ...
+        class PageWithDeprecatedOverrides: ...
 
     # Despite the deprecation, it should still properly add the rule in the
     # registry.

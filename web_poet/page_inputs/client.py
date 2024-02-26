@@ -211,9 +211,9 @@ class HttpClient:
             response = await self._request_downloader(request)
         except HttpError as ex:
             if self.save_responses:
-                self._saved_responses[
-                    request_fingerprint(request)
-                ] = _SavedResponseData(request, None, ex)
+                self._saved_responses[request_fingerprint(request)] = (
+                    _SavedResponseData(request, None, ex)
+                )
             raise
 
         if self.save_responses:

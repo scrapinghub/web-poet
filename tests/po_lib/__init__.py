@@ -1,6 +1,7 @@
 """
 This package is just for overrides testing purposes.
 """
+
 from typing import Any, Dict, List, Type, Union
 
 from url_matcher import Patterns
@@ -18,12 +19,10 @@ class POBase(ItemPage):
     expected_meta: Dict[str, Any]
 
 
-class POTopLevelOverriden1(ItemPage):
-    ...
+class POTopLevelOverriden1(ItemPage): ...
 
 
-class POTopLevelOverriden2(ItemPage):
-    ...
+class POTopLevelOverriden2(ItemPage): ...
 
 
 @handle_urls("example.com", instead_of=POTopLevelOverriden1)
