@@ -26,7 +26,7 @@ setup(
         "w3lib >= 1.22.0",
         "async-lru >= 1.0.3",
         "itemadapter >= 0.8.0",
-        "andi",
+        "andi >= 0.5.0",
         "python-dateutil",
         "time-machine",
         "packaging >= 20.0",
