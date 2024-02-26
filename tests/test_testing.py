@@ -15,6 +15,7 @@ from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.exceptions import HttpRequestError, HttpResponseError, Retry, UseFallback
+from web_poet.page_inputs import AnnotatedResult
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
@@ -537,3 +538,28 @@ def test_page_object_exception_none(pytester, book_list_html_response) -> None:
     assert fixture.exception_path.exists()
     result = pytester.runpytest()
     result.assert_outcomes(failed=1)
+
+
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+
+    @attrs.define(kw_only=True)
+    class MyAnnotatedItemPage(MyItemPage):
+        response: Annotated[HttpResponse, "foo", 42]
+
+        async def to_item(self) -> dict:
+            return {"foo": "bar"}
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
+)
+def test_annotated(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyAnnotatedItemPage,
+        page_inputs=[AnnotatedResult(book_list_html_response, ("foo", 42))],
+        expected_output={"foo": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)

@@ -1,3 +1,4 @@
+from .annotated import AnnotatedResult
 from .browser import BrowserHtml, BrowserResponse
 from .client import HttpClient
 from .http import (

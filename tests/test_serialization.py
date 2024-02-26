@@ -1,3 +1,4 @@
+import sys
 from typing import Type
 
 import attrs
@@ -14,6 +15,7 @@ from web_poet import (
     Stats,
     WebPage,
 )
+from web_poet.page_inputs.annotated import AnnotatedResult
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -214,3 +216,47 @@ def test_httpclient_empty(tmp_path) -> None:
     assert (directory / "HttpClient.exists").exists()
     read_serialized_deps = storage.read()
     assert "HttpClient" in read_serialized_deps
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
+)
+def test_annotated(book_list_html_response) -> None:
+    from typing import Annotated
+
+    @attrs.define
+    class MyWebPage(ItemPage):
+        response: Annotated[HttpResponse, "foo", 42]
+        url: ResponseUrl
+
+    url_str = "http://books.toscrape.com/index.html"
+    url = ResponseUrl(url_str)
+
+    serialized_deps = serialize(
+        [AnnotatedResult(book_list_html_response, ("foo", 42)), url]
+    )
+    po = MyWebPage(
+        book_list_html_response,
+        url,
+    )
+    deserialized_po = deserialize(MyWebPage, serialized_deps)
+    _assert_pages_equal(po, deserialized_po)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
+)
+def test_annotated_duplicate(book_list_html_response) -> None:
+    url_str = "http://books.toscrape.com/index.html"
+    url = ResponseUrl(url_str)
+
+    with pytest.raises(
+        ValueError, match="Several instances of AnnotatedResult for HttpResponse were"
+    ):
+        serialize(
+            [
+                AnnotatedResult(book_list_html_response, ("foo", 42)),
+                AnnotatedResult(book_list_html_response, ("bar",)),
+                url,
+            ]
+        )

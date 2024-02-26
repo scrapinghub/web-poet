@@ -1,7 +1,8 @@
 import json
-from typing import Dict, List, Optional, Type, cast
+from typing import Any, Dict, List, Optional, Type, cast
 
 from .. import (
+    AnnotatedResult,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -15,7 +16,9 @@ from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
 from .api import (
     SerializedLeafData,
+    _get_name_for_class,
     deserialize_leaf,
+    load_class,
     register_serialization,
     serialize_leaf,
 )
@@ -193,3 +196,32 @@ def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:
 
 
 register_serialization(_serialize_Stats, _deserialize_Stats)
+
+
+def _serialize_AnnotatedResult(o: AnnotatedResult) -> SerializedLeafData:
+    serialized_data: SerializedLeafData = {
+        "metadata.json": json.dumps(o.metadata).encode(),
+        "result_type.txt": _get_name_for_class(type(o.result)).encode(),
+    }
+    serialized_result = serialize_leaf(o.result)
+    for k, v in serialized_result.items():
+        serialized_data["result-" + k] = v
+    return serialized_data
+
+
+def _deserialize_AnnotatedResult(
+    cls: Type[AnnotatedResult], data: SerializedLeafData
+) -> AnnotatedResult:
+    metadata = json.loads(data["metadata.json"])
+    result_type = load_class(data["result_type.txt"].decode())
+    serialized_result = {}
+    for k, v in data.items():
+        if not k.startswith("result-"):
+            continue
+        serialized_result[k.split("-", 1)[1]] = v
+    result: Any = deserialize_leaf(result_type, serialized_result)
+
+    return cls(result=result, metadata=metadata)
+
+
+register_serialization(_serialize_AnnotatedResult, _deserialize_AnnotatedResult)
