@@ -1,6 +1,7 @@
 """This package is being used by tests/po_lib to validate some behaviors on
 external depedencies.
 """
+
 from typing import Any, Dict, Type
 
 from url_matcher import Patterns
@@ -14,8 +15,7 @@ class POBase(ItemPage):
     expected_meta: Dict[str, Any]
 
 
-class POLibSubOverriden(ItemPage):
-    ...
+class POLibSubOverriden(ItemPage): ...
 
 
 @handle_urls("sub.example", instead_of=POLibSubOverriden)

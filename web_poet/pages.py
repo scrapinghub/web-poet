@@ -59,13 +59,11 @@ class Returns(Generic[ItemT]):
 
 
 @overload
-def get_item_cls(cls: type, default: type) -> type:
-    ...
+def get_item_cls(cls: type, default: type) -> type: ...
 
 
 @overload
-def get_item_cls(cls: type, default: None) -> Optional[type]:
-    ...
+def get_item_cls(cls: type, default: None) -> Optional[type]: ...
 
 
 def get_item_cls(cls: type, default: Optional[type] = None) -> Optional[type]:

@@ -1,4 +1,5 @@
 """Test page object input validation scenarios."""
+
 from typing import Optional
 
 import attrs

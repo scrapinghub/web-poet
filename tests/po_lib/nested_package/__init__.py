@@ -4,8 +4,7 @@ from tests.po_lib import POBase
 from web_poet import ItemPage, handle_urls
 
 
-class PONestedPkgOverriden(ItemPage):
-    ...
+class PONestedPkgOverriden(ItemPage): ...
 
 
 @handle_urls(
