@@ -8,7 +8,7 @@ import andi
 from andi.typeutils import strip_annotated
 
 import web_poet
-from web_poet import AnnotatedResult, Injectable
+from web_poet import AnnotatedInstance, Injectable
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
 
@@ -136,15 +136,15 @@ def serialize(deps: Iterable[Any]) -> SerializedData:
         cls = dep.__class__
         if is_injectable(cls):
             raise ValueError(f"Injectable type {cls} passed to serialize()")
-        if cls is AnnotatedResult:
-            key = f"AnnotatedResult {_get_name_for_class(dep.result.__class__)}"
+        if cls is AnnotatedInstance:
+            key = f"AnnotatedInstance {_get_name_for_class(dep.result.__class__)}"
         else:
             key = _get_name_for_class(cls)
 
         if key in result:
             cls_name = cls.__name__
-            if cls is AnnotatedResult:
-                cls_name = f"AnnotatedResult for {dep.result.__class__.__name__}"
+            if cls is AnnotatedInstance:
+                cls_name = f"AnnotatedInstance for {dep.result.__class__.__name__}"
             raise ValueError(
                 f"Several instances of {cls_name} were passed to serialize()."
             )
@@ -192,8 +192,8 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
     deps: Dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
-        if dep_type_name.startswith("AnnotatedResult "):
-            annotated_result = deserialize_leaf(AnnotatedResult, dep_data)
+        if dep_type_name.startswith("AnnotatedInstance "):
+            annotated_result = deserialize_leaf(AnnotatedInstance, dep_data)
             dep_type = annotated_result.get_annotated_cls()
             deserialized_dep = annotated_result.result
         else:

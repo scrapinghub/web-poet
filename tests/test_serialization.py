@@ -15,7 +15,7 @@ from web_poet import (
     Stats,
     WebPage,
 )
-from web_poet.page_inputs.annotated import AnnotatedResult
+from web_poet.page_inputs.annotated import AnnotatedInstance
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -233,7 +233,7 @@ def test_annotated(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     serialized_deps = serialize(
-        [AnnotatedResult(book_list_html_response, ("foo", 42)), url]
+        [AnnotatedInstance(book_list_html_response, ("foo", 42)), url]
     )
     po = MyWebPage(
         book_list_html_response,
@@ -255,8 +255,8 @@ def test_annotated_duplicate(book_list_html_response) -> None:
     ):
         serialize(
             [
-                AnnotatedResult(book_list_html_response, ("foo", 42)),
-                AnnotatedResult(book_list_html_response, ("bar",)),
+                AnnotatedInstance(book_list_html_response, ("foo", 42)),
+                AnnotatedInstance(book_list_html_response, ("bar",)),
                 url,
             ]
         )

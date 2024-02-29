@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List, Optional, Type, cast
 
 from .. import (
-    AnnotatedResult,
+    AnnotatedInstance,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -198,9 +198,9 @@ def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:
 register_serialization(_serialize_Stats, _deserialize_Stats)
 
 
-def _serialize_AnnotatedResult(o: AnnotatedResult) -> SerializedLeafData:
+def _serialize_AnnotatedInstance(o: AnnotatedInstance) -> SerializedLeafData:
     serialized_data: SerializedLeafData = {
-        "metadata.json": json.dumps(o.metadata).encode(),
+        "metadata.json": _format_json(o.metadata).encode(),
         "result_type.txt": _get_name_for_class(type(o.result)).encode(),
     }
     serialized_result = serialize_leaf(o.result)
@@ -209,9 +209,9 @@ def _serialize_AnnotatedResult(o: AnnotatedResult) -> SerializedLeafData:
     return serialized_data
 
 
-def _deserialize_AnnotatedResult(
-    cls: Type[AnnotatedResult], data: SerializedLeafData
-) -> AnnotatedResult:
+def _deserialize_AnnotatedInstance(
+    cls: Type[AnnotatedInstance], data: SerializedLeafData
+) -> AnnotatedInstance:
     metadata = json.loads(data["metadata.json"])
     result_type = load_class(data["result_type.txt"].decode())
     serialized_result = {}
@@ -224,4 +224,4 @@ def _deserialize_AnnotatedResult(
     return cls(result=result, metadata=metadata)
 
 
-register_serialization(_serialize_AnnotatedResult, _deserialize_AnnotatedResult)
+register_serialization(_serialize_AnnotatedInstance, _deserialize_AnnotatedInstance)

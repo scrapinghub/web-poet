@@ -15,7 +15,7 @@ from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.exceptions import HttpRequestError, HttpResponseError, Retry, UseFallback
-from web_poet.page_inputs import AnnotatedResult
+from web_poet.page_inputs import AnnotatedInstance
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
@@ -558,7 +558,7 @@ def test_annotated(pytester, book_list_html_response) -> None:
     _save_fixture(
         pytester,
         page_cls=MyAnnotatedItemPage,
-        page_inputs=[AnnotatedResult(book_list_html_response, ("foo", 42))],
+        page_inputs=[AnnotatedInstance(book_list_html_response, ("foo", 42))],
         expected_output={"foo": "bar"},
     )
     result = pytester.runpytest()

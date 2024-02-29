@@ -3,8 +3,8 @@ from typing import Any, Tuple
 
 
 @dataclass
-class AnnotatedResult:
-    """Wrapper for annotated dependencies.
+class AnnotatedInstance:
+    """Wrapper for instances of annotated dependencies.
 
     It is used when both the dependency value and the dependency annotation are
     needed.
