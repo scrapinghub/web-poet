@@ -251,7 +251,7 @@ def test_annotated_duplicate(book_list_html_response) -> None:
     url = ResponseUrl(url_str)
 
     with pytest.raises(
-        ValueError, match="Several instances of AnnotatedResult for HttpResponse were"
+        ValueError, match="Several instances of AnnotatedInstance for HttpResponse were"
     ):
         serialize(
             [
