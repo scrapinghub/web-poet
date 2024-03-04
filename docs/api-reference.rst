@@ -126,6 +126,11 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
+typing.Annotated support
+========================
+
+.. automodule:: web_poet.annotated
+    :members:
 
 Utils
 =====

@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 import andi
+from andi.typeutils import strip_annotated
 
 import web_poet
 from web_poet import Injectable
+from web_poet.annotated import AnnotatedInstance
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
 
@@ -135,7 +137,19 @@ def serialize(deps: Iterable[Any]) -> SerializedData:
         cls = dep.__class__
         if is_injectable(cls):
             raise ValueError(f"Injectable type {cls} passed to serialize()")
-        result[_get_name_for_class(cls)] = serialize_leaf(dep)
+        if cls is AnnotatedInstance:
+            key = f"AnnotatedInstance {_get_name_for_class(dep.result.__class__)}"
+        else:
+            key = _get_name_for_class(cls)
+
+        if key in result:
+            cls_name = cls.__name__
+            if cls is AnnotatedInstance:
+                cls_name = f"AnnotatedInstance for {dep.result.__class__.__name__}"
+            raise ValueError(
+                f"Several instances of {cls_name} were passed to serialize()."
+            )
+        result[key] = serialize_leaf(dep)
     return result
 
 
@@ -179,15 +193,21 @@ def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
     deps: Dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
-        dep_type = load_class(dep_type_name)
-        deps[dep_type] = deserialize_leaf(dep_type, dep_data)
+        if dep_type_name.startswith("AnnotatedInstance "):
+            annotated_result = deserialize_leaf(AnnotatedInstance, dep_data)
+            dep_type = annotated_result.get_annotated_cls()
+            deserialized_dep = annotated_result.result
+        else:
+            dep_type = load_class(dep_type_name)
+            deserialized_dep = deserialize_leaf(dep_type, dep_data)
+        deps[dep_type] = deserialized_dep
 
-    externally_provided = deps.keys()
+    externally_provided = {strip_annotated(cls) for cls in deps.keys()}
     plan = andi.plan(
         cls, is_injectable=is_injectable, externally_provided=externally_provided
     )
     for fn_or_cls, kwargs_spec in plan[:-1]:
-        if fn_or_cls in externally_provided:
+        if strip_annotated(fn_or_cls) in externally_provided:
             continue
-        deps[fn_or_cls] = fn_or_cls(**kwargs_spec.kwargs(deps))
+        deps[strip_annotated(fn_or_cls)] = fn_or_cls(**kwargs_spec.kwargs(deps))
     return cls(**plan.final_kwargs(deps))
