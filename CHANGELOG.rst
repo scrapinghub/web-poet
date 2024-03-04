@@ -2,6 +2,18 @@
 Changelog
 =========
 
+0.17.0 (YYYY-MM-DD)
+-------------------
+
+* Now requires ``andi >= 0.5.0``.
+* Package requirements that were unversioned now have minimum versions
+  specified.
+* Added support for Python 3.12.
+* Added support for ``typing.Annotated`` dependencies to the serialization and
+  testing code.
+* Documentation improvements.
+* CI improvements.
+
 0.16.0 (2024-01-23)
 -------------------
 
@@ -49,7 +61,7 @@ Changelog
 
 * The :ref:`testing framework <web-poet-testing>` now allows defining a
   :ref:`custom item adapter <web-poet-testing-adapters>`.
-* We have made a backward-incompatible change on test fixture serialization: 
+* We have made a backward-incompatible change on test fixture serialization:
   the ``type_name`` field of exceptions has been renamed to ``import_path``.
 * Fixed built-in Python types, e.g. ``int``, not working as :ref:`field
   processors <field-processors>`.
