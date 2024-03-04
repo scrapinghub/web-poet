@@ -2,7 +2,6 @@ import json
 from typing import Any, Dict, List, Optional, Type, cast
 
 from .. import (
-    AnnotatedInstance,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -11,6 +10,7 @@ from .. import (
     PageParams,
     Stats,
 )
+from ..annotated import AnnotatedInstance
 from ..exceptions import HttpError
 from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url

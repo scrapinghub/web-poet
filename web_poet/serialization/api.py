@@ -8,7 +8,8 @@ import andi
 from andi.typeutils import strip_annotated
 
 import web_poet
-from web_poet import AnnotatedInstance, Injectable
+from web_poet import Injectable
+from web_poet.annotated import AnnotatedInstance
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
 

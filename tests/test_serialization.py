@@ -15,7 +15,7 @@ from web_poet import (
     Stats,
     WebPage,
 )
-from web_poet.page_inputs.annotated import AnnotatedInstance
+from web_poet.annotated import AnnotatedInstance
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
