@@ -11,10 +11,6 @@ Page Inputs
 
 .. module:: web_poet.page_inputs
 
-.. automodule:: web_poet.page_inputs.annotated
-   :members:
-   :undoc-members:
-
 .. automodule:: web_poet.page_inputs.browser
    :members:
    :undoc-members:
@@ -130,6 +126,11 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
+typing.Annotated support
+========================
+
+.. automodule:: web_poet.annotated
+    :members:
 
 Utils
 =====
