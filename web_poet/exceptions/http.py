@@ -24,7 +24,9 @@ class HttpError(IOError):
     :type request: HttpRequest
     """
 
-    def __init__(self, msg: str = None, request: HttpRequest = None):
+    def __init__(
+        self, msg: Optional[str] = None, request: Optional[HttpRequest] = None
+    ):
         #: Request that triggered the exception.
         self.request: Optional[HttpRequest] = request
         if msg is None:
@@ -66,9 +68,9 @@ class HttpResponseError(HttpError):
 
     def __init__(
         self,
-        msg: str = None,
-        response: HttpResponse = None,
-        request: HttpRequest = None,
+        msg: Optional[str] = None,
+        response: Optional[HttpResponse] = None,
+        request: Optional[HttpRequest] = None,
     ):
         #: Response that triggered the exception.
         self.response: Optional[HttpResponse] = response

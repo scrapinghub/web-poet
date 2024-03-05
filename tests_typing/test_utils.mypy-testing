@@ -8,7 +8,7 @@ def test_memoizemethod_noargs():
     class Foo:
         @memoizemethod_noargs
         def meth(self) -> str:
-            ...
+            return ''
 
     foo = Foo()
     reveal_type(foo.meth())  # R: builtins.str
@@ -19,7 +19,7 @@ def test_cached_method_sync():
     class Foo:
         @cached_method
         def meth(self) -> str:
-            ...
+            return ''
 
     foo = Foo()
     reveal_type(foo.meth())  # R: builtins.str
@@ -30,7 +30,7 @@ async def test_cached_method_async():
     class Foo:
         @cached_method
         async def meth(self) -> str:
-            ...
+            return ''
 
     foo = Foo()
     reveal_type(await foo.meth())  # R: builtins.str
