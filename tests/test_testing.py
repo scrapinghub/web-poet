@@ -3,7 +3,7 @@ import json
 import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import attrs
 import dateutil.tz
@@ -252,7 +252,7 @@ def _assert_frozen_item(
     pytester: "pytest.Pytester",
     response: HttpResponse,
     *,
-    outcomes: dict = None,
+    outcomes: Optional[Dict[str, int]] = None,
 ) -> None:
     # this makes an item with datetime fields corresponding to frozen_time
     item = ItemAdapter(_get_product_item(frozen_time)).asdict()

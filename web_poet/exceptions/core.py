@@ -5,7 +5,9 @@ Core Exceptions
 These exceptions are tied to how **web-poet** operates.
 """
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from web_poet import HttpRequest
@@ -55,7 +57,9 @@ class NoSavedHttpResponse(AssertionError):
     :type request: HttpRequest
     """
 
-    def __init__(self, msg: str = None, request: "HttpRequest" = None):
+    def __init__(
+        self, msg: Optional[str] = None, request: Optional[HttpRequest] = None
+    ):
         self.request = request
         if msg is None:
             msg = f"There is no saved response available for this HTTP Request: {self.request}"
