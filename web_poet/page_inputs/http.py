@@ -1,9 +1,29 @@
+from __future__ import annotations
+
 import json
 from hashlib import sha1
-from typing import Any, Optional, TypeVar, Union
-from urllib.parse import urljoin
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
+from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit
 
 import attrs
+from lxml.html import (
+    FormElement,
+    InputElement,
+    MultipleSelectOptions,
+    SelectElement,
+    TextareaElement,
+)
 from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
@@ -11,6 +31,7 @@ from w3lib.encoding import (
     read_bom,
     resolve_encoding,
 )
+from w3lib.html import strip_html5_whitespace
 from w3lib.url import canonicalize_url
 
 from web_poet._base import _HttpHeaders
@@ -19,6 +40,14 @@ from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
 from .url import ResponseUrl as _ResponseUrl
+
+if TYPE_CHECKING:
+    # typing.Self requires Python 3.11
+    from typing_extensions import Self
+
+FormdataVType = Union[str, Iterable[str]]
+FormdataKVType = Tuple[str, FormdataVType]
+FormdataType = Optional[Union[Dict[str, FormdataVType], List[FormdataKVType]]]
 
 T_headers = TypeVar("T_headers", bound=_HttpHeaders)
 
@@ -118,6 +147,83 @@ class HttpResponseHeaders(_HttpHeaders):
         return http_content_type_encoding(content_type)
 
 
+def _is_listlike(x: Any) -> bool:
+    """Return ``True`` if *x* is a list-like object, i.e. an iterable but not
+    a string or bytes, or ``False`` otherwise."""
+    return hasattr(x, "__iter__") and not isinstance(x, (str, bytes))
+
+
+def _value(
+    form: Union[InputElement, SelectElement, TextareaElement]
+) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
+    if form.tag == "select":
+        return _select_value(cast(SelectElement, form), form.name, form.value)
+    return form.name, form.value
+
+
+def _select_value(
+    form: SelectElement,
+    name: Optional[str],
+    value: Union[None, str, MultipleSelectOptions],
+) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
+    if value is None and not form.multiple:
+        # Match browser behavior on simple select tag without options selected
+        # And for select tags without options
+        options = form.value_options
+        return (name, options[0]) if options else (None, None)
+    return name, value
+
+
+def _get_form_query(form: FormElement, data: FormdataType) -> str:
+    try:
+        keys = dict(data or ()).keys()
+    except (ValueError, TypeError):
+        raise ValueError("data should be a dict or iterable of tuples")
+    if not data:
+        data = []
+    inputs = form.xpath(
+        "descendant::textarea"
+        "|descendant::select"
+        "|descendant::input[not(@type) or @type["
+        ' not(re:test(., "^(?:submit|image|reset)$", "i"))'
+        " and (../@checked or"
+        '  not(re:test(., "^(?:checkbox|radio)$", "i")))]]',
+        namespaces={"re": "http://exslt.org/regular-expressions"},
+    )
+    values: List[FormdataKVType] = [
+        (k, "" if v is None else v)
+        for k, v in (_value(e) for e in inputs)
+        if k and k not in keys
+    ]
+    items = data.items() if isinstance(data, dict) else data
+    values.extend((k, v) for k, v in items if v is not None)
+    encoded_values = [
+        (k.encode(), v.encode())
+        for k, vs in values
+        for v in (cast(Iterable[str], vs) if _is_listlike(vs) else [cast(str, vs)])
+    ]
+    return urlencode(encoded_values, doseq=True)
+
+
+def _get_form_method(form: FormElement) -> str:
+    method = form.method
+    if method is None:
+        raise ValueError(f"{form} has no method set.")
+    method = method.upper()
+    if method not in {"GET", "POST"}:
+        method = "GET"
+    return method
+
+
+def _get_form_url(form: FormElement) -> str:
+    if form.base_url is None:
+        raise ValueError(f"{form} has no base_url set.")
+    action = form.get("action")
+    if action is None:
+        return form.base_url
+    return urljoin(form.base_url, strip_html5_whitespace(action))
+
+
 @attrs.define(auto_attribs=False, slots=False, eq=False)
 class HttpRequest:
     """Represents a generic HTTP request used by other functionalities in
@@ -132,6 +238,28 @@ class HttpRequest:
     body: HttpRequestBody = attrs.field(
         factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
     )
+
+    @classmethod
+    def from_form(cls, form: FormElement, data: FormdataType) -> Self:
+        """Return an :class:`HttpRequest` to submit *form* with the
+        specified *data*."""
+        query = _get_form_query(form, data)
+        method = _get_form_method(form)
+        url = _get_form_url(form)
+        headers = {}
+        body = b""
+        if method == "GET":
+            url = urlunsplit(urlsplit(url)._replace(query=query))
+        else:
+            assert method == "POST"
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            body = query.encode()
+        return HttpRequest(
+            url=url,
+            method=method,
+            headers=headers,
+            body=body,
+        )
 
     def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:
         """Return *url* as an absolute URL.

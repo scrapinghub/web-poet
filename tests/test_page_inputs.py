@@ -211,6 +211,62 @@ def test_http_request_init_with_response_url() -> None:
     assert str(req.url) == str(resp.url)
 
 
+def test_http_request_from_form_get() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="GET">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option selected="selected" value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root, {"query": "foo"})
+    assert (
+        str(request.url) == "https://example.com/search?bar=tender&baz=ooka&query=foo"
+    )
+    assert request.method == "GET"
+    assert request.headers == HttpRequestHeaders()
+    assert request.body == b""
+
+
+def test_http_request_from_form_post() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="POST">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option selected="selected" value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root, {"query": "foo"})
+    assert str(request.url) == "https://example.com/search"
+    assert request.method == "POST"
+    assert request.headers == HttpRequestHeaders(
+        {"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    assert request.body == b"bar=tender&baz=ooka&query=foo"
+
+
 @pytest.mark.parametrize(
     "cls",
     (
@@ -515,13 +571,15 @@ def test_browser_html() -> None:
 
 
 def test_browser_response() -> None:
+    url = "http://example.com"
     html = "<html><body><p>Hello, </p><p>world!</p></body></html>"
-    response = BrowserResponse(url="http://example.com", html=html, status=200)
+    response = BrowserResponse(url=url, html=html, status=200)
     assert response.xpath("//p/text()").getall() == ["Hello, ", "world!"]
     assert response.css("p::text").getall() == ["Hello, ", "world!"]
     assert isinstance(response.selector, parsel.Selector)
     assert isinstance(response.html, BrowserHtml)
     assert str(response.urljoin("products")) == "http://example.com/products"
+    assert response.selector.root.base_url == url
 
 
 @pytest.mark.parametrize(
@@ -668,6 +726,7 @@ def test_http_or_browser_response() -> None:
         assert isinstance(response.selector, parsel.Selector)
         assert str(response.urljoin("products")) == "http://example.com/products"
         assert response.status is None
+        assert response.selector.root.base_url == url
 
     response = AnyResponse(response=BrowserResponse(url=url, html=html, status=200))
     assert response.status == 200

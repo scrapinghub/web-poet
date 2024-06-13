@@ -46,12 +46,12 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
     @property
     def selector(self) -> parsel.Selector:
         """Cached instance of :external:class:`parsel.selector.Selector`."""
-        # XXX: caching is implemented in a manual way to avoid issues with
+        # caching is implemented in a manual way to avoid issues with
         # non-hashable classes, where memoizemethod_noargs doesn't work
         if self.__cached_selector is not None:
             return self.__cached_selector
-        # XXX: should we pass base_url=self.url, as Scrapy does?
-        sel = parsel.Selector(text=self._selector_input())
+        base_url = str(self.url) if hasattr(self, "url") else None
+        sel = parsel.Selector(text=self._selector_input(), base_url=base_url)
         self.__cached_selector = sel
         return sel
 
