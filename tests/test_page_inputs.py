@@ -5,6 +5,7 @@ import aiohttp.web_response
 import parsel
 import pytest
 import requests
+from parsel import Selector
 
 from web_poet import BrowserResponse, RequestUrl, ResponseUrl
 from web_poet.page_inputs import (
@@ -265,6 +266,119 @@ def test_http_request_from_form_post() -> None:
         {"Content-Type": "application/x-www-form-urlencoded"}
     )
     assert request.body == b"bar=tender&baz=ooka&query=foo"
+
+
+def test_http_request_from_form_select_no_selected() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="POST">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root)
+    assert request.body == b"query=&bar=code&baz=ooka"
+
+
+def test_http_request_from_form_no_method() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root)
+    assert request.method == "GET"
+
+
+def test_http_request_from_form_bad_method() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="PUT">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root)
+    assert request.method == "GET"
+
+
+def test_http_request_from_form_no_base_url() -> None:
+    selector = Selector(
+        text="""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="PUT">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = selector.css("#search-form")[0]
+    with pytest.raises(ValueError):
+        HttpRequest.from_form(form_selector.root)
+
+
+def test_http_request_from_form_no_action() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" method="POST">
+            <input type="text" value="" name="query">
+            <select name="bar">
+                <option value="code">Barcode</option>
+                <option value="tender">Bartender</option>
+            </select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root)
+    assert str(request.url) == url
 
 
 @pytest.mark.parametrize(

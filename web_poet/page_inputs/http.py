@@ -175,10 +175,7 @@ def _select_value(
 
 
 def _get_form_query(form: FormElement, data: FormdataType) -> str:
-    try:
-        keys = dict(data or ()).keys()
-    except (ValueError, TypeError):
-        raise ValueError("data should be a dict or iterable of tuples")
+    keys = dict(data or ()).keys()
     if not data:
         data = []
     inputs = form.xpath(
@@ -207,8 +204,7 @@ def _get_form_query(form: FormElement, data: FormdataType) -> str:
 
 def _get_form_method(form: FormElement) -> str:
     method = form.method
-    if method is None:
-        raise ValueError(f"{form} has no method set.")
+    assert method is not None
     method = method.upper()
     if method not in {"GET", "POST"}:
         method = "GET"
@@ -240,7 +236,7 @@ class HttpRequest:
     )
 
     @classmethod
-    def from_form(cls, form: FormElement, data: FormdataType) -> Self:
+    def from_form(cls, form: FormElement, data: FormdataType = None) -> Self:
         """Return an :class:`HttpRequest` to submit *form* with the
         specified *data*."""
         query = _get_form_query(form, data)
