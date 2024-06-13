@@ -154,23 +154,21 @@ def _is_listlike(x: Any) -> bool:
 
 
 def _value(
-    form: Union[InputElement, SelectElement, TextareaElement]
+    element: Union[InputElement, SelectElement, TextareaElement]
 ) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
-    if form.tag == "select":
-        return _select_value(cast(SelectElement, form), form.name, form.value)
-    return form.name, form.value
+    if element.tag == "select":
+        return _select_value(cast(SelectElement, element), element.name, element.value)
+    return element.name, element.value
 
 
 def _select_value(
-    form: SelectElement,
+    element: SelectElement,
     name: Optional[str],
     value: Union[None, str, MultipleSelectOptions],
 ) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
-    if value is None and not form.multiple:
-        # Match browser behavior on simple select tag without options selected
-        # And for select tags without options
-        options = form.value_options
-        return (name, options[0]) if options else (None, None)
+    if value is None and not element.multiple:
+        # Match browser behavior on select tags without options
+        return (None, None)
     return name, value
 
 

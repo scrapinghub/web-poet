@@ -291,6 +291,26 @@ def test_http_request_from_form_select_no_selected() -> None:
     assert request.body == b"query=&bar=code&baz=ooka"
 
 
+def test_http_request_from_form_select_no_options() -> None:
+    url = "https://example.com"
+    response = HttpResponse(
+        url,
+        b"""
+        <!doctype html>
+        <title>a</title>
+        <form id="search-form" accept-charset="utf-8" action="/search" method="POST">
+            <input type="text" value="" name="query">
+            <select name="bar"></select>
+            <input type="submit">
+            <input type="hidden" name="baz" value="ooka">
+        </form>
+        """,
+    )
+    form_selector = response.css("#search-form")[0]
+    request = HttpRequest.from_form(form_selector.root)
+    assert request.body == b"query=&baz=ooka"
+
+
 def test_http_request_from_form_no_method() -> None:
     url = "https://example.com"
     response = HttpResponse(
