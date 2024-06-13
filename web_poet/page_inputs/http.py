@@ -254,7 +254,7 @@ class HttpRequest:
             assert method == "POST"
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             body = query.encode()
-        return HttpRequest(
+        return cls(
             url=url,
             method=method,
             headers=headers,
