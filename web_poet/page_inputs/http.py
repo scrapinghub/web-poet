@@ -12,18 +12,11 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    cast,
 )
-from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import urljoin
 
 import attrs
-from lxml.html import (
-    FormElement,
-    InputElement,
-    MultipleSelectOptions,
-    SelectElement,
-    TextareaElement,
-)
+from form2request import form2request
 from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
@@ -31,7 +24,6 @@ from w3lib.encoding import (
     read_bom,
     resolve_encoding,
 )
-from w3lib.html import strip_html5_whitespace
 from w3lib.url import canonicalize_url
 
 from web_poet._base import _HttpHeaders
@@ -43,6 +35,9 @@ from .url import ResponseUrl as _ResponseUrl
 
 if TYPE_CHECKING:
     # typing.Self requires Python 3.11
+    from lxml.html import FormElement  # nosec
+    from lxml.html import HtmlElement  # nosec
+    from parsel import Selector, SelectorList
     from typing_extensions import Self
 
 FormdataVType = Union[str, Iterable[str]]
@@ -147,77 +142,6 @@ class HttpResponseHeaders(_HttpHeaders):
         return http_content_type_encoding(content_type)
 
 
-def _is_listlike(x: Any) -> bool:
-    """Return ``True`` if *x* is a list-like object, i.e. an iterable but not
-    a string or bytes, or ``False`` otherwise."""
-    return hasattr(x, "__iter__") and not isinstance(x, (str, bytes))
-
-
-def _value(
-    element: Union[InputElement, SelectElement, TextareaElement]
-) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
-    if element.tag == "select":
-        return _select_value(cast(SelectElement, element), element.name, element.value)
-    return element.name, element.value
-
-
-def _select_value(
-    element: SelectElement,
-    name: Optional[str],
-    value: Union[None, str, MultipleSelectOptions],
-) -> Tuple[Optional[str], Union[None, str, MultipleSelectOptions]]:
-    if value is None and not element.multiple:
-        # Match browser behavior on select tags without options
-        return (None, None)
-    return name, value
-
-
-def _get_form_query(form: FormElement, data: FormdataType) -> str:
-    keys = dict(data or ()).keys()
-    if not data:
-        data = []
-    inputs = form.xpath(
-        "descendant::textarea"
-        "|descendant::select"
-        "|descendant::input[not(@type) or @type["
-        ' not(re:test(., "^(?:submit|image|reset)$", "i"))'
-        " and (../@checked or"
-        '  not(re:test(., "^(?:checkbox|radio)$", "i")))]]',
-        namespaces={"re": "http://exslt.org/regular-expressions"},
-    )
-    values: List[FormdataKVType] = [
-        (k, "" if v is None else v)
-        for k, v in (_value(e) for e in inputs)
-        if k and k not in keys
-    ]
-    items = data.items() if isinstance(data, dict) else data
-    values.extend((k, v) for k, v in items if v is not None)
-    encoded_values = [
-        (k.encode(), v.encode())
-        for k, vs in values
-        for v in (cast(Iterable[str], vs) if _is_listlike(vs) else [cast(str, vs)])
-    ]
-    return urlencode(encoded_values, doseq=True)
-
-
-def _get_form_method(form: FormElement) -> str:
-    method = form.method
-    assert method is not None
-    method = method.upper()
-    if method not in {"GET", "POST"}:
-        method = "GET"
-    return method
-
-
-def _get_form_url(form: FormElement) -> str:
-    if form.base_url is None:
-        raise ValueError(f"{form} has no base_url set.")
-    action = form.get("action")
-    if action is None:
-        return form.base_url
-    return urljoin(form.base_url, strip_html5_whitespace(action))
-
-
 @attrs.define(auto_attribs=False, slots=False, eq=False)
 class HttpRequest:
     """Represents a generic HTTP request used by other functionalities in
@@ -234,25 +158,34 @@ class HttpRequest:
     )
 
     @classmethod
-    def from_form(cls, form: FormElement, data: FormdataType = None) -> Self:
-        """Return an :class:`HttpRequest` to submit *form* with the
-        specified *data*."""
-        query = _get_form_query(form, data)
-        method = _get_form_method(form)
-        url = _get_form_url(form)
-        headers = {}
-        body = b""
-        if method == "GET":
-            url = urlunsplit(urlsplit(url)._replace(query=query))
-        else:
-            assert method == "POST"
-            headers = {"Content-Type": "application/x-www-form-urlencoded"}
-            body = query.encode()
-        return cls(
-            url=url,
+    def from_form(
+        cls,
+        form: FormElement | Selector | SelectorList,
+        data: FormdataType = None,
+        *,
+        click: None | bool | HtmlElement = None,
+        method: None | str = None,
+        enctype: None | str = None,
+        **kwargs,
+    ) -> Self:
+        """Return an :class:`HttpRequest` to submit an HTML form.
+
+        See the :doc:`form2request usage documentation <form2request:usage>`
+        and :func:`~form2request.form2request` for parameter reference.
+        """
+        request_data = form2request(
+            form,
+            data,
+            click=click,
             method=method,
-            headers=headers,
-            body=body,
+            enctype=enctype,
+            **kwargs,
+        )
+        return cls(
+            url=request_data.url,
+            method=request_data.method,
+            headers=request_data.headers,
+            body=request_data.body,
         )
 
     def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:

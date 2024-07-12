@@ -196,6 +196,10 @@ intersphinx_mapping = {
         "https://www.attrs.org/en/stable/",
         None,
     ),
+    "form2request": (
+        "https://form2request.readthedocs.io/en/latest/",
+        None,
+    ),
     "python": (
         "https://docs.python.org/3",
         None,
@@ -213,7 +217,7 @@ intersphinx_mapping = {
         None,
     ),
     "multidict": (
-        "https://multidict.readthedocs.io/en/latest/",
+        "https://multidict.aio-libs.org/en/latest/",
         None,
     ),
     "scrapy-poet": (

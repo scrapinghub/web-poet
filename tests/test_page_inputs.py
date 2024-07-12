@@ -1,7 +1,9 @@
 import codecs
+import importlib.metadata
 import json
 
 import aiohttp.web_response
+import packaging.version
 import parsel
 import pytest
 import requests
@@ -20,6 +22,11 @@ from web_poet.page_inputs import (
     Stats,
 )
 from web_poet.page_inputs.http import request_fingerprint
+
+FORM2REQUEST_VERSION = packaging.version.parse(
+    importlib.metadata.version("form2request")
+)
+FORM2REQUEST_0_1_0 = packaging.version.parse("0.1.0")
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
@@ -291,6 +298,9 @@ def test_http_request_from_form_select_no_selected() -> None:
     assert request.body == b"query=&bar=code&baz=ooka"
 
 
+@pytest.mark.skipif(
+    FORM2REQUEST_VERSION <= FORM2REQUEST_0_1_0, reason="form2request bug fixed in 0.1.1"
+)
 def test_http_request_from_form_select_no_options() -> None:
     url = "https://example.com"
     response = HttpResponse(
