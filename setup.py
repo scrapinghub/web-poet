@@ -20,7 +20,7 @@ setup(
     entry_points={"pytest11": ["web-poet = web_poet.testing.pytest"]},
     install_requires=[
         "attrs >= 21.3.0",
-        "form2request >= 0.1.0",
+        "form2request >= 0.1.1",
         "parsel >= 1.8.1",
         "url-matcher >= 0.2.0",
         "multidict >= 0.5.0",
