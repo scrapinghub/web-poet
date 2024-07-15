@@ -2,21 +2,10 @@ from __future__ import annotations
 
 import json
 from hashlib import sha1
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Optional, TypeVar, Union
 from urllib.parse import urljoin
 
 import attrs
-from form2request import form2request
 from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
@@ -32,17 +21,6 @@ from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
 from .url import ResponseUrl as _ResponseUrl
-
-if TYPE_CHECKING:
-    # typing.Self requires Python 3.11
-    from lxml.html import FormElement  # nosec
-    from lxml.html import HtmlElement  # nosec
-    from parsel import Selector, SelectorList
-    from typing_extensions import Self
-
-FormdataVType = Union[str, Iterable[str]]
-FormdataKVType = Tuple[str, FormdataVType]
-FormdataType = Optional[Union[Dict[str, FormdataVType], List[FormdataKVType]]]
 
 T_headers = TypeVar("T_headers", bound=_HttpHeaders)
 
@@ -146,6 +124,10 @@ class HttpResponseHeaders(_HttpHeaders):
 class HttpRequest:
     """Represents a generic HTTP request used by other functionalities in
     **web-poet** like :class:`~.HttpClient`.
+
+    .. tip:: To build a request to submit an HTML form, use the
+        :doc:`form2request library <form2request:index>`, which provides
+        integration with web-poet.
     """
 
     url: _RequestUrl = attrs.field(converter=_RequestUrl)
@@ -156,37 +138,6 @@ class HttpRequest:
     body: HttpRequestBody = attrs.field(
         factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
     )
-
-    @classmethod
-    def from_form(
-        cls,
-        form: FormElement | Selector | SelectorList,
-        data: FormdataType = None,
-        *,
-        click: None | bool | HtmlElement = None,
-        method: None | str = None,
-        enctype: None | str = None,
-        **kwargs,
-    ) -> Self:
-        """Return an :class:`HttpRequest` to submit an HTML form.
-
-        See the :doc:`form2request usage documentation <form2request:usage>`
-        and :func:`~form2request.form2request` for parameter reference.
-        """
-        request_data = form2request(
-            form,
-            data,
-            click=click,
-            method=method,
-            enctype=enctype,
-            **kwargs,
-        )
-        return cls(
-            url=request_data.url,
-            method=request_data.method,
-            headers=request_data.headers,
-            body=request_data.body,
-        )
 
     def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:
         """Return *url* as an absolute URL.
