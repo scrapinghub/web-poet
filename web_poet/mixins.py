@@ -33,7 +33,7 @@ class SelectorShortcutsMixin:
 class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
     """
     Inherit from this mixin, implement ``._selector_input`` method,
-    get ``.selector`` property and ``.xpath`` / ``.css`` / "``.jmespath``
+    get ``.selector`` property and ``.xpath`` / ``.css`` / ``.jmespath``
     methods.
     """
 

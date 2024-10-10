@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.18.0 (YYYY-MM-DD)
+-------------------
+
+* :attr:`web_poet.mixins.SelectableMixin.selector` is now created with the
+  ``base_url`` value set to ``self.url`` if this attribute exists.
+* Added a mention of the :doc:`form2request library <form2request:index>` to
+  the :class:`~.HttpRequest` documentation.
+* CI improvements.
+
 0.17.0 (2024-03-04)
 -------------------
 
