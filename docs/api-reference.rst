@@ -90,6 +90,11 @@ Mixins
    :inherited-members:
    :no-special-members:
 
+.. autoclass:: web_poet.mixins.SelectableMixin
+   :members:
+   :inherited-members:
+   :no-special-members:
+
 Requests
 ========
 
