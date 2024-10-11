@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.18.0 (YYYY-MM-DD)
+0.17.1 (2024-10-11)
 -------------------
 
 * :attr:`web_poet.mixins.SelectableMixin.selector` is now created with the
