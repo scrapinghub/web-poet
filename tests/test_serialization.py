@@ -1,5 +1,4 @@
-import sys
-from typing import Type
+from typing import Annotated, Type
 
 import attrs
 import pytest
@@ -218,12 +217,7 @@ def test_httpclient_empty(tmp_path) -> None:
     assert "HttpClient" in read_serialized_deps
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
-)
 def test_annotated(book_list_html_response) -> None:
-    from typing import Annotated
-
     @attrs.define
     class MyWebPage(ItemPage):
         response: Annotated[HttpResponse, "foo", 42]
@@ -243,9 +237,6 @@ def test_annotated(book_list_html_response) -> None:
     _assert_pages_equal(po, deserialized_po)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
-)
 def test_annotated_duplicate(book_list_html_response) -> None:
     url_str = "http://books.toscrape.com/index.html"
     url = ResponseUrl(url_str)

@@ -30,7 +30,6 @@ setup(
         "python-dateutil >= 2.7.0",
         "time-machine >= 2.7.1",
         "packaging >= 20.0",
-        "backports.zoneinfo >= 0.2.1; python_version < '3.9' and platform_system != 'Windows'",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -39,10 +38,10 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
     ],
 )

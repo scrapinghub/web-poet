@@ -1,9 +1,9 @@
 import datetime
 import json
-import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Annotated, Any, Dict, Optional
+from zoneinfo import ZoneInfo
 
 import attrs
 import dateutil.tz
@@ -223,7 +223,8 @@ class MetadataLocalTime(Metadata):
 
 @attrs.define(kw_only=True)
 class ProductLocalTime(Product):
-    metadata: Optional[MetadataLocalTime]
+    # in newer zyte-common-items this should inherit from ProductMetadata
+    metadata: Optional[MetadataLocalTime]  # type: ignore[assignment]
 
 
 def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
@@ -282,11 +283,6 @@ def test_pytest_frozen_time_naive(pytester, book_list_html_response) -> None:
 @pytest.mark.skipif(not time_machine.HAVE_TZSET, reason="Not supported on Windows")
 @pytest.mark.parametrize("offset", [-5, 0, 8])
 def test_pytest_frozen_time_tz(pytester, book_list_html_response, offset) -> None:
-    if sys.version_info >= (3, 9):
-        from zoneinfo import ZoneInfo
-    else:
-        from backports.zoneinfo import ZoneInfo
-
     tzinfo = ZoneInfo(f"Etc/GMT{-offset:+d}")
     frozen_time = datetime.datetime(2022, 3, 4, 20, 21, 22, tzinfo=tzinfo)
     _assert_frozen_item(frozen_time, pytester, book_list_html_response)
@@ -540,20 +536,14 @@ def test_page_object_exception_none(pytester, book_list_html_response) -> None:
     result.assert_outcomes(failed=1)
 
 
-if sys.version_info >= (3, 9):
-    from typing import Annotated
+@attrs.define(kw_only=True)
+class MyAnnotatedItemPage(MyItemPage):
+    response: Annotated[HttpResponse, "foo", 42]
 
-    @attrs.define(kw_only=True)
-    class MyAnnotatedItemPage(MyItemPage):
-        response: Annotated[HttpResponse, "foo", 42]
-
-        async def to_item(self) -> dict:
-            return {"foo": "bar"}
+    async def to_item(self) -> dict:
+        return {"foo": "bar"}
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 9), reason="No Annotated support in Python < 3.9"
-)
 def test_annotated(pytester, book_list_html_response) -> None:
     _save_fixture(
         pytester,

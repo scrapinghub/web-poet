@@ -71,7 +71,7 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
             ]
         else:
-            overall_tests = [
+            overall_tests: List[pytest.Item] = [
                 WebPoetNoToItemException.from_parent(
                     parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
                 ),
@@ -79,7 +79,7 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
                     parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
                 ),
             ]
-            field_tests = [
+            field_tests: List[pytest.Item] = [
                 WebPoetFieldItem.from_parent(
                     parent=self, name=field, fixture=self.fixture, field_name=field
                 )

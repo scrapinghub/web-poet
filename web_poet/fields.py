@@ -6,7 +6,7 @@ into separate Page Object methods / properties.
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 
 import attrs
 from itemadapter import ItemAdapter
@@ -163,7 +163,7 @@ def field(
     if method is not None:
         # @field syntax
         res = _field(method)
-        update_wrapper(res, method)
+        update_wrapper(cast(Callable, res), method)
         return res
     else:
         # @field(...) syntax
