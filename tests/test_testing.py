@@ -223,7 +223,8 @@ class MetadataLocalTime(Metadata):
 
 @attrs.define(kw_only=True)
 class ProductLocalTime(Product):
-    metadata: Optional[MetadataLocalTime]
+    # in newer zyte-common-items this should inherit from ProductMetadata
+    metadata: Optional[MetadataLocalTime]  # type: ignore[assignment]
 
 
 def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
