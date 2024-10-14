@@ -3,9 +3,9 @@ import datetime
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import Any, Iterable, Optional, Type, TypeVar, Union, cast
+from zoneinfo import ZoneInfo
 
 import dateutil.parser
 import dateutil.tz
@@ -180,11 +180,6 @@ class Fixture:
                 f" is not supported on Windows, converting to local"
             )
             return parsed_value.astimezone()
-
-        if sys.version_info >= (3, 9):
-            from zoneinfo import ZoneInfo
-        else:
-            from backports.zoneinfo import ZoneInfo
 
         if parsed_value.tzinfo == dateutil.tz.UTC:
             return parsed_value.replace(tzinfo=ZoneInfo("UTC"))
