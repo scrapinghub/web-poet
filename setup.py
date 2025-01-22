@@ -21,7 +21,7 @@ setup(
     install_requires=[
         "attrs >= 21.3.0",
         "parsel >= 1.5.0",
-        "url-matcher >= 0.2.0",
+        "url-matcher >= 0.4.0",
         "multidict >= 0.5.0",
         "w3lib >= 1.22.0",
         "async-lru >= 1.0.3",
