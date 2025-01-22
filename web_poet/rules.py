@@ -391,6 +391,42 @@ class RulesRegistry:
         matcher = self._item_matchers.get(item_cls)
         return self._match_url_for_page_object(url, matcher)
 
+    def top_rules_for_item(self, url: Union[_Url, str], item_cls: Type) -> List[Type]:
+        """Iterates the top rules that apply for *url* and *item_cls*.
+
+        If multiple rules score the same, multiple rules are iterated. This may
+        be useful, for example, if you want to apply some custom logic to
+        choose between rules that otherwise have the same score. For example:
+
+        .. code-block:: python
+
+            from web_poet import default_registry
+
+            def browser_page_cls_for_item(url, item_cls):
+                fallback = None
+                for rule in default_registry.top_rules_for_item(url, item_cls):
+                    if rule.meta.get("browser", False):
+                        return rule.use
+                    if not fallback:
+                        fallback = rule.use
+                if not fallback:
+                    raise ValueError(f"No rule found for URL {url!r} and item class {item_cls}")
+                return fallback
+        """
+        if not url or not item_cls:
+            return
+        matcher = self._item_matchers.get(item_cls)
+        if not matcher:
+            return
+        max_priority = None
+        for rule_id in matcher.match_all(url):
+            rule = self._rules[rule_id]
+            if max_priority is None:
+                max_priority = rule.for_patterns.priority
+            elif rule.for_patterns.priority < max_priority:
+                break
+            yield rule
+
 
 def _walk_module(module: str) -> Iterable:
     """Return all modules from a module recursively.
