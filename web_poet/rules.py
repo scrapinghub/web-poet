@@ -10,6 +10,7 @@ from typing import (
     Any,
     DefaultDict,
     Dict,
+    Generator,
     Iterable,
     List,
     Mapping,
@@ -391,7 +392,9 @@ class RulesRegistry:
         matcher = self._item_matchers.get(item_cls)
         return self._match_url_for_page_object(url, matcher)
 
-    def top_rules_for_item(self, url: Union[_Url, str], item_cls: Type) -> List[Type]:
+    def top_rules_for_item(
+        self, url: Union[_Url, str], item_cls: Type
+    ) -> Generator[ApplyRule, None, None]:
         """Iterates the top rules that apply for *url* and *item_cls*.
 
         If multiple rules score the same, multiple rules are iterated. This may
