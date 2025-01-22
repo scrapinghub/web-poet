@@ -69,6 +69,7 @@ def test_is_injectable() -> None:
             }
 
     assert is_injectable(None) is False
+    assert is_injectable(type(None)) is False
     assert is_injectable(MyClass) is False
     assert is_injectable(MyClass()) is False
     assert is_injectable(MyItemPage) is True
