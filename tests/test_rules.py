@@ -421,6 +421,36 @@ def test_page_cls_for_item() -> None:
         assert method(cls("https://example.org"), FakeItem) is None
 
 
+def test_top_rules_for_item() -> None:
+    registry = RulesRegistry()
+
+    assert list(registry.top_rules_for_item("https://example.com", Product)) == []
+
+    @registry.handle_urls("https://a.example", priority=1000)
+    class A1(ProductPage):
+        pass
+
+    @registry.handle_urls("https://a.example", priority=900)
+    class A2(ProductPage):
+        pass
+
+    assert {
+        rule.use for rule in registry.top_rules_for_item("https://a.example", Product)
+    } == {A1}
+
+    @registry.handle_urls("https://b.example")
+    class B1(ProductPage):
+        pass
+
+    @registry.handle_urls("https://b.example")
+    class B2(ProductPage):
+        pass
+
+    assert {
+        rule.use for rule in registry.top_rules_for_item("https://b.example", Product)
+    } == {B1, B2}
+
+
 def test_from_override_rules_deprecation_using_ApplyRule() -> None:
     rules = [
         ApplyRule(
