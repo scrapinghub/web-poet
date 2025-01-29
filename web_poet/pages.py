@@ -35,10 +35,6 @@ class Injectable(abc.ABC, FieldsMixin):
     pass
 
 
-# NoneType is considered as injectable. Required for Optionals to work.
-Injectable.register(type(None))
-
-
 def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
