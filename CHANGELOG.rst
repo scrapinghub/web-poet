@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.18.0 (unreleased)
+-------------------
+
+* Removed support for Python 3.8, added support for Python 3.13.
+* The minimum required version of :doc:`url-matcher <url-matcher:index>`
+  changed from ``0.2.0`` to ``0.4.0``.
+* ``type(None)`` is no longer considered injectable.
+* Added :meth:`RulesRegistry.top_rules_for_item()
+  <web_poet.rules.RulesRegistry.top_rules_for_item>`.
+
 0.17.1 (2024-10-11)
 -------------------
 

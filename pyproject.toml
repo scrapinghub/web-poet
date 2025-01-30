@@ -1,3 +1,22 @@
+[tool.bumpversion]
+current_version = "0.17.1"
+commit = true
+tag = true
+tag_name = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = 'CHANGELOG.rst'
+search = "\\(unreleased\\)$"
+replace = "({now:%Y-%m-%d})"
+regex = true
+
+[[tool.bumpversion.files]]
+filename = "docs/conf.py"
+
+[[tool.bumpversion.files]]
+filename = "setup.py"
+parse = "version\\s*=\\s*['\"](?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+
 [tool.isort]
 profile = "black"
 multi_line_output = 3
