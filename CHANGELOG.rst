@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.18.0 (unreleased)
+0.18.0 (2025-01-30)
 -------------------
 
 * Removed support for Python 3.8, added support for Python 3.13.
