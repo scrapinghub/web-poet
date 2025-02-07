@@ -33,6 +33,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install tox
+    - name: Install -dev for 3.14
+      if: contains(matrix.python-version, '3.14')
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxml2-dev libxslt-dev
     - name: tox
       env: ${{ matrix.env }}
       run: |
