@@ -3,11 +3,13 @@
 In general, users shouldn't import and use the contents of this module.
 """
 
-from typing import AnyStr, Dict, List, Tuple, Type, TypeVar, Union
+from __future__ import annotations
+
+from typing import AnyStr, TypeVar, Union
 
 from multidict import CIMultiDict
 
-_AnyStrDict = Dict[AnyStr, Union[AnyStr, List[AnyStr], Tuple[AnyStr, ...]]]
+_AnyStrDict = dict[AnyStr, Union[AnyStr, list[AnyStr], tuple[AnyStr, ...]]]
 T_headers = TypeVar("T_headers", bound="_HttpHeaders")
 
 
@@ -19,7 +21,7 @@ class _HttpHeaders(CIMultiDict):
     """
 
     @classmethod
-    def from_name_value_pairs(cls: Type[T_headers], arg: List[Dict]) -> T_headers:
+    def from_name_value_pairs(cls: type[T_headers], arg: list[dict]) -> T_headers:
         """An alternative constructor for instantiation using a ``List[Dict]``
         where the 'key' is the header name while the 'value' is the header value.
 
@@ -35,7 +37,7 @@ class _HttpHeaders(CIMultiDict):
 
     @classmethod
     def from_bytes_dict(
-        cls: Type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
+        cls: type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
     ) -> T_headers:
         """An alternative constructor for instantiation where the header-value
         pairs could be in raw bytes form.

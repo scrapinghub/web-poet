@@ -1,4 +1,6 @@
-from typing import Callable, Union
+from __future__ import annotations
+
+from typing import Callable
 from unittest import mock
 
 import pytest
@@ -98,7 +100,7 @@ async def test_http_client_allow_status(
 
     method = getattr(client, method_name)
 
-    url_or_request: Union[str, HttpRequest] = "url"
+    url_or_request: str | HttpRequest = "url"
     if method_name == "execute":
         # NOTE: We're ignoring the type below due to the following mypy bugs:
         #   - https://github.com/python/mypy/issues/10187

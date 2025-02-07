@@ -1,10 +1,10 @@
-from typing import Union
+from __future__ import annotations
 
 
 class _Url:
     """Base URL class."""
 
-    def __init__(self, url: Union[str, "_Url"]):
+    def __init__(self, url: str | _Url):
         if not isinstance(url, (str, _Url)):
             raise TypeError(
                 f"`url` must be a str or an instance of _Url, "

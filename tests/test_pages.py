@@ -1,4 +1,6 @@
-from typing import Generic, List, Optional, TypeVar
+from __future__ import annotations
+
+from typing import Generic, TypeVar
 
 import attrs
 import pytest
@@ -143,7 +145,7 @@ async def test_item_page_required_field_missing() -> None:
     @attrs.define
     class MyItem:
         name: str
-        price: Optional[float]
+        price: float | None
 
     class MyPage(ItemPage[MyItem]):
         @field
@@ -267,7 +269,7 @@ async def test_extractor(book_list_html_response) -> None:
 
     @attrs.define
     class ListItem:
-        books: List[BookItem]
+        books: list[BookItem]
 
     @attrs.define
     class MyPage(ItemPage[ListItem]):

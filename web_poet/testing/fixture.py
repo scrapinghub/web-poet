@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import datetime
 import json
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable, Optional, Type, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
@@ -44,7 +47,7 @@ META_FILE_NAME = "meta.json"
 FixtureT = TypeVar("FixtureT", bound="Fixture")
 
 
-def _get_available_filename(template: str, directory: Union[str, os.PathLike]) -> str:
+def _get_available_filename(template: str, directory: str | os.PathLike) -> str:
     i = 1
     while True:
         result = Path(directory, template.format(i))
@@ -58,7 +61,7 @@ class Fixture:
 
     def __init__(self, path: Path) -> None:
         self.path = path
-        self._output_error: Optional[Exception] = None
+        self._output_error: Exception | None = None
 
     @property
     def type_name(self) -> str:
@@ -118,11 +121,11 @@ class Fixture:
             meta_dict["adapter"] = load_class(meta_dict["adapter"])
         return meta_dict
 
-    def _get_adapter_cls(self) -> Type[ItemAdapter]:
+    def _get_adapter_cls(self) -> type[ItemAdapter]:
         cls = self.get_meta().get("adapter")
         if not cls:
             return WebPoetTestItemAdapter
-        return cast(Type[ItemAdapter], cls)
+        return cast(type[ItemAdapter], cls)
 
     def _get_output(self) -> dict:
         page = self.get_page()
@@ -137,7 +140,7 @@ class Fixture:
         """
         try:
             meta = self.get_meta()
-            frozen_time: Optional[str] = meta.get("frozen_time")
+            frozen_time: str | None = meta.get("frozen_time")
             if frozen_time:
                 frozen_time_parsed = self._parse_frozen_time(frozen_time)
                 with time_machine.travel(frozen_time_parsed):
@@ -244,13 +247,13 @@ class Fixture:
 
     @classmethod
     def save(
-        cls: Type[FixtureT],
-        base_directory: Union[str, os.PathLike],
+        cls: type[FixtureT],
+        base_directory: str | os.PathLike,
         *,
         inputs: Iterable[Any],
         item: Any = None,
-        exception: Optional[Exception] = None,
-        meta: Optional[dict] = None,
+        exception: Exception | None = None,
+        meta: dict | None = None,
         fixture_name=None,
     ) -> FixtureT:
         """Save and return a fixture."""

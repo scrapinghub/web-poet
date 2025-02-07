@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict
+from typing import Any
 
 from web_poet.serialization.api import _get_name_for_class, load_class
 
 
-def _exception_to_dict(ex: Exception) -> Dict[str, Any]:
+def _exception_to_dict(ex: Exception) -> dict[str, Any]:
     """Serialize an exception.
 
     Only the exception type and the first argument are saved.
@@ -15,7 +17,7 @@ def _exception_to_dict(ex: Exception) -> Dict[str, Any]:
     }
 
 
-def _exception_from_dict(data: Dict[str, Any]) -> Exception:
+def _exception_from_dict(data: dict[str, Any]) -> Exception:
     """Deserialize an exception.
 
     Only the exception type and the first argument are restored.

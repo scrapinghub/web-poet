@@ -1,24 +1,13 @@
-from __future__ import annotations  # https://www.python.org/dev/peps/pep-0563/
+from __future__ import annotations
 
 import importlib
 import importlib.util
 import pkgutil
 import warnings
 from collections import defaultdict, deque
+from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import (
-    Any,
-    DefaultDict,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, DefaultDict, TypeVar, Union
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -83,10 +72,10 @@ class ApplyRule:
     """
 
     for_patterns: Patterns = attrs.field(converter=str_to_pattern)
-    use: Type[ItemPage] = attrs.field(kw_only=True)
-    instead_of: Optional[Type[ItemPage]] = attrs.field(default=None, kw_only=True)
-    to_return: Optional[Type[Any]] = attrs.field(default=None, kw_only=True)
-    meta: Dict[str, Any] = attrs.field(factory=dict, kw_only=True)
+    use: type[ItemPage] = attrs.field(kw_only=True)
+    instead_of: type[ItemPage] | None = attrs.field(default=None, kw_only=True)
+    to_return: type[Any] | None = attrs.field(default=None, kw_only=True)
+    meta: dict[str, Any] = attrs.field(factory=dict, kw_only=True)
 
     def __hash__(self):
         return hash((self.for_patterns, self.use, self.instead_of, self.to_return))
@@ -124,12 +113,12 @@ class RulesRegistry:
         rules to separate it from the ``default_registry``.
     """
 
-    def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
-        self._rules: Dict[int, ApplyRule] = {}
-        self._overrides_matchers: DefaultDict[Optional[Type[ItemPage]], URLMatcher] = (
+    def __init__(self, *, rules: Iterable[ApplyRule] | None = None):
+        self._rules: dict[int, ApplyRule] = {}
+        self._overrides_matchers: DefaultDict[type[ItemPage] | None, URLMatcher] = (
             defaultdict(URLMatcher)
         )
-        self._item_matchers: DefaultDict[Optional[Type], URLMatcher] = defaultdict(
+        self._item_matchers: DefaultDict[type | None, URLMatcher] = defaultdict(
             URLMatcher
         )
 
@@ -196,7 +185,7 @@ class RulesRegistry:
 
     @classmethod
     def from_override_rules(
-        cls: Type[RulesRegistryTV], rules: List[ApplyRule]
+        cls: type[RulesRegistryTV], rules: list[ApplyRule]
     ) -> RulesRegistryTV:
         """Deprecated. Use ``RulesRegistry(rules=...)`` instead."""
         msg = (
@@ -210,10 +199,10 @@ class RulesRegistry:
         self,
         include: Strings,
         *,
-        overrides: Optional[Type[ItemPage]] = None,
-        instead_of: Optional[Type[ItemPage]] = None,
-        to_return: Optional[Type] = None,
-        exclude: Optional[Strings] = None,
+        overrides: type[ItemPage] | None = None,
+        instead_of: type[ItemPage] | None = None,
+        to_return: type | None = None,
+        exclude: Strings | None = None,
         priority: int = 500,
         **kwargs,
     ):
@@ -276,7 +265,7 @@ class RulesRegistry:
 
         return wrapper
 
-    def get_rules(self) -> List[ApplyRule]:
+    def get_rules(self) -> list[ApplyRule]:
         """Return all the :class:`~.ApplyRule` that were declared using
         the ``@handle_urls`` decorator.
 
@@ -288,13 +277,13 @@ class RulesRegistry:
         """
         return list(self._rules.values())
 
-    def get_overrides(self) -> List[ApplyRule]:
+    def get_overrides(self) -> list[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
         msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.get_rules()
 
-    def search(self, **kwargs) -> List[ApplyRule]:
+    def search(self, **kwargs) -> list[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
         the provided attributes.
 
@@ -350,15 +339,15 @@ class RulesRegistry:
                 results.append(rule)
         return results
 
-    def search_overrides(self, **kwargs) -> List[ApplyRule]:
+    def search_overrides(self, **kwargs) -> list[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
         msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self.search(**kwargs)
 
     def _match_url_for_page_object(
-        self, url: Union[_Url, str], matcher: Optional[URLMatcher] = None
-    ) -> Optional[Type[ItemPage]]:
+        self, url: _Url | str, matcher: URLMatcher | None = None
+    ) -> type[ItemPage] | None:
         """Returns the page object to use based on the URL and URLMatcher."""
         if not url or matcher is None:
             return None
@@ -367,13 +356,11 @@ class RulesRegistry:
         if rule_id is not None:
             return self._rules[rule_id].use
 
-    def overrides_for(
-        self, url: Union[_Url, str]
-    ) -> Mapping[Type[ItemPage], Type[ItemPage]]:
+    def overrides_for(self, url: _Url | str) -> Mapping[type[ItemPage], type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the page object that is
         **overridden** by the page object in 'value'."""
-        result: Dict[Type[ItemPage], Type[ItemPage]] = {}
+        result: dict[type[ItemPage], type[ItemPage]] = {}
         for replaced_page, matcher in self._overrides_matchers.items():
             if replaced_page is None:
                 continue
@@ -382,9 +369,7 @@ class RulesRegistry:
                 result[replaced_page] = page
         return result
 
-    def page_cls_for_item(
-        self, url: Union[_Url, str], item_cls: Type
-    ) -> Optional[Type]:
+    def page_cls_for_item(self, url: _Url | str, item_cls: type) -> type | None:
         """Return the page object class associated with the given URL that's able
         to produce the given ``item_cls``."""
         if item_cls is None:
@@ -393,8 +378,8 @@ class RulesRegistry:
         return self._match_url_for_page_object(url, matcher)
 
     def top_rules_for_item(
-        self, url: Union[_Url, str], item_cls: Type
-    ) -> Generator[ApplyRule, None, None]:
+        self, url: _Url | str, item_cls: type
+    ) -> Generator[ApplyRule]:
         """Iterates the top rules that apply for *url* and *item_cls*.
 
         If multiple rules score the same, multiple rules are iterated. This may

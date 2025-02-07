@@ -1,6 +1,6 @@
 """Test page object input validation scenarios."""
 
-from typing import Optional
+from __future__ import annotations
 
 import attrs
 import pytest
@@ -278,7 +278,7 @@ async def test_invalid_input_async_field_caching():
 async def test_invalid_input_cross_api_caching():
     @attrs.define
     class _Item(Item):
-        b: Optional[str] = None
+        b: str | None = None
 
     class Page(BaseCachingPage, Returns[_Item]):
         @field

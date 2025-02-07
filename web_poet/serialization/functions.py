@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Any, cast
 
 from .. import (
     HttpClient,
@@ -40,7 +42,7 @@ def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
 
 
 def _deserialize_HttpRequest(
-    cls: Type[HttpRequest], data: SerializedLeafData
+    cls: type[HttpRequest], data: SerializedLeafData
 ) -> HttpRequest:
     body = HttpRequestBody(data.get("body.txt", b""))
     info = json.loads(data["info.json"])
@@ -69,7 +71,7 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
 
 
 def _deserialize_HttpResponse(
-    cls: Type[HttpResponse], data: SerializedLeafData
+    cls: type[HttpResponse], data: SerializedLeafData
 ) -> HttpResponse:
     body = HttpResponseBody(data["body.html"])
     info = json.loads(data["info.json"])
@@ -90,7 +92,7 @@ def _serialize_HttpResponseBody(o: HttpResponseBody) -> SerializedLeafData:
 
 
 def _deserialize_HttpResponseBody(
-    cls: Type[HttpResponseBody], data: SerializedLeafData
+    cls: type[HttpResponseBody], data: SerializedLeafData
 ) -> HttpResponseBody:
     return cls(data["html"])
 
@@ -102,7 +104,7 @@ def _serialize__Url(o: _Url) -> SerializedLeafData:
     return {"txt": str(o).encode()}
 
 
-def _deserialize__Url(cls: Type[_Url], data: SerializedLeafData) -> _Url:
+def _deserialize__Url(cls: type[_Url], data: SerializedLeafData) -> _Url:
     return cls(data["txt"].decode())
 
 
@@ -129,13 +131,13 @@ def _serialize_HttpClient(o: HttpClient) -> SerializedLeafData:
 
 
 def _deserialize_HttpClient(
-    cls: Type[HttpClient], data: SerializedLeafData
+    cls: type[HttpClient], data: SerializedLeafData
 ) -> HttpClient:
-    responses: List[_SavedResponseData] = []
+    responses: list[_SavedResponseData] = []
 
-    serialized_requests: Dict[str, SerializedLeafData] = {}
-    serialized_responses: Dict[str, SerializedLeafData] = {}
-    serialized_exceptions: Dict[str, SerializedLeafData] = {}
+    serialized_requests: dict[str, SerializedLeafData] = {}
+    serialized_responses: dict[str, SerializedLeafData] = {}
+    serialized_exceptions: dict[str, SerializedLeafData] = {}
     for k, v in data.items():
         if k == "exists":
             continue
@@ -160,7 +162,7 @@ def _deserialize_HttpClient(
             response = deserialize_leaf(HttpResponse, serialized_response)
         else:
             response = None
-        exception: Optional[HttpError]
+        exception: HttpError | None
         if serialized_exception:
             exc_data = json.loads(serialized_exception["json"])
             exception = cast(HttpError, _exception_from_dict(exc_data))
@@ -179,7 +181,7 @@ def _serialize_PageParams(o: PageParams) -> SerializedLeafData:
 
 
 def _deserialize_PageParams(
-    cls: Type[PageParams], data: SerializedLeafData
+    cls: type[PageParams], data: SerializedLeafData
 ) -> PageParams:
     return cls(json.loads(data["json"]))
 
@@ -191,7 +193,7 @@ def _serialize_Stats(o: Stats) -> SerializedLeafData:
     return {}
 
 
-def _deserialize_Stats(cls: Type[Stats], data: SerializedLeafData) -> Stats:
+def _deserialize_Stats(cls: type[Stats], data: SerializedLeafData) -> Stats:
     return cls()
 
 
@@ -210,7 +212,7 @@ def _serialize_AnnotatedInstance(o: AnnotatedInstance) -> SerializedLeafData:
 
 
 def _deserialize_AnnotatedInstance(
-    cls: Type[AnnotatedInstance], data: SerializedLeafData
+    cls: type[AnnotatedInstance], data: SerializedLeafData
 ) -> AnnotatedInstance:
     metadata = json.loads(data["metadata.json"])
     result_type = load_class(data["result_type.txt"].decode())

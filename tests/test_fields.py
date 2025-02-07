@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import random
-from typing import Callable, List
+from typing import Callable
 
 import attrs
 import pytest
@@ -629,11 +631,11 @@ def test_field_processors_override() -> None:
 
     class BasePage(ItemPage):
         class Processors:
-            f1: List[Callable] = [str.strip]
+            f1: list[Callable] = [str.strip]
             f2 = [str.strip]
             f3 = [str.strip]
-            f4: List[Callable] = [str.strip]
-            f5: List[Callable] = [str.strip]
+            f4: list[Callable] = [str.strip]
+            f5: list[Callable] = [str.strip]
 
         @field
         def f1(self):
@@ -695,7 +697,7 @@ def test_field_processors_super() -> None:
 
     class Page(BasePage):
         class Processors(BasePage.Processors):
-            name: List[Callable] = []
+            name: list[Callable] = []
 
         @field
         def name(self):
@@ -704,8 +706,8 @@ def test_field_processors_super() -> None:
 
     class Page2(Page):
         class Processors(Page.Processors):
-            name: List[Callable] = []
-            desc: List[Callable] = []
+            name: list[Callable] = []
+            desc: list[Callable] = []
 
         @field
         def desc(self):

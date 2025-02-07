@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import os
+from collections.abc import Iterable
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
 import andi
 from andi.typeutils import strip_annotated
@@ -14,22 +17,22 @@ from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
 
 # represents a leaf dependency of any type serialized as a set of files
-SerializedLeafData = Dict[str, bytes]
+SerializedLeafData = dict[str, bytes]
 # represents a set of leaf dependencies of different types
-SerializedData = Dict[str, SerializedLeafData]
+SerializedData = dict[str, SerializedLeafData]
 T = TypeVar("T")
 InjectableT = TypeVar("InjectableT", bound=Injectable)
 SerializeFunction = Callable[[Any], SerializedLeafData]
-DeserializeFunction = Callable[[Type[T], SerializedLeafData], T]
+DeserializeFunction = Callable[[type[T], SerializedLeafData], T]
 
 
 class SerializedDataFileStorage:
-    def __init__(self, directory: Union[str, os.PathLike]) -> None:
+    def __init__(self, directory: str | os.PathLike) -> None:
         super().__init__()
         self.directory: Path = Path(directory)
 
     @staticmethod
-    def _split_file_name(file_name: str) -> Tuple[str, str]:
+    def _split_file_name(file_name: str) -> tuple[str, str]:
         """Extract the type name and the type-specific suffix from a file name.
 
         >>> SerializedDataFileStorage._split_file_name("TypeName.ext")
@@ -94,7 +97,7 @@ def serialize_leaf(o: Any) -> SerializedLeafData:
     raise NotImplementedError(f"Serialization for {type(o)} is not implemented")
 
 
-def _deserialize_leaf_base(cls: Type[Any], data: SerializedLeafData) -> Any:
+def _deserialize_leaf_base(cls: type[Any], data: SerializedLeafData) -> Any:
     raise NotImplementedError(f"Deserialization for {cls} is not implemented")
 
 
@@ -109,7 +112,7 @@ def register_serialization(
     f_serialize.f_deserialize = f_deserialize  # type: ignore[attr-defined]
 
 
-def deserialize_leaf(cls: Type[T], data: SerializedLeafData) -> T:
+def deserialize_leaf(cls: type[T], data: SerializedLeafData) -> T:
     f_ser: SerializeFunction = serialize_leaf.dispatch(cls)  # type: ignore[attr-defined]
     return f_ser.f_deserialize(cls, data)  # type: ignore[attr-defined]
 
@@ -189,8 +192,8 @@ def load_class(type_name: str) -> type:
     return result
 
 
-def deserialize(cls: Type[InjectableT], data: SerializedData) -> InjectableT:
-    deps: Dict[Callable, Any] = {}
+def deserialize(cls: type[InjectableT], data: SerializedData) -> InjectableT:
+    deps: dict[Callable, Any] = {}
 
     for dep_type_name, dep_data in data.items():
         if dep_type_name.startswith("AnnotatedInstance "):

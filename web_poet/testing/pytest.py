@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import operator
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List, Optional, Set, Union
 
 import pytest
 
@@ -31,12 +33,12 @@ class WebPoetFile(pytest.File, _PathCompatMixin):
     """Represents a directory containing test subdirectories for one Page Object."""
 
     @staticmethod
-    def sorted(items: List["WebPoetCollector"]) -> List["WebPoetCollector"]:
+    def sorted(items: list[WebPoetCollector]) -> list[WebPoetCollector]:
         """Sort the test list by the test name."""
         return sorted(items, key=operator.attrgetter("name"))
 
-    def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:  # noqa: D102
-        result: List[WebPoetCollector] = []
+    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:  # noqa: D102
+        result: list[WebPoetCollector] = []
         path = self._path
         for entry in path.iterdir():
             if entry.is_dir():
@@ -54,10 +56,10 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
     """Represents a directory containing one test."""
 
     def __init__(self, name: str, parent=None, **kwargs) -> None:
-        super(WebPoetCollector, self).__init__(name, parent, **kwargs)
+        super().__init__(name, parent, **kwargs)
         self.fixture = Fixture(self._path)
 
-    def collect(self) -> Iterable[Union[pytest.Item, pytest.Collector]]:
+    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
         """Return a list of children (items and collectors) for this
         collection node."""
         if self.fixture.exception_path.exists():
@@ -71,7 +73,7 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
             ]
         else:
-            overall_tests: List[pytest.Item] = [
+            overall_tests: list[pytest.Item] = [
                 WebPoetNoToItemException.from_parent(
                     parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
                 ),
@@ -79,7 +81,7 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
                     parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
                 ),
             ]
-            field_tests: List[pytest.Item] = [
+            field_tests: list[pytest.Item] = [
                 WebPoetFieldItem.from_parent(
                     parent=self, name=field, fixture=self.fixture, field_name=field
                 )
@@ -222,12 +224,12 @@ class WebPoetFieldItem(_WebPoetItem):
             return super().repr_failure(excinfo, style)
 
 
-_found_type_dirs: Set[Path] = set()
+_found_type_dirs: set[Path] = set()
 
 
 def collect_file_hook(
     file_path: Path, parent: pytest.Collector
-) -> Optional[pytest.Collector]:
+) -> pytest.Collector | None:
     if file_path.name in {OUTPUT_FILE_NAME, EXCEPTION_FILE_NAME}:
         testcase_dir = file_path.parent
         type_dir = testcase_dir.parent
@@ -245,9 +247,7 @@ def collect_file_hook(
     return None
 
 
-def pytest_addoption(
-    parser: "pytest.Parser", pluginmanager: "pytest.PytestPluginManager"
-):
+def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginManager):
     parser.addoption(
         "--web-poet-test-per-item",
         dest="WEB_POET_TEST_PER_ITEM",
@@ -282,7 +282,7 @@ if _new_pytest:
 
     def pytest_collect_file(
         file_path: Path, parent: pytest.Collector
-    ) -> Optional[pytest.Collector]:
+    ) -> pytest.Collector | None:
         return collect_file_hook(file_path, parent)
 
 else:
@@ -311,5 +311,5 @@ else:
 
     def pytest_collect_file(  # type: ignore[misc]
         path: py.path.local, parent: pytest.Collector
-    ) -> Optional[pytest.Collector]:
+    ) -> pytest.Collector | None:
         return collect_file_hook(Path(path), parent)
