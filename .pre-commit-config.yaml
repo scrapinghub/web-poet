@@ -23,3 +23,9 @@ repos:
           - flake8-string-format
     repo: https://github.com/pycqa/flake8
     rev: 7.1.1
+  - hooks:
+      - id: pyupgrade
+        args: [--py39-plus]
+        exclude: ^docs/tutorial-project/
+    repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.1

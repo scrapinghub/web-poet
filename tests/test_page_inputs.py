@@ -64,7 +64,7 @@ def test_http_response_body_json() -> None:
     http_body = HttpResponseBody(b'{"foo": 123}')
     assert http_body.json() == {"foo": 123}
 
-    http_body = HttpResponseBody('{"ключ": "значение"}'.encode("utf8"))
+    http_body = HttpResponseBody('{"ключ": "значение"}'.encode())
     assert http_body.json() == {"ключ": "значение"}
 
 
@@ -295,7 +295,7 @@ def test_http_response_json() -> None:
     response = HttpResponse(url, body=b'{"key": "value"}')
     assert response.json() == {"key": "value"}
 
-    response = HttpResponse(url, body='{"ключ": "значение"}'.encode("utf8"))
+    response = HttpResponse(url, body='{"ключ": "значение"}'.encode())
     assert response.json() == {"ключ": "значение"}
 
 
@@ -343,19 +343,17 @@ def test_http_response_utf16() -> None:
 
 
 def test_explicit_encoding() -> None:
-    response = HttpResponse(
-        "http://www.example.com", "£".encode("utf-8"), encoding="utf-8"
-    )
+    response = HttpResponse("http://www.example.com", "£".encode(), encoding="utf-8")
     assert response.encoding == "utf-8"
     assert response.text == "£"
 
 
 def test_explicit_encoding_invalid() -> None:
     response = HttpResponse(
-        "http://www.example.com", body="£".encode("utf-8"), encoding="latin1"
+        "http://www.example.com", body="£".encode(), encoding="latin1"
     )
     assert response.encoding == "latin1"
-    assert response.text == "£".encode("utf-8").decode("latin1")
+    assert response.text == "£".encode().decode("latin1")
 
 
 def test_utf8_body_detection() -> None:
@@ -386,7 +384,7 @@ def test_gb2312() -> None:
 def test_bom_encoding() -> None:
     response = HttpResponse(
         "http://www.example.com",
-        body=codecs.BOM_UTF8 + "🎉".encode("utf-8"),
+        body=codecs.BOM_UTF8 + "🎉".encode(),
         headers={"Content-type": "text/html; charset=cp1251"},
     )
     assert response.encoding == "utf-8"

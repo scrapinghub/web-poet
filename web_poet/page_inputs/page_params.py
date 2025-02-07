@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class PageParams(dict):
     """Container class that could contain any arbitrary data to be passed into
     a Page Object.

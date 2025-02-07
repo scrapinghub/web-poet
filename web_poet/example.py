@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from asyncio import run
-from typing import Any, Dict, Optional, Type
+from typing import Any
 from warnings import warn
 
 import andi
@@ -37,9 +39,9 @@ def _get_http_response(url: str) -> HttpResponse:
 
 def _get_page(
     url: str,
-    page_cls: Type[ItemPage],
+    page_cls: type[ItemPage],
     *,
-    page_params: Optional[Dict[Any, Any]] = None,
+    page_params: dict[Any, Any] | None = None,
 ) -> ItemPage:
     plan = andi.plan(
         page_cls,
@@ -50,7 +52,7 @@ def _get_page(
             PageParams,
         },
     )
-    instances: Dict[Any, Any] = {}
+    instances: dict[Any, Any] = {}
     for fn_or_cls, kwargs_spec in plan:
         if fn_or_cls is HttpResponse:
             instances[fn_or_cls] = _get_http_response(url)
@@ -65,9 +67,9 @@ def _get_page(
 
 def get_item(
     url: str,
-    item_cls: Type,
+    item_cls: type,
     *,
-    page_params: Optional[Dict[Any, Any]] = None,
+    page_params: dict[Any, Any] | None = None,
 ) -> Any:
     """Returns an item built from the specified URL using a page object class
     from the default registry.

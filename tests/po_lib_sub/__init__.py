@@ -2,7 +2,9 @@
 external depedencies.
 """
 
-from typing import Any, Dict, Type
+from __future__ import annotations
+
+from typing import Any
 
 from url_matcher import Patterns
 
@@ -10,9 +12,9 @@ from web_poet import ItemPage, handle_urls
 
 
 class POBase(ItemPage):
-    expected_instead_of: Type[ItemPage]
+    expected_instead_of: type[ItemPage]
     expected_patterns: Patterns
-    expected_meta: Dict[str, Any]
+    expected_meta: dict[str, Any]
 
 
 class POLibSubOverriden(ItemPage): ...

@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import datetime
 import json
 from collections import deque
 from pathlib import Path
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
 import attrs
@@ -31,7 +33,7 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
     meta = {"foo": "bar", "frozen_time": "2022-01-01"}
 
     def _assert_fixture_files(
-        directory: Path, expected_meta: Optional[dict] = None
+        directory: Path, expected_meta: dict | None = None
     ) -> None:
         input_dir = directory / INPUT_DIR_NAME
         assert (input_dir / "HttpResponse-body.html").exists()
@@ -218,13 +220,13 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
 
 @attrs.define(kw_only=True)
 class MetadataLocalTime(Metadata):
-    dateDownloadedLocal: Optional[str] = None
+    dateDownloadedLocal: str | None = None
 
 
 @attrs.define(kw_only=True)
 class ProductLocalTime(Product):
     # in newer zyte-common-items this should inherit from ProductMetadata
-    metadata: Optional[MetadataLocalTime]  # type: ignore[assignment]
+    metadata: MetadataLocalTime | None  # type: ignore[assignment]
 
 
 def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
@@ -250,10 +252,10 @@ class DateItemPage(WebPage):
 
 def _assert_frozen_item(
     frozen_time: datetime.datetime,
-    pytester: "pytest.Pytester",
+    pytester: pytest.Pytester,
     response: HttpResponse,
     *,
-    outcomes: Optional[Dict[str, int]] = None,
+    outcomes: dict[str, int] | None = None,
 ) -> None:
     # this makes an item with datetime fields corresponding to frozen_time
     item = ItemAdapter(_get_product_item(frozen_time)).asdict()
