@@ -38,7 +38,7 @@ class POTopLevel1(POBase):
         Patterns(["example.com"]),
     ]
     expected_to_return = [None, None]
-    expected_meta = [{}, {}]  # type: ignore
+    expected_meta = [{}, {}]  # type: ignore[assignment]
 
 
 @handle_urls("example.com", instead_of=POTopLevelOverriden2)
@@ -46,4 +46,4 @@ class POTopLevel2(POBase):
     expected_instead_of = POTopLevelOverriden2
     expected_patterns = Patterns(["example.com"])
     expected_to_return = None
-    expected_meta = {}  # type: ignore
+    expected_meta = {}

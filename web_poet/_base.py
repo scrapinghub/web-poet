@@ -62,14 +62,14 @@ class _HttpHeaders(CIMultiDict):
         def _norm(data):
             if isinstance(data, str) or data is None:
                 return data
-            elif isinstance(data, bytes):
+            if isinstance(data, bytes):
                 return data.decode(encoding)
             raise ValueError(f"Expecting str or bytes. Received {type(data)}")
 
         converted = []
 
         for header, value in arg.items():
-            if isinstance(value, list) or isinstance(value, tuple):
+            if isinstance(value, (list, tuple)):
                 converted.extend([(_norm(header), _norm(v)) for v in value])
             else:
                 converted.append((_norm(header), _norm(value)))

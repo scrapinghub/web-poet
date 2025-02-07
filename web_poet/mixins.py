@@ -8,8 +8,8 @@ import parsel
 from w3lib.html import get_base_url
 
 if TYPE_CHECKING:
-    from web_poet.page_inputs.http import HttpResponse  # pragma: nocover
-    from web_poet.page_inputs.url import RequestUrl, ResponseUrl  # pragma: nocover
+    from web_poet.page_inputs.http import HttpResponse
+    from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
 class SelectorShortcutsMixin:
@@ -41,7 +41,7 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
 
     @abc.abstractmethod
     def _selector_input(self) -> str:
-        raise NotImplementedError()  # pragma: nocover
+        raise NotImplementedError  # pragma: nocover
 
     @property
     def selector(self) -> parsel.Selector:

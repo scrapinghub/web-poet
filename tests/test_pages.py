@@ -38,7 +38,7 @@ def test_page_object() -> None:
 
 def test_web_page_object(book_list_html_response) -> None:
     class MyWebPage(WebPage):
-        def to_item(self) -> dict:  # type: ignore
+        def to_item(self) -> dict:  # type: ignore[override]
             return {
                 "url": self.url,
                 "title": self.css("title::text").get("").strip(),
@@ -65,7 +65,7 @@ def test_is_injectable() -> None:
         pass
 
     class MyItemPage(ItemPage):
-        def to_item(self) -> dict:  # type: ignore
+        def to_item(self) -> dict:  # type: ignore[override]
             return {
                 "foo": "bar",
             }

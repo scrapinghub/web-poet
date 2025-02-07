@@ -18,4 +18,4 @@ class PONestedModule(POBase):
         include=["example.com", "example.org"], exclude=["/*.jpg|"]
     )
     expected_to_return = None
-    expected_meta = {}  # type: ignore
+    expected_meta = {}

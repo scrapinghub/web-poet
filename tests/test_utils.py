@@ -133,8 +133,7 @@ def test_warning_on_instance() -> None:
     w = _mywarnings(w)
     assert len(w) == 1
     expected = (
-        f"{__name__}.Deprecated is deprecated, instantiate "
-        f"{__name__}.NewName instead."
+        f"{__name__}.Deprecated is deprecated, instantiate {__name__}.NewName instead."
     )
     assert str(w[0].message) == expected
     assert w[0].lineno == lineno
@@ -267,12 +266,14 @@ def test_deprecate_subclass_of_deprecated_class() -> None:
 
 
 def test_inspect_stack() -> None:
-    with mock.patch("inspect.stack", side_effect=IndexError):
-        with warnings.catch_warnings(record=True) as w:
-            DeprecatedName: Any = _create_deprecated_class("DeprecatedName", NewName)
+    with (
+        mock.patch("inspect.stack", side_effect=IndexError),
+        warnings.catch_warnings(record=True) as w,
+    ):
+        DeprecatedName: Any = _create_deprecated_class("DeprecatedName", NewName)
 
-            class SubClass(DeprecatedName):
-                pass
+        class SubClass(DeprecatedName):
+            pass
 
     assert "Error detecting parent module" in str(w[0].message)
 
@@ -422,7 +423,7 @@ def test_cached_method_exception() -> None:
         @cached_method
         def meth(self):
             self.n_called += 1
-            raise Error()
+            raise Error
 
     foo = Foo()
 
@@ -443,7 +444,7 @@ async def test_cached_method_exception_async() -> None:
         @cached_method
         async def meth(self):
             self.n_called += 1
-            raise Error()
+            raise Error
 
     foo = Foo()
 
@@ -527,7 +528,7 @@ class SpecializedTwoGenerics(MyGeneric2[Item2], BaseSpecialized):
 
 
 @pytest.mark.parametrize(
-    ["cls", "param"],
+    ("cls", "param"),
     [
         (MyGeneric, None),
         (Base, None),

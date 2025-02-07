@@ -3,8 +3,7 @@ from __future__ import annotations
 import datetime
 import json
 from collections import deque
-from pathlib import Path
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 from zoneinfo import ZoneInfo
 
 import attrs
@@ -23,6 +22,9 @@ from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 N_TESTS = len(attrs.fields(Product)) + 2
 
@@ -239,7 +241,8 @@ def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
         url="http://example.com",
         name="foo",
         metadata=MetadataLocalTime(
-            dateDownloaded=date_str, dateDownloadedLocal=date_local_str  # type: ignore[call-arg]
+            dateDownloaded=date_str,
+            dateDownloadedLocal=date_local_str,  # type: ignore[call-arg]
         ),
     )
 
@@ -449,7 +452,7 @@ def test_httpclient_request_exception(pytester, book_list_html_response) -> None
 
 
 class MyItemPage3(WebPage):
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         return {"foo": "bar", "egg": "spam", "hello": "world"}
 
 

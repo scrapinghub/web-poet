@@ -123,20 +123,17 @@ def field(
             return method(instance)
 
         @staticmethod
-        def _get_processed_method(cls, key):
-            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(key)
+        def _get_processed_method(page_cls, key):
+            return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
 
         @staticmethod
-        def _set_processed_method(cls, key, method):
-            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
+        def _set_processed_method(page_cls, key, method):
+            getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
 
         @staticmethod
         def _process(value, page, processors):
             for processor, takes_page in processors:
-                if takes_page:
-                    value = processor(value, page=page)
-                else:
-                    value = processor(value)
+                value = processor(value, page=page) if takes_page else processor(value)
             return value
 
         @staticmethod
@@ -167,9 +164,8 @@ def field(
         res = _field(method)
         update_wrapper(cast(Callable, res), method)
         return res
-    else:
-        # @field(...) syntax
-        return _field
+    # @field(...) syntax
+    return _field
 
 
 def get_fields_dict(cls_or_instance) -> dict[str, FieldInfo]:
@@ -187,7 +183,10 @@ T = TypeVar("T")
 # inference works properly if a non-default item_cls is passed; for dict
 # it's not working (return type is Any)
 async def item_from_fields(
-    obj, item_cls: type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
 ) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
@@ -209,7 +208,10 @@ async def item_from_fields(
 
 
 def item_from_fields_sync(
-    obj, item_cls: type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))

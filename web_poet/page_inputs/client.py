@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Callable, Union, cast
+from typing import TYPE_CHECKING, Callable, Union, cast
 
 from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
@@ -16,9 +15,13 @@ from web_poet.page_inputs.http import (
     HttpResponse,
     request_fingerprint,
 )
-from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
 from web_poet.utils import as_list
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+from web_poet.page_inputs.url import _Url
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +85,7 @@ class HttpClient:
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
         allow_all_status = any(
-            True for s in allow_status_normalized if "*" == s.strip()
+            True for s in allow_status_normalized if s.strip() == "*"
         )
 
         if (
@@ -131,8 +134,7 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-        response = await self.execute(req, allow_status=allow_status)
-        return response
+        return await self.execute(req, allow_status=allow_status)
 
     async def get(
         self,

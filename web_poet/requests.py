@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import logging
 from contextvars import ContextVar
+from typing import TYPE_CHECKING
 
 from web_poet.exceptions import RequestDownloaderVarError
-from web_poet.page_inputs.http import HttpRequest, HttpResponse
+
+if TYPE_CHECKING:
+    from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +27,12 @@ async def _perform_request(request: HttpRequest) -> HttpResponse:
 
     try:
         request_downloader = request_downloader_var.get()
-    except LookupError:
+    except LookupError as ex:
         raise RequestDownloaderVarError(
             "Additional requests are used inside the Page Object but the "
             "current framework has not set any HttpRequest Backend via "
             "'web_poet.request_downloader_var'"
-        )
+        ) from ex
 
     response_data: HttpResponse = await request_downloader(request)
     return response_data

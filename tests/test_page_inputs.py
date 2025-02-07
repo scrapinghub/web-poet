@@ -69,7 +69,7 @@ def test_http_response_body_json() -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "body_cls"],
+    ("cls", "body_cls"),
     [
         (HttpRequest, HttpRequestBody),
         (HttpResponse, HttpResponseBody),
@@ -92,7 +92,7 @@ def test_http_defaults(cls, body_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "headers_cls"],
+    ("cls", "headers_cls"),
     [
         (HttpRequest, HttpRequestHeaders),
         (HttpResponse, HttpResponseHeaders),
@@ -108,7 +108,7 @@ def test_http_with_headers_alt_constructor(cls, headers_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "body_cls"],
+    ("cls", "body_cls"),
     [
         (HttpRequest, HttpRequestBody),
         (HttpResponse, HttpResponseBody),
@@ -156,7 +156,7 @@ def test_http_response_headers(headers_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "headers_cls"],
+    ("cls", "headers_cls"),
     [
         (HttpRequest, HttpRequestHeaders),
         (HttpResponse, HttpResponseHeaders),
@@ -213,10 +213,10 @@ def test_http_request_init_with_response_url() -> None:
 
 @pytest.mark.parametrize(
     "cls",
-    (
+    [
         HttpRequestHeaders,
         HttpResponseHeaders,
-    ),
+    ],
 )
 def test_http_headers_from_bytes_dict(cls) -> None:
     raw_headers = {
@@ -241,16 +241,20 @@ def test_http_headers_from_bytes_dict(cls) -> None:
 
 @pytest.mark.parametrize(
     "cls",
-    (
+    [
         HttpRequestHeaders,
         HttpResponseHeaders,
-    ),
+    ],
 )
 def test_http_response_headers_from_bytes_dict_err(cls) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+    ):
         cls.from_bytes_dict({b"Content-Length": [316]})
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+    ):
         cls.from_bytes_dict({b"Content-Length": 316})
 
 
@@ -288,8 +292,8 @@ def test_http_response_selectors(book_list_html_response) -> None:
 def test_http_response_json() -> None:
     url = "http://example.com"
 
+    response = HttpResponse(url, body=b"non json")
     with pytest.raises(json.JSONDecodeError):
-        response = HttpResponse(url, body=b"non json")
         response.json()
 
     response = HttpResponse(url, body=b'{"key": "value"}')
@@ -313,7 +317,7 @@ def test_http_response_text() -> None:
 
 
 @pytest.mark.parametrize(
-    ["headers", "encoding"],
+    ("headers", "encoding"),
     [
         ({"Content-type": "text/html; charset=utf-8"}, "utf-8"),
         ({"Content-type": "text/html; charset=UTF8"}, "utf-8"),
@@ -525,10 +529,10 @@ def test_browser_response() -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (HttpRequest,),
-        (HttpResponse,),
+        HttpRequest,
+        HttpResponse,
     ],
 )
 def test_urljoin_absolute(cls) -> None:
@@ -539,10 +543,10 @@ def test_urljoin_absolute(cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (HttpRequest,),
-        (HttpResponse,),
+        HttpRequest,
+        HttpResponse,
     ],
 )
 def test_urljoin_relative(cls) -> None:
@@ -569,10 +573,10 @@ def test_urljoin_relative_html_base() -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (RequestUrl,),
-        (ResponseUrl,),
+        RequestUrl,
+        ResponseUrl,
     ],
 )
 def test_urljoin_input_classes(cls) -> None:

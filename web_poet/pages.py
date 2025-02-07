@@ -4,20 +4,23 @@ import abc
 import inspect
 from contextlib import suppress
 from functools import wraps
-from typing import Any, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 import attr
-import parsel
 
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
-from web_poet.page_inputs import HttpResponse
 from web_poet.utils import (
     CallableT,
     _create_deprecated_class,
     cached_method,
     get_generic_param,
 )
+
+if TYPE_CHECKING:
+    import parsel
+
+from web_poet.page_inputs import HttpResponse
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -33,8 +36,6 @@ class Injectable(abc.ABC, FieldsMixin):
     Instead of inheriting you can also use ``Injectable.register(MyWebPage)``.
     ``Injectable.register`` can also be used as a decorator.
     """
-
-    pass
 
 
 def is_injectable(cls: Any) -> bool:
@@ -130,13 +131,13 @@ class ItemPage(Extractor[ItemT], Injectable):
     def _validate_input(self) -> None:
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
-            return
+            return None
         with suppress(AttributeError):
             if self.__validating_input:
                 # We are in a recursive call, i.e. _validate_input is being
                 # called from _validate_input itself (likely through a @field
                 # method).
-                return
+                return None
 
         self.__validating_input: bool = True
         validation_item = self.validate_input()  # type: ignore[attr-defined]

@@ -7,7 +7,7 @@ import warnings
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import Any, DefaultDict, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -115,10 +115,10 @@ class RulesRegistry:
 
     def __init__(self, *, rules: Iterable[ApplyRule] | None = None):
         self._rules: dict[int, ApplyRule] = {}
-        self._overrides_matchers: DefaultDict[type[ItemPage] | None, URLMatcher] = (
+        self._overrides_matchers: defaultdict[type[ItemPage] | None, URLMatcher] = (
             defaultdict(URLMatcher)
         )
-        self._item_matchers: DefaultDict[type | None, URLMatcher] = defaultdict(
+        self._item_matchers: defaultdict[type | None, URLMatcher] = defaultdict(
             URLMatcher
         )
 
@@ -329,15 +329,9 @@ class RulesRegistry:
             attribs = getter(rule)
             if not isinstance(attribs, tuple):
                 attribs = (attribs,)
-            if attribs == tuple(kwargs.values()):
-                return True
-            return False
+            return attribs == tuple(kwargs.values())
 
-        results = []
-        for rule in rules or self.get_rules():
-            if finder(rule):
-                results.append(rule)
-        return results
+        return [rule for rule in rules or self.get_rules() if finder(rule)]
 
     def search_overrides(self, **kwargs) -> list[ApplyRule]:
         """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
@@ -355,6 +349,7 @@ class RulesRegistry:
         rule_id = matcher.match(str(url))
         if rule_id is not None:
             return self._rules[rule_id].use
+        return None
 
     def overrides_for(self, url: _Url | str) -> Mapping[type[ItemPage], type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and

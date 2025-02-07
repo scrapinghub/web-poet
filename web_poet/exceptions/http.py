@@ -40,8 +40,6 @@ class HttpRequestError(HttpError):
     :type request: HttpRequest
     """
 
-    pass
-
 
 class HttpResponseError(HttpError):
     """Indicates that an exception has occurred when the **HTTP Response** was

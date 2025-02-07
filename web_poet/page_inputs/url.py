@@ -22,10 +22,6 @@ class _Url:
 class ResponseUrl(_Url):
     """URL of the response"""
 
-    pass
-
 
 class RequestUrl(_Url):
     """URL of the request"""
-
-    pass

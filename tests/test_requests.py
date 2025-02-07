@@ -224,7 +224,7 @@ async def test_http_client_batch_execute_with_exception_raised(
     requests = [
         HttpRequest("url-1"),
     ]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="test exception"):
         await client_that_errs.batch_execute(*requests)
 
 
@@ -245,7 +245,8 @@ async def test_http_client_batch_execute_allow_status(
     responses = await client.batch_execute(*requests, allow_status=["400", "403"])
 
     for r in responses:
-        assert isinstance(r, HttpResponse) and r.status == 400
+        assert isinstance(r, HttpResponse)
+        assert r.status == 400
 
     with pytest.raises(HttpResponseError) as excinfo:
         await client.batch_execute(*requests)
@@ -270,22 +271,18 @@ async def test_http_client_batch_execute_allow_status(
 
     responses = await client.batch_execute(*requests, return_exceptions=True)
     for r in responses:
-        assert (
-            isinstance(r, HttpResponseError)
-            and isinstance(r.request, HttpRequest)
-            and isinstance(r.response, HttpResponse)
-        )
+        assert isinstance(r, HttpResponseError)
+        assert isinstance(r.request, HttpRequest)
+        assert isinstance(r.response, HttpResponse)
     assert all(str(r).startswith("400 BAD_REQUEST response for") for r in responses)
 
     responses = await client.batch_execute(
         *requests, return_exceptions=True, allow_status=408
     )
     for r in responses:
-        assert (
-            isinstance(r, HttpResponseError)
-            and isinstance(r.request, HttpRequest)
-            and isinstance(r.response, HttpResponse)
-        )
+        assert isinstance(r, HttpResponseError)
+        assert isinstance(r.request, HttpRequest)
+        assert isinstance(r.response, HttpResponse)
     assert all(str(r).startswith("400 BAD_REQUEST response for") for r in responses)
 
     # These have no assertions since they're used to see if mypy raises an

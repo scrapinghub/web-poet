@@ -7,7 +7,7 @@ from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
 from .url import ResponseUrl
 
 
-class BrowserHtml(SelectableMixin, str):
+class BrowserHtml(SelectableMixin, str):  # noqa: SLOT000
     """HTML returned by a web browser,
     i.e. snapshot of the DOM tree in HTML format.
     """

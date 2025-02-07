@@ -32,8 +32,6 @@ ResponseUrl = _create_deprecated_class("ResponseUrl", _ResponseUrl)
 class HttpRequestBody(bytes):
     """A container for holding the raw HTTP request body in bytes format."""
 
-    pass
-
 
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
@@ -81,8 +79,6 @@ class HttpRequestHeaders(_HttpHeaders):
     :class:`multidict.CIMultiDict`. For more info on its other features, read
     the API spec of :class:`multidict.CIMultiDict`.
     """
-
-    pass
 
 
 class HttpResponseHeaders(_HttpHeaders):
@@ -249,11 +245,12 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+        return None
 
 
 def request_fingerprint(req: HttpRequest) -> str:
     """Return the fingerprint of the request."""
-    fp = sha1()
+    fp = sha1()  # noqa: S324
     fp.update(req.method.encode() + b"\n")
     fp.update(canonicalize_url(str(req.url)).encode() + b"\n")
     for name, value in sorted(req.headers.items()):

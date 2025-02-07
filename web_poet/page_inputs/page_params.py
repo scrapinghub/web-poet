@@ -7,5 +7,3 @@ class PageParams(dict):
 
     Note that this is simply a subclass of Python's ``dict``.
     """
-
-    pass

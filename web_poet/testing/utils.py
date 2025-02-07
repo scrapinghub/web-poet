@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-import pytest
+from typing import TYPE_CHECKING
+
 from _pytest.assertion.util import assertrepr_compare
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def comparison_error_message(

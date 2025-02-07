@@ -139,7 +139,7 @@ def _create_deprecated_class(
         # deprecated class is in jinja2 template). __module__ attribute is not
         # important enough to raise an exception as users may be unable
         # to fix inspect.stack() errors.
-        warn(f"Error detecting parent module: {e!r}")
+        warn(f"Error detecting parent module: {e!r}", stacklevel=1)
 
     return deprecated_cls
 

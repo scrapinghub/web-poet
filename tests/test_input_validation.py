@@ -64,7 +64,7 @@ async def test_valid_input_async_field():
 
 class BaseRetryPage(BasePage):
     def validate_input(self):
-        raise Retry()
+        raise Retry
 
 
 def test_retry_sync_to_item():
@@ -108,7 +108,7 @@ async def test_retry_async_field():
 class BaseUseFallbackPage(BasePage):
     def validate_input(self):
         if self.a is None:
-            raise UseFallback()
+            raise UseFallback
 
     @field
     def a(self):
@@ -143,7 +143,7 @@ async def test_use_fallback_async_field():
     class Page(BaseUseFallbackPage):
         def validate_input(self):
             # Cannot use async self.a
-            raise UseFallback()
+            raise UseFallback
 
         @field
         async def a(self):
@@ -235,7 +235,7 @@ class BaseCachingPage(BasePage):
 
     def validate_input(self):
         if self._raise:
-            raise UseFallback()
+            raise UseFallback
         self._raise = True
 
 
@@ -304,7 +304,7 @@ async def test_recursion():
 
         def validate_input(self):
             if self._raise:
-                raise UseFallback()
+                raise UseFallback
             self._raise = True
             assert self.a == "a"
 

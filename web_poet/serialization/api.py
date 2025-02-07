@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import os
-from collections.abc import Iterable
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import andi
 from andi.typeutils import strip_annotated
@@ -15,6 +13,10 @@ from web_poet import Injectable
 from web_poet.annotated import AnnotatedInstance
 from web_poet.pages import is_injectable
 from web_poet.utils import get_fq_class_name
+
+if TYPE_CHECKING:
+    import os
+    from collections.abc import Iterable
 
 # represents a leaf dependency of any type serialized as a set of files
 SerializedLeafData = dict[str, bytes]
@@ -70,9 +72,8 @@ class SerializedDataFileStorage:
         if "." not in suffix:
             # TypeName.ext
             return type_name + "." + suffix
-        else:
-            # TypeName-component.ext
-            return type_name + "-" + suffix
+        # TypeName-component.ext
+        return type_name + "-" + suffix
 
     def read(self) -> SerializedData:  # noqa: D102
         result: SerializedData = {}
@@ -184,8 +185,8 @@ def load_class(type_name: str) -> type:
         name = type_name
     try:
         mod = import_module(module)
-    except ModuleNotFoundError:
-        raise ValueError(f"Unable to import module {module}")
+    except ModuleNotFoundError as ex:
+        raise ValueError(f"Unable to import module {module}") from ex
     result = getattr(mod, name, None)
     if not result:
         raise ValueError(f"Unknown type {type_name}")
@@ -205,7 +206,7 @@ def deserialize(cls: type[InjectableT], data: SerializedData) -> InjectableT:
             deserialized_dep = deserialize_leaf(dep_type, dep_data)
         deps[dep_type] = deserialized_dep
 
-    externally_provided = {strip_annotated(cls) for cls in deps.keys()}
+    externally_provided = {strip_annotated(cls) for cls in deps}
     plan = andi.plan(
         cls, is_injectable=is_injectable, externally_provided=externally_provided
     )

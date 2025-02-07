@@ -104,7 +104,7 @@ def test_item_from_fields_sync() -> None:
             return item_from_fields_sync(self, dict)
 
     page = Page()
-    assert page.to_item() == dict(name="name")
+    assert page.to_item() == {"name": "name"}
 
 
 def test_field_non_callable() -> None:
@@ -113,7 +113,7 @@ def test_field_non_callable() -> None:
         @attrs.define
         class Page(ItemPage):
             # https://github.com/python/mypy/issues/1362#issuecomment-438246775
-            @field  # type: ignore
+            @field  # type: ignore[prop-decorator]
             @property
             def name(self):
                 return "name"
@@ -660,9 +660,9 @@ def test_field_processors_override() -> None:
     class Page(BasePage):
         class Processors(BasePage.Processors):
             f1 = [proc1]
-            f4 = BasePage.Processors.f4 + [proc1]
+            f4 = [*BasePage.Processors.f4, proc1]
 
-        @field(out=BasePage.Processors.f5 + [proc1])
+        @field(out=[*BasePage.Processors.f5, proc1])
         def f5(self):
             return "  f5\t "
 

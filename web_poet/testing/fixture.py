@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 import json
 import logging
-import os
-from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
@@ -34,6 +31,11 @@ from .exceptions import (
     WrongExceptionRaised,
 )
 from .itemadapter import WebPoetTestItemAdapter
+
+if TYPE_CHECKING:
+    import datetime
+    import os
+    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -174,8 +176,7 @@ class Fixture:
         if parsed_value.tzinfo is None:
             # if it's left as None, time_machine will set it to timezone.utc,
             # but we want to interpret the value as local time
-            parsed_value = parsed_value.astimezone()
-            return parsed_value
+            return parsed_value.astimezone()
 
         if not time_machine.HAVE_TZSET:
             logger.warning(
@@ -241,9 +242,9 @@ class Fixture:
             received_type = type(ex)
             expected_type = type(self.get_expected_exception())
             if received_type != expected_type:
-                raise WrongExceptionRaised() from ex
+                raise WrongExceptionRaised from ex
         else:
-            raise ExceptionNotRaised()
+            raise ExceptionNotRaised
 
     @classmethod
     def save(
@@ -258,9 +259,7 @@ class Fixture:
     ) -> FixtureT:
         """Save and return a fixture."""
         if not fixture_name:
-            fixture_name = _get_available_filename(
-                "test-{}", base_directory  # noqa: P103
-            )
+            fixture_name = _get_available_filename("test-{}", base_directory)
         fixture_dir = Path(base_directory, fixture_name)
         fixture = cls(fixture_dir)
         fixture.input_path.mkdir(parents=True)

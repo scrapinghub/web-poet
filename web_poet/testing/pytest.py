@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import operator
-from collections.abc import Iterable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -17,6 +17,9 @@ from web_poet.testing.exceptions import (
 from web_poet.testing.fixture import EXCEPTION_FILE_NAME, OUTPUT_FILE_NAME, Fixture
 from web_poet.testing.utils import comparison_error_message
 from web_poet.utils import get_fq_class_name
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # https://github.com/pytest-dev/pytest/discussions/10261
 _version_tuple = getattr(pytest, "version_tuple", None)
@@ -37,7 +40,7 @@ class WebPoetFile(pytest.File, _PathCompatMixin):
         """Sort the test list by the test name."""
         return sorted(items, key=operator.attrgetter("name"))
 
-    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:  # noqa: D102
+    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
         result: list[WebPoetCollector] = []
         path = self._path
         for entry in path.iterdir():
@@ -72,22 +75,21 @@ class WebPoetCollector(pytest.Collector, _PathCompatMixin):
             return [
                 WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
             ]
-        else:
-            overall_tests: list[pytest.Item] = [
-                WebPoetNoToItemException.from_parent(
-                    parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
-                ),
-                WebPoetNoExtraFieldsItem.from_parent(
-                    parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
-                ),
-            ]
-            field_tests: list[pytest.Item] = [
-                WebPoetFieldItem.from_parent(
-                    parent=self, name=field, fixture=self.fixture, field_name=field
-                )
-                for field in self.fixture.get_expected_output_fields()
-            ]
-            return overall_tests + field_tests
+        overall_tests: list[pytest.Item] = [
+            WebPoetNoToItemException.from_parent(
+                parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
+            ),
+            WebPoetNoExtraFieldsItem.from_parent(
+                parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
+            ),
+        ]
+        field_tests: list[pytest.Item] = [
+            WebPoetFieldItem.from_parent(
+                parent=self, name=field, fixture=self.fixture, field_name=field
+            )
+            for field in self.fixture.get_expected_output_fields()
+        ]
+        return overall_tests + field_tests
 
 
 class _WebPoetItem(pytest.Item, _PathCompatMixin):
@@ -113,8 +115,7 @@ class WebPoetItem(_WebPoetItem):
                 got=got,
                 prefix="The output doesn't match.",
             )
-        else:
-            return super().repr_failure(excinfo, style)
+        return super().repr_failure(excinfo, style)
 
 
 class WebPoetNoExtraFieldsItem(_WebPoetItem):
@@ -133,8 +134,7 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
         if isinstance(excinfo.value, FieldsUnexpected):
             fields = excinfo.value.args[0]
             return f"The item contains unexpected fields: \n{self._format_extra_fields(fields)}"
-        else:
-            return super().repr_failure(excinfo, style)
+        return super().repr_failure(excinfo, style)
 
     def _format_extra_fields(self, extra_fields):
         lines = []
@@ -176,7 +176,7 @@ class WebPoetExpectedException(_WebPoetItem):
         if isinstance(excinfo.value, WrongExceptionRaised):
             got = excinfo.value.__cause__
             if _new_pytest:
-                from pytest import ExceptionInfo
+                from pytest import ExceptionInfo  # noqa: PT013
             else:
                 from _pytest._code import ExceptionInfo
             inner_excinfo = ExceptionInfo.from_exc_info(
@@ -217,11 +217,10 @@ class WebPoetFieldItem(_WebPoetItem):
                 got=got,
                 prefix=f"item.{self.field_name} is not correct.",
             )
-        elif isinstance(excinfo.value, FieldMissing):
+        if isinstance(excinfo.value, FieldMissing):
             field_name = excinfo.value.args[0]
             return f"item.{field_name} is missing."
-        else:
-            return super().repr_failure(excinfo, style)
+        return super().repr_failure(excinfo, style)
 
 
 _found_type_dirs: set[Path] = set()
@@ -300,13 +299,13 @@ else:
         return WebPoetCollector.from_parent(
             parent,
             name=name,
-            fspath=py.path.local(path),
+            fspath=py.path.local(path),  # noqa: PTH124
         )
 
     def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
         return WebPoetFile.from_parent(
             parent,
-            fspath=py.path.local(path),
+            fspath=py.path.local(path),  # noqa: PTH124
         )
 
     def pytest_collect_file(  # type: ignore[misc]

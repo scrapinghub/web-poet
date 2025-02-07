@@ -28,4 +28,4 @@ class POLibSubNotImported(POBase):
     expected_instead_of = POLibSubOverridenNotImported
     expected_patterns = Patterns(["sub_not_imported.example"])
     expected_to_return = None
-    expected_meta = {}  # type: ignore
+    expected_meta = {}

@@ -1,4 +1,6 @@
-import os
+from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
@@ -7,10 +9,8 @@ from web_poet.page_inputs import HttpResponse, HttpResponseBody
 pytest_plugins = ["pytester"]
 
 
-def read_fixture(path):
-    path = os.path.join(os.path.dirname(__file__), path)
-    with open(path, encoding="utf-8") as f:
-        return f.read()
+def read_fixture(path: str) -> str:
+    return (Path(__file__).parent / path).read_text(encoding="utf-8")
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def book_list_html():
     return read_fixture("fixtures/book_list.html")
 
 
-@pytest.fixture()
+@pytest.fixture
 def some_json_response():
     body = """
     {
