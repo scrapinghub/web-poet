@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from _pytest.assertion.util import assertrepr_compare
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 def comparison_error_message(
-    config: pytest.Config, op: str, expected, got, prefix: str = ""
+    config: pytest.Config, op: str, expected: Any, got: Any, prefix: str = ""
 ) -> str:
     """Generate an error message"""
     lines = [prefix] if prefix else []

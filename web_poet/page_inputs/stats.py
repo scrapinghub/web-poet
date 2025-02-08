@@ -25,7 +25,7 @@ class DummyStatCollector(StatCollector):
     does not persist stats. It is used when running automatic tests, where stat
     storage is not necessary."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._stats: dict[str, Any] = {}
 
     def set(self, key: str, value: Any) -> None:  # noqa: D102
@@ -52,7 +52,7 @@ class Stats:
     if it supports stats, and if so, how to read stored stats.
     """
 
-    def __init__(self, stat_collector=None):
+    def __init__(self, stat_collector: StatCollector | None = None):
         self._stats = stat_collector or DummyStatCollector()
 
     def set(self, key: str, value: Any) -> None:

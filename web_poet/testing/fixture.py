@@ -4,13 +4,12 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, cast
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
 import dateutil.tz
 import time_machine
-from itemadapter import ItemAdapter
 
 from web_poet import ItemPage
 from web_poet.serialization import (
@@ -37,6 +36,11 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Iterable
 
+    from itemadapter import ItemAdapter
+
+    # typing.Self requires Python 3.11
+    from typing_extensions import Self
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,10 +50,7 @@ EXCEPTION_FILE_NAME = "exception.json"
 META_FILE_NAME = "meta.json"
 
 
-FixtureT = TypeVar("FixtureT", bound="Fixture")
-
-
-def _get_available_filename(template: str, directory: str | os.PathLike) -> str:
+def _get_available_filename(template: str, directory: str | os.PathLike[str]) -> str:
     i = 1
     while True:
         result = Path(directory, template.format(i))
@@ -127,7 +128,7 @@ class Fixture:
         cls = self.get_meta().get("adapter")
         if not cls:
             return WebPoetTestItemAdapter
-        return cast(type[ItemAdapter], cls)
+        return cast("type[ItemAdapter]", cls)
 
     def _get_output(self) -> dict:
         page = self.get_page()
@@ -199,14 +200,14 @@ class Fixture:
         output = self.get_expected_output()
         return list(output.keys())
 
-    def assert_full_item_correct(self):
+    def assert_full_item_correct(self) -> None:
         """Get the output and assert that it matches the expected output."""
         output = _format_json(self.get_output())
         expected_output = _format_json(self.get_expected_output())
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 
-    def assert_field_correct(self, name: str):
+    def assert_field_correct(self, name: str) -> None:
         """Assert that a certain field in the output matches the expected value"""
         actual_item = self.get_output()
         if name not in actual_item:
@@ -216,7 +217,7 @@ class Fixture:
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
 
-    def assert_no_extra_fields(self):
+    def assert_no_extra_fields(self) -> None:
         """Assert that there are no extra fields in the output"""
         output = self.get_output()
         expected_output = self.get_expected_output()
@@ -231,7 +232,7 @@ class Fixture:
         """
         return self._output_error is not None
 
-    def assert_no_toitem_exceptions(self):
+    def assert_no_toitem_exceptions(self) -> None:
         """Assert that to_item() can be run (doesn't raise an error)"""
         self.get_output()
 
@@ -249,15 +250,15 @@ class Fixture:
 
     @classmethod
     def save(
-        cls: type[FixtureT],
-        base_directory: str | os.PathLike,
+        cls,
+        base_directory: str | os.PathLike[str],
         *,
         inputs: Iterable[Any],
         item: Any = None,
         exception: Exception | None = None,
         meta: dict | None = None,
         fixture_name=None,
-    ) -> FixtureT:
+    ) -> Self:
         """Save and return a fixture."""
         if not fixture_name:
             fixture_name = _get_available_filename("test-{}", base_directory)

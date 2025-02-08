@@ -165,7 +165,7 @@ def _deserialize_HttpClient(
         exception: HttpError | None
         if serialized_exception:
             exc_data = json.loads(serialized_exception["json"])
-            exception = cast(HttpError, _exception_from_dict(exc_data))
+            exception = cast("HttpError", _exception_from_dict(exc_data))
         else:
             exception = None
         responses.append(_SavedResponseData(request, response, exception))

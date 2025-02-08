@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from hashlib import sha1
-from typing import Any, TypeVar
+from typing import Any
 from urllib.parse import urljoin
 
 import attrs
@@ -21,8 +21,6 @@ from web_poet.utils import memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
 from .url import ResponseUrl as _ResponseUrl
-
-T_headers = TypeVar("T_headers", bound=_HttpHeaders)
 
 
 class HttpRequestBody(bytes):
@@ -226,9 +224,7 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         body_encoding, text = html_to_unicode(
             content_type,
             self.body,
-            # FIXME: type ignore can be removed when the following is released:
-            # https://github.com/scrapy/w3lib/pull/190
-            auto_detect_fun=self._auto_detect_fun,  # type: ignore[arg-type]
+            auto_detect_fun=self._auto_detect_fun,
             default_encoding=self._DEFAULT_ENCODING,
         )
         self._cached_text = text

@@ -23,7 +23,17 @@ exclude_also = [
 ]
 
 [tool.mypy]
-warn_no_return = false
+ignore_missing_imports = false
+implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+allow_untyped_defs = true
+allow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "web_poet.example"
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "tests.po_lib_to_return.*"

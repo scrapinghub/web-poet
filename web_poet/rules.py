@@ -7,7 +7,7 @@ import warnings
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import Any, TypeVar, Union
+from typing import Any, Union
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -17,8 +17,6 @@ from web_poet.pages import ItemPage, get_item_cls
 from web_poet.utils import as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]
-
-RulesRegistryTV = TypeVar("RulesRegistryTV", bound="RulesRegistry")
 
 
 @attrs.define(frozen=True)
@@ -180,7 +178,7 @@ class RulesRegistry:
         self._rules[rule_id] = rule
 
     @classmethod
-    def _format_list(cls, objects: Iterable) -> str:
+    def _format_list(cls, objects: Iterable[object]) -> str:
         return "\n".join(repr(rule) for rule in objects)
 
     def handle_urls(
@@ -256,7 +254,7 @@ class RulesRegistry:
         """
         return list(self._rules.values())
 
-    def search(self, **kwargs) -> list[ApplyRule]:
+    def search(self, **kwargs: Any) -> list[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
         the provided attributes.
 

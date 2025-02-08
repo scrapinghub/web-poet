@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import andi
 from andi.typeutils import strip_annotated
@@ -24,12 +24,12 @@ SerializedLeafData = dict[str, bytes]
 SerializedData = dict[str, SerializedLeafData]
 T = TypeVar("T")
 InjectableT = TypeVar("InjectableT", bound=Injectable)
-SerializeFunction = Callable[[Any], SerializedLeafData]
+SerializeFunction = Callable[[T], SerializedLeafData]
 DeserializeFunction = Callable[[type[T], SerializedLeafData], T]
 
 
 class SerializedDataFileStorage:
-    def __init__(self, directory: str | os.PathLike) -> None:
+    def __init__(self, directory: str | os.PathLike[str]) -> None:
         super().__init__()
         self.directory: Path = Path(directory)
 
@@ -107,15 +107,15 @@ serialize_leaf = singledispatch(serialize_leaf)
 
 
 def register_serialization(
-    f_serialize: SerializeFunction, f_deserialize: DeserializeFunction
+    f_serialize: SerializeFunction[T], f_deserialize: DeserializeFunction[T]
 ) -> None:
     serialize_leaf.register(f_serialize)  # type: ignore[attr-defined]
     f_serialize.f_deserialize = f_deserialize  # type: ignore[attr-defined]
 
 
 def deserialize_leaf(cls: type[T], data: SerializedLeafData) -> T:
-    f_ser: SerializeFunction = serialize_leaf.dispatch(cls)  # type: ignore[attr-defined]
-    return f_ser.f_deserialize(cls, data)  # type: ignore[attr-defined]
+    f_ser: SerializeFunction[T] = serialize_leaf.dispatch(cls)  # type: ignore[attr-defined]
+    return cast("T", f_ser.f_deserialize(cls, data))  # type: ignore[attr-defined]
 
 
 def _get_name_for_class(cls: type) -> str:
@@ -190,7 +190,7 @@ def load_class(type_name: str) -> type:
     result = getattr(mod, name, None)
     if not result:
         raise ValueError(f"Unknown type {type_name}")
-    return result
+    return cast("type", result)
 
 
 def deserialize(cls: type[InjectableT], data: SerializedData) -> InjectableT:

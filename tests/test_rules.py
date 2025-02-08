@@ -1,4 +1,5 @@
 import warnings
+from typing import Any
 
 import attrs
 import pytest
@@ -84,7 +85,7 @@ def test_apply_rule_uniqueness() -> None:
     # The ``meta`` parameter is ignored in the hash.
     assert hash(rule1) == hash(rule2)
 
-    params = [
+    params: list[dict[str, Any]] = [
         {
             "for_patterns": patterns,
             "use": POTopLevel1,
