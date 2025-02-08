@@ -1,4 +1,3 @@
-# from __future__ import annotations breaks some tests here
 from typing import Annotated
 
 import attrs
