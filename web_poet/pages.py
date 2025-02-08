@@ -1,26 +1,21 @@
-from __future__ import annotations
-
 import abc
 import inspect
 from contextlib import suppress
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
+from typing import Any, Generic, Optional, TypeVar, overload
 
 import attr
+import parsel
 
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
+from web_poet.page_inputs import HttpResponse
 from web_poet.utils import (
     CallableT,
     _create_deprecated_class,
     cached_method,
     get_generic_param,
 )
-
-if TYPE_CHECKING:
-    import parsel
-
-from web_poet.page_inputs import HttpResponse
 
 
 class Injectable(abc.ABC, FieldsMixin):
@@ -62,10 +57,10 @@ def get_item_cls(cls: type, default: type) -> type: ...
 
 
 @overload
-def get_item_cls(cls: type, default: None) -> type | None: ...
+def get_item_cls(cls: type, default: None) -> Optional[type]: ...
 
 
-def get_item_cls(cls: type, default: type | None = None) -> type | None:
+def get_item_cls(cls: type, default: Optional[type] = None) -> Optional[type]:
     param = get_generic_param(cls, Returns)
     return param or default
 

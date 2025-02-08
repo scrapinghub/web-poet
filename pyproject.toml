@@ -139,6 +139,9 @@ ignore = [
     # Move application import {} into a type-checking block
     # (The fix can break singledispatch() and/or andi.)
     "TC001",
+    # Add `from __future__ import annotations` to simplify
+    # (The fix can break singledispatch() and/or andi.)
+    "FA100",
 ]
 
 [tool.ruff.lint.per-file-ignores]
