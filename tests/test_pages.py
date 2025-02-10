@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import attrs
 import pytest
@@ -70,14 +70,14 @@ def test_is_injectable() -> None:
                 "foo": "bar",
             }
 
-    from collections.abc import Set as CollectionsSet
-    from typing import Set as TypingSet
+    from collections.abc import Set as CollectionsSet  # noqa: PYI025
+    from typing import Set as TypingSet  # noqa: UP035
 
     assert is_injectable(None) is False
     assert is_injectable(type(None)) is False
     assert is_injectable(set) is False
     assert is_injectable(set[str]) is False
-    assert is_injectable(TypingSet[str]) is False
+    assert is_injectable(TypingSet[str]) is False  # noqa: UP006
     assert is_injectable(CollectionsSet[str]) is False
     assert is_injectable(Optional[str]) is False
     assert is_injectable(MyClass) is False
