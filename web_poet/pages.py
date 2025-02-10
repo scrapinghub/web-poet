@@ -40,8 +40,8 @@ def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
     return (
-        not isinstance(cls, GenericAlias)
-        and isinstance(cls, type)
+        isinstance(cls, type)
+        and not isinstance(cls, GenericAlias)
         and issubclass(cls, Injectable)
     )
 
