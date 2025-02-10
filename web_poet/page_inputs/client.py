@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Callable, Dict, Iterable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Callable, Union, cast
 
 from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
@@ -13,16 +15,20 @@ from web_poet.page_inputs.http import (
     HttpResponse,
     request_fingerprint,
 )
-from web_poet.page_inputs.url import _Url
 from web_poet.requests import _perform_request
 from web_poet.utils import as_list
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+from web_poet.page_inputs.url import _Url
+
 logger = logging.getLogger(__name__)
 
-_StrMapping = Dict[str, str]
+_StrMapping = dict[str, str]
 _Headers = Union[_StrMapping, HttpRequestHeaders]
 _Body = Union[bytes, HttpRequestBody]
-_StatusList = Union[str, int, List[Union[str, int]]]
+_StatusList = Union[str, int, list[Union[str, int]]]
 
 
 @dataclass
@@ -30,8 +36,8 @@ class _SavedResponseData:
     """Class for storing a request and its result."""
 
     request: HttpRequest
-    response: Optional[HttpResponse]
-    exception: Optional[HttpError] = None
+    response: HttpResponse | None
+    exception: HttpError | None = None
 
     def fingerprint(self) -> str:
         """Return the request fingeprint."""
@@ -57,16 +63,16 @@ class HttpClient:
 
     def __init__(
         self,
-        request_downloader: Optional[Callable] = None,
+        request_downloader: Callable | None = None,
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
-        responses: Optional[Iterable[_SavedResponseData]] = None,
+        responses: Iterable[_SavedResponseData] | None = None,
     ):
         self._request_downloader = request_downloader or _perform_request
         self.save_responses = save_responses
         self.return_only_saved_responses = return_only_saved_responses
-        self._saved_responses: Dict[str, _SavedResponseData] = {
+        self._saved_responses: dict[str, _SavedResponseData] = {
             data.fingerprint(): data for data in responses or []
         }
 
@@ -75,11 +81,11 @@ class HttpClient:
         response: HttpResponse,
         request: HttpRequest,
         *,
-        allow_status: Optional[_StatusList] = None,
+        allow_status: _StatusList | None = None,
     ) -> None:
         allow_status_normalized = list(map(str, as_list(allow_status)))
         allow_all_status = any(
-            True for s in allow_status_normalized if "*" == s.strip()
+            True for s in allow_status_normalized if s.strip() == "*"
         )
 
         if (
@@ -96,12 +102,12 @@ class HttpClient:
 
     async def request(
         self,
-        url: Union[str, _Url],
+        url: str | _Url,
         *,
         method: str = "GET",
-        headers: Optional[_Headers] = None,
-        body: Optional[_Body] = None,
-        allow_status: Optional[_StatusList] = None,
+        headers: _Headers | None = None,
+        body: _Body | None = None,
+        allow_status: _StatusList | None = None,
     ) -> HttpResponse:
         """This is a shortcut for creating an :class:`~.HttpRequest` instance and
         executing that request.
@@ -128,15 +134,14 @@ class HttpClient:
         headers = headers or {}
         body = body or b""
         req = HttpRequest(url=url, method=method, headers=headers, body=body)
-        response = await self.execute(req, allow_status=allow_status)
-        return response
+        return await self.execute(req, allow_status=allow_status)
 
     async def get(
         self,
-        url: Union[str, _Url],
+        url: str | _Url,
         *,
-        headers: Optional[_Headers] = None,
-        allow_status: Optional[_StatusList] = None,
+        headers: _Headers | None = None,
+        allow_status: _StatusList | None = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but peforming a ``GET``
         request.
@@ -150,11 +155,11 @@ class HttpClient:
 
     async def post(
         self,
-        url: Union[str, _Url],
+        url: str | _Url,
         *,
-        headers: Optional[_Headers] = None,
-        body: Optional[_Body] = None,
-        allow_status: Optional[_StatusList] = None,
+        headers: _Headers | None = None,
+        body: _Body | None = None,
+        allow_status: _StatusList | None = None,
     ) -> HttpResponse:
         """Similar to :meth:`~.HttpClient.request` but performing a ``POST``
         request.
@@ -168,7 +173,7 @@ class HttpClient:
         )
 
     async def execute(
-        self, request: HttpRequest, *, allow_status: Optional[_StatusList] = None
+        self, request: HttpRequest, *, allow_status: _StatusList | None = None
     ) -> HttpResponse:
         """Execute the specified :class:`~.HttpRequest` instance using the
         request implementation configured in the :class:`~.HttpClient`
@@ -227,8 +232,8 @@ class HttpClient:
         self,
         *requests: HttpRequest,
         return_exceptions: bool = False,
-        allow_status: Optional[_StatusList] = None,
-    ) -> List[Union[HttpResponse, HttpResponseError]]:
+        allow_status: _StatusList | None = None,
+    ) -> list[HttpResponse | HttpResponseError]:
         """Similar to :meth:`~.HttpClient.execute` but accepts a collection of
         :class:`~.HttpRequest` instances that would be batch executed.
 
@@ -260,7 +265,7 @@ class HttpClient:
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )
-        return cast(List[Union[HttpResponse, HttpResponseError]], responses)
+        return cast(list[Union[HttpResponse, HttpResponseError]], responses)
 
     def get_saved_responses(self) -> Iterable[_SavedResponseData]:
         """Return saved requests and responses."""

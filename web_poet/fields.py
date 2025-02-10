@@ -3,10 +3,12 @@
 into separate Page Object methods / properties.
 """
 
+from __future__ import annotations
+
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Callable, TypeVar, cast
 
 import attrs
 from itemadapter import ItemAdapter
@@ -26,10 +28,10 @@ class FieldInfo:
     name: str
 
     #: field metadata
-    meta: Optional[dict] = None
+    meta: dict | None = None
 
     #: field processors
-    out: Optional[List[Callable]] = None
+    out: list[Callable] | None = None
 
 
 class FieldsMixin:
@@ -58,8 +60,8 @@ def field(
     method=None,
     *,
     cached: bool = False,
-    meta: Optional[dict] = None,
-    out: Optional[List[Callable]] = None,
+    meta: dict | None = None,
+    out: list[Callable] | None = None,
 ):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
@@ -84,7 +86,7 @@ def field(
                     f"@field decorator must be used on methods, {method!r} is decorated instead"
                 )
             self.original_method = method
-            self.name: Optional[str] = None
+            self.name: str | None = None
 
         def __set_name__(self, owner, name):
             self.name = name
@@ -109,7 +111,7 @@ def field(
                     processor_functions = getattr(owner.Processors, self.name, [])
                 else:
                     processor_functions = []
-                processors: List[Tuple[Callable, bool]] = []
+                processors: list[tuple[Callable, bool]] = []
                 for processor_function in processor_functions:
                     takes_page = callable_has_parameter(processor_function, "page")
                     processors.append((processor_function, takes_page))
@@ -121,20 +123,17 @@ def field(
             return method(instance)
 
         @staticmethod
-        def _get_processed_method(cls, key):
-            return getattr(cls, _FIELD_METHODS_ATTRIBUTE).get(key)
+        def _get_processed_method(page_cls, key):
+            return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
 
         @staticmethod
-        def _set_processed_method(cls, key, method):
-            getattr(cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
+        def _set_processed_method(page_cls, key, method):
+            getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
 
         @staticmethod
         def _process(value, page, processors):
             for processor, takes_page in processors:
-                if takes_page:
-                    value = processor(value, page=page)
-                else:
-                    value = processor(value)
+                value = processor(value, page=page) if takes_page else processor(value)
             return value
 
         @staticmethod
@@ -165,12 +164,11 @@ def field(
         res = _field(method)
         update_wrapper(cast(Callable, res), method)
         return res
-    else:
-        # @field(...) syntax
-        return _field
+    # @field(...) syntax
+    return _field
 
 
-def get_fields_dict(cls_or_instance) -> Dict[str, FieldInfo]:
+def get_fields_dict(cls_or_instance) -> dict[str, FieldInfo]:
     """Return a dictionary with information about the fields defined
     for the class: keys are field names, and values are
     :class:`web_poet.fields.FieldInfo` instances.
@@ -185,7 +183,10 @@ T = TypeVar("T")
 # inference works properly if a non-default item_cls is passed; for dict
 # it's not working (return type is Any)
 async def item_from_fields(
-    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
 ) -> T:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
@@ -207,7 +208,10 @@ async def item_from_fields(
 
 
 def item_from_fields_sync(
-    obj, item_cls: Type[T] = dict, *, skip_nonitem_fields: bool = False  # type: ignore[assignment]
+    obj,
+    item_cls: type[T] = dict,  # type: ignore[assignment]
+    *,
+    skip_nonitem_fields: bool = False,
 ) -> T:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))
@@ -217,8 +221,8 @@ def item_from_fields_sync(
 
 
 def _without_unsupported_field_names(
-    item_cls: type, field_names: List[str]
-) -> List[str]:
+    item_cls: type, field_names: list[str]
+) -> list[str]:
     item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
     if item_field_names is None:  # item_cls doesn't define field names upfront
         return field_names[:]

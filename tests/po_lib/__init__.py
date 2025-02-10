@@ -2,7 +2,9 @@
 This package is just for overrides testing purposes.
 """
 
-from typing import Any, Dict, List, Type, Union
+from __future__ import annotations
+
+from typing import Any
 
 from url_matcher import Patterns
 
@@ -13,10 +15,10 @@ from .. import po_lib_sub  # noqa: F401
 
 
 class POBase(ItemPage):
-    expected_instead_of: Union[Type[ItemPage], List[Type[ItemPage]]]
+    expected_instead_of: type[ItemPage] | list[type[ItemPage]]
     expected_patterns: Patterns
     expected_to_return: Any = None
-    expected_meta: Dict[str, Any]
+    expected_meta: dict[str, Any]
 
 
 class POTopLevelOverriden1(ItemPage): ...
@@ -36,7 +38,7 @@ class POTopLevel1(POBase):
         Patterns(["example.com"]),
     ]
     expected_to_return = [None, None]
-    expected_meta = [{}, {}]  # type: ignore
+    expected_meta = [{}, {}]  # type: ignore[assignment]
 
 
 @handle_urls("example.com", instead_of=POTopLevelOverriden2)
@@ -44,4 +46,4 @@ class POTopLevel2(POBase):
     expected_instead_of = POTopLevelOverriden2
     expected_patterns = Patterns(["example.com"])
     expected_to_return = None
-    expected_meta = {}  # type: ignore
+    expected_meta = {}

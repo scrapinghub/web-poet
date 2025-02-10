@@ -7,18 +7,18 @@ These exceptions are tied to how **web-poet** operates.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from web_poet import HttpRequest
 
 
 __all__ = [
-    "RequestDownloaderVarError",
+    "NoSavedHttpResponse",
     "PageObjectAction",
+    "RequestDownloaderVarError",
     "Retry",
     "UseFallback",
-    "NoSavedHttpResponse",
 ]
 
 
@@ -57,9 +57,7 @@ class NoSavedHttpResponse(AssertionError):
     :type request: HttpRequest
     """
 
-    def __init__(
-        self, msg: Optional[str] = None, request: Optional[HttpRequest] = None
-    ):
+    def __init__(self, msg: str | None = None, request: HttpRequest | None = None):
         self.request = request
         if msg is None:
             msg = f"There is no saved response available for this HTTP Request: {self.request}"

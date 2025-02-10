@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import random
-from typing import Callable, List
+from typing import Callable
 
 import attrs
 import pytest
@@ -102,7 +104,7 @@ def test_item_from_fields_sync() -> None:
             return item_from_fields_sync(self, dict)
 
     page = Page()
-    assert page.to_item() == dict(name="name")
+    assert page.to_item() == {"name": "name"}
 
 
 def test_field_non_callable() -> None:
@@ -111,7 +113,7 @@ def test_field_non_callable() -> None:
         @attrs.define
         class Page(ItemPage):
             # https://github.com/python/mypy/issues/1362#issuecomment-438246775
-            @field  # type: ignore
+            @field  # type: ignore[prop-decorator]
             @property
             def name(self):
                 return "name"
@@ -629,11 +631,11 @@ def test_field_processors_override() -> None:
 
     class BasePage(ItemPage):
         class Processors:
-            f1: List[Callable] = [str.strip]
+            f1: list[Callable] = [str.strip]
             f2 = [str.strip]
             f3 = [str.strip]
-            f4: List[Callable] = [str.strip]
-            f5: List[Callable] = [str.strip]
+            f4: list[Callable] = [str.strip]
+            f5: list[Callable] = [str.strip]
 
         @field
         def f1(self):
@@ -658,9 +660,9 @@ def test_field_processors_override() -> None:
     class Page(BasePage):
         class Processors(BasePage.Processors):
             f1 = [proc1]
-            f4 = BasePage.Processors.f4 + [proc1]
+            f4 = [*BasePage.Processors.f4, proc1]
 
-        @field(out=BasePage.Processors.f5 + [proc1])
+        @field(out=[*BasePage.Processors.f5, proc1])
         def f5(self):
             return "  f5\t "
 
@@ -695,7 +697,7 @@ def test_field_processors_super() -> None:
 
     class Page(BasePage):
         class Processors(BasePage.Processors):
-            name: List[Callable] = []
+            name: list[Callable] = []
 
         @field
         def name(self):
@@ -704,8 +706,8 @@ def test_field_processors_super() -> None:
 
     class Page2(Page):
         class Processors(Page.Processors):
-            name: List[Callable] = []
-            desc: List[Callable] = []
+            name: list[Callable] = []
+            desc: list[Callable] = []
 
         @field
         def desc(self):

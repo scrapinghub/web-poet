@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import inspect
 import weakref
 from collections import deque
 from collections.abc import Iterable
 from functools import lru_cache, partial, wraps
 from types import MethodType
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, get_args
+from typing import Any, Callable, TypeVar, get_args
 from warnings import warn
 
 import packaging.version
@@ -35,7 +37,7 @@ def get_fq_class_name(cls: type) -> str:
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
-def _clspath(cls: type, forced: Optional[str] = None) -> str:
+def _clspath(cls: type, forced: str | None = None) -> str:
     if forced is not None:
         return forced
     return get_fq_class_name(cls)
@@ -137,7 +139,7 @@ def _create_deprecated_class(
         # deprecated class is in jinja2 template). __module__ attribute is not
         # important enough to raise an exception as users may be unable
         # to fix inspect.stack() errors.
-        warn(f"Error detecting parent module: {e!r}")
+        warn(f"Error detecting parent module: {e!r}", stacklevel=1)
 
     return deprecated_cls
 
@@ -233,7 +235,7 @@ if _async_lru_version.major < 2:
     _alru_cache = partial(alru_cache, cache_exceptions=False)
 
 
-def as_list(value: Optional[Any]) -> List[Any]:
+def as_list(value: Any | None) -> list[Any]:
     """Normalizes the value input as a list.
 
     >>> as_list(None)
@@ -270,15 +272,13 @@ async def ensure_awaitable(obj):
     return obj
 
 
-def str_to_pattern(url_pattern: Union[str, Patterns]) -> Patterns:
+def str_to_pattern(url_pattern: str | Patterns) -> Patterns:
     if isinstance(url_pattern, Patterns):
         return url_pattern
     return Patterns([url_pattern])
 
 
-def get_generic_param(
-    cls: type, expected: Union[type, Tuple[type, ...]]
-) -> Optional[type]:
+def get_generic_param(cls: type, expected: type | tuple[type, ...]) -> type | None:
     """Search the base classes recursively breadth-first for a generic class and return its param.
 
     Returns the param of the first found class that is a subclass of ``expected``.

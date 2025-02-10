@@ -101,7 +101,7 @@ def test_apply_rule_uniqueness() -> None:
         },
     ]
 
-    for change in params[0].keys():
+    for change in params[0]:
         # Changing any one of the params should result in a hash mismatch
         rule1 = ApplyRule(**params[0])
         kwargs = params[0].copy()
@@ -162,7 +162,7 @@ def test_apply_rule_kwargs_only() -> None:
             ApplyRule(
                 "example.com",
                 *[params[r] for r in remove],
-                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]  # noqa: B038
+                **{k: v for k, v in params.items() if k not in remove},  # type: ignore[arg-type]
             )
 
 

@@ -4,8 +4,8 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
-import os
 import sys
+from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
@@ -14,7 +14,7 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 
-sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 # -- Project information -----------------------------------------------------

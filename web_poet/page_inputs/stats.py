@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 StatNum = Union[int, float]
 
@@ -24,7 +26,7 @@ class DummyStatCollector(StatCollector):
     storage is not necessary."""
 
     def __init__(self):
-        self._stats: Dict[str, Any] = {}
+        self._stats: dict[str, Any] = {}
 
     def set(self, key: str, value: Any) -> None:  # noqa: D102
         self._stats[key] = value

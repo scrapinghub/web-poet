@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 import attrs
 
@@ -7,7 +7,7 @@ from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
 from .url import ResponseUrl
 
 
-class BrowserHtml(SelectableMixin, str):
+class BrowserHtml(SelectableMixin, str):  # noqa: SLOT000
     """HTML returned by a web browser,
     i.e. snapshot of the DOM tree in HTML format.
     """
@@ -34,7 +34,7 @@ class BrowserResponse(SelectableMixin, UrlShortcutsMixin):
 
     url: ResponseUrl = attrs.field(converter=ResponseUrl)
     html: BrowserHtml = attrs.field(converter=BrowserHtml)
-    status: Optional[int] = attrs.field(default=None, kw_only=True)
+    status: int | None = attrs.field(default=None, kw_only=True)
 
     def _selector_input(self) -> str:
         return self.html

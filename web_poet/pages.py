@@ -33,8 +33,6 @@ class Injectable(abc.ABC, FieldsMixin):
     ``Injectable.register`` can also be used as a decorator.
     """
 
-    pass
-
 
 def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
@@ -133,13 +131,13 @@ class ItemPage(Extractor[ItemT], Injectable):
     def _validate_input(self) -> None:
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
-            return
+            return None
         with suppress(AttributeError):
             if self.__validating_input:
                 # We are in a recursive call, i.e. _validate_input is being
                 # called from _validate_input itself (likely through a @field
                 # method).
-                return
+                return None
 
         self.__validating_input: bool = True
         validation_item = self.validate_input()  # type: ignore[attr-defined]

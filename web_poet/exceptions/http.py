@@ -6,7 +6,7 @@ These are exceptions pertaining to common issues faced when executing HTTP
 operations.
 """
 
-from typing import Optional
+from __future__ import annotations
 
 from web_poet.page_inputs.http import HttpRequest, HttpResponse
 
@@ -24,11 +24,9 @@ class HttpError(IOError):
     :type request: HttpRequest
     """
 
-    def __init__(
-        self, msg: Optional[str] = None, request: Optional[HttpRequest] = None
-    ):
+    def __init__(self, msg: str | None = None, request: HttpRequest | None = None):
         #: Request that triggered the exception.
-        self.request: Optional[HttpRequest] = request
+        self.request: HttpRequest | None = request
         if msg is None:
             msg = f"An Error ocurred when executing this HTTP Request: {self.request}"
         super().__init__(msg)
@@ -41,8 +39,6 @@ class HttpRequestError(HttpError):
     :param request: The :class:`~.HttpRequest` instance that was used.
     :type request: HttpRequest
     """
-
-    pass
 
 
 class HttpResponseError(HttpError):
@@ -68,12 +64,12 @@ class HttpResponseError(HttpError):
 
     def __init__(
         self,
-        msg: Optional[str] = None,
-        response: Optional[HttpResponse] = None,
-        request: Optional[HttpRequest] = None,
+        msg: str | None = None,
+        response: HttpResponse | None = None,
+        request: HttpRequest | None = None,
     ):
         #: Response that triggered the exception.
-        self.response: Optional[HttpResponse] = response
+        self.response: HttpResponse | None = response
         if msg is None:
             msg = f"Unexpected HTTP Response received: {self.response}"
         super().__init__(msg, request=request)

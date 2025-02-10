@@ -1,14 +1,12 @@
+from pathlib import Path
+
 from setuptools import find_packages, setup
-
-with open("README.rst") as f:
-    long_description = f.read()
-
 
 setup(
     name="web-poet",
     version="0.18.0",
     description="Zyte's Page Object pattern for web scraping",
-    long_description=long_description,
+    long_description=Path("README.rst").read_text(),
     long_description_content_type="text/x-rst",
     author="Zyte Group Ltd",
     author_email="opensource@zyte.com",

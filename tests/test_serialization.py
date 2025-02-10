@@ -1,4 +1,4 @@
-from typing import Annotated, Type
+from typing import Annotated
 
 import attrs
 import pytest
@@ -153,7 +153,7 @@ def test_custom_functions() -> None:
     def _serialize(o: C) -> SerializedLeafData:
         return {"bin": o.value.to_bytes((o.value.bit_length() + 7) // 8, "little")}
 
-    def _deserialize(t: Type[C], data: SerializedLeafData) -> C:
+    def _deserialize(t: type[C], data: SerializedLeafData) -> C:
         return t(int.from_bytes(data["bin"], "little"))
 
     register_serialization(_serialize, _deserialize)

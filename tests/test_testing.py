@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import datetime
 import json
 from collections import deque
-from pathlib import Path
-from typing import Annotated, Any, Dict, Optional
+from typing import TYPE_CHECKING, Annotated, Any
 from zoneinfo import ZoneInfo
 
 import attrs
@@ -22,6 +23,9 @@ from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 N_TESTS = len(attrs.fields(Product)) + 2
 
 
@@ -31,7 +35,7 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
     meta = {"foo": "bar", "frozen_time": "2022-01-01"}
 
     def _assert_fixture_files(
-        directory: Path, expected_meta: Optional[dict] = None
+        directory: Path, expected_meta: dict | None = None
     ) -> None:
         input_dir = directory / INPUT_DIR_NAME
         assert (input_dir / "HttpResponse-body.html").exists()
@@ -218,13 +222,13 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
 
 @attrs.define(kw_only=True)
 class MetadataLocalTime(Metadata):
-    dateDownloadedLocal: Optional[str] = None
+    dateDownloadedLocal: str | None = None
 
 
 @attrs.define(kw_only=True)
 class ProductLocalTime(Product):
     # in newer zyte-common-items this should inherit from ProductMetadata
-    metadata: Optional[MetadataLocalTime]  # type: ignore[assignment]
+    metadata: MetadataLocalTime | None  # type: ignore[assignment]
 
 
 def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
@@ -237,7 +241,8 @@ def _get_product_item(date: datetime.datetime) -> ProductLocalTime:
         url="http://example.com",
         name="foo",
         metadata=MetadataLocalTime(
-            dateDownloaded=date_str, dateDownloadedLocal=date_local_str  # type: ignore[call-arg]
+            dateDownloaded=date_str,
+            dateDownloadedLocal=date_local_str,  # type: ignore[call-arg]
         ),
     )
 
@@ -250,10 +255,10 @@ class DateItemPage(WebPage):
 
 def _assert_frozen_item(
     frozen_time: datetime.datetime,
-    pytester: "pytest.Pytester",
+    pytester: pytest.Pytester,
     response: HttpResponse,
     *,
-    outcomes: Optional[Dict[str, int]] = None,
+    outcomes: dict[str, int] | None = None,
 ) -> None:
     # this makes an item with datetime fields corresponding to frozen_time
     item = ItemAdapter(_get_product_item(frozen_time)).asdict()
@@ -447,7 +452,7 @@ def test_httpclient_request_exception(pytester, book_list_html_response) -> None
 
 
 class MyItemPage3(WebPage):
-    async def to_item(self) -> dict:  # noqa: D102
+    async def to_item(self) -> dict:
         return {"foo": "bar", "egg": "spam", "hello": "world"}
 
 

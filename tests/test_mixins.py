@@ -1,12 +1,12 @@
-import packaging.version as version
 import parsel
 import pytest
+from packaging import version
 
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.page_inputs import HttpResponse
 
 PARSEL_VERSION = version.parse(getattr(parsel, "__version__", "0.0"))
-PARSEL_18_PLUS = PARSEL_VERSION >= version.parse("1.8.0")
+PARSEL_18_PLUS = PARSEL_VERSION >= version.parse("1.8.0")  # noqa: SIM300
 
 
 class MyPage(ResponseShortcutsMixin):

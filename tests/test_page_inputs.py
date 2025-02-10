@@ -64,12 +64,12 @@ def test_http_response_body_json() -> None:
     http_body = HttpResponseBody(b'{"foo": 123}')
     assert http_body.json() == {"foo": 123}
 
-    http_body = HttpResponseBody('{"ключ": "значение"}'.encode("utf8"))
+    http_body = HttpResponseBody('{"ключ": "значение"}'.encode())
     assert http_body.json() == {"ключ": "значение"}
 
 
 @pytest.mark.parametrize(
-    ["cls", "body_cls"],
+    ("cls", "body_cls"),
     [
         (HttpRequest, HttpRequestBody),
         (HttpResponse, HttpResponseBody),
@@ -92,7 +92,7 @@ def test_http_defaults(cls, body_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "headers_cls"],
+    ("cls", "headers_cls"),
     [
         (HttpRequest, HttpRequestHeaders),
         (HttpResponse, HttpResponseHeaders),
@@ -108,7 +108,7 @@ def test_http_with_headers_alt_constructor(cls, headers_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "body_cls"],
+    ("cls", "body_cls"),
     [
         (HttpRequest, HttpRequestBody),
         (HttpResponse, HttpResponseBody),
@@ -156,7 +156,7 @@ def test_http_response_headers(headers_cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls", "headers_cls"],
+    ("cls", "headers_cls"),
     [
         (HttpRequest, HttpRequestHeaders),
         (HttpResponse, HttpResponseHeaders),
@@ -213,10 +213,10 @@ def test_http_request_init_with_response_url() -> None:
 
 @pytest.mark.parametrize(
     "cls",
-    (
+    [
         HttpRequestHeaders,
         HttpResponseHeaders,
-    ),
+    ],
 )
 def test_http_headers_from_bytes_dict(cls) -> None:
     raw_headers = {
@@ -241,16 +241,20 @@ def test_http_headers_from_bytes_dict(cls) -> None:
 
 @pytest.mark.parametrize(
     "cls",
-    (
+    [
         HttpRequestHeaders,
         HttpResponseHeaders,
-    ),
+    ],
 )
 def test_http_response_headers_from_bytes_dict_err(cls) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+    ):
         cls.from_bytes_dict({b"Content-Length": [316]})
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+    ):
         cls.from_bytes_dict({b"Content-Length": 316})
 
 
@@ -288,14 +292,14 @@ def test_http_response_selectors(book_list_html_response) -> None:
 def test_http_response_json() -> None:
     url = "http://example.com"
 
+    response = HttpResponse(url, body=b"non json")
     with pytest.raises(json.JSONDecodeError):
-        response = HttpResponse(url, body=b"non json")
         response.json()
 
     response = HttpResponse(url, body=b'{"key": "value"}')
     assert response.json() == {"key": "value"}
 
-    response = HttpResponse(url, body='{"ключ": "значение"}'.encode("utf8"))
+    response = HttpResponse(url, body='{"ключ": "значение"}'.encode())
     assert response.json() == {"ключ": "значение"}
 
 
@@ -313,7 +317,7 @@ def test_http_response_text() -> None:
 
 
 @pytest.mark.parametrize(
-    ["headers", "encoding"],
+    ("headers", "encoding"),
     [
         ({"Content-type": "text/html; charset=utf-8"}, "utf-8"),
         ({"Content-type": "text/html; charset=UTF8"}, "utf-8"),
@@ -343,19 +347,17 @@ def test_http_response_utf16() -> None:
 
 
 def test_explicit_encoding() -> None:
-    response = HttpResponse(
-        "http://www.example.com", "£".encode("utf-8"), encoding="utf-8"
-    )
+    response = HttpResponse("http://www.example.com", "£".encode(), encoding="utf-8")
     assert response.encoding == "utf-8"
     assert response.text == "£"
 
 
 def test_explicit_encoding_invalid() -> None:
     response = HttpResponse(
-        "http://www.example.com", body="£".encode("utf-8"), encoding="latin1"
+        "http://www.example.com", body="£".encode(), encoding="latin1"
     )
     assert response.encoding == "latin1"
-    assert response.text == "£".encode("utf-8").decode("latin1")
+    assert response.text == "£".encode().decode("latin1")
 
 
 def test_utf8_body_detection() -> None:
@@ -386,7 +388,7 @@ def test_gb2312() -> None:
 def test_bom_encoding() -> None:
     response = HttpResponse(
         "http://www.example.com",
-        body=codecs.BOM_UTF8 + "🎉".encode("utf-8"),
+        body=codecs.BOM_UTF8 + "🎉".encode(),
         headers={"Content-type": "text/html; charset=cp1251"},
     )
     assert response.encoding == "utf-8"
@@ -527,10 +529,10 @@ def test_browser_response() -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (HttpRequest,),
-        (HttpResponse,),
+        HttpRequest,
+        HttpResponse,
     ],
 )
 def test_urljoin_absolute(cls) -> None:
@@ -541,10 +543,10 @@ def test_urljoin_absolute(cls) -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (HttpRequest,),
-        (HttpResponse,),
+        HttpRequest,
+        HttpResponse,
     ],
 )
 def test_urljoin_relative(cls) -> None:
@@ -571,10 +573,10 @@ def test_urljoin_relative_html_base() -> None:
 
 
 @pytest.mark.parametrize(
-    ["cls"],
+    "cls",
     [
-        (RequestUrl,),
-        (ResponseUrl,),
+        RequestUrl,
+        ResponseUrl,
     ],
 )
 def test_urljoin_input_classes(cls) -> None:

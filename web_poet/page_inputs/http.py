@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from hashlib import sha1
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar
 from urllib.parse import urljoin
 
 import attrs
@@ -32,17 +32,15 @@ ResponseUrl = _create_deprecated_class("ResponseUrl", _ResponseUrl)
 class HttpRequestBody(bytes):
     """A container for holding the raw HTTP request body in bytes format."""
 
-    pass
-
 
 class HttpResponseBody(bytes):
     """A container for holding the raw HTTP response body in bytes format."""
 
-    def bom_encoding(self) -> Optional[str]:
+    def bom_encoding(self) -> str | None:
         """Returns the encoding from the byte order mark if present."""
         return read_bom(self)[0]
 
-    def declared_encoding(self) -> Optional[str]:
+    def declared_encoding(self) -> str | None:
         """Return the encoding specified in meta tags in the html body,
         or ``None`` if no suitable encoding was found"""
         return html_body_declared_encoding(self)
@@ -82,8 +80,6 @@ class HttpRequestHeaders(_HttpHeaders):
     the API spec of :class:`multidict.CIMultiDict`.
     """
 
-    pass
-
 
 class HttpResponseHeaders(_HttpHeaders):
     """A container for holding the HTTP response headers.
@@ -113,7 +109,7 @@ class HttpResponseHeaders(_HttpHeaders):
     the API spec of :class:`multidict.CIMultiDict`.
     """
 
-    def declared_encoding(self) -> Optional[str]:
+    def declared_encoding(self) -> str | None:
         """Return encoding detected from the Content-Type header, or None
         if encoding is not found"""
         content_type = self.get("Content-Type", "")
@@ -139,7 +135,7 @@ class HttpRequest:
         factory=HttpRequestBody, converter=HttpRequestBody, kw_only=True
     )
 
-    def urljoin(self, url: Union[str, _RequestUrl, _ResponseUrl]) -> _RequestUrl:
+    def urljoin(self, url: str | _RequestUrl | _ResponseUrl) -> _RequestUrl:
         """Return *url* as an absolute URL.
 
         If *url* is relative, it is made absolute relative to :attr:`url`."""
@@ -171,14 +167,14 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
 
     url: _ResponseUrl = attrs.field(converter=_ResponseUrl)
     body: HttpResponseBody = attrs.field(converter=HttpResponseBody)
-    status: Optional[int] = attrs.field(default=None, kw_only=True)
+    status: int | None = attrs.field(default=None, kw_only=True)
     headers: HttpResponseHeaders = attrs.field(
         factory=HttpResponseHeaders, converter=HttpResponseHeaders, kw_only=True
     )
-    _encoding: Optional[str] = attrs.field(default=None, kw_only=True)
+    _encoding: str | None = attrs.field(default=None, kw_only=True)
 
     _DEFAULT_ENCODING = "ascii"
-    _cached_text: Optional[str] = None
+    _cached_text: str | None = None
 
     @property
     def text(self) -> str:
@@ -201,7 +197,7 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         return self.text
 
     @property
-    def encoding(self) -> Optional[str]:
+    def encoding(self) -> str | None:
         """Encoding of the response"""
         return (
             self._encoding
@@ -217,19 +213,19 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         return self.body.json()
 
     @memoizemethod_noargs
-    def _body_bom_encoding(self) -> Optional[str]:
+    def _body_bom_encoding(self) -> str | None:
         return self.body.bom_encoding()
 
     @memoizemethod_noargs
-    def _headers_declared_encoding(self) -> Optional[str]:
+    def _headers_declared_encoding(self) -> str | None:
         return self.headers.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_declared_encoding(self) -> Optional[str]:
+    def _body_declared_encoding(self) -> str | None:
         return self.body.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_inferred_encoding(self) -> Optional[str]:
+    def _body_inferred_encoding(self) -> str | None:
         content_type = self.headers.get("Content-Type", "")
         body_encoding, text = html_to_unicode(
             content_type,
@@ -242,18 +238,19 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         self._cached_text = text
         return body_encoding
 
-    def _auto_detect_fun(self, body: bytes) -> Optional[str]:
+    def _auto_detect_fun(self, body: bytes) -> str | None:
         for enc in (self._DEFAULT_ENCODING, "utf-8", "cp1252"):
             try:
                 body.decode(enc)
             except UnicodeError:
                 continue
             return resolve_encoding(enc)
+        return None
 
 
 def request_fingerprint(req: HttpRequest) -> str:
     """Return the fingerprint of the request."""
-    fp = sha1()
+    fp = sha1()  # noqa: S324
     fp.update(req.method.encode() + b"\n")
     fp.update(canonicalize_url(str(req.url)).encode() + b"\n")
     for name, value in sorted(req.headers.items()):
