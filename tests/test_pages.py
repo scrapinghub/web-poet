@@ -70,8 +70,16 @@ def test_is_injectable() -> None:
                 "foo": "bar",
             }
 
+    from collections.abc import Set as CollectionsSet
+    from typing import Set as TypingSet
+
     assert is_injectable(None) is False
     assert is_injectable(type(None)) is False
+    assert is_injectable(set) is False
+    assert is_injectable(set[str]) is False
+    assert is_injectable(TypingSet[str]) is False
+    assert is_injectable(CollectionsSet[str]) is False
+    assert is_injectable(Optional[str]) is False
     assert is_injectable(MyClass) is False
     assert is_injectable(MyClass()) is False
     assert is_injectable(MyItemPage) is True

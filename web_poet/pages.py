@@ -2,6 +2,7 @@ import abc
 import inspect
 from contextlib import suppress
 from functools import wraps
+from types import GenericAlias
 from typing import Any, Generic, Optional, TypeVar, overload
 
 import attr
@@ -36,7 +37,11 @@ class Injectable(abc.ABC, FieldsMixin):
 def is_injectable(cls: Any) -> bool:
     """Return True if ``cls`` is a class which inherits
     from :class:`~.Injectable`."""
-    return isinstance(cls, type) and issubclass(cls, Injectable)
+    return (
+        isinstance(cls, type)
+        and not isinstance(cls, GenericAlias)
+        and issubclass(cls, Injectable)
+    )
 
 
 ItemT = TypeVar("ItemT")
