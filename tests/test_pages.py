@@ -10,7 +10,6 @@ from web_poet.pages import (
     Injectable,
     ItemPage,
     ItemT,
-    ItemWebPage,
     Returns,
     SelectorExtractor,
     WebPage,
@@ -51,15 +50,6 @@ def test_web_page_object(book_list_html_response) -> None:
     }
 
 
-def test_item_web_page_deprecated() -> None:
-    with pytest.warns(
-        DeprecationWarning, match="deprecated class web_poet.pages.ItemWebPage"
-    ):
-
-        class MyItemWebPage(ItemWebPage):
-            pass
-
-
 def test_is_injectable() -> None:
     class MyClass:
         pass
@@ -85,7 +75,6 @@ def test_is_injectable() -> None:
     assert is_injectable(MyItemPage) is True
     assert is_injectable(MyItemPage()) is False
     assert is_injectable(ItemPage) is True
-    assert is_injectable(ItemWebPage) is True
 
 
 @pytest.mark.asyncio

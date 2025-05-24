@@ -36,11 +36,9 @@ from tests.po_lib_to_return import (
 )
 from web_poet import (
     ApplyRule,
-    OverrideRule,
     RulesRegistry,
     consume_modules,
     default_registry,
-    handle_urls,
 )
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
@@ -214,19 +212,6 @@ def test_multiple_handle_urls_annotations() -> None:
         assert rule.meta == rule.use.expected_meta[i], rule.use  # type: ignore[attr-defined]
 
 
-def test_registry_get_overrides_deprecation() -> None:
-    msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
-    with pytest.warns(DeprecationWarning, match=msg):
-        rules = default_registry.get_overrides()
-
-    # It should still work as usual
-    assert len(rules) == len(default_registry.get_rules())
-
-    # but the rules from ``.get_overrides()`` should return ``ApplyRule`` and
-    # not the old ``OverrideRule``.
-    assert all(r for r in rules if isinstance(r, ApplyRule))
-
-
 def test_consume_module_not_existing() -> None:
     with pytest.raises(ImportError):
         consume_modules("this_does_not_exist")
@@ -307,20 +292,6 @@ def test_registry_search() -> None:
     # Such rules doesn't exist
     rules = default_registry.search(use=POModuleOverriden)
     assert len(rules) == 0
-
-
-def test_registry_search_overrides_deprecation() -> None:
-    msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
-    with pytest.warns(DeprecationWarning, match=msg):
-        rules = default_registry.search_overrides(use=POTopLevel2)
-
-    # It should still work as usual
-    assert len(rules) == 1
-    assert rules[0].use == POTopLevel2
-
-    # The rules from ``.get_overrides()`` should return ``ApplyRule`` and
-    # not the old ``OverrideRule``.
-    assert isinstance(rules[0], ApplyRule)
 
 
 def test_init_rules() -> None:
@@ -449,79 +420,3 @@ def test_top_rules_for_item() -> None:
     assert {
         rule.use for rule in registry.top_rules_for_item("https://b.example", Product)
     } == {B1, B2}
-
-
-def test_from_override_rules_deprecation_using_ApplyRule() -> None:
-    rules = [
-        ApplyRule(
-            for_patterns=Patterns(include=["example.com"]),
-            use=POTopLevel1,
-            instead_of=POTopLevelOverriden2,
-        )
-    ]
-
-    msg = "The 'from_override_rules' method is deprecated."
-    with pytest.warns(DeprecationWarning, match=msg):
-        registry = RulesRegistry.from_override_rules(rules)
-
-    assert registry.get_rules() == rules
-    assert default_registry.get_rules() != rules
-
-
-def test_from_override_rules_deprecation_using_OverrideRule() -> None:
-    rules = [
-        OverrideRule(
-            for_patterns=Patterns(include=["example.com"]),
-            use=POTopLevel1,
-            instead_of=POTopLevelOverriden2,
-        )
-    ]
-
-    msg = "The 'from_override_rules' method is deprecated."
-    with pytest.warns(DeprecationWarning, match=msg):
-        registry = RulesRegistry.from_override_rules(rules)
-
-    assert registry.get_rules() == rules
-    assert default_registry.get_rules() != rules
-
-
-def test_handle_urls_deprecation() -> None:
-    before_count = len(default_registry.get_rules())
-
-    msg = (
-        "The 'overrides' parameter in @handle_urls is deprecated. Use the "
-        "'instead_of' parameter."
-    )
-    with pytest.warns(DeprecationWarning, match=msg):
-
-        @handle_urls("example.com", overrides=CustomProductPage)
-        class PageWithDeprecatedOverrides: ...
-
-    # Despite the deprecation, it should still properly add the rule in the
-    # registry.
-    after_count = len(default_registry.get_rules())
-    assert after_count == before_count + 1
-
-    # The added rule should have its deprecated 'overrides' parameter converted
-    # into the new 'instead_of' parameter.
-    rules = default_registry.search(
-        instead_of=CustomProductPage, use=PageWithDeprecatedOverrides
-    )
-    assert rules == [
-        ApplyRule(
-            "example.com",
-            instead_of=CustomProductPage,
-            # mypy complains here since it's expecting a container class when
-            # declared, i.e, ``ItemPage[SomeItem]``
-            use=PageWithDeprecatedOverrides,  # type: ignore[arg-type]
-        )
-    ]
-
-
-def test_override_rule_deprecation() -> None:
-    msg = (
-        "web_poet.rules.OverrideRule is deprecated, "
-        "instantiate web_poet.rules.ApplyRule instead."
-    )
-    with pytest.warns(DeprecationWarning, match=msg):
-        OverrideRule(for_patterns=None, use=None)

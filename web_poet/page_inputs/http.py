@@ -17,16 +17,12 @@ from w3lib.url import canonicalize_url
 
 from web_poet._base import _HttpHeaders
 from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
-from web_poet.utils import _create_deprecated_class, memoizemethod_noargs
+from web_poet.utils import memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
 from .url import ResponseUrl as _ResponseUrl
 
 T_headers = TypeVar("T_headers", bound=_HttpHeaders)
-
-
-RequestUrl = _create_deprecated_class("RequestUrl", _RequestUrl)
-ResponseUrl = _create_deprecated_class("ResponseUrl", _ResponseUrl)
 
 
 class HttpRequestBody(bytes):
