@@ -132,11 +132,8 @@ def test_apply_rule_immutability() -> None:
 def test_apply_rule_converter_on_pattern() -> None:
     # passing strings should auto-converter into Patterns
     rule = ApplyRule("example.com", use=POTopLevel1, instead_of=POTopLevelOverriden2)
-    # too strict type hints in url-matcher 0.6.0
     assert rule.for_patterns == Patterns(
-        include=("example.com",),  # type: ignore[arg-type]
-        exclude=(),  # type: ignore[arg-type]
-        priority=500,
+        include=["example.com"], exclude=[], priority=500
     )
 
     # Passing Patterns should still work
@@ -145,11 +142,8 @@ def test_apply_rule_converter_on_pattern() -> None:
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
     )
-    # too strict type hints in url-matcher 0.6.0
     assert rule.for_patterns == Patterns(
-        include=("example.com",),  # type: ignore[arg-type]
-        exclude=(),  # type: ignore[arg-type]
-        priority=500,
+        include=["example.com"], exclude=[], priority=500
     )
 
 
