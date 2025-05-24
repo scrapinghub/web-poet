@@ -23,8 +23,7 @@ exclude_also = [
 ]
 
 [tool.mypy]
-ignore_missing_imports = true
-no_warn_no_return = true
+warn_no_return = false
 
 [[tool.mypy.overrides]]
 module = "tests.po_lib_to_return.*"

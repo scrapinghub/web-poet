@@ -16,7 +16,7 @@ from .. import po_lib_sub  # noqa: F401
 
 class POBase(ItemPage):
     expected_instead_of: type[ItemPage] | list[type[ItemPage]]
-    expected_patterns: Patterns
+    expected_patterns: Patterns | list[Patterns]
     expected_to_return: Any = None
     expected_meta: dict[str, Any]
 

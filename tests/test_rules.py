@@ -103,10 +103,10 @@ def test_apply_rule_uniqueness() -> None:
 
     for change in params[0]:
         # Changing any one of the params should result in a hash mismatch
-        rule1 = ApplyRule(**params[0])
+        rule1 = ApplyRule(**params[0])  # type: ignore[arg-type]
         kwargs = params[0].copy()
         kwargs.update({change: params[1][change]})
-        rule2 = ApplyRule(**kwargs)
+        rule2 = ApplyRule(**kwargs)  # type: ignore[arg-type]
         assert hash(rule1) != hash(rule2)
 
 
@@ -132,8 +132,11 @@ def test_apply_rule_immutability() -> None:
 def test_apply_rule_converter_on_pattern() -> None:
     # passing strings should auto-converter into Patterns
     rule = ApplyRule("example.com", use=POTopLevel1, instead_of=POTopLevelOverriden2)
+    # too strict type hints in url-matcher 0.6.0
     assert rule.for_patterns == Patterns(
-        include=("example.com",), exclude=(), priority=500
+        include=("example.com",),  # type: ignore[arg-type]
+        exclude=(),  # type: ignore[arg-type]
+        priority=500,
     )
 
     # Passing Patterns should still work
@@ -142,8 +145,11 @@ def test_apply_rule_converter_on_pattern() -> None:
         use=POTopLevel1,
         instead_of=POTopLevelOverriden2,
     )
+    # too strict type hints in url-matcher 0.6.0
     assert rule.for_patterns == Patterns(
-        include=("example.com",), exclude=(), priority=500
+        include=("example.com",),  # type: ignore[arg-type]
+        exclude=(),  # type: ignore[arg-type]
+        priority=500,
     )
 
 
