@@ -402,7 +402,7 @@ class RulesRegistry:
         if not matcher:
             return
         max_priority = None
-        for rule_id in matcher.match_all(url):
+        for rule_id in matcher.match_all(str(url)):
             rule = self._rules[rule_id]
             if max_priority is None:
                 max_priority = rule.for_patterns.priority

@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12']  # keep in sync with .readthedocs.yml
+        python-version: ['3.13']  # keep in sync with .readthedocs.yml
         tox-job: ["mypy", "docs", "linters", "types", "twinecheck"]
 
     steps:
