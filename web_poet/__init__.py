@@ -19,7 +19,6 @@ from .pages import (
     Extractor,
     Injectable,
     ItemPage,
-    ItemWebPage,
     Returns,
     SelectorExtractor,
     WebPage,
@@ -28,8 +27,6 @@ from .pages import (
 from .requests import request_downloader_var
 from .rules import (
     ApplyRule,
-    OverrideRule,
-    PageObjectRegistry,
     RulesRegistry,
     consume_modules,
 )

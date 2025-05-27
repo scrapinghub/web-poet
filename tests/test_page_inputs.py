@@ -586,32 +586,6 @@ def test_urljoin_input_classes(cls) -> None:
     assert str(new_url) == "https://example.com/foo"
 
 
-def test_requesturl_move() -> None:
-    from web_poet.page_inputs.http import RequestUrl
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            "web_poet.page_inputs.http.RequestUrl is deprecated, instantiate "
-            "web_poet.page_inputs.url.RequestUrl instead."
-        ),
-    ):
-        RequestUrl("https://example.com")
-
-
-def test_responseurl_move() -> None:
-    from web_poet.page_inputs.http import ResponseUrl
-
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            "web_poet.page_inputs.http.ResponseUrl is deprecated, instantiate "
-            "web_poet.page_inputs.url.ResponseUrl instead."
-        ),
-    ):
-        ResponseUrl("https://example.com")
-
-
 def test_request_fingerprint() -> None:
     req1 = HttpRequest(url="http://toscrape.com/1")
     req2 = HttpRequest(url="http://toscrape.com/1")

@@ -14,7 +14,7 @@ from url_matcher import Patterns, URLMatcher
 
 from web_poet.page_inputs.url import _Url
 from web_poet.pages import ItemPage, get_item_cls
-from web_poet.utils import _create_deprecated_class, as_list, str_to_pattern
+from web_poet.utils import as_list, str_to_pattern
 
 Strings = Union[str, Iterable[str]]
 
@@ -183,23 +183,10 @@ class RulesRegistry:
     def _format_list(cls, objects: Iterable) -> str:
         return "\n".join(repr(rule) for rule in objects)
 
-    @classmethod
-    def from_override_rules(
-        cls: type[RulesRegistryTV], rules: list[ApplyRule]
-    ) -> RulesRegistryTV:
-        """Deprecated. Use ``RulesRegistry(rules=...)`` instead."""
-        msg = (
-            "The 'from_override_rules' method is deprecated. "
-            "Use 'RulesRegistry(rules=...)' instead."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return cls(rules=rules)
-
     def handle_urls(
         self,
         include: Strings,
         *,
-        overrides: type[ItemPage] | None = None,
         instead_of: type[ItemPage] | None = None,
         to_return: type | None = None,
         exclude: Strings | None = None,
@@ -241,14 +228,6 @@ class RulesRegistry:
         """
 
         def wrapper(cls):
-            if overrides is not None:
-                msg = (
-                    "The 'overrides' parameter in @handle_urls is deprecated. "
-                    "Use the 'instead_of' parameter instead. If both 'instead_of' "
-                    "and 'overrides' are provided, the latter is ignored."
-                )
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
             rule = ApplyRule(
                 for_patterns=Patterns(
                     include=as_list(include),
@@ -256,7 +235,7 @@ class RulesRegistry:
                     priority=priority,
                 ),
                 use=cls,
-                instead_of=instead_of or overrides,
+                instead_of=instead_of,
                 to_return=to_return or get_item_cls(cls),
                 meta=kwargs,
             )
@@ -276,12 +255,6 @@ class RulesRegistry:
             ``@handle_urls`` decorators from external Page Objects.
         """
         return list(self._rules.values())
-
-    def get_overrides(self) -> list[ApplyRule]:
-        """Deprecated, use :meth:`~.RulesRegistry.get_rules` instead."""
-        msg = "The 'get_overrides' method is deprecated. Use 'get_rules' instead."
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self.get_rules()
 
     def search(self, **kwargs) -> list[ApplyRule]:
         """Return any :class:`ApplyRule` from the registry that matches with all
@@ -332,12 +305,6 @@ class RulesRegistry:
             return attribs == tuple(kwargs.values())
 
         return [rule for rule in rules or self.get_rules() if finder(rule)]
-
-    def search_overrides(self, **kwargs) -> list[ApplyRule]:
-        """Deprecated, use :meth:`~.RulesRegistry.search` instead."""
-        msg = "The 'search_overrides' method is deprecated. Use 'search' instead."
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self.search(**kwargs)
 
     def _match_url_for_page_object(
         self, url: _Url | str, matcher: URLMatcher | None = None
@@ -469,9 +436,3 @@ def consume_modules(*modules: str) -> None:
         # Inspired by itertools recipe: https://docs.python.org/3/library/itertools.html
         # Using a deque() results in a tiny bit performance improvement that list().
         deque(gen, maxlen=0)
-
-
-OverrideRule = _create_deprecated_class("OverrideRule", ApplyRule, warn_once=False)
-PageObjectRegistry = _create_deprecated_class(
-    "PageObjectRegistry", RulesRegistry, warn_once=True
-)
