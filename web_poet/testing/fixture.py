@@ -158,14 +158,9 @@ class Fixture:
         return _format_json(self._get_adapter_cls()(item).asdict())
 
     @memoizemethod_noargs
-    def get_expected_output_bytes(self) -> bytes:
-        """Return the saved output as bytes."""
-        return self.output_path.read_bytes()
-
-    @memoizemethod_noargs
     def get_expected_output(self) -> dict:
         """Return the saved output."""
-        return json.loads(self.get_expected_output_bytes())
+        return json.loads(self.output_path.read_bytes())
 
     @memoizemethod_noargs
     def get_expected_exception(self) -> Exception:
@@ -207,7 +202,7 @@ class Fixture:
     def assert_full_item_correct(self):
         """Get the output and assert that it matches the expected output."""
         output = _format_json(self.get_output())
-        expected_output = self.get_expected_output_bytes()
+        expected_output = self.output_path.read_text()
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 
@@ -216,8 +211,8 @@ class Fixture:
         actual_item = self.get_output()
         if name not in actual_item:
             raise FieldMissing(name)
-        expected_field = _format_json(self.get_expected_output()[name])
-        actual_field = _format_json(actual_item[name])
+        expected_field = json.loads(_format_json(self.get_expected_output()[name]))
+        actual_field = json.loads(_format_json(actual_item[name]))
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
 

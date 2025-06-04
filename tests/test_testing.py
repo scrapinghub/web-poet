@@ -214,11 +214,19 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
         page_inputs=[book_list_html_response],
         expected_output={"foo": "not bar"},
     )
-    result = pytester.runpytest("--web-poet-test-per-item")
+    result = pytester.runpytest("--web-poet-test-per-item", "-vv")
     result.assert_outcomes(passed=0, failed=1)
 
-    result.stdout.fnmatch_lines("*{'foo': 'bar'} != {'foo': 'not bar'}*")
-    result.stdout.fnmatch_lines("*The output doesn't match*")
+    result.stdout.fnmatch_lines(
+        "*The output doesn't match.\n"
+        '\'{\\n  "foo": "bar"\\n}\' == \'{\\n  "foo": "not bar"\\n}\'\n'
+        "\n"
+        "  {\n"
+        '-   "foo": "not bar"\n'
+        "?           ----\n"
+        '+   "foo": "bar"\n'
+        "  }*"
+    )
 
 
 @attrs.define(kw_only=True)
