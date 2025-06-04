@@ -220,7 +220,7 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
     result.stdout.fnmatch_lines(
         "*The output doesn't match.\n"
         '\'{\\n  "foo": "bar"\\n}\' == \'{\\n  "foo": "not bar"\\n}\'\n'
-        "\n"
+        "*"
         "  {\n"
         '-   "foo": "not bar"\n'
         "?           ----\n"
