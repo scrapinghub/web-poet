@@ -18,6 +18,7 @@ from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.annotated import AnnotatedInstance
 from web_poet.exceptions import HttpRequestError, HttpResponseError, Retry, UseFallback
 from web_poet.page_inputs.client import _SavedResponseData
+from web_poet.page_inputs.url import RequestUrl
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
@@ -558,3 +559,30 @@ def test_annotated(pytester, book_list_html_response) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=3)
+
+
+def test_request_url_output_serialization(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": RequestUrl("https://books.toscrape.com/")}
+    item_json = {"foo": "https://books.toscrape.com/"}
+
+    def _assert_fixture_files(
+        directory: Path, expected_meta: dict | None = None
+    ) -> None:
+        input_dir = directory / INPUT_DIR_NAME
+        assert (input_dir / "HttpResponse-body.html").exists()
+        assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
+            book_list_html_response.body
+        )
+        assert (input_dir / "HttpResponse-info.json").exists()
+        assert (directory / OUTPUT_FILE_NAME).exists()
+        assert json.loads((directory / OUTPUT_FILE_NAME).read_bytes()) == item_json
+        if expected_meta:
+            assert (
+                json.loads((directory / META_FILE_NAME).read_bytes()) == expected_meta
+            )
+        else:
+            assert not (directory / META_FILE_NAME).exists()
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    _assert_fixture_files(base_dir / "test-1")
