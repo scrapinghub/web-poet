@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import pytest
 
@@ -33,34 +33,58 @@ class _PathCompatMixin:
 
 
 class FixturesTestFile(pytest.File, _PathCompatMixin):
-    """Represents a directory containing test subdirectories for one Page Object."""
+    """Represents the ``test.py`` file at the root of a fixtures dir."""
 
     @staticmethod
-    def sorted(items: list[WebPoetCollector]) -> list[WebPoetCollector]:
+    def sorted(items: list[PageDir]) -> list[PageDir]:
         """Sort the test list by the test name."""
         return sorted(items, key=operator.attrgetter("name"))
 
     def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
-        result: list[WebPoetCollector] = []
-        path = self._path
-        for page_path in path.iterdir():
+        result: list[PageDir] = []
+        for page_path in self._path.parent.iterdir():
             if not page_path.is_dir():
                 continue
-            for testcase_path in page_path.iterdir():
-                if not testcase_path.is_dir():
-                    continue
-                item: WebPoetCollector = _get_collector(
-                    self,
-                    name=testcase_path.name,
-                    path=testcase_path,
-                )
-                if item.fixture.is_valid():
-                    result.append(item)
+            item: PageDir = _get_section(
+                PageDir,
+                self,
+                name=page_path.name,
+                path=page_path,
+            )
+            result.append(item)
         return self.sorted(result)
 
 
-class WebPoetCollector(pytest.Collector, _PathCompatMixin):
-    """Represents a directory containing one test."""
+class PageDir(pytest.Collector, _PathCompatMixin):
+    """Represents a directory containing test subdirectories for one Page Object."""
+
+    def __init__(self, name: str, parent=None, **kwargs) -> None:
+        super().__init__(name, parent, **kwargs)
+        self.fixture = Fixture(self._path)
+
+    @staticmethod
+    def sorted(items: list[TestCase]) -> list[TestCase]:
+        """Sort the test list by the test name."""
+        return sorted(items, key=operator.attrgetter("name"))
+
+    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
+        result: list[TestCase] = []
+        for testcase_path in self._path.iterdir():
+            if not testcase_path.is_dir():
+                continue
+            item: TestCase = _get_section(
+                TestCase,
+                self,
+                name=testcase_path.name,
+                path=testcase_path,
+            )
+            if item.fixture.is_valid():
+                result.append(item)
+        return self.sorted(result)
+
+
+class TestCase(pytest.Collector, _PathCompatMixin):
+    """Represents a directory containing one testcase."""
 
     def __init__(self, name: str, parent=None, **kwargs) -> None:
         super().__init__(name, parent, **kwargs)
@@ -246,11 +270,22 @@ def collect_file_hook(
         ):
             return None
         _found_fixtures_test_files.add(fixtures_test_file)
-        file: FixturesTestFile = _get_file(
-            parent,
-            path=fixtures_test_file,
-        )
-        return file
+        return _get_file(parent, path=fixtures_test_file)
+    if file_path.name == "test.py" and file_path not in _found_fixtures_test_files:
+        for page_dir in file_path.parent.iterdir():
+            if not page_dir.is_dir():
+                continue
+            for testcase_dir in page_dir.iterdir():
+                if not testcase_dir.is_dir():
+                    continue
+                for testcase_file in testcase_dir.iterdir():
+                    if testcase_file.name not in {
+                        OUTPUT_FILE_NAME,
+                        EXCEPTION_FILE_NAME,
+                    }:
+                        continue
+                    _found_fixtures_test_files.add(file_path)
+                    return _get_file(parent, path=file_path)
     return None
 
 
@@ -263,19 +298,14 @@ def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginMa
     )
 
 
+T = TypeVar("T", bound=pytest.Collector)
+
 if _new_pytest:
 
-    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
-        return WebPoetItem.from_parent(
-            parent,
-            name=name,
-            path=path,
-        )
-
-    def _get_collector(
-        parent: pytest.Collector, *, name: str, path: Path
-    ) -> WebPoetCollector:
-        return WebPoetCollector.from_parent(
+    def _get_section(
+        cls: type[T], parent: pytest.Collector, *, name: str, path: Path
+    ) -> T:
+        return cls.from_parent(
             parent,
             name=name,
             path=path,
@@ -295,19 +325,16 @@ if _new_pytest:
 else:
     import py.path
 
-    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
-        return WebPoetItem.from_parent(
+    def _get_section(
+        cls: type[T], parent: pytest.Collector, *, name: str, path: Path
+    ) -> T:
+        kwargs = {}
+        if cls is not WebPoetItem:
+            kwargs["fspath"] = py.path.local(path)  # noqa: PTH124
+        return cls.from_parent(
             parent,
             name=name,
-        )
-
-    def _get_collector(
-        parent: pytest.Collector, *, name: str, path: Path
-    ) -> WebPoetCollector:
-        return WebPoetCollector.from_parent(
-            parent,
-            name=name,
-            fspath=py.path.local(path),  # noqa: PTH124
+            **kwargs,
         )
 
     def _get_file(parent: pytest.Collector, *, path: Path) -> FixturesTestFile:
