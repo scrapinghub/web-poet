@@ -264,11 +264,10 @@ def collect_file_hook(
         if not fixture.is_valid():
             return None
         fixtures_test_file = page_dir.parent / "test.py"
-        if (
-            fixtures_test_file in _found_fixtures_test_files
-            or not fixtures_test_file.exists()
-        ):
+        if fixtures_test_file in _found_fixtures_test_files:
             return None
+        if not fixtures_test_file.exists():
+            fixtures_test_file.write_text("")
         _found_fixtures_test_files.add(fixtures_test_file)
         return _get_file(parent, path=fixtures_test_file)
     if file_path.name == "test.py" and file_path not in _found_fixtures_test_files:
