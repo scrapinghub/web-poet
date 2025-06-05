@@ -32,7 +32,7 @@ class _PathCompatMixin:
         return self.path if _new_pytest else Path(self.fspath)
 
 
-class WebPoetFile(pytest.File, _PathCompatMixin):
+class FixturesTestFile(pytest.File, _PathCompatMixin):
     """Represents a directory containing test subdirectories for one Page Object."""
 
     @staticmethod
@@ -43,12 +43,16 @@ class WebPoetFile(pytest.File, _PathCompatMixin):
     def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
         result: list[WebPoetCollector] = []
         path = self._path
-        for entry in path.iterdir():
-            if entry.is_dir():
+        for page_path in path.iterdir():
+            if not page_path.is_dir():
+                continue
+            for testcase_path in page_path.iterdir():
+                if not testcase_path.is_dir():
+                    continue
                 item: WebPoetCollector = _get_collector(
                     self,
-                    name=entry.name,
-                    path=entry,
+                    name=testcase_path.name,
+                    path=testcase_path,
                 )
                 if item.fixture.is_valid():
                     result.append(item)
@@ -223,7 +227,7 @@ class WebPoetFieldItem(_WebPoetItem):
         return super().repr_failure(excinfo, style)
 
 
-_found_type_dirs: set[Path] = set()
+_found_fixtures_test_files: set[Path] = set()
 
 
 def collect_file_hook(
@@ -231,16 +235,20 @@ def collect_file_hook(
 ) -> pytest.Collector | None:
     if file_path.name in {OUTPUT_FILE_NAME, EXCEPTION_FILE_NAME}:
         testcase_dir = file_path.parent
-        type_dir = testcase_dir.parent
+        page_dir = testcase_dir.parent
         fixture = Fixture(testcase_dir)
         if not fixture.is_valid():
             return None
-        if type_dir in _found_type_dirs:
+        fixtures_test_file = page_dir.parent / "test.py"
+        if (
+            fixtures_test_file in _found_fixtures_test_files
+            or not fixtures_test_file.exists()
+        ):
             return None
-        _found_type_dirs.add(type_dir)
-        file: WebPoetFile = _get_file(
+        _found_fixtures_test_files.add(fixtures_test_file)
+        file: FixturesTestFile = _get_file(
             parent,
-            path=type_dir,
+            path=fixtures_test_file,
         )
         return file
     return None
@@ -273,8 +281,8 @@ if _new_pytest:
             path=path,
         )
 
-    def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
-        return WebPoetFile.from_parent(
+    def _get_file(parent: pytest.Collector, *, path: Path) -> FixturesTestFile:
+        return FixturesTestFile.from_parent(
             parent,
             path=path,
         )
@@ -302,8 +310,8 @@ else:
             fspath=py.path.local(path),  # noqa: PTH124
         )
 
-    def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
-        return WebPoetFile.from_parent(
+    def _get_file(parent: pytest.Collector, *, path: Path) -> FixturesTestFile:
+        return FixturesTestFile.from_parent(
             parent,
             fspath=py.path.local(path),  # noqa: PTH124
         )
