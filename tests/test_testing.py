@@ -18,6 +18,7 @@ from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
 from web_poet.annotated import AnnotatedInstance
 from web_poet.exceptions import HttpRequestError, HttpResponseError, Retry, UseFallback
 from web_poet.page_inputs.client import _SavedResponseData
+from web_poet.page_inputs.url import RequestUrl
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
@@ -206,6 +207,22 @@ def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_pytest_plugin_compare_item_unformatted_output(
+    pytester, book_list_html_response
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar"},
+    )
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
+    fixture = Fixture(base_dir / "test-1")
+    fixture.output_path.write_text('{"foo":"bar"}')
+    result = pytester.runpytest("--web-poet-test-per-item")
+    result.assert_outcomes(passed=1)
+
+
 def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> None:
     _save_fixture(
         pytester,
@@ -213,11 +230,19 @@ def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> N
         page_inputs=[book_list_html_response],
         expected_output={"foo": "not bar"},
     )
-    result = pytester.runpytest("--web-poet-test-per-item")
+    result = pytester.runpytest("--web-poet-test-per-item", "-vv")
     result.assert_outcomes(passed=0, failed=1)
 
-    result.stdout.fnmatch_lines("*{'foo': 'bar'} != {'foo': 'not bar'}*")
-    result.stdout.fnmatch_lines("*The output doesn't match*")
+    result.stdout.fnmatch_lines(
+        "*The output doesn't match.\n"
+        '\'{\\n  "foo": "bar"\\n}\' == \'{\\n  "foo": "not bar"\\n}\'\n'
+        "*"
+        "  {\n"
+        '-   "foo": "not bar"\n'
+        "?           ----\n"
+        '+   "foo": "bar"\n'
+        "  }*"
+    )
 
 
 @attrs.define(kw_only=True)
@@ -558,3 +583,41 @@ def test_annotated(pytester, book_list_html_response) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=3)
+
+
+def test_request_url_output_serialization(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": RequestUrl("https://books.toscrape.com/")}
+    item_json = {"foo": "https://books.toscrape.com/"}
+
+    def _assert_fixture_files(
+        directory: Path, expected_meta: dict | None = None
+    ) -> None:
+        input_dir = directory / INPUT_DIR_NAME
+        assert (input_dir / "HttpResponse-body.html").exists()
+        assert (input_dir / "HttpResponse-body.html").read_bytes() == bytes(
+            book_list_html_response.body
+        )
+        assert (input_dir / "HttpResponse-info.json").exists()
+        assert (directory / OUTPUT_FILE_NAME).exists()
+        assert json.loads((directory / OUTPUT_FILE_NAME).read_bytes()) == item_json
+        if expected_meta:
+            assert (
+                json.loads((directory / META_FILE_NAME).read_bytes()) == expected_meta
+            )
+        else:
+            assert not (directory / META_FILE_NAME).exists()
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    _assert_fixture_files(base_dir / "test-1")
+
+
+def test_unserializable(book_list_html_response, tmp_path) -> None:
+    class Foo:
+        pass
+
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": Foo()}
+
+    with pytest.raises(TypeError):
+        Fixture.save(base_dir, inputs=[book_list_html_response], item=item)

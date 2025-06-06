@@ -201,19 +201,20 @@ class Fixture:
 
     def assert_full_item_correct(self):
         """Get the output and assert that it matches the expected output."""
-        output = self.get_output()
-        expected_output = self.get_expected_output()
+        output = _format_json(self.get_output())
+        expected_output = _format_json(self.get_expected_output())
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 
     def assert_field_correct(self, name: str):
         """Assert that a certain field in the output matches the expected value"""
-        expected_output = self.get_expected_output()[name]
-        if name not in self.get_output():
+        actual_item = self.get_output()
+        if name not in actual_item:
             raise FieldMissing(name)
-        output = self.get_output()[name]
-        if output != expected_output:
-            raise FieldValueIncorrect(output, expected_output)
+        expected_field = json.loads(_format_json(self.get_expected_output()[name]))
+        actual_field = json.loads(_format_json(actual_item[name]))
+        if actual_field != expected_field:
+            raise FieldValueIncorrect(actual_field, expected_field)
 
     def assert_no_extra_fields(self):
         """Assert that there are no extra fields in the output"""
