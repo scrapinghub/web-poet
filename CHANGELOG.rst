@@ -2,6 +2,37 @@
 Changelog
 =========
 
+0.19.0 (unreleased)
+-------------------
+
+* Removed some deprecated code:
+
+  * The ``web_poet.overrides`` module is removed.
+  * The ``ItemWebPage``, ``OverrideRule`` and ``PageObjectRegistry`` classes
+    are removed.
+  * The ``from_override_rules()`` class method and the ``get_overrides()`` and
+    ``search_overrides()`` methods of :class:`~web_poet.rules.RulesRegistry`
+    are removed.
+  * The ``overrides`` parameter of
+    :meth:`~web_poet.rules.RulesRegistry.handle_urls` is removed.
+  * The ``RequestUrl`` and ``ResponseUrl`` classes can no longer be imported
+    from ``web_poet.page_inputs.http``.
+
+* :ref:`Tests <web-poet-testing>` now support items with
+  :class:`~web_poet.page_inputs.url.RequestUrl` and
+  :class:`~web_poet.page_inputs.url.ResponseUrl` objects.
+
+* Improved the :ref:`pytest plugin <web-poet-testing-pytest>`:
+
+    * Pytest ≥ 7.0.0 is now required.
+    * Tests within a test case can now be run individually.
+    * Tests are now compatible with `vscode-python`_.
+
+    .. _vscode-python: https://github.com/microsoft/vscode-python
+
+* Fixed an error of :func:`~web_poet.pages.is_injectable` with
+  :class:`~types.GenericAlias` on Python ≤ 3.10.
+
 0.18.0 (2025-01-30)
 -------------------
 

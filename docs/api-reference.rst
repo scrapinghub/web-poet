@@ -119,11 +119,16 @@ Apply Rules
 
 See :ref:`rules` for more context about its use cases and some examples.
 
-.. autofunction:: web_poet.handle_urls
+.. data:: web_poet.default_registry
+
+    Default :class:`~rules.RulesRegistry`.
+
+.. function:: web_poet.handle_urls
+
+    :meth:`~rules.RulesRegistry.handle_urls` of the :data:`default_registry`.
 
 .. automodule:: web_poet.rules
    :members:
-   :exclude-members: handle_urls
 
 Fields
 ======
