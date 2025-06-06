@@ -202,7 +202,7 @@ class Fixture:
     def assert_full_item_correct(self):
         """Get the output and assert that it matches the expected output."""
         output = _format_json(self.get_output())
-        expected_output = self.output_path.read_text()
+        expected_output = _format_json(self.get_expected_output())
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 

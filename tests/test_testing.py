@@ -207,6 +207,22 @@ def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_pytest_plugin_compare_item_unformatted_output(
+    pytester, book_list_html_response
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar"},
+    )
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(MyItemPage)
+    fixture = Fixture(base_dir / "test-1")
+    fixture.output_path.write_text('{"foo":"bar"}')
+    result = pytester.runpytest("--web-poet-test-per-item")
+    result.assert_outcomes(passed=1)
+
+
 def test_pytest_plugin_compare_item_fail(pytester, book_list_html_response) -> None:
     _save_fixture(
         pytester,
