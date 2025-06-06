@@ -18,6 +18,10 @@ Changelog
   * The ``RequestUrl`` and ``ResponseUrl`` classes can no longer be imported
     from ``web_poet.page_inputs.http``.
 
+* :ref:`Tests <web-poet-testing>` now support items with
+  :class:`~web_poet.page_inputs.url.RequestUrl` and
+  :class:`~web_poet.page_inputs.url.ResponseUrl` objects.
+
 * Improved the :ref:`pytest plugin <web-poet-testing-pytest>`:
 
     * Pytest ≥ 7.0.0 is now required.
