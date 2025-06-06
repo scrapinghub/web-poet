@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import operator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -32,39 +31,15 @@ class _PathCompatMixin:
         return self.path if _new_pytest else Path(self.fspath)
 
 
-class WebPoetFile(pytest.File, _PathCompatMixin):
-    """Represents a directory containing test subdirectories for one Page Object."""
+class TestCase(pytest.File, _PathCompatMixin):
+    """Represents the ``output.json`` or ``exception.json`` file in a testcase
+    directory."""
 
-    @staticmethod
-    def sorted(items: list[WebPoetCollector]) -> list[WebPoetCollector]:
-        """Sort the test list by the test name."""
-        return sorted(items, key=operator.attrgetter("name"))
-
-    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
-        result: list[WebPoetCollector] = []
-        path = self._path
-        for entry in path.iterdir():
-            if entry.is_dir():
-                item: WebPoetCollector = _get_collector(
-                    self,
-                    name=entry.name,
-                    path=entry,
-                )
-                if item.fixture.is_valid():
-                    result.append(item)
-        return self.sorted(result)
-
-
-class WebPoetCollector(pytest.Collector, _PathCompatMixin):
-    """Represents a directory containing one test."""
-
-    def __init__(self, name: str, parent=None, **kwargs) -> None:
-        super().__init__(name, parent, **kwargs)
-        self.fixture = Fixture(self._path)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fixture = Fixture(self._path.parent)
 
     def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
-        """Return a list of children (items and collectors) for this
-        collection node."""
         if self.fixture.exception_path.exists():
             return [
                 WebPoetExpectedException.from_parent(
@@ -223,26 +198,13 @@ class WebPoetFieldItem(_WebPoetItem):
         return super().repr_failure(excinfo, style)
 
 
-_found_type_dirs: set[Path] = set()
-
-
 def collect_file_hook(
     file_path: Path, parent: pytest.Collector
 ) -> pytest.Collector | None:
     if file_path.name in {OUTPUT_FILE_NAME, EXCEPTION_FILE_NAME}:
-        testcase_dir = file_path.parent
-        type_dir = testcase_dir.parent
-        fixture = Fixture(testcase_dir)
-        if not fixture.is_valid():
-            return None
-        if type_dir in _found_type_dirs:
-            return None
-        _found_type_dirs.add(type_dir)
-        file: WebPoetFile = _get_file(
-            parent,
-            path=type_dir,
-        )
-        return file
+        fixture = Fixture(file_path.parent)
+        if fixture.is_valid():
+            return _get_testcase(parent, path=file_path)
     return None
 
 
@@ -257,24 +219,8 @@ def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginMa
 
 if _new_pytest:
 
-    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
-        return WebPoetItem.from_parent(
-            parent,
-            name=name,
-            path=path,
-        )
-
-    def _get_collector(
-        parent: pytest.Collector, *, name: str, path: Path
-    ) -> WebPoetCollector:
-        return WebPoetCollector.from_parent(
-            parent,
-            name=name,
-            path=path,
-        )
-
-    def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
-        return WebPoetFile.from_parent(
+    def _get_testcase(parent: pytest.Collector, *, path: Path) -> TestCase:
+        return TestCase.from_parent(
             parent,
             path=path,
         )
@@ -287,23 +233,8 @@ if _new_pytest:
 else:
     import py.path
 
-    def _get_item(parent: pytest.Collector, *, name: str, path: Path) -> WebPoetItem:
-        return WebPoetItem.from_parent(
-            parent,
-            name=name,
-        )
-
-    def _get_collector(
-        parent: pytest.Collector, *, name: str, path: Path
-    ) -> WebPoetCollector:
-        return WebPoetCollector.from_parent(
-            parent,
-            name=name,
-            fspath=py.path.local(path),  # noqa: PTH124
-        )
-
-    def _get_file(parent: pytest.Collector, *, path: Path) -> WebPoetFile:
-        return WebPoetFile.from_parent(
+    def _get_testcase(parent: pytest.Collector, *, path: Path) -> TestCase:
+        return TestCase.from_parent(
             parent,
             fspath=py.path.local(path),  # noqa: PTH124
         )
