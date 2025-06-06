@@ -610,3 +610,14 @@ def test_request_url_output_serialization(book_list_html_response, tmp_path) -> 
 
     Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
     _assert_fixture_files(base_dir / "test-1")
+
+
+def test_unserializable(book_list_html_response, tmp_path) -> None:
+    class Foo:
+        pass
+
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": Foo()}
+
+    with pytest.raises(TypeError):
+        Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
