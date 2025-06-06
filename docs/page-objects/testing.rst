@@ -14,7 +14,8 @@ tools for this:
 * dependency serialization into a Python object and into a set of files;
 * recreating Page Objects from the serialized dependencies;
 * a high-level function to save a test fixture;
-* a ``pytest`` plugin that discovers fixtures and runs tests for them.
+* a plugin for ``pytest 7.0.0`` and higher that discovers fixtures and runs
+  tests for them.
 
 .. _dep-serialization:
 
