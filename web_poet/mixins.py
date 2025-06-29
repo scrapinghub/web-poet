@@ -7,9 +7,10 @@ from urllib.parse import urljoin
 import parsel
 from w3lib.html import get_base_url
 
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
+
 if TYPE_CHECKING:
     from web_poet.page_inputs.http import HttpResponse
-    from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
 class SelectorShortcutsMixin:
@@ -74,8 +75,6 @@ class UrlShortcutsMixin:
 
         If *url* is relative, it is made absolute relative to the base URL of
         *self*."""
-        from web_poet.page_inputs.url import RequestUrl
-
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 

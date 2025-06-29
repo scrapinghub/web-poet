@@ -5,12 +5,16 @@ In general, users shouldn't import and use the contents of this module.
 
 from __future__ import annotations
 
-from typing import AnyStr, TypeVar, Union
+from typing import TYPE_CHECKING, AnyStr, Union, overload
 
 from multidict import CIMultiDict
 
+if TYPE_CHECKING:
+    # typing.Self requires Python 3.11
+    from typing_extensions import Self
+
+
 _AnyStrDict = dict[AnyStr, Union[AnyStr, list[AnyStr], tuple[AnyStr, ...]]]
-T_headers = TypeVar("T_headers", bound="_HttpHeaders")
 
 
 class _HttpHeaders(CIMultiDict):
@@ -21,7 +25,7 @@ class _HttpHeaders(CIMultiDict):
     """
 
     @classmethod
-    def from_name_value_pairs(cls: type[T_headers], arg: list[dict]) -> T_headers:
+    def from_name_value_pairs(cls, arg: list[dict]) -> Self:
         """An alternative constructor for instantiation using a ``List[Dict]``
         where the 'key' is the header name while the 'value' is the header value.
 
@@ -36,9 +40,7 @@ class _HttpHeaders(CIMultiDict):
         return cls([(pair["name"], pair["value"]) for pair in arg])
 
     @classmethod
-    def from_bytes_dict(
-        cls: type[T_headers], arg: _AnyStrDict, encoding: str = "utf-8"
-    ) -> T_headers:
+    def from_bytes_dict(cls, arg: _AnyStrDict, encoding: str = "utf-8") -> Self:
         """An alternative constructor for instantiation where the header-value
         pairs could be in raw bytes form.
 
@@ -59,7 +61,13 @@ class _HttpHeaders(CIMultiDict):
         <_HttpHeaders('Content-Encoding': 'gzip', 'Content-Encoding': 'br', 'Content-Type': 'text/html', 'content-length': '648')>
         """
 
-        def _norm(data):
+        @overload
+        def _norm(data: str | bytes) -> str: ...
+
+        @overload
+        def _norm(data: None) -> None: ...
+
+        def _norm(data: str | bytes | None) -> str | None:
             if isinstance(data, str) or data is None:
                 return data
             if isinstance(data, bytes):

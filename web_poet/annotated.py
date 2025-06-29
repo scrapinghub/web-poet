@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
 
 
 @dataclass
@@ -21,8 +21,6 @@ class AnnotatedInstance:
     result: Any
     metadata: tuple[Any, ...]
 
-    def get_annotated_cls(self):
+    def get_annotated_cls(self) -> Annotated[Any, ...]:
         """Returns a re-created :class:`typing.Annotated` type."""
-        from typing import Annotated
-
         return Annotated[(type(self.result), *self.metadata)]

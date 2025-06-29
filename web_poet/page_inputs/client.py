@@ -4,7 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Callable, Union, cast
+from typing import TYPE_CHECKING, Union, cast
 
 from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
@@ -15,7 +15,7 @@ from web_poet.page_inputs.http import (
     HttpResponse,
     request_fingerprint,
 )
-from web_poet.requests import _perform_request
+from web_poet.requests import RequestDownloaderT, _perform_request
 from web_poet.utils import as_list
 
 if TYPE_CHECKING:
@@ -63,7 +63,7 @@ class HttpClient:
 
     def __init__(
         self,
-        request_downloader: Callable | None = None,
+        request_downloader: RequestDownloaderT | None = None,
         *,
         save_responses: bool = False,
         return_only_saved_responses: bool = False,
@@ -265,14 +265,14 @@ class HttpClient:
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )
-        return cast(list[Union[HttpResponse, HttpResponseError]], responses)
+        return cast("list[Union[HttpResponse, HttpResponseError]]", responses)
 
     def get_saved_responses(self) -> Iterable[_SavedResponseData]:
         """Return saved requests and responses."""
         return self._saved_responses.values()
 
 
-def _http_status_name(status: int):
+def _http_status_name(status: int) -> str:
     """
     >>> _http_status_name(200)
     'OK'

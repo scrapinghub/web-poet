@@ -19,6 +19,7 @@ from web_poet.page_inputs import (
     Stats,
 )
 from web_poet.page_inputs.http import request_fingerprint
+from web_poet.page_inputs.stats import DummyStatCollector
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
@@ -620,6 +621,7 @@ def test_stats() -> None:
     stats.inc("b", 5)
     stats.inc("c")
 
+    assert isinstance(stats._stats, DummyStatCollector)
     assert stats._stats._stats == {"a": "1", "b": 8, "c": 1}
 
 

@@ -106,7 +106,9 @@ class Extractor(Returns[ItemT], FieldsMixin):
         value = self._skip_nonitem_fields
         return False if value is _NOT_SET else bool(value)
 
-    def __init_subclass__(cls, skip_nonitem_fields=_NOT_SET, **kwargs):
+    def __init_subclass__(
+        cls, skip_nonitem_fields: Any = _NOT_SET, **kwargs: Any
+    ) -> None:
         super().__init_subclass__(**kwargs)
         if skip_nonitem_fields is _NOT_SET:
             # This is a workaround for attrs issue.
@@ -127,7 +129,7 @@ class ItemPage(Extractor[ItemT], Injectable):
     """Base class for page objects."""
 
     @cached_method
-    def _validate_input(self) -> None:
+    def _validate_input(self) -> Any:
         """Run self.validate_input if defined."""
         if not hasattr(self, "validate_input"):
             return None
@@ -139,7 +141,7 @@ class ItemPage(Extractor[ItemT], Injectable):
                 return None
 
         self.__validating_input: bool = True
-        validation_item = self.validate_input()  # type: ignore[attr-defined]
+        validation_item = self.validate_input()
         self.__validating_input = False
         return validation_item
 

@@ -60,8 +60,8 @@ def test_is_injectable() -> None:
                 "foo": "bar",
             }
 
-    from collections.abc import Set as CollectionsSet  # noqa: PYI025
-    from typing import Set as TypingSet  # noqa: UP035
+    from collections.abc import Set as CollectionsSet  # noqa: PYI025,PLC0415
+    from typing import Set as TypingSet  # noqa: UP035,PLC0415
 
     assert is_injectable(None) is False
     assert is_injectable(type(None)) is False

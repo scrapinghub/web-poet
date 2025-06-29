@@ -8,7 +8,7 @@ from __future__ import annotations
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Callable, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 import attrs
 from itemadapter import ItemAdapter
@@ -37,14 +37,16 @@ class FieldInfo:
 class FieldsMixin:
     """A mixin which is required for a class to support fields"""
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         # To support fields, we must ensure that fields dict is not shared
         # between subclasses, i.e. a decorator in a subclass doesn't affect
         # the base class. This is done by making decorator write to a
         # temporary location, and then merging it all on subclass creation.
-        this_class_fields = getattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-        base_fields = {}
+        this_class_fields: dict[str, FieldInfo] = getattr(
+            cls, _FIELDS_INFO_ATTRIBUTE_WRITE, {}
+        )
+        base_fields: dict[str, FieldInfo] = {}
         for base_class in cls.__bases__:
             fields = getattr(base_class, _FIELDS_INFO_ATTRIBUTE_READ, {})
             base_fields.update(fields)
@@ -88,7 +90,7 @@ def field(
             self.original_method = method
             self.name: str | None = None
 
-        def __set_name__(self, owner, name):
+        def __set_name__(self, owner, name: str) -> None:
             self.name = name
             if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
                 setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
@@ -108,6 +110,7 @@ def field(
                 if out is not None:
                     processor_functions = out
                 elif hasattr(owner, "Processors"):
+                    assert self.name is not None
                     processor_functions = getattr(owner.Processors, self.name, [])
                 else:
                     processor_functions = []
@@ -123,21 +126,21 @@ def field(
             return method(instance)
 
         @staticmethod
-        def _get_processed_method(page_cls, key):
+        def _get_processed_method(page_cls, key: int):
             return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
 
         @staticmethod
-        def _set_processed_method(page_cls, key, method):
+        def _set_processed_method(page_cls, key: int, method) -> None:
             getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
 
         @staticmethod
-        def _process(value, page, processors):
+        def _process(value: Any, page, processors: list[tuple[Callable, bool]]) -> Any:
             for processor, takes_page in processors:
                 value = processor(value, page=page) if takes_page else processor(value)
             return value
 
         @staticmethod
-        def _processed(method, processors):
+        def _processed(method, processors: list[tuple[Callable, bool]]):
             """Returns a wrapper for method that calls processors on its result"""
             if inspect.iscoroutinefunction(method):
 
@@ -162,7 +165,7 @@ def field(
     if method is not None:
         # @field syntax
         res = _field(method)
-        update_wrapper(cast(Callable, res), method)
+        update_wrapper(cast("Callable", res), method)
         return res
     # @field(...) syntax
     return _field

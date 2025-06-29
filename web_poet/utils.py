@@ -15,7 +15,7 @@ from async_lru import alru_cache
 from url_matcher import Patterns
 
 
-def callable_has_parameter(obj, name):
+def callable_has_parameter(obj: Callable[..., Any], name: str) -> bool:
     try:
         sig = inspect.signature(obj)
     except ValueError:  # built-in, e.g. int
@@ -44,15 +44,15 @@ def _clspath(cls: type, forced: str | None = None) -> str:
 
 
 def _create_deprecated_class(
-    name,
-    new_class,
-    clsdict=None,
-    warn_once=True,
-    old_class_path=None,
-    new_class_path=None,
-    subclass_warn_message="{cls} inherits from deprecated class {old}, please inherit from {new}.",
-    instance_warn_message="{cls} is deprecated, instantiate {new} instead.",
-):
+    name: str,
+    new_class: type,
+    clsdict: dict[str, Any] | None = None,
+    warn_once: bool = True,
+    old_class_path: str | None = None,
+    new_class_path: str | None = None,
+    subclass_warn_message: str = "{cls} inherits from deprecated class {old}, please inherit from {new}.",
+    instance_warn_message: str = "{cls} is deprecated, instantiate {new} instead.",
+) -> type:
     """
     Return a "deprecated" class that causes its subclasses to issue a warning.
     Subclasses of ``new_class`` are considered subclasses of this class.
@@ -72,17 +72,19 @@ def _create_deprecated_class(
     OldName.
     """
 
-    class DeprecatedClass(new_class.__class__):
+    class DeprecatedClass(new_class.__class__):  # type: ignore[misc, name-defined]
         deprecated_class = None
         warned_on_subclass = False
 
-        def __new__(metacls, name, bases, clsdict_):
+        def __new__(
+            metacls, name: str, bases: tuple[type, ...], clsdict_: dict[str, Any]
+        ) -> type:
             cls = super().__new__(metacls, name, bases, clsdict_)
             if metacls.deprecated_class is None:
                 metacls.deprecated_class = cls
             return cls
 
-        def __init__(cls, name, bases, clsdict_):
+        def __init__(cls, name: str, bases: tuple[type, ...], clsdict_: dict[str, Any]):
             meta = cls.__class__
             old = meta.deprecated_class
             if old in bases and not (warn_once and meta.warned_on_subclass):
@@ -100,10 +102,10 @@ def _create_deprecated_class(
         # see https://www.python.org/dev/peps/pep-3119/#overloading-isinstance-and-issubclass
         # and https://docs.python.org/reference/datamodel.html#customizing-instance-and-subclass-checks
         # for implementation details
-        def __instancecheck__(cls, inst):
+        def __instancecheck__(cls, inst: Any) -> bool:
             return any(cls.__subclasscheck__(c) for c in (type(inst), inst.__class__))
 
-        def __subclasscheck__(cls, sub):
+        def __subclasscheck__(cls, sub: type) -> bool:
             if cls is not DeprecatedClass.deprecated_class:
                 # we should do the magic only if second `issubclass` argument
                 # is the deprecated class itself - subclasses of the
@@ -117,7 +119,7 @@ def _create_deprecated_class(
             mro = getattr(sub, "__mro__", ())
             return any(c in {cls, new_class} for c in mro)
 
-        def __call__(cls, *args, **kwargs):
+        def __call__(cls, *args: Any, **kwargs: Any) -> Any:
             old = DeprecatedClass.deprecated_class
             if cls is old:
                 msg = instance_warn_message.format(
@@ -235,7 +237,7 @@ if _async_lru_version.major < 2:
     _alru_cache = partial(alru_cache, cache_exceptions=False)
 
 
-def as_list(value: Any | None) -> list[Any]:
+def as_list(value: Any) -> list[Any]:
     """Normalizes the value input as a list.
 
     >>> as_list(None)
