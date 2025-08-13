@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.19.1 (unreleased)
+0.19.1 (2025-08-13)
 -------------------
 
 Improved type annotations.
