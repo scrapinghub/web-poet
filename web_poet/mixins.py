@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
+from web_poet.page_inputs.http import HttpResponse
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
-
-if TYPE_CHECKING:
-    from web_poet.page_inputs.http import HttpResponse
 
 
 class SelectorShortcutsMixin:
