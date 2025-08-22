@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 import parsel
 from w3lib.html import get_base_url
 
-from web_poet.page_inputs.http import HttpResponse
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
@@ -77,6 +76,9 @@ class UrlShortcutsMixin:
 
 
 class ResponseProtocol(Protocol):
+    # circular import, cannot move under `if TYPE_CHECKING` as the annotation is used at the run time
+    from web_poet.page_inputs.http import HttpResponse  # noqa: PLC0415
+
     response: HttpResponse
 
 
