@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.19.2 (unreleased)
+0.19.2 (2025-08-22)
 -------------------
 
 Fixed runtime resolving of type annotations for some types.
