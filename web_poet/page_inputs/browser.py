@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Optional
 
 import attrs
 
@@ -34,7 +34,7 @@ class BrowserResponse(SelectableMixin, UrlShortcutsMixin):
 
     url: ResponseUrl = attrs.field(converter=ResponseUrl)
     html: BrowserHtml = attrs.field(converter=BrowserHtml)
-    status: int | None = attrs.field(default=None, kw_only=True)
+    status: Optional[int] = attrs.field(default=None, kw_only=True)
 
     def _selector_input(self) -> str:
         return self.html

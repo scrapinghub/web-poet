@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib
 import importlib.util
 import pkgutil
@@ -7,7 +5,7 @@ import warnings
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -71,8 +69,8 @@ class ApplyRule:
 
     for_patterns: Patterns = attrs.field(converter=str_to_pattern)
     use: type[ItemPage] = attrs.field(kw_only=True)
-    instead_of: type[ItemPage] | None = attrs.field(default=None, kw_only=True)
-    to_return: type[Any] | None = attrs.field(default=None, kw_only=True)
+    instead_of: Optional[type[ItemPage]] = attrs.field(default=None, kw_only=True)
+    to_return: Optional[type[Any]] = attrs.field(default=None, kw_only=True)
     meta: dict[str, Any] = attrs.field(factory=dict, kw_only=True)
 
     def __hash__(self):
@@ -111,12 +109,12 @@ class RulesRegistry:
         rules to separate it from the ``default_registry``.
     """
 
-    def __init__(self, *, rules: Iterable[ApplyRule] | None = None):
+    def __init__(self, *, rules: Optional[Iterable[ApplyRule]] = None):
         self._rules: dict[int, ApplyRule] = {}
-        self._overrides_matchers: defaultdict[type[ItemPage] | None, URLMatcher] = (
+        self._overrides_matchers: defaultdict[Optional[type[ItemPage]], URLMatcher] = (
             defaultdict(URLMatcher)
         )
-        self._item_matchers: defaultdict[type | None, URLMatcher] = defaultdict(
+        self._item_matchers: defaultdict[Optional[type], URLMatcher] = defaultdict(
             URLMatcher
         )
 
@@ -185,9 +183,9 @@ class RulesRegistry:
         self,
         include: Strings,
         *,
-        instead_of: type[ItemPage] | None = None,
-        to_return: type | None = None,
-        exclude: Strings | None = None,
+        instead_of: Optional[type[ItemPage]] = None,
+        to_return: Optional[type] = None,
+        exclude: Optional[Strings] = None,
         priority: int = 500,
         **kwargs,
     ):
@@ -305,8 +303,8 @@ class RulesRegistry:
         return [rule for rule in rules or self.get_rules() if finder(rule)]
 
     def _match_url_for_page_object(
-        self, url: _Url | str, matcher: URLMatcher | None = None
-    ) -> type[ItemPage] | None:
+        self, url: Union[_Url, str], matcher: Optional[URLMatcher] = None
+    ) -> Optional[type[ItemPage]]:
         """Returns the page object to use based on the URL and URLMatcher."""
         if not url or matcher is None:
             return None
@@ -316,7 +314,9 @@ class RulesRegistry:
             return self._rules[rule_id].use
         return None
 
-    def overrides_for(self, url: _Url | str) -> Mapping[type[ItemPage], type[ItemPage]]:
+    def overrides_for(
+        self, url: Union[_Url, str]
+    ) -> Mapping[type[ItemPage], type[ItemPage]]:
         """Finds all of the page objects associated with the given URL and
         returns a Mapping where the 'key' represents the page object that is
         **overridden** by the page object in 'value'."""
@@ -329,7 +329,9 @@ class RulesRegistry:
                 result[replaced_page] = page
         return result
 
-    def page_cls_for_item(self, url: _Url | str, item_cls: type) -> type | None:
+    def page_cls_for_item(
+        self, url: Union[_Url, str], item_cls: type
+    ) -> Optional[type]:
         """Return the page object class associated with the given URL that's able
         to produce the given ``item_cls``."""
         if item_cls is None:
@@ -338,7 +340,7 @@ class RulesRegistry:
         return self._match_url_for_page_object(url, matcher)
 
     def top_rules_for_item(
-        self, url: _Url | str, item_cls: type
+        self, url: Union[_Url, str], item_cls: type
     ) -> Generator[ApplyRule]:
         """Iterates the top rules that apply for *url* and *item_cls*.
 
