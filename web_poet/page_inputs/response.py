@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Optional, Union
 
 import attrs
 
@@ -12,7 +12,7 @@ from web_poet.page_inputs.url import ResponseUrl
 class AnyResponse(SelectableMixin, UrlShortcutsMixin):
     """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse`."""
 
-    response: BrowserResponse | HttpResponse
+    response: Union[BrowserResponse, HttpResponse]
 
     @property
     def url(self) -> ResponseUrl:
@@ -27,7 +27,7 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
         return self.response.text
 
     @property
-    def status(self) -> int | None:
+    def status(self) -> Optional[int]:
         """The int status code of the HTTP response, if available."""
         return self.response.status
 

@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 import abc
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol, Union
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
-
-if TYPE_CHECKING:
-    from web_poet.page_inputs.http import HttpResponse
 
 
 class SelectorShortcutsMixin:
@@ -70,7 +65,7 @@ class UrlShortcutsMixin:
             self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
         return self._cached_base_url
 
-    def urljoin(self, url: str | RequestUrl | ResponseUrl) -> RequestUrl:
+    def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
         """Return *url* as an absolute URL.
 
         If *url* is relative, it is made absolute relative to the base URL of
@@ -79,7 +74,10 @@ class UrlShortcutsMixin:
 
 
 class ResponseProtocol(Protocol):
-    response: HttpResponse
+    # circular import; renamed to not confuse sphinx with multiple targets
+    from web_poet.page_inputs.http import HttpResponse as _HttpResponse  # noqa: PLC0415
+
+    response: _HttpResponse
 
 
 class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixin):
