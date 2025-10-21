@@ -1,9 +1,12 @@
+import json
 from typing import Annotated
 
 import attrs
 import pytest
 
 from web_poet import (
+    BrowserHtml,
+    BrowserResponse,
     HttpClient,
     HttpResponse,
     HttpResponseBody,
@@ -52,6 +55,35 @@ def test_serialization_leaf() -> None:
     assert HttpResponseBody(serialized_data["html"]) == leaf
     deserialized_data = deserialize_leaf(HttpResponseBody, serialized_data)
     assert leaf == deserialized_data
+
+
+def test_serialization_browser_html() -> None:
+    html_str = "<html><body>Hello</body></html>"
+    browser_html = BrowserHtml(html_str)
+
+    serialized_data = serialize_leaf(browser_html)
+    assert serialized_data == {"body.html": html_str.encode("utf8")}
+
+    deserialized = deserialize_leaf(BrowserHtml, serialized_data)
+    assert isinstance(deserialized, BrowserHtml)
+    assert deserialized == browser_html
+
+
+def test_serialization_browser_response() -> None:
+    html = BrowserHtml("<html><body>Hello</body></html>")
+    url = ResponseUrl("http://example.com")
+    response = BrowserResponse(url=url, html=html, status=200)
+
+    serialized_data = serialize_leaf(response)
+    assert serialized_data["body.html"] == html.encode("utf8")
+    info = json.loads(serialized_data["info.json"])
+    assert info == {"url": str(url), "status": 200}
+
+    deserialized = deserialize_leaf(BrowserResponse, serialized_data)
+    assert isinstance(deserialized, BrowserResponse)
+    assert str(deserialized.url) == str(response.url)
+    assert deserialized.html == response.html
+    assert deserialized.status == response.status
 
 
 def test_serialization_leaf_unsupported() -> None:

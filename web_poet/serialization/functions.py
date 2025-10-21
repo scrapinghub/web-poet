@@ -4,6 +4,8 @@ import json
 from typing import Any, cast
 
 from .. import (
+    BrowserHtml,
+    BrowserResponse,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -227,3 +229,43 @@ def _deserialize_AnnotatedInstance(
 
 
 register_serialization(_serialize_AnnotatedInstance, _deserialize_AnnotatedInstance)
+
+
+def _serialize_BrowserHtml(o: BrowserHtml) -> SerializedLeafData:
+    return {"body.html": o.encode("utf8")}
+
+
+def _deserialize_BrowserHtml(
+    cls: type[BrowserHtml], data: SerializedLeafData
+) -> BrowserHtml:
+    body: bytes = data.get("body.html") or b""
+    return cls(body.decode("utf8"))
+
+
+register_serialization(_serialize_BrowserHtml, _deserialize_BrowserHtml)
+
+
+def _serialize_BrowserResponse(o: BrowserResponse) -> SerializedLeafData:
+    info = {
+        "url": str(o.url),
+        "status": o.status,
+    }
+    return {
+        "body.html": o.html.encode("utf8"),
+        "info.json": _format_json(info).encode(),
+    }
+
+
+def _deserialize_BrowserResponse(
+    cls: type[BrowserResponse], data: SerializedLeafData
+) -> BrowserResponse:
+    html = BrowserHtml(data["body.html"].decode("utf8"))
+    info = json.loads(data["info.json"])
+    return cls(
+        url=info["url"],
+        html=html,
+        status=info["status"],
+    )
+
+
+register_serialization(_serialize_BrowserResponse, _deserialize_BrowserResponse)
