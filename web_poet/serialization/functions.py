@@ -4,6 +4,7 @@ import json
 from typing import Any, cast
 
 from .. import (
+    AnyResponse,
     BrowserHtml,
     BrowserResponse,
     HttpClient,
@@ -269,3 +270,23 @@ def _deserialize_BrowserResponse(
 
 
 register_serialization(_serialize_BrowserResponse, _deserialize_BrowserResponse)
+
+
+def _serialize_AnyResponse(o: AnyResponse) -> SerializedLeafData:
+    if isinstance(o.response, HttpResponse):
+        return _serialize_HttpResponse(o.response)
+    return _serialize_BrowserResponse(o.response)
+
+
+def _deserialize_AnyResponse(
+    cls: type[AnyResponse], data: SerializedLeafData
+) -> AnyResponse:
+    info = json.loads(data["info.json"])
+    if "_encoding" in info:
+        response = _deserialize_HttpResponse(HttpResponse, data)
+        return cls(response=response)
+    response = _deserialize_BrowserResponse(BrowserResponse, data)
+    return cls(response=response)
+
+
+register_serialization(_serialize_AnyResponse, _deserialize_AnyResponse)
