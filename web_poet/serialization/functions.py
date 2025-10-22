@@ -281,6 +281,7 @@ def _serialize_AnyResponse(o: AnyResponse) -> SerializedLeafData:
 def _deserialize_AnyResponse(
     cls: type[AnyResponse], data: SerializedLeafData
 ) -> AnyResponse:
+    response: BrowserResponse | HttpResponse
     info = json.loads(data["info.json"])
     if "_encoding" in info:
         response = _deserialize_HttpResponse(HttpResponse, data)
