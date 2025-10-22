@@ -4,6 +4,9 @@ import json
 from typing import Any, cast
 
 from .. import (
+    AnyResponse,
+    BrowserHtml,
+    BrowserResponse,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -63,6 +66,7 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
         "status": o.status,
         "headers": list(o.headers.items()),
         "_encoding": o._encoding,
+        "type": "HttpResponse",
     }
     return {
         "body.html": bytes(o.body),
@@ -227,3 +231,65 @@ def _deserialize_AnnotatedInstance(
 
 
 register_serialization(_serialize_AnnotatedInstance, _deserialize_AnnotatedInstance)
+
+
+def _serialize_BrowserHtml(o: BrowserHtml) -> SerializedLeafData:
+    return {"body.html": o.encode("utf8")}
+
+
+def _deserialize_BrowserHtml(
+    cls: type[BrowserHtml], data: SerializedLeafData
+) -> BrowserHtml:
+    body: bytes = data.get("body.html") or b""
+    return cls(body.decode("utf8"))
+
+
+register_serialization(_serialize_BrowserHtml, _deserialize_BrowserHtml)
+
+
+def _serialize_BrowserResponse(o: BrowserResponse) -> SerializedLeafData:
+    info = {
+        "url": str(o.url),
+        "status": o.status,
+        "type": "BrowserResponse",
+    }
+    return {
+        "body.html": o.html.encode("utf8"),
+        "info.json": _format_json(info).encode(),
+    }
+
+
+def _deserialize_BrowserResponse(
+    cls: type[BrowserResponse], data: SerializedLeafData
+) -> BrowserResponse:
+    html = BrowserHtml(data["body.html"].decode("utf8"))
+    info = json.loads(data["info.json"])
+    return cls(
+        url=info["url"],
+        html=html,
+        status=info["status"],
+    )
+
+
+register_serialization(_serialize_BrowserResponse, _deserialize_BrowserResponse)
+
+
+def _serialize_AnyResponse(o: AnyResponse) -> SerializedLeafData:
+    if isinstance(o.response, HttpResponse):
+        return _serialize_HttpResponse(o.response)
+    return _serialize_BrowserResponse(o.response)
+
+
+def _deserialize_AnyResponse(
+    cls: type[AnyResponse], data: SerializedLeafData
+) -> AnyResponse:
+    response: BrowserResponse | HttpResponse
+    info = json.loads(data["info.json"])
+    if info.get("type") == "BrowserResponse":
+        response = _deserialize_BrowserResponse(BrowserResponse, data)
+        return cls(response=response)
+    response = _deserialize_HttpResponse(HttpResponse, data)
+    return cls(response=response)
+
+
+register_serialization(_serialize_AnyResponse, _deserialize_AnyResponse)
