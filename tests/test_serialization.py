@@ -78,7 +78,7 @@ def test_serialization_browser_response() -> None:
     serialized_data = serialize_leaf(response)
     assert serialized_data["body.html"] == html.encode("utf8")
     info = json.loads(serialized_data["info.json"])
-    assert info == {"url": str(url), "status": 200}
+    assert info == {"url": str(url), "status": 200, "type": "BrowserResponse"}
 
     deserialized = deserialize_leaf(BrowserResponse, serialized_data)
     assert isinstance(deserialized, BrowserResponse)
@@ -115,7 +115,7 @@ def test_serialization_anyresponse_browser_response() -> None:
     serialized_data = serialize_leaf(any_response)
     assert serialized_data["body.html"] == html.encode("utf8")
     info = json.loads(serialized_data["info.json"])
-    assert info == {"url": str(url), "status": 200}
+    assert info == {"url": str(url), "status": 200, "type": "BrowserResponse"}
     assert "_encoding" not in info
 
     deserialized = deserialize_leaf(AnyResponse, serialized_data)
@@ -168,6 +168,7 @@ def test_serialization(book_list_html_response) -> None:
   "_encoding": "utf-8",
   "headers": [],
   "status": null,
+  "type": "HttpResponse",
   "url": "{url_str}"
 }}""".encode()
     assert serialized_deps == {

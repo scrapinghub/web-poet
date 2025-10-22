@@ -66,6 +66,7 @@ def _serialize_HttpResponse(o: HttpResponse) -> SerializedLeafData:
         "status": o.status,
         "headers": list(o.headers.items()),
         "_encoding": o._encoding,
+        "type": "HttpResponse",
     }
     return {
         "body.html": bytes(o.body),
@@ -250,6 +251,7 @@ def _serialize_BrowserResponse(o: BrowserResponse) -> SerializedLeafData:
     info = {
         "url": str(o.url),
         "status": o.status,
+        "type": "BrowserResponse",
     }
     return {
         "body.html": o.html.encode("utf8"),
@@ -283,10 +285,10 @@ def _deserialize_AnyResponse(
 ) -> AnyResponse:
     response: BrowserResponse | HttpResponse
     info = json.loads(data["info.json"])
-    if "_encoding" in info:
-        response = _deserialize_HttpResponse(HttpResponse, data)
+    if info["type"] == "BrowserResponse":
+        response = _deserialize_BrowserResponse(BrowserResponse, data)
         return cls(response=response)
-    response = _deserialize_BrowserResponse(BrowserResponse, data)
+    response = _deserialize_HttpResponse(HttpResponse, data)
     return cls(response=response)
 
 
