@@ -285,7 +285,7 @@ def _deserialize_AnyResponse(
 ) -> AnyResponse:
     response: BrowserResponse | HttpResponse
     info = json.loads(data["info.json"])
-    if info["type"] == "BrowserResponse":
+    if info.get("type") == "BrowserResponse":
         response = _deserialize_BrowserResponse(BrowserResponse, data)
         return cls(response=response)
     response = _deserialize_HttpResponse(HttpResponse, data)
