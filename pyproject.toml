@@ -24,7 +24,7 @@ exclude_also = [
 
 [tool.mypy]
 ignore_missing_imports = false
-implicit_reexport = true
+implicit_reexport = false
 
 [[tool.mypy.overrides]]
 module = "tests.*"
