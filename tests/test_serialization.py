@@ -1,9 +1,13 @@
+import json
 from typing import Annotated
 
 import attrs
 import pytest
 
 from web_poet import (
+    AnyResponse,
+    BrowserHtml,
+    BrowserResponse,
     HttpClient,
     HttpResponse,
     HttpResponseBody,
@@ -54,6 +58,74 @@ def test_serialization_leaf() -> None:
     assert leaf == deserialized_data
 
 
+def test_serialization_browser_html() -> None:
+    html_str = "<html><body>Hello</body></html>"
+    browser_html = BrowserHtml(html_str)
+
+    serialized_data = serialize_leaf(browser_html)
+    assert serialized_data == {"body.html": html_str.encode("utf8")}
+
+    deserialized = deserialize_leaf(BrowserHtml, serialized_data)
+    assert isinstance(deserialized, BrowserHtml)
+    assert deserialized == browser_html
+
+
+def test_serialization_browser_response() -> None:
+    html = BrowserHtml("<html><body>Hello</body></html>")
+    url = ResponseUrl("http://example.com")
+    response = BrowserResponse(url=url, html=html, status=200)
+
+    serialized_data = serialize_leaf(response)
+    assert serialized_data["body.html"] == html.encode("utf8")
+    info = json.loads(serialized_data["info.json"])
+    assert info == {"url": str(url), "status": 200, "type": "BrowserResponse"}
+
+    deserialized = deserialize_leaf(BrowserResponse, serialized_data)
+    assert isinstance(deserialized, BrowserResponse)
+    assert deserialized.html == response.html
+    assert deserialized.status == response.status
+    _assert_urls_equal(deserialized.url, response.url)
+
+
+def test_serialization_anyresponse_http_response(book_list_html_response) -> None:
+    any_response = AnyResponse(response=book_list_html_response)
+
+    serialized_data = serialize_leaf(any_response)
+    info = json.loads(serialized_data["info.json"])
+    assert "_encoding" in info
+    assert info["_encoding"] == book_list_html_response._encoding
+    assert serialized_data["body.html"] == bytes(book_list_html_response.body)
+
+    deserialized = deserialize_leaf(AnyResponse, serialized_data)
+    assert isinstance(deserialized, AnyResponse)
+    assert isinstance(deserialized.response, HttpResponse)
+    assert deserialized.response.body == book_list_html_response.body
+    assert deserialized.response.status == book_list_html_response.status
+    assert deserialized.response.headers == book_list_html_response.headers
+    assert deserialized.response._encoding == book_list_html_response._encoding
+    _assert_urls_equal(deserialized.response.url, book_list_html_response.url)
+
+
+def test_serialization_anyresponse_browser_response() -> None:
+    html = BrowserHtml("<html><body>Hello</body></html>")
+    url = ResponseUrl("http://example.com")
+    browser_response = BrowserResponse(url=url, html=html, status=200)
+    any_response = AnyResponse(response=browser_response)
+
+    serialized_data = serialize_leaf(any_response)
+    assert serialized_data["body.html"] == html.encode("utf8")
+    info = json.loads(serialized_data["info.json"])
+    assert info == {"url": str(url), "status": 200, "type": "BrowserResponse"}
+    assert "_encoding" not in info
+
+    deserialized = deserialize_leaf(AnyResponse, serialized_data)
+    assert isinstance(deserialized, AnyResponse)
+    assert isinstance(deserialized.response, BrowserResponse)
+    assert deserialized.response.html == browser_response.html
+    assert deserialized.response.status == browser_response.status
+    _assert_urls_equal(deserialized.response.url, browser_response.url)
+
+
 def test_serialization_leaf_unsupported() -> None:
     class A:
         pass
@@ -96,6 +168,7 @@ def test_serialization(book_list_html_response) -> None:
   "_encoding": "utf-8",
   "headers": [],
   "status": null,
+  "type": "HttpResponse",
   "url": "{url_str}"
 }}""".encode()
     assert serialized_deps == {
