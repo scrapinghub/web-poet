@@ -27,10 +27,6 @@ ignore_missing_imports = false
 implicit_reexport = false
 
 [[tool.mypy.overrides]]
-module = "zyte_common_items"
-implicit_reexport = true  # to be fixed
-
-[[tool.mypy.overrides]]
 module = "tests.*"
 allow_untyped_defs = true
 allow_incomplete_defs = true
