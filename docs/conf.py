@@ -27,7 +27,7 @@ author = "Zyte Group Ltd"
 # The short X.Y version
 version = ""
 # The full version, including alpha/beta/rc tags
-release = "0.19.2"
+release = "0.20.0"
 
 
 # -- General configuration ---------------------------------------------------
