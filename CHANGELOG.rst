@@ -2,17 +2,26 @@
 Changelog
 =========
 
+0.20.0 (unreleased)
+-------------------
+
+* Added support for Python 3.14.
+
+* Added support for :class:`~.BrowserResponse`, :class:`~.AnyResponse` and
+  :class:`~.BrowserHtml` dependencies to the :ref:`testing framework
+  <web-poet-testing>`.
+
+* Explicitly re-export public names.
+
 0.19.2 (2025-08-22)
 -------------------
 
-Fixed runtime resolving of type annotations for some types.
-
+* Fixed runtime resolving of type annotations for some types.
 
 0.19.1 (2025-08-13)
 -------------------
 
-Improved type annotations.
-
+* Improved type annotations.
 
 0.19.0 (2025-06-06)
 -------------------
