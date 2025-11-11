@@ -97,6 +97,8 @@ class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixi
     @property
     def html(self) -> str:
         """Shortcut to HTML Response's content."""
+        if hasattr(self.response, "html"):
+            return self.response.html
         return self.response.text
 
     def _selector_input(self) -> str:

@@ -5,7 +5,7 @@ from typing import Generic, Optional, TypeVar
 import attrs
 import pytest
 
-from web_poet import HttpResponse, PageParams, field
+from web_poet import BrowserResponse, HttpResponse, PageParams, field
 from web_poet.pages import (
     Injectable,
     ItemPage,
@@ -103,6 +103,47 @@ async def test_web_page_fields() -> None:
     item = await page.to_item()
     assert isinstance(item, Item)
     assert item == Item(name="name")
+
+
+def test_web_page_with_browser_response() -> None:
+    """Test that WebPage works with BrowserResponse.
+
+    BrowserResponse has .html instead of .text, so WebPage's ResponseShortcutsMixin
+    needs to handle both types of responses.
+    """
+
+    html = """
+    <html>
+        <head><title>Test Page</title></head>
+        <body>
+            <a href="/page1">Link 1</a>
+            <a href="/page2">Link 2</a>
+        </body>
+    </html>
+    """
+
+    browser_response = BrowserResponse(url="https://example.org", html=html, status=200)
+
+    class MyPage(WebPage[dict]):
+        def to_item(self) -> dict:  # type: ignore[override]
+            return {
+                "url": self.url,
+                "title": self.css("title::text").get("").strip(),
+                "links": self.css("a::attr(href)").getall(),
+            }
+
+    page = MyPage(response=browser_response)
+
+    # These should work without AttributeError
+    assert page.url == "https://example.org"
+    assert page.css("title::text").get() == "Test Page"
+    assert page.xpath("//a/@href").getall() == ["/page1", "/page2"]
+
+    # Test to_item works correctly
+    item = page.to_item()
+    assert item["url"] == "https://example.org"
+    assert item["title"] == "Test Page"
+    assert item["links"] == ["/page1", "/page2"]
 
 
 @pytest.mark.asyncio
