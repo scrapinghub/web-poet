@@ -8,6 +8,29 @@ from w3lib.html import get_base_url
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
+class _HttpResponseLike(Protocol):
+    """Protocol for HTTP response objects.
+
+    HTTP responses have a url and a text property.
+    """
+
+    url: Union[ResponseUrl, str]
+    text: str
+
+
+class _BrowserResponseLike(Protocol):
+    """Protocol for browser response objects.
+
+    Browser responses have a url and an html attribute.
+    """
+
+    url: Union[ResponseUrl, str]
+    html: str
+
+
+_ResponseLike = Union[_HttpResponseLike, _BrowserResponseLike]
+
+
 class SelectorShortcutsMixin:
     def xpath(self, query, **kwargs) -> parsel.SelectorList:
         """A shortcut to ``.selector.xpath()``."""
@@ -74,10 +97,13 @@ class UrlShortcutsMixin:
 
 
 class ResponseProtocol(Protocol):
-    # circular import; renamed to not confuse sphinx with multiple targets
-    from web_poet.page_inputs.http import HttpResponse as _HttpResponse  # noqa: PLC0415
+    """Protocol for objects that have a response attribute.
 
-    response: _HttpResponse
+    The response must be a response-like object with url and html/text attributes.
+    This works with both HttpResponse (has .text) and BrowserResponse (has .html).
+    """
+
+    response: _ResponseLike
 
 
 class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixin):

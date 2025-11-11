@@ -7,6 +7,7 @@ import pytest
 
 from web_poet import BrowserResponse, HttpResponse, PageParams, field
 from web_poet.pages import (
+    BrowserPage,
     Injectable,
     ItemPage,
     ItemT,
@@ -106,10 +107,10 @@ async def test_web_page_fields() -> None:
 
 
 def test_web_page_with_browser_response() -> None:
-    """Test that WebPage works with BrowserResponse.
+    """Test that BrowserPage works with BrowserResponse.
 
-    BrowserResponse has .html instead of .text, so WebPage's ResponseShortcutsMixin
-    needs to handle both types of responses.
+    BrowserResponse has .html instead of .text, so we use BrowserPage
+    which is designed for BrowserResponse.
     """
 
     html = """
@@ -124,7 +125,7 @@ def test_web_page_with_browser_response() -> None:
 
     browser_response = BrowserResponse(url="https://example.org", html=html, status=200)
 
-    class MyPage(WebPage[dict]):
+    class MyPage(BrowserPage[dict]):
         def to_item(self) -> dict:  # type: ignore[override]
             return {
                 "url": self.url,
