@@ -1,5 +1,5 @@
 import abc
-from typing import Protocol, Union
+from typing import Generic, Protocol, TypeVar, Union
 from urllib.parse import urljoin
 
 import parsel
@@ -29,6 +29,7 @@ class _BrowserResponseLike(Protocol):
 
 
 _ResponseLike = Union[_HttpResponseLike, _BrowserResponseLike]
+ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
 
 class SelectorShortcutsMixin:
@@ -96,22 +97,14 @@ class UrlShortcutsMixin:
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
-class ResponseProtocol(Protocol):
-    """Protocol for objects that have a response attribute.
-
-    The response must be a response-like object with url and html/text attributes.
-    This works with both HttpResponse (has .text) and BrowserResponse (has .html).
-    """
-
-    response: _ResponseLike
-
-
-class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixin):
+class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 
     It requires "response" attribute to be present.
     """
+
+    response: ResponseT
 
     _cached_base_url = None
 
@@ -124,9 +117,9 @@ class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixi
     def html(self) -> str:
         """Shortcut to HTML Response's content."""
         try:
-            return self.response.html
+            return self.response.html  # type: ignore[union-attr]
         except AttributeError:
-            return self.response.text
+            return self.response.text  # type: ignore[union-attr]
 
     def _selector_input(self) -> str:
         return self.html
