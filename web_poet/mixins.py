@@ -8,27 +8,13 @@ from w3lib.html import get_base_url
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
-class _HttpResponseLike(Protocol):
-    """Protocol for HTTP response objects.
-
-    HTTP responses have a url and a text property.
-    """
+class _ResponseLike(Protocol):
+    """Protocol for response objects."""
 
     url: Union[ResponseUrl, str]
     text: str
 
 
-class _BrowserResponseLike(Protocol):
-    """Protocol for browser response objects.
-
-    Browser responses have a url and an html attribute.
-    """
-
-    url: Union[ResponseUrl, str]
-    html: str
-
-
-_ResponseLike = Union[_HttpResponseLike, _BrowserResponseLike]
 ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
 
@@ -116,10 +102,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
     @property
     def html(self) -> str:
         """Shortcut to HTML Response's content."""
-        try:
-            return self.response.html  # type: ignore[union-attr]
-        except AttributeError:
-            return self.response.text  # type: ignore[union-attr]
+        return self.response.text
 
     def _selector_input(self) -> str:
         return self.html

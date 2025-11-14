@@ -22,8 +22,6 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
     @property
     def text(self) -> str:
         """Text or HTML contents of the response."""
-        if isinstance(self.response, BrowserResponse):
-            return self.response.html
         return self.response.text
 
     @property
