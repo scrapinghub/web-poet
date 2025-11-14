@@ -57,6 +57,13 @@ provides helper methods to use it:
 
 .. literalinclude:: code-examples/webpage.py
 
+Similarly, if your page object class needs
+:class:`~web_poet.page_inputs.browser.BrowserResponse` as input, use
+:class:`~web_poet.pages.BrowserPage`, which works the same way as
+:class:`~web_poet.pages.WebPage` but for browser-rendered pages:
+
+.. literalinclude:: code-examples/browserpage.py
+
 
 .. _output-item:
 

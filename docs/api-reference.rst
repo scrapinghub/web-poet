@@ -66,6 +66,13 @@ Pages
    :inherited-members:
    :no-special-members:
 
+.. autoclass:: BrowserPage
+   :show-inheritance:
+   :members:
+   :undoc-members:
+   :inherited-members:
+   :no-special-members:
+
 .. autoclass:: Returns
    :show-inheritance:
    :members:

@@ -1,11 +1,21 @@
 import abc
-from typing import Protocol, Union
+from typing import Generic, Protocol, TypeVar, Union
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
+
+
+class _ResponseLike(Protocol):
+    """Protocol for response objects."""
+
+    url: Union[ResponseUrl, str]
+    text: str
+
+
+ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
 
 class SelectorShortcutsMixin:
@@ -73,19 +83,14 @@ class UrlShortcutsMixin:
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
-class ResponseProtocol(Protocol):
-    # circular import; renamed to not confuse sphinx with multiple targets
-    from web_poet.page_inputs.http import HttpResponse as _HttpResponse  # noqa: PLC0415
-
-    response: _HttpResponse
-
-
-class ResponseShortcutsMixin(ResponseProtocol, SelectableMixin, UrlShortcutsMixin):
+class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMixin):
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 
     It requires "response" attribute to be present.
     """
+
+    response: ResponseT
 
     _cached_base_url = None
 

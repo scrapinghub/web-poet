@@ -10,7 +10,7 @@ import parsel
 
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
-from web_poet.page_inputs import HttpResponse
+from web_poet.page_inputs import BrowserResponse, HttpResponse
 from web_poet.utils import (
     CallableT,
     cached_method,
@@ -158,6 +158,15 @@ class WebPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """
 
     response: HttpResponse
+
+
+@attr.s(auto_attribs=True)
+class BrowserPage(ItemPage[ItemT], ResponseShortcutsMixin):
+    """Base Page Object which requires :class:`~.BrowserResponse`
+    and provides XPath / CSS shortcuts.
+    """
+
+    response: BrowserResponse
 
 
 @attr.s(auto_attribs=True)
