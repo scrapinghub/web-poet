@@ -125,9 +125,9 @@ Working with BrowserResponse
 =============================
 
 :class:`~.BrowserResponse` is similar to :class:`~.HttpResponse`, but for
-browser-rendered pages. It has an :attr:`~.BrowserResponse.html` attribute
-instead of a :attr:`~.HttpResponse.text` attribute, which contains the rendered
-HTML (as a :class:`str`) after JavaScript execution.
+browser-rendered pages. In addition to the :attr:`~.BrowserResponse.text`
+attribute, it has an :attr:`~.BrowserResponse.html` attribute containing
+the rendered HTML (as a :class:`str`) after JavaScript execution.
 
 Like :class:`~.HttpResponse`, it provides :meth:`css() <.BrowserResponse.css>`
 and :meth:`xpath() <.BrowserResponse.xpath>` methods to select content from
