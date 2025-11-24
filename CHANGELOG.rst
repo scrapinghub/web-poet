@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.21.0 (unreleased)
+0.21.0 (2025-11-24)
 -------------------
 
 * Added :class:`~web_poet.pages.BrowserPage` page object class to work with
