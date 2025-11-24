@@ -66,6 +66,11 @@ define as inputs for a page object class, including:
     status code and :class:`~web_poet.page_inputs.browser.BrowserHtml`
     of a rendered web page.
 
+    .. tip:: You can use :class:`~web_poet.pages.BrowserPage` instead of
+             :class:`~web_poet.pages.ItemPage` to have
+             :class:`~web_poet.page_inputs.browser.BrowserResponse` as input
+             and get convenient shortcuts for working with it.
+
 -   :class:`~web_poet.page_inputs.response.AnyResponse`, which either holds
     :class:`~web_poet.page_inputs.browser.BrowserResponse` or
     :class:`~web_poet.page_inputs.http.HttpResponse` as the ``.response``
@@ -80,6 +85,11 @@ Working with HttpResponse
 =========================
 
 :class:`~.HttpResponse` has many attributes and methods.
+
+.. tip:: You can use :class:`~web_poet.pages.WebPage` instead of
+         :class:`~web_poet.pages.ItemPage` to have
+         :class:`~web_poet.page_inputs.http.HttpResponse` as input and get
+         convenient shortcuts for working with it.
 
 To get the entire response body, you can use :attr:`~.HttpResponse.body` for
 the raw :class:`bytes`, :attr:`~.HttpResponse.text` for the :class:`str`
@@ -103,6 +113,30 @@ There are also methods to select content from responses: :meth:`jmespath()
 
     >>> response.jmespath("foo")
     [<Selector query='foo' data='bar'>]
+    >>> response.css("h1::text")
+    [<Selector query='descendant-or-self::h1/text()' data='Title'>]
+    >>> response.xpath("//h1/text()")
+    [<Selector query='//h1/text()' data='Title'>]
+
+
+.. _browserresponse:
+
+Working with BrowserResponse
+=============================
+
+:class:`~.BrowserResponse` is similar to :class:`~.HttpResponse`, but for
+browser-rendered pages. In addition to the :attr:`~.BrowserResponse.text`
+attribute, it has an :attr:`~.BrowserResponse.html` attribute containing
+the rendered HTML (as a :class:`str`) after JavaScript execution.
+
+Like :class:`~.HttpResponse`, it provides :meth:`css() <.BrowserResponse.css>`
+and :meth:`xpath() <.BrowserResponse.xpath>` methods to select content from
+the rendered page:
+
+.. code-block:: python
+
+    >>> response.html
+    '<html><head>...</head><body><h1>Title</h1>...</body></html>'
     >>> response.css("h1::text")
     [<Selector query='descendant-or-self::h1/text()' data='Title'>]
     >>> response.xpath("//h1/text()")

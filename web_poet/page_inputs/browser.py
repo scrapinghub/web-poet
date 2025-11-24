@@ -36,5 +36,13 @@ class BrowserResponse(SelectableMixin, UrlShortcutsMixin):
     html: BrowserHtml = attrs.field(converter=BrowserHtml)
     status: Optional[int] = attrs.field(default=None, kw_only=True)
 
+    @property
+    def text(self) -> str:
+        """HTML returned by the browser, identical to ``self.html``.
+
+        Provided for compatibility with :class:`~.HttpResponse`.
+        """
+        return str(self.html)
+
     def _selector_input(self) -> str:
         return self.html

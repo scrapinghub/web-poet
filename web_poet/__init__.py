@@ -16,6 +16,7 @@ from .page_inputs import (
     Stats,
 )
 from .pages import (
+    BrowserPage,
     Extractor,
     Injectable,
     ItemPage,
@@ -36,6 +37,7 @@ __all__ = [
     "AnyResponse",
     "ApplyRule",
     "BrowserHtml",
+    "BrowserPage",
     "BrowserResponse",
     "Extractor",
     "HttpClient",
