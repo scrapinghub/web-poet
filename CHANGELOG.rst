@@ -8,6 +8,9 @@ Changelog
 * Added :class:`~web_poet.pages.BrowserPage` page object class to work with
   :class:`~web_poet.page_inputs.browser.BrowserResponse`.
 
+* Added :attr:`BrowserResponse.text
+  <web_poet.page_inputs.browser.BrowserResponse.text>` attribute.
+
 0.20.0 (2025-10-28)
 -------------------
 
