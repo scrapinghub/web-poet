@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.21.0 (unreleased)
+-------------------
+
+* Added `BrowserPage` page object class to work with `BrowserResponse`
+
 0.20.0 (2025-10-28)
 -------------------
 
