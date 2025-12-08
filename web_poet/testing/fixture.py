@@ -207,13 +207,17 @@ class Fixture:
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 
-    def assert_field_correct(self, name: str) -> None:
+    def assert_field_correct(
+        self, name: str, user_props: list[tuple[str, object]] | None = None
+    ) -> None:
         """Assert that a certain field in the output matches the expected value"""
+        expected_field = json.loads(_format_json(self.get_expected_output()[name]))
+        self._append_user_prop(user_props, "expected_value", expected_field)
         actual_item = self.get_output()
         if name not in actual_item:
             raise FieldMissing(name)
-        expected_field = json.loads(_format_json(self.get_expected_output()[name]))
         actual_field = json.loads(_format_json(actual_item[name]))
+        self._append_user_prop(user_props, "actual_value", actual_field)
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
 
@@ -236,17 +240,32 @@ class Fixture:
         """Assert that to_item() can be run (doesn't raise an error)"""
         self.get_output()
 
-    def assert_toitem_exception(self) -> None:
+    def assert_toitem_exception(
+        self, user_props: list[tuple[str, object]] | None = None
+    ) -> None:
         """Assert that to_item() raises an exception of the expected type"""
+        expected_exception = self.get_expected_exception()
+        self._append_user_prop(
+            user_props, "expected_exception", _exception_to_dict(expected_exception)
+        )
         try:
             self.get_output()
         except Exception as ex:
-            received_type = type(ex)
-            expected_type = type(self.get_expected_exception())
-            if received_type != expected_type:
+            self._append_user_prop(
+                user_props, "actual_exception", _exception_to_dict(ex)
+            )
+            if type(ex) is not type(expected_exception):
                 raise WrongExceptionRaised from ex
         else:
             raise ExceptionNotRaised
+
+    @staticmethod
+    def _append_user_prop(
+        user_props: list[tuple[str, object]] | None, name: str, value: object
+    ) -> None:
+        """A replacement for the ``record_property`` fixture."""
+        if user_props is not None:
+            user_props.append((f"web_poet_{name}", json.dumps(value)))
 
     @classmethod
     def save(
