@@ -12,6 +12,7 @@ import pytest
 import time_machine
 from itemadapter import ItemAdapter
 from itemadapter.adapter import DictAdapter
+from parsel import Selector
 from zyte_common_items import Item, Metadata, Product
 
 from web_poet import HttpClient, HttpRequest, HttpResponse, WebPage, field
@@ -621,3 +622,79 @@ def test_unserializable(book_list_html_response, tmp_path) -> None:
 
     with pytest.raises(TypeError):
         Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+
+
+@pytest.mark.parametrize("expected", ["bar", "not bar"])
+def test_junitxml(
+    pytester: pytest.Pytester, book_list_html_response: HttpResponse, expected: str
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": expected},
+    )
+    report_name = "junit.xml"
+    result = pytester.runpytest(
+        f"--junitxml={report_name}", "-o", "junit_family=legacy"
+    )
+    if expected == "bar":
+        result.assert_outcomes(passed=3)
+    else:
+        result.assert_outcomes(failed=1, passed=2)
+    report_path = pytester.path / report_name
+    assert report_path.exists()
+    sel = Selector(report_path.read_text(encoding="utf-8"))
+    testcases = sel.xpath(
+        "//testcase[@classname='fixtures.tests.test_testing.MyItemPage.test-1.output.json' and @name='foo']"
+    )
+    assert len(testcases) == 1
+    testcase = testcases[0]
+    expected_node = testcase.xpath(
+        "properties/property[@name='web_poet_expected_value']"
+    )[0]
+    assert expected_node.xpath("@value").get() == f'"{expected}"'
+    actual_node = testcase.xpath("properties/property[@name='web_poet_actual_value']")[
+        0
+    ]
+    assert actual_node.xpath("@value").get() == '"bar"'
+
+
+@pytest.mark.parametrize("expected", [Retry, UseFallback])
+def test_junitxml_expected_exception(
+    pytester: pytest.Pytester,
+    book_list_html_response: HttpResponse,
+    expected: type[Exception],
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=RetryItemPage,
+        page_inputs=[book_list_html_response],
+        expected_exception=expected(),
+    )
+    report_name = "junit.xml"
+    result = pytester.runpytest(
+        f"--junitxml={report_name}", "-o", "junit_family=legacy"
+    )
+    if expected is Retry:
+        result.assert_outcomes(passed=1)
+    else:
+        result.assert_outcomes(failed=1)
+    report_path = pytester.path / report_name
+    assert report_path.exists()
+    sel = Selector(report_path.read_text(encoding="utf-8"))
+    testcases = sel.xpath(
+        "//testcase[@classname='fixtures.tests.test_testing.RetryItemPage.test-1.exception.json' and @name='TO_ITEM_RAISES']"
+    )
+    assert len(testcases) == 1
+    testcase = testcases[0]
+    expected_node = testcase.xpath(
+        "properties/property[@name='web_poet_expected_exception']"
+    )[0]
+    expected_data = json.loads(expected_node.xpath("@value").get())
+    assert expected_data == {"import_path": get_fq_class_name(expected), "msg": None}
+    actual_node = testcase.xpath(
+        "properties/property[@name='web_poet_actual_exception']"
+    )[0]
+    actual_data = json.loads(actual_node.xpath("@value").get())
+    assert actual_data == {"import_path": "web_poet.exceptions.core.Retry", "msg": None}
