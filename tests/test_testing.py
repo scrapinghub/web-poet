@@ -691,10 +691,14 @@ def test_junitxml_expected_exception(
     expected_node = testcase.xpath(
         "properties/property[@name='web_poet_expected_exception']"
     )[0]
-    expected_data = json.loads(expected_node.xpath("@value").get())
+    expected_json = expected_node.xpath("@value").get()
+    assert expected_json
+    expected_data = json.loads(expected_json)
     assert expected_data == {"import_path": get_fq_class_name(expected), "msg": None}
     actual_node = testcase.xpath(
         "properties/property[@name='web_poet_actual_exception']"
     )[0]
-    actual_data = json.loads(actual_node.xpath("@value").get())
+    actual_json = actual_node.xpath("@value").get()
+    assert actual_json
+    actual_data = json.loads(actual_json)
     assert actual_data == {"import_path": "web_poet.exceptions.core.Retry", "msg": None}
