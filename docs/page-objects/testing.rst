@@ -370,3 +370,24 @@ It works like :class:`itemadapter.ItemAdapter` but doesn't change behavior when
 
 .. _itemadapter: https://github.com/scrapy/itemadapter
 .. _the relevant itemadapter docs: https://github.com/scrapy/itemadapter/#multiple-adapter-classes
+
+.. _web-poet-testing-user-props:
+
+pytest user properties
+======================
+
+After a test run the following `pytest user properties`_ are available:
+
+* on per-field tests the ``expected_value`` and ``actual_value`` properties
+  contain JSON-encoded expected and actual field values
+* on expected exception tests the ``expected_exception`` and
+  ``actual_exception`` properties contain JSON-encoded dicts for expected and
+  actual exceptions, with the ``import_path`` field containing the import path
+  of the exception class and the ``msg`` field containing the first argument of
+  the exception instance.
+
+The main use case for this is generating a `JUnitXML report`_ and getting the
+values from the ``/testsuites/testsuite/testcase/properties/property`` nodes.
+
+.. _pytest user properties: https://docs.pytest.org/en/stable/reference/reference.html#pytest.Item.user_properties
+.. _JUnitXML report: https://docs.pytest.org/en/stable/how-to/output.html#creating-junitxml-format-files
