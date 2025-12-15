@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.22.0 (unreleased)
+0.22.0 (2025-12-15)
 -------------------
 
 * :ref:`Tests <web-poet-testing>` now put expected and actual values into
