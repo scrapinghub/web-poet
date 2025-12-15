@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.22.0 (unreleased)
+-------------------
+
+* :ref:`Tests <web-poet-testing>` now put expected and actual values into
+  :ref:`pytest user properties <web-poet-testing-user-props>`.
+
 0.21.0 (2025-11-24)
 -------------------
 
