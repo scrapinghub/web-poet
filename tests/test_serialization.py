@@ -30,7 +30,7 @@ from web_poet.serialization import (
     serialize,
     serialize_leaf,
 )
-from web_poet.serialization.utils import _format_json
+from web_poet.serialization.utils import _format_json, _load_json
 
 
 def _assert_pages_equal(p1, p2) -> None:
@@ -383,3 +383,10 @@ def test_annotation_metadata_root_structure() -> None:
     metadata_json = serialized[expected_key]["metadata.json"]
     expected = _format_json(list(metadata)).encode()
     assert metadata_json == expected
+
+
+def test_unknown_serialized_type():
+    metadata_json = [{"_type": "nonexistenttype", "_data": [1, 2, 3]}]
+    s = json.dumps(metadata_json).encode()
+    with pytest.raises(ValueError, match="Unknown _type"):
+        _load_json(s)

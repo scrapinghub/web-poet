@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import builtins
 import json
 from base64 import b64decode, b64encode
 from typing import Any, cast
@@ -41,6 +40,16 @@ def _format_json(data: Any) -> str:
     )
 
 
+_LIST_LIKE_TYPES = (tuple, set, frozenset)
+
+
+def _get_name_for_class_match(obj: Any, types: tuple[type, ...]) -> str:
+    for t in types:
+        if isinstance(obj, t):
+            return _get_name_for_class(t)
+    raise ValueError("No matching type found")
+
+
 def _prepare_for_json(o: Any) -> Any:
     if isinstance(o, (str, int, float, bool, type(None))):
         return o
@@ -48,17 +57,9 @@ def _prepare_for_json(o: Any) -> Any:
         return {k: _prepare_for_json(v) for k, v in o.items()}
     if isinstance(o, list):
         return [_prepare_for_json(x) for x in o]
-    if isinstance(o, (tuple, set, frozenset)):
-        return {
-            "_type": (
-                "tuple"
-                if isinstance(o, tuple)
-                else "set"
-                if isinstance(o, set)
-                else "frozenset"
-            ),
-            "_data": [_prepare_for_json(x) for x in o],
-        }
+    if isinstance(o, _LIST_LIKE_TYPES):
+        type_name = _get_name_for_class_match(o, _LIST_LIKE_TYPES)
+        return {"_type": type_name, "_data": [_prepare_for_json(x) for x in o]}
     if isinstance(o, bytes):
         return {
             "_type": "bytes",
@@ -81,7 +82,10 @@ def _json_object_hook(d: dict[str, Any]) -> Any:
     data = d["_data"]
     if type_name == "bytes":
         return b64decode(data)
-    return getattr(builtins, type_name)(data)
+    allowed = {_get_name_for_class(t): t for t in _LIST_LIKE_TYPES}
+    if type_name not in allowed:
+        raise ValueError(f"Unknown _type in JSON data: {type_name!r}")
+    return allowed[type_name](data)
 
 
 def _load_json(data: str | bytes) -> Any:
