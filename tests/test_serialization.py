@@ -30,6 +30,7 @@ from web_poet.serialization import (
     serialize,
     serialize_leaf,
 )
+from web_poet.serialization.utils import _format_json
 
 
 def _assert_pages_equal(p1, p2) -> None:
@@ -364,3 +365,21 @@ def test_non_json_annotations(metadata_item: Any) -> None:
     assert str(deserialized_instance.result) == str(result)
 
     assert metadata == deserialized_instance.metadata
+
+
+def test_annotation_metadata_root_structure() -> None:
+    """metadata.json must serialize the outer structure as a JSON list for
+    backward compatibility. Nested tuples should use the _type/_data format."""
+    metadata_item = (("a", "b"), 1)
+    metadata = (metadata_item,)
+    result = ResponseUrl("http://example.com")
+    instance = AnnotatedInstance(result, metadata)
+
+    serialized = serialize([instance])
+
+    expected_key = "AnnotatedInstance ResponseUrl"
+    assert expected_key in serialized
+
+    metadata_json = serialized[expected_key]["metadata.json"]
+    expected = _format_json(list(metadata)).encode()
+    assert metadata_json == expected

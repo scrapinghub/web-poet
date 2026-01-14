@@ -33,7 +33,11 @@ def _format_json(data: Any) -> str:
     """Produce a formatted JSON string with preset options."""
     data = _prepare_for_json(data)
     return json.dumps(
-        data, ensure_ascii=False, sort_keys=True, indent=2, cls=_CustomJSONEncoder
+        data,
+        ensure_ascii=False,
+        sort_keys=True,
+        indent=2,
+        cls=_CustomJSONEncoder,
     )
 
 
@@ -46,7 +50,13 @@ def _prepare_for_json(o: Any) -> Any:
         return [_prepare_for_json(x) for x in o]
     if isinstance(o, (tuple, set, frozenset)):
         return {
-            "_type": "tuple" if isinstance(o, tuple) else "set" if isinstance(o, set) else "frozenset",
+            "_type": (
+                "tuple"
+                if isinstance(o, tuple)
+                else "set"
+                if isinstance(o, set)
+                else "frozenset"
+            ),
             "_data": [_prepare_for_json(x) for x in o],
         }
     if isinstance(o, bytes):
