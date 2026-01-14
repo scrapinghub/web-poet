@@ -27,7 +27,7 @@ from .api import (
     register_serialization,
     serialize_leaf,
 )
-from .utils import _exception_from_dict, _exception_to_dict, _format_json
+from .utils import _exception_from_dict, _exception_to_dict, _format_json, _load_json
 
 
 def _serialize_HttpRequest(o: HttpRequest) -> SerializedLeafData:
@@ -48,7 +48,7 @@ def _deserialize_HttpRequest(
     cls: type[HttpRequest], data: SerializedLeafData
 ) -> HttpRequest:
     body = HttpRequestBody(data.get("body.txt", b""))
-    info = json.loads(data["info.json"])
+    info = _load_json(data["info.json"])
     return cls(
         body=body,
         url=info["url"],
@@ -78,7 +78,7 @@ def _deserialize_HttpResponse(
     cls: type[HttpResponse], data: SerializedLeafData
 ) -> HttpResponse:
     body = HttpResponseBody(data["body.html"])
-    info = json.loads(data["info.json"])
+    info = _load_json(data["info.json"])
     return cls(
         body=body,
         url=info["url"],
@@ -168,7 +168,7 @@ def _deserialize_HttpClient(
             response = None
         exception: HttpError | None
         if serialized_exception:
-            exc_data = json.loads(serialized_exception["json"])
+            exc_data = _load_json(serialized_exception["json"])
             exception = cast("HttpError", _exception_from_dict(exc_data))
         else:
             exception = None
@@ -187,7 +187,7 @@ def _serialize_PageParams(o: PageParams) -> SerializedLeafData:
 def _deserialize_PageParams(
     cls: type[PageParams], data: SerializedLeafData
 ) -> PageParams:
-    return cls(json.loads(data["json"]))
+    return cls(_load_json(data["json"]))
 
 
 register_serialization(_serialize_PageParams, _deserialize_PageParams)
@@ -218,7 +218,7 @@ def _serialize_AnnotatedInstance(o: AnnotatedInstance) -> SerializedLeafData:
 def _deserialize_AnnotatedInstance(
     cls: type[AnnotatedInstance], data: SerializedLeafData
 ) -> AnnotatedInstance:
-    metadata = json.loads(data["metadata.json"])
+    metadata = tuple(_load_json(data["metadata.json"]))
     result_type = load_class(data["result_type.txt"].decode())
     serialized_result = {}
     for k, v in data.items():
@@ -263,7 +263,7 @@ def _deserialize_BrowserResponse(
     cls: type[BrowserResponse], data: SerializedLeafData
 ) -> BrowserResponse:
     html = BrowserHtml(data["body.html"].decode("utf8"))
-    info = json.loads(data["info.json"])
+    info = _load_json(data["info.json"])
     return cls(
         url=info["url"],
         html=html,
@@ -284,7 +284,7 @@ def _deserialize_AnyResponse(
     cls: type[AnyResponse], data: SerializedLeafData
 ) -> AnyResponse:
     response: BrowserResponse | HttpResponse
-    info = json.loads(data["info.json"])
+    info = _load_json(data["info.json"])
     if info.get("type") == "BrowserResponse":
         response = _deserialize_BrowserResponse(BrowserResponse, data)
         return cls(response=response)

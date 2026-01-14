@@ -1,5 +1,5 @@
 import json
-from typing import Annotated
+from typing import Annotated, Any
 
 import attrs
 import pytest
@@ -333,3 +333,34 @@ def test_annotated_duplicate(book_list_html_response) -> None:
                 url,
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "metadata_item",
+    [
+        frozenset({("key", "value"), ("timeout", 5)}),
+        b"somebytes",
+        (("a", "b"), 1),
+    ],
+)
+def test_non_json_annotations(metadata_item: Any) -> None:
+    """Test built-in Python types that are hashable, and thus can be used in
+    annotations, but are not JSON-compatible, and thus need special handling
+    during JSON serialization and deserialization."""
+    metadata = (metadata_item,)
+    url_str = "http://example.com"
+    result = ResponseUrl(url_str)
+    instance = AnnotatedInstance(result, metadata)
+
+    serialized = serialize([instance])
+
+    expected_key = "AnnotatedInstance ResponseUrl"
+    assert expected_key in serialized
+
+    deserialized_instance = deserialize_leaf(
+        AnnotatedInstance, serialized[expected_key]
+    )
+    assert isinstance(deserialized_instance, AnnotatedInstance)
+    assert str(deserialized_instance.result) == str(result)
+
+    assert metadata == deserialized_instance.metadata

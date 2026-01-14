@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import builtins
 import json
+from base64 import b64decode, b64encode
 from typing import Any, cast
 
 from web_poet.page_inputs.url import _Url
@@ -29,9 +31,30 @@ def _exception_from_dict(data: dict[str, Any]) -> Exception:
 
 def _format_json(data: Any) -> str:
     """Produce a formatted JSON string with preset options."""
+    data = _prepare_for_json(data)
     return json.dumps(
         data, ensure_ascii=False, sort_keys=True, indent=2, cls=_CustomJSONEncoder
     )
+
+
+def _prepare_for_json(o: Any) -> Any:
+    if isinstance(o, (str, int, float, bool, type(None))):
+        return o
+    if isinstance(o, dict):
+        return {k: _prepare_for_json(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_prepare_for_json(x) for x in o]
+    if isinstance(o, (tuple, set, frozenset)):
+        return {
+            "_type": "tuple" if isinstance(o, tuple) else "set" if isinstance(o, set) else "frozenset",
+            "_data": [_prepare_for_json(x) for x in o],
+        }
+    if isinstance(o, bytes):
+        return {
+            "_type": "bytes",
+            "_data": b64encode(o).decode("ascii"),
+        }
+    return o
 
 
 class _CustomJSONEncoder(json.JSONEncoder):
@@ -39,3 +62,17 @@ class _CustomJSONEncoder(json.JSONEncoder):
         if isinstance(o, _Url):
             return str(o)
         return super().default(o)
+
+
+def _json_object_hook(d: dict[str, Any]) -> Any:
+    type_name = d.get("_type")
+    if "_data" not in d or not type_name:
+        return d
+    data = d["_data"]
+    if type_name == "bytes":
+        return b64decode(data)
+    return getattr(builtins, type_name)(data)
+
+
+def _load_json(data: str | bytes) -> Any:
+    return json.loads(data, object_hook=_json_object_hook)
