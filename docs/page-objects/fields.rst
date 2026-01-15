@@ -125,6 +125,7 @@ Reimplementing a field when subclassing a :ref:`page object class
 
     from my_library import BasePage
 
+
     @attrs.define
     class CustomPage(BasePage):
 
@@ -162,16 +163,17 @@ For example:
 
     from my_library import BasePage, BaseItem
 
+
     @attrs.define
     class CustomItem(BaseItem):
         new_field: str
+
 
     @attrs.define
     class CustomPage(BasePage, Returns[CustomItem]):
 
         @field
-        def new_field(self) -> str:
-            ...
+        def new_field(self) -> str: ...
 
 
 .. _remove-field:
@@ -204,9 +206,11 @@ For example:
 
     from my_library import BasePage
 
+
     @attrs.define
     class CustomItem:
         kept_field: str
+
 
     @attrs.define
     class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
@@ -252,9 +256,11 @@ For example:
 
     from my_library import BasePage
 
+
     @attrs.define
     class CustomItem:
         new_field: str
+
 
     @attrs.define
     class CustomPage(BasePage, Returns[CustomItem], skip_nonitem_fields=True):
@@ -302,9 +308,11 @@ For example:
 
     from my_library import BasePage
 
+
     @attrs.define
     class CustomItem:
         name: str
+
 
     @attrs.define
     class CustomPage(ItemPage[CustomItem]):
@@ -326,9 +334,11 @@ returns as a dependency in your new page object class. For example:
 
     from my_library import BaseItem
 
+
     @attrs.define
     class CustomItem:
         name: str
+
 
     @attrs.define
     class CustomPage(ItemPage[CustomItem]):
@@ -367,6 +377,7 @@ example:
 
     from my_library import BaseItem1, BaseItem2
 
+
     @attrs.define
     class CustomItem:
         name: str
@@ -402,11 +413,14 @@ returning it:
 
     from web_poet import ItemPage, HttpResponse, field
 
+
     def clean_tabs(s: str) -> str:
-        return s.replace('\t', ' ')
+        return s.replace("\t", " ")
+
 
     def add_brand(s: str, page: ItemPage) -> str:
         return f"{page.brand} - {s}"
+
 
     class MyPage(ItemPage):
         response: HttpResponse
@@ -452,8 +466,10 @@ class named ``Processors``:
     import attrs
     from web_poet import ItemPage, HttpResponse, field
 
+
     def clean_tabs(s: str) -> str:
-        return s.replace('\t', ' ')
+        return s.replace("\t", " ")
+
 
     @attrs.define
     class MyPage(ItemPage):
@@ -479,8 +495,10 @@ explicitly accessing or subclassing the ``Processors`` class:
     import attrs
     from web_poet import ItemPage, HttpResponse, field
 
+
     def clean_tabs(s: str) -> str:
-        return s.replace('\t', ' ')
+        return s.replace("\t", " ")
+
 
     @attrs.define
     class MyPage(ItemPage):
@@ -492,6 +510,7 @@ explicitly accessing or subclassing the ``Processors`` class:
         @field
         def name(self) -> str:
             return self.response.css(".name ::text").get() or ""
+
 
     class MyPage2(MyPage):
         class Processors(MyPage.Processors):
@@ -530,6 +549,7 @@ In the simplest cases you need to pass a selector to them:
     from parsel import Selector
     from web_poet import Extractor, ItemPage, HttpResponse, field
 
+
     @attrs.define
     class MyPage(ItemPage):
         response: HttpResponse
@@ -541,6 +561,7 @@ In the simplest cases you need to pass a selector to them:
                 variant = await VariantExtractor(color_sel).to_item()
                 variants.append(variant)
             return variants
+
 
     @attrs.define
     class VariantExtractor(Extractor):
@@ -590,6 +611,7 @@ attributes from this response:
 
     from web_poet import ItemPage, HttpResponse, HttpClient, validates_input
 
+
     class MyPage(ItemPage):
         response: HttpResponse
         http: HttpClient
@@ -599,9 +621,9 @@ attributes from this response:
             api_url = self.response.css("...").get()
             api_response = await self.http.get(api_url).json()
             return {
-                'name': self.response.css(".name ::text").get(),
-                'price': api_response.get("price"),
-                'sku': api_response.get("sku"),
+                "name": self.response.css(".name ::text").get(),
+                "price": api_response.get("price"),
+                "sku": api_response.get("sku"),
             }
 
 When converting such Page Objects to use fields, be careful not to make an
@@ -613,6 +635,7 @@ extracting the heavy operation to a method, and caching the results:
     from typing import Dict
 
     from web_poet import ItemPage, HttpResponse, HttpClient, field, cached_method
+
 
     class MyPage(ItemPage):
         response: HttpResponse
@@ -665,11 +688,12 @@ If you're an experienced Python developer, you might wonder why is
     from functools import lru_cache
     from web_poet import ItemPage
 
+
     class MyPage(ItemPage):
-        # ...
+        ...
+
         @lru_cache
-        def heavy_method(self):
-            # ...
+        def heavy_method(self): ...
 
 Don't do it! There are two issues with :func:`functools.lru_cache`, which make
 it unsuitable here:
@@ -709,11 +733,11 @@ Field metadata
 
     from web_poet import ItemPage, field
 
+
     class MyPage(ItemPage):
 
         @field(meta={"expensive": True})
-        async def my_field(self):
-            ...
+        async def my_field(self): ...
 
 To retrieve this information, use :func:`web_poet.fields.get_fields_dict`; it
 returns a dictionary, where keys are field names, and values are
@@ -748,7 +772,8 @@ evaluation from ever happening. For example:
        def foo(self):
            raise RuntimeError("This exception is never raised")
 
-    assert Page().foo == "bar"
+
+   assert Page().foo == "bar"
 
 Field evaluation may still happen for a field if the field is used in the
 implementation of the ``validate_input`` method. Note, however, that only

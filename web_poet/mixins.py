@@ -1,5 +1,5 @@
 import abc
-from typing import Generic, Protocol, TypeVar, Union
+from typing import Generic, Protocol, TypeVar
 from urllib.parse import urljoin
 
 import parsel
@@ -11,7 +11,7 @@ from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 class _ResponseLike(Protocol):
     """Protocol for response objects."""
 
-    url: Union[ResponseUrl, str]
+    url: ResponseUrl | str
     text: str
 
 
@@ -75,7 +75,7 @@ class UrlShortcutsMixin:
             self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
         return self._cached_base_url
 
-    def urljoin(self, url: Union[str, RequestUrl, ResponseUrl]) -> RequestUrl:
+    def urljoin(self, url: str | RequestUrl | ResponseUrl) -> RequestUrl:
         """Return *url* as an absolute URL.
 
         If *url* is relative, it is made absolute relative to the base URL of
@@ -83,7 +83,7 @@ class UrlShortcutsMixin:
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
-class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMixin):
+class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMixin):  # noqa: PYI059
     """Common shortcut methods for working with HTML responses.
     This mixin could be used with Page Object base classes.
 

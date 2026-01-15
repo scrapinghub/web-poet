@@ -15,7 +15,7 @@ from .. import (
     PageParams,
     Stats,
 )
-from ..annotated import AnnotatedInstance
+from ..annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from ..exceptions import HttpError
 from ..page_inputs.client import _SavedResponseData
 from ..page_inputs.url import _Url
@@ -206,7 +206,7 @@ register_serialization(_serialize_Stats, _deserialize_Stats)
 
 def _serialize_AnnotatedInstance(o: AnnotatedInstance) -> SerializedLeafData:
     serialized_data: SerializedLeafData = {
-        "metadata.json": _format_json(o.metadata).encode(),
+        "metadata.json": _format_json(annotation_decode(o.metadata)).encode(),
         "result_type.txt": _get_name_for_class(type(o.result)).encode(),
     }
     serialized_result = serialize_leaf(o.result)
@@ -218,7 +218,7 @@ def _serialize_AnnotatedInstance(o: AnnotatedInstance) -> SerializedLeafData:
 def _deserialize_AnnotatedInstance(
     cls: type[AnnotatedInstance], data: SerializedLeafData
 ) -> AnnotatedInstance:
-    metadata = json.loads(data["metadata.json"])
+    metadata = annotation_encode(json.loads(data["metadata.json"]))
     result_type = load_class(data["result_type.txt"].decode())
     serialized_result = {}
     for k, v in data.items():

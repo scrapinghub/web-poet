@@ -34,8 +34,7 @@ between brackets:
 .. code-block:: python
 
     @attrs.define
-    class MyPage(ItemPage[MyItem]):
-        ...
+    class MyPage(ItemPage[MyItem]): ...
 
 :class:`~.ItemPage.to_item` builds an instance of the specified item class
 based on the page object class :ref:`fields <fields>`.
@@ -53,12 +52,11 @@ then annotate those classes when subclassing them:
 .. code-block:: python
 
     @attrs.define
-    class MyBasePage(ItemPage):
-        ...
+    class MyBasePage(ItemPage): ...
+
 
     @attrs.define
-    class MyPage(MyBasePage[MyItem]):
-        ...
+    class MyPage(MyBasePage[MyItem]): ...
 
 To change the item class of a subclass that has already defined its item class,
 use :class:`~.Returns`:
@@ -66,8 +64,7 @@ use :class:`~.Returns`:
 .. code-block:: python
 
     @attrs.define
-    class MyOtherPage(MyPage, Returns[MyOtherItem]):
-        ...
+    class MyOtherPage(MyPage, Returns[MyOtherItem]): ...
 
 
 Best practices for item classes

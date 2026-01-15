@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 import attrs
 
 from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
@@ -12,7 +10,7 @@ from web_poet.page_inputs.url import ResponseUrl
 class AnyResponse(SelectableMixin, UrlShortcutsMixin):
     """A container that holds either :class:`~.BrowserResponse` or :class:`~.HttpResponse`."""
 
-    response: Union[BrowserResponse, HttpResponse]
+    response: BrowserResponse | HttpResponse
 
     @property
     def url(self) -> ResponseUrl:
@@ -25,7 +23,7 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
         return self.response.text
 
     @property
-    def status(self) -> Optional[int]:
+    def status(self) -> int | None:
         """The int status code of the HTTP response, if available."""
         return self.response.status
 

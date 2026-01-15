@@ -1,5 +1,3 @@
-from typing import Optional
-
 import attrs
 
 from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
@@ -34,7 +32,7 @@ class BrowserResponse(SelectableMixin, UrlShortcutsMixin):
 
     url: ResponseUrl = attrs.field(converter=ResponseUrl)
     html: BrowserHtml = attrs.field(converter=BrowserHtml)
-    status: Optional[int] = attrs.field(default=None, kw_only=True)
+    status: int | None = attrs.field(default=None, kw_only=True)
 
     @property
     def text(self) -> str:

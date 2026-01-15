@@ -16,6 +16,7 @@ To support parameters, add :class:`~.PageParams` to your :ref:`inputs
     import attrs
     from web_poet import PageParams, WebPage
 
+
     @attrs.define
     class MyPage(WebPage):
         page_params: PageParams

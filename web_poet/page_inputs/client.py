@@ -4,7 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
@@ -26,9 +26,9 @@ from web_poet.page_inputs.url import _Url
 logger = logging.getLogger(__name__)
 
 _StrMapping = dict[str, str]
-_Headers = Union[_StrMapping, HttpRequestHeaders]
-_Body = Union[bytes, HttpRequestBody]
-_StatusList = Union[str, int, list[Union[str, int]]]
+_Headers = _StrMapping | HttpRequestHeaders
+_Body = bytes | HttpRequestBody
+_StatusList = str | int | list[str | int]
 
 
 @dataclass
@@ -265,7 +265,7 @@ class HttpClient:
         responses = await asyncio.gather(
             *coroutines, return_exceptions=return_exceptions
         )
-        return cast("list[Union[HttpResponse, HttpResponseError]]", responses)
+        return cast("list[HttpResponse | HttpResponseError]", responses)
 
     def get_saved_responses(self) -> Iterable[_SavedResponseData]:
         """Return saved requests and responses."""

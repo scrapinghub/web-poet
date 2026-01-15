@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import attrs
 import pytest
@@ -30,6 +30,9 @@ from web_poet import (
     item_from_fields_sync,
 )
 from web_poet.fields import FieldsMixin, get_fields_dict
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @attrs.define

@@ -143,11 +143,12 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
-typing.Annotated support
-========================
+Annotation support
+==================
 
-.. automodule:: web_poet.annotated
-    :members:
+.. autofunction:: web_poet.annotation_encode
+.. autofunction:: web_poet.annotation_decode
+.. autoclass:: web_poet.AnnotatedInstance
 
 Utils
 =====

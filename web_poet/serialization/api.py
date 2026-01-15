@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import andi
 from andi.typeutils import strip_annotated

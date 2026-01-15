@@ -8,12 +8,15 @@ from __future__ import annotations
 import inspect
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import attrs
 from itemadapter import ItemAdapter
 
 from web_poet.utils import cached_method, callable_has_parameter, ensure_awaitable
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"

@@ -13,7 +13,7 @@ web-poet
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml
    :alt: Tox Ubuntu
-   
+
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml
    :alt: Tox Windows
