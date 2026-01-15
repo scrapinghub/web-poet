@@ -59,4 +59,4 @@ class AnnotatedInstance:
         return Annotated[(type(self.result), *self.metadata)]
 
 
-__all__ = []  # Prefer imports from web_poet.__init__.py
+__all__: list[str] = []  # Prefer imports from web_poet.__init__.py
