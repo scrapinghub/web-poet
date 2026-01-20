@@ -154,7 +154,7 @@ However, note that custom input classes may make your :ref:`page object classes
 Input annotations
 =================
 
-A type hint that point to an input class can be annotated with
+A type hint that points to an input class can be annotated with
 :obj:`~typing.Annotated`. For example:
 
 .. code-block:: python
