@@ -209,7 +209,7 @@ And the ``print(item)`` statement should output the following:
 
 .. code-block:: python
 
-   Book(title='The Exiled')
+   Book(title="The Exiled")
 
 In this tutorial you use ``web_poet.example.get_item``, which is a simple,
 incomplete implementation of the web-poet specification, built specifically for
@@ -325,7 +325,7 @@ You can see in the new output that your new classes have been used:
 
 .. code-block:: python
 
-   CategorizedBook(title='The Exiled', category='Mystery', category_rank=None)
+   CategorizedBook(title="The Exiled", category="Mystery", category_rank=None)
 
 
 Use additional requests
@@ -392,7 +392,7 @@ the expected value:
 
 .. code-block:: python
 
-   CategorizedBook(title='The Exiled', category='Mystery', category_rank=24)
+   CategorizedBook(title="The Exiled", category="Mystery", category_rank=24)
 
 
 Use parameters
@@ -445,7 +445,7 @@ time, but the result should be the same as before:
 
 .. code-block:: python
 
-   CategorizedBook(title='The Exiled', category='Mystery', category_rank=24)
+   CategorizedBook(title="The Exiled", category="Mystery", category_rank=24)
 
 Only that now the value of ``category_rank`` comes from
 ``tutorial-project/run.py``, and not from additional requests sent by

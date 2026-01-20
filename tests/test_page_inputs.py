@@ -249,12 +249,12 @@ def test_http_headers_from_bytes_dict(cls) -> None:
 )
 def test_http_response_headers_from_bytes_dict_err(cls) -> None:
     with pytest.raises(
-        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+        ValueError, match=r"Expecting str or bytes\. Received <class 'int'>"
     ):
         cls.from_bytes_dict({b"Content-Length": [316]})
 
     with pytest.raises(
-        ValueError, match="Expecting str or bytes. Received <class 'int'>"
+        ValueError, match=r"Expecting str or bytes\. Received <class 'int'>"
     ):
         cls.from_bytes_dict({b"Content-Length": 316})
 

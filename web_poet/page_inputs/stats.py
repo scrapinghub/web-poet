@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Union
+from typing import Any
 
-StatNum = Union[int, float]
+StatNum = int | float
 
 
 class StatCollector(ABC):

@@ -1,3 +1,4 @@
+from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from .fields import field, item_from_fields, item_from_fields_sync
 from .page_inputs import (
     AnyResponse,
@@ -34,6 +35,7 @@ from .rules import (
 from .utils import cached_method
 
 __all__ = [
+    "AnnotatedInstance",
     "AnyResponse",
     "ApplyRule",
     "BrowserHtml",
@@ -57,6 +59,8 @@ __all__ = [
     "SelectorExtractor",
     "Stats",
     "WebPage",
+    "annotation_decode",
+    "annotation_encode",
     "cached_method",
     "consume_modules",
     "default_registry",

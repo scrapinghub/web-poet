@@ -5,7 +5,7 @@ In general, users shouldn't import and use the contents of this module.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AnyStr, Union, overload
+from typing import TYPE_CHECKING, AnyStr, overload
 
 from multidict import CIMultiDict
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-_AnyStrDict = dict[AnyStr, Union[AnyStr, list[AnyStr], tuple[AnyStr, ...]]]
+_AnyStrDict = dict[AnyStr, AnyStr | list[AnyStr] | tuple[AnyStr, ...]]
 
 
 class _HttpHeaders(CIMultiDict):

@@ -13,7 +13,7 @@ web-poet
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-ubuntu.yml
    :alt: Tox Ubuntu
-   
+
 .. image:: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml/badge.svg
    :target: https://github.com/scrapinghub/web-poet/actions/workflows/tests-windows.yml
    :alt: Tox Windows
@@ -28,7 +28,7 @@ web-poet
 
 .. intro starts
 
-``web-poet`` is a Python 3.9+ implementation of the `page object pattern`_ for
+``web-poet`` is a Python 3.10+ implementation of the `page object pattern`_ for
 web scraping. It enables writing portable, reusable web parsing code.
 
 .. _page object pattern: https://martinfowler.com/bliki/PageObject.html

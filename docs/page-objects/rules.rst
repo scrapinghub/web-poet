@@ -32,9 +32,9 @@ a page object. For example:
 
     from my_items import MyItem
 
+
     @handle_urls("example.com")
-    class MyPage(ItemPage[MyItem]):
-        ...
+    class MyPage(ItemPage[MyItem]): ...
 
 The code above tells web-poet to use the ``MyPage`` :ref:`page object class
 <page-object-classes>` when given a URL pointing to the ``example.com`` domain
@@ -50,11 +50,12 @@ objects:
 
     from my_items import MyItem
 
-    class MyPage(ItemPage[MyItem]):
-        ...
+
+    class MyPage(ItemPage[MyItem]): ...
+
 
     rule = ApplyRule(
-        for_patterns=Patterns(include=['example.com']),
+        for_patterns=Patterns(include=["example.com"]),
         use=MyPage,
         to_return=MyItem,
     )
@@ -119,8 +120,7 @@ tie as follows:
     .. code-block:: python
 
         @handle_urls("example.com", instead_of=MyPage)
-        class OverridingPage(ItemPage[MyItem]):
-            ...
+        class OverridingPage(ItemPage[MyItem]): ...
 
     That is:
 
@@ -144,8 +144,7 @@ tie as follows:
     .. code-block:: python
 
         @handle_urls("example.com", priority=510)
-        class PriorityPage(ItemPage[MyItem]):
-            ...
+        class PriorityPage(ItemPage[MyItem]): ...
 
     The following would happen:
 
@@ -233,6 +232,7 @@ to solve the conflict:
 
         from package1 import A
         from web_poet import handle_urls
+
 
         @handle_urls(..., priority=510)
         class NewA(A):

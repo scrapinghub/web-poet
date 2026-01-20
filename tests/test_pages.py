@@ -70,7 +70,8 @@ def test_is_injectable() -> None:
     assert is_injectable(set[str]) is False
     assert is_injectable(TypingSet[str]) is False  # noqa: UP006
     assert is_injectable(CollectionsSet[str]) is False
-    assert is_injectable(Optional[str]) is False
+    assert is_injectable(Optional[str]) is False  # noqa: UP045
+    assert is_injectable(str | None) is False
     assert is_injectable(MyClass) is False
     assert is_injectable(MyClass()) is False
     assert is_injectable(MyItemPage) is True

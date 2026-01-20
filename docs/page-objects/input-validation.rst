@@ -60,13 +60,13 @@ For example:
 .. code-block:: python
 
    def validate_input(self):
-       if self.css('.product-id::text') is not None:
+       if self.css(".product-id::text") is not None:
            return
-       if self.css('.http-503-error'):
+       if self.css(".http-503-error"):
            raise Retry()
-       if self.css('.product'):
+       if self.css(".product"):
            raise UseFallback()
-       if self.css('.product-list'):
+       if self.css(".product-list"):
            return Product(is_valid=False)
 
 You may use fields in your implementation of the ``validate_input`` method, but
@@ -96,10 +96,10 @@ decorating your custom ``to_item`` method with
 
     from web_poet import validates_input
 
+
     class Page(ItemPage[Item]):
         @validates_input
-        async def to_item(self):
-            ...
+        async def to_item(self): ...
 
 :exc:`~web_poet.exceptions.Retry` and :exc:`~web_poet.exceptions.UseFallback`
 may also be raised from the ``to_item`` method. This could come in handy, for

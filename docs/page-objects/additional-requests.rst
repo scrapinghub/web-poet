@@ -25,7 +25,7 @@ look like:
 
 
     @attrs.define
-    class MyProductPage(ProductPage]):
+    class MyProductPage(ProductPage):
         http: HttpClient
 
         @field

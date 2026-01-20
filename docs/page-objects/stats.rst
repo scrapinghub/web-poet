@@ -17,6 +17,7 @@ changes:
     from attrs import define
     from web_poet import field, Stats, WebPage
 
+
     @attrs.define
     class MyPage(WebPage):
         stats: Stats

@@ -19,7 +19,7 @@ from web_poet import (
     Stats,
     WebPage,
 )
-from web_poet.annotated import AnnotatedInstance
+from web_poet.annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from web_poet.page_inputs.url import _Url
 from web_poet.serialization import (
     SerializedDataFileStorage,
@@ -333,3 +333,27 @@ def test_annotated_duplicate(book_list_html_response) -> None:
                 url,
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "raw_annotation",
+    [
+        {"foo": "bar"},
+        ["foo", "bar"],
+    ],
+)
+def test_annotation_codec(raw_annotation):
+    encoded_annotation = annotation_encode(raw_annotation)
+    assert annotation_decode(encoded_annotation) == raw_annotation
+
+    obj = ResponseUrl("http://example.com")
+    metadata = (encoded_annotation,)
+    serialized = serialize([AnnotatedInstance(obj, metadata)])
+    expected_key = "AnnotatedInstance ResponseUrl"
+    assert expected_key in serialized
+    deserialized_instance = deserialize_leaf(
+        AnnotatedInstance, serialized[expected_key]
+    )
+    assert isinstance(deserialized_instance, AnnotatedInstance)
+    assert str(deserialized_instance.result) == str(obj)
+    assert metadata == deserialized_instance.metadata

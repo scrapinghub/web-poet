@@ -45,6 +45,8 @@ are supported out of the box, user-defined types need a pair of implementation
 functions that need to be registered using
 :func:`web_poet.serialization.register_serialization`.
 
+.. _fixtures:
+
 Fixtures
 ========
 

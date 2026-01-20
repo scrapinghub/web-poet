@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
-from typing import Callable
 
 from web_poet.exceptions import RequestDownloaderVarError
 from web_poet.page_inputs.http import HttpRequest, HttpResponse

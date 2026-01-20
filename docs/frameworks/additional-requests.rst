@@ -40,8 +40,10 @@ This can be set using:
     import web_poet
     from web_poet import validates_input
 
-    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
-        ...
+
+    async def request_implementation(
+        req: web_poet.HttpRequest,
+    ) -> web_poet.HttpResponse: ...
 
 
     def create_http_client():
@@ -53,8 +55,8 @@ This can be set using:
         http: web_poet.HttpClient
 
         @validates_input
-        async def to_item(self):
-            ...
+        async def to_item(self): ...
+
 
     # Once this is set, the ``request_implementation`` becomes available to
     # all instances of HttpClient, unless HttpClient is created with
@@ -92,8 +94,11 @@ when creating an :class:`~.HttpClient` instance:
     import web_poet
     from web_poet import validates_input
 
-    async def request_implementation(req: web_poet.HttpRequest) -> web_poet.HttpResponse:
-        ...
+
+    async def request_implementation(
+        req: web_poet.HttpRequest,
+    ) -> web_poet.HttpResponse: ...
+
 
     def create_http_client():
         return web_poet.HttpClient(request_downloader=request_implementation)
@@ -104,8 +109,8 @@ when creating an :class:`~.HttpClient` instance:
         http: web_poet.HttpClient
 
         @validates_input
-        async def to_item(self):
-            ...
+        async def to_item(self): ...
+
 
     # Assume that it's constructed with the necessary arguments taken somewhere.
     response = web_poet.HttpResponse(...)
@@ -183,6 +188,7 @@ like the ones above, then it would cause the code to look like:
                 response = await self.http.get("...")
             except (aiohttp.ClientError, requests.RequestException, urllib.error.HTTPError):
                 # handle the error here
+                ...
 
 Such code could turn messy in no time especially when the number of HTTP backends
 that Page Objects have to support are steadily increasing. Not to mention the
@@ -214,6 +220,7 @@ This makes the code simpler:
                 response = await self.http.get("...")
             except web_poet.exceptions.HttpError:
                 # handle the error here
+                ...
 
 Expected behavior for Exceptions
 ********************************

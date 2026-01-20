@@ -3,10 +3,10 @@ from __future__ import annotations
 import inspect
 import weakref
 from collections import deque
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import lru_cache, partial, wraps
 from types import MethodType
-from typing import Any, Callable, TypeVar, get_args
+from typing import Any, TypeVar, get_args
 from warnings import warn
 
 import packaging.version

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -14,6 +14,9 @@ from web_poet.page_inputs import (
     HttpResponse,
 )
 from web_poet.requests import request_downloader_var
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.fixture

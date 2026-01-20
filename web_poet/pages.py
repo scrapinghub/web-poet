@@ -3,7 +3,7 @@ import inspect
 from contextlib import suppress
 from functools import wraps
 from types import GenericAlias
-from typing import Any, Generic, Optional, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
 
 import attr
 import parsel
@@ -61,10 +61,10 @@ def get_item_cls(cls: type, default: type) -> type: ...
 
 
 @overload
-def get_item_cls(cls: type, default: None) -> Optional[type]: ...
+def get_item_cls(cls: type, default: None) -> type | None: ...
 
 
-def get_item_cls(cls: type, default: Optional[type] = None) -> Optional[type]:
+def get_item_cls(cls: type, default: type | None = None) -> type | None:
     param = get_generic_param(cls, Returns)
     return param or default
 

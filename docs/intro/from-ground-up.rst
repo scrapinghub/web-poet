@@ -28,7 +28,10 @@ Imagine you are writing code to scrape a book web page from
             "title": selector.css("h1").get(),
         }
 
-    item = scrape("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+
+    item = scrape(
+        "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
+    )
 
 This ``scrape`` function is simple, but it has a big issue: it only supports
 downloading the specified URL using the requests_ library. What if you want to
@@ -55,8 +58,10 @@ function into 2 separate functions, ``download`` and ``parse``:
             "title": selector.css("h1").get(),
         }
 
+
     def download(url: str) -> requests.Response:
         return requests.get(url)
+
 
     url = "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
     response = download(url)
@@ -178,6 +183,7 @@ can then refactor your ``BookPage`` class as follows:
 
     from web_poet import WebPage
 
+
     class BookPage(WebPage):
         def to_item(self) -> dict:
             return {
@@ -191,6 +197,7 @@ methods:
 .. code-block:: python
 
     from web_poet import WebPage
+
 
     class BookPage(WebPage):
         def to_item(self) -> dict:

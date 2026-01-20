@@ -96,27 +96,23 @@ the raw :class:`bytes`, :attr:`~.HttpResponse.text` for the :class:`str`
 (decoded with the detected :attr:`~.HttpResponse.encoding`), or :meth:`json()
 <.HttpResponse.json>` to load a JSON response as a Python data structure:
 
-.. code-block:: python
-
-    >>> response.body
-    b'{"foo": "bar"}'
-    >>> response.text
-    '{"foo": "bar"}'
-    >>> response.json()
-    {'foo': 'bar'}
+>>> response.body
+b'{"foo": "bar"}'
+>>> response.text
+'{"foo": "bar"}'
+>>> response.json()
+{'foo': 'bar'}
 
 There are also methods to select content from responses: :meth:`jmespath()
 <.HttpResponse.jmespath>` for JSON and :meth:`css() <.HttpResponse.css>` and
 :meth:`xpath() <.HttpResponse.xpath>` for HTML and XML:
 
-.. code-block:: python
-
-    >>> response.jmespath("foo")
-    [<Selector query='foo' data='bar'>]
-    >>> response.css("h1::text")
-    [<Selector query='descendant-or-self::h1/text()' data='Title'>]
-    >>> response.xpath("//h1/text()")
-    [<Selector query='//h1/text()' data='Title'>]
+>>> response.jmespath("foo")
+[<Selector query='foo' data='bar'>]
+>>> response.css("h1::text")
+[<Selector query='descendant-or-self::h1/text()' data='Title'>]
+>>> response.xpath("//h1/text()")
+[<Selector query='//h1/text()' data='Title'>]
 
 
 .. _browserresponse:
@@ -133,14 +129,12 @@ Like :class:`~.HttpResponse`, it provides :meth:`css() <.BrowserResponse.css>`
 and :meth:`xpath() <.BrowserResponse.xpath>` methods to select content from
 the rendered page:
 
-.. code-block:: python
-
-    >>> response.html
-    '<html><head>...</head><body><h1>Title</h1>...</body></html>'
-    >>> response.css("h1::text")
-    [<Selector query='descendant-or-self::h1/text()' data='Title'>]
-    >>> response.xpath("//h1/text()")
-    [<Selector query='//h1/text()' data='Title'>]
+>>> response.html
+'<html><head>...</head><body><h1>Title</h1>...</body></html>'
+>>> response.css("h1::text")
+[<Selector query='descendant-or-self::h1/text()' data='Title'>]
+>>> response.xpath("//h1/text()")
+[<Selector query='//h1/text()' data='Title'>]
 
 
 .. _custom-inputs:
@@ -153,3 +147,40 @@ You may define your own input classes if you are using a :ref:`framework
 
 However, note that custom input classes may make your :ref:`page object classes
 <page-object-classes>` less portable across frameworks.
+
+
+.. _input-annotations:
+
+Input annotations
+=================
+
+A type hint that points to an input class can be annotated with
+:obj:`~typing.Annotated`. For example:
+
+.. code-block:: python
+
+    from typing import Annotated
+    from web_poet.page_inputs.http import HttpResponse
+    from web_poet.pages import WebPage
+
+
+    class MyPage(WebPage):
+        def __init__(self, response: Annotated[HttpResponse, "my-metadata"]): ...
+
+web-poet requires annotations to be JSON-serializable, for :ref:`fixture
+support <fixtures>`. Because :obj:`~typing.Annotated` requires annotations to
+be hashable, web-poet provides :func:`~web_poet.annotation_encode` to support
+:class:`list` and :class:`dict` structures in annotations. For example:
+
+.. code-block:: python
+
+    from typing import Annotated
+    from web_poet import annotation_encode
+    from web_poet.page_inputs.http import HttpResponse
+    from web_poet.pages import WebPage
+
+
+    class MyPage(WebPage):
+        def __init__(
+            self, response: Annotated[HttpResponse, annotation_encode({"foo": ["bar"]})]
+        ): ...
