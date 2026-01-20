@@ -2,6 +2,14 @@
 Changelog
 =========
 
+0.23.0 (unreleased)
+-------------------
+
+* Dropped Python 3.9 support.
+
+* Added :func:`~web_poet.annotation_encode` (see :ref:`input-annotations`) and
+  :func:`~web_poet.annotation_decode`.
+
 0.22.0 (2025-12-15)
 -------------------
 
