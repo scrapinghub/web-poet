@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import Any
+from typing import Any, TypeAlias
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -14,7 +14,7 @@ from web_poet.page_inputs.url import _Url
 from web_poet.pages import ItemPage, get_item_cls
 from web_poet.utils import as_list, str_to_pattern
 
-Strings = str | Iterable[str]
+Strings: TypeAlias = str | Iterable[str]
 
 
 @attrs.define(frozen=True)

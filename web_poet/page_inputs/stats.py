@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TypeAlias
 
-StatNum = int | float
+StatNum: TypeAlias = int | float
 
 
 class StatCollector(ABC):

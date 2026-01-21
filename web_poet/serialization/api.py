@@ -4,7 +4,7 @@ from collections.abc import Callable
 from functools import singledispatch
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
 
 import andi
 from andi.typeutils import strip_annotated
@@ -20,13 +20,13 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 # represents a leaf dependency of any type serialized as a set of files
-SerializedLeafData = dict[str, bytes]
+SerializedLeafData: TypeAlias = dict[str, bytes]
 # represents a set of leaf dependencies of different types
-SerializedData = dict[str, SerializedLeafData]
+SerializedData: TypeAlias = dict[str, SerializedLeafData]
 T = TypeVar("T")
 InjectableT = TypeVar("InjectableT", bound=Injectable)
-SerializeFunction = Callable[[T], SerializedLeafData]
-DeserializeFunction = Callable[[type[T], SerializedLeafData], T]
+SerializeFunction: TypeAlias = Callable[[T], SerializedLeafData]
+DeserializeFunction: TypeAlias = Callable[[type[T], SerializedLeafData], T]
 
 
 class SerializedDataFileStorage:
