@@ -4,7 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, TypeAlias, cast
 
 from web_poet.exceptions import HttpError, HttpResponseError
 from web_poet.exceptions.core import NoSavedHttpResponse
@@ -25,10 +25,10 @@ from web_poet.page_inputs.url import _Url
 
 logger = logging.getLogger(__name__)
 
-_StrMapping = dict[str, str]
-_Headers = _StrMapping | HttpRequestHeaders
-_Body = bytes | HttpRequestBody
-_StatusList = str | int | list[str | int]
+_StrMapping: TypeAlias = dict[str, str]
+_Headers: TypeAlias = _StrMapping | HttpRequestHeaders
+_Body: TypeAlias = bytes | HttpRequestBody
+_StatusList: TypeAlias = str | int | list[str | int]
 
 
 @dataclass

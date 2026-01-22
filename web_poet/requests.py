@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
+from typing import TypeAlias
 
 from web_poet.exceptions import RequestDownloaderVarError
 from web_poet.page_inputs.http import HttpRequest, HttpResponse
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 #: Frameworks that wants to support additional requests in ``web-poet`` should
 #: set the appropriate implementation of ``request_downloader_var``
 #: for requesting data.
-RequestDownloaderT = Callable[[HttpRequest], Awaitable[HttpResponse]]
+RequestDownloaderT: TypeAlias = Callable[[HttpRequest], Awaitable[HttpResponse]]
 request_downloader_var: ContextVar[RequestDownloaderT] = ContextVar(
     "request_downloader"
 )

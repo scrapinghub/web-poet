@@ -16,6 +16,7 @@ setup(
         "web_poet": ["py.typed"],
     },
     entry_points={"pytest11": ["web-poet = web_poet.testing.pytest"]},
+    python_requires=">=3.10",
     install_requires=[
         "attrs >= 21.3.0",
         "parsel >= 1.5.0",
