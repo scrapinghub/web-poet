@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="web-poet",
-    version="0.22.0",
+    version="0.23.0",
     description="Zyte's Page Object pattern for web scraping",
     long_description=Path("README.rst").read_text(),
     long_description_content_type="text/x-rst",

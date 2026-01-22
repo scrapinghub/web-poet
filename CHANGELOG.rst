@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.0 (unreleased)
+0.23.0 (2026-01-22)
 -------------------
 
 * Dropped Python 3.9 support.
