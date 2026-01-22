@@ -10,6 +10,8 @@ Changelog
 * Added :func:`~web_poet.annotation_encode` (see :ref:`input-annotations`) and
   :func:`~web_poet.annotation_decode`.
 
+* Implemented type hint improvements.
+
 0.22.0 (2025-12-15)
 -------------------
 
