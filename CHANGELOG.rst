@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.1 (unreleased)
+0.23.1 (2026-01-27)
 -------------------
 
 * :func:`@field <web_poet.fields.field>` no longer strips docstrings
