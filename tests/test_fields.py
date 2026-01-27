@@ -164,6 +164,26 @@ def test_field_decorator_no_arguments() -> None:
     assert page.to_item() == {"name": "Name"}
 
 
+def test_field_preserves_docstrings() -> None:
+    class Page(ItemPage):
+        @field
+        def foo(self):
+            """Foo docs"""
+            return "foo"
+
+        @field()
+        def bar(self):
+            """Bar docs"""
+            return "bar"
+
+    assert Page.foo.__doc__ == "Foo docs"
+    assert Page.bar.__doc__ == "Bar docs"
+
+    page = Page()
+    assert page.foo == "foo"
+    assert page.bar == "bar"
+
+
 def test_field_cache_sync() -> None:
     class Page(ItemPage):
         _n_called_1 = 0

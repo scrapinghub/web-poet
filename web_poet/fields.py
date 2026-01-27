@@ -92,6 +92,7 @@ def field(
                 )
             self.original_method = method
             self.name: str | None = None
+            update_wrapper(self, method)
 
         def __set_name__(self, owner, name: str) -> None:
             self.name = name
@@ -102,6 +103,13 @@ def field(
             getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
 
         def __get__(self, instance, owner=None):
+            # When accessed on the class (instance is None) return the
+            # descriptor itself (which has been wrapped with the original
+            # function attributes) so that __doc__ and other metadata are
+            # preserved.
+            if instance is None:
+                return self
+
             # We use the original method and the out arg from the field and
             # the Processors class from the instance class, so caching needs to
             # take into account the instance class and the field object. So we
