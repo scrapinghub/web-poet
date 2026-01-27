@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.23.1 (unreleased)
+-------------------
+
+* :func:`@field <web_poet.fields.field>` no longer strips docstrings
+  from decorated methods.
+
 0.23.0 (2026-01-22)
 -------------------
 
