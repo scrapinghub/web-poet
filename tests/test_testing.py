@@ -64,6 +64,16 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
     _assert_fixture_files(base_dir / "test-2", expected_meta=meta)
 
 
+def test_save_fixture_unicode_item(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": "✓bar£"}
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    fixture = Fixture(base_dir / "test-1")
+    assert json.loads(fixture.output_path.read_bytes()) == item
+    assert fixture.get_expected_output() == item
+
+
 class MyItemPage(WebPage):
     async def to_item(self) -> dict:
         return {"foo": "bar"}

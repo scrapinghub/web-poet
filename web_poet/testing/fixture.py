@@ -295,7 +295,7 @@ class Fixture:
             fixture.meta_path.write_text(_format_json(meta))
 
         if item is not None:
-            with fixture.output_path.open("w") as f:
+            with fixture.output_path.open("w", encoding="utf-8") as f:
                 f.write(fixture.item_to_json(item))
 
         if exception:
