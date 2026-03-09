@@ -74,6 +74,19 @@ def test_save_fixture_unicode_item(book_list_html_response, tmp_path) -> None:
     assert fixture.get_expected_output() == item
 
 
+def test_save_fixture_unicode_exception(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    exc = ValueError("✓bar£")
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], exception=exc)
+    fixture = Fixture(base_dir / "test-1")
+    exc_data = json.loads(fixture.exception_path.read_bytes())
+    assert exc_data == {"import_path": "builtins.ValueError", "msg": "✓bar£"}
+    expected_exc = fixture.get_expected_exception()
+    assert type(expected_exc) is ValueError
+    assert expected_exc.args == ("✓bar£",)
+
+
 class MyItemPage(WebPage):
     async def to_item(self) -> dict:
         return {"foo": "bar"}
