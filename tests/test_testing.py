@@ -64,6 +64,41 @@ def test_save_fixture(book_list_html_response, tmp_path) -> None:
     _assert_fixture_files(base_dir / "test-2", expected_meta=meta)
 
 
+def test_save_fixture_unicode_item(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": "✓bar£"}
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    fixture = Fixture(base_dir / "test-1")
+    assert json.loads(fixture.output_path.read_bytes()) == item
+    assert fixture.get_expected_output() == item
+
+
+def test_save_fixture_unicode_exception(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    exc = ValueError("✓bar£")
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], exception=exc)
+    fixture = Fixture(base_dir / "test-1")
+    exc_data = json.loads(fixture.exception_path.read_bytes())
+    assert exc_data == {"import_path": "builtins.ValueError", "msg": "✓bar£"}
+    expected_exc = fixture.get_expected_exception()
+    assert type(expected_exc) is ValueError
+    assert expected_exc.args == ("✓bar£",)
+
+
+def test_save_fixture_unicode_meta(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    item = {"foo": "bar"}
+    meta = {"foo": "✓bar£", "frozen_time": "2022-01-01"}
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item, meta=meta)
+    fixture = Fixture(base_dir / "test-1")
+    meta_data = json.loads(fixture.meta_path.read_bytes())
+    assert meta_data == meta
+    assert fixture.get_meta() == meta
+
+
 class MyItemPage(WebPage):
     async def to_item(self) -> dict:
         return {"foo": "bar"}
