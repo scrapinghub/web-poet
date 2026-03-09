@@ -292,7 +292,7 @@ class Fixture:
         if meta:
             if meta.get("adapter"):
                 meta["adapter"] = get_fq_class_name(meta["adapter"])
-            fixture.meta_path.write_text(_format_json(meta))
+            fixture.meta_path.write_text(_format_json(meta), encoding="utf-8")
 
         if item is not None:
             with fixture.output_path.open("w", encoding="utf-8") as f:
@@ -300,6 +300,6 @@ class Fixture:
 
         if exception:
             exc_data = _exception_to_dict(exception)
-            fixture.exception_path.write_text(_format_json(exc_data))
+            fixture.exception_path.write_text(_format_json(exc_data), encoding="utf-8")
 
         return fixture
