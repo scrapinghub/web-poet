@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.2 (unreleased)
+0.23.2 (2026-03-10)
 -------------------
 
 * JSON files in :ref:`test fixtures <web-poet-testing>` are now saved using
