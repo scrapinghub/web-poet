@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.23.2 (unreleased)
+-------------------
+
+* JSON files in :ref:`test fixtures <web-poet-testing>` are now saved using
+  UTF-8 instead of the system encoding.
+
 0.23.1 (2026-01-27)
 -------------------
 
