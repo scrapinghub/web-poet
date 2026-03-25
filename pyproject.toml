@@ -180,4 +180,5 @@ ignore = [
 convention = "pep257"
 
 [tool.sphinx-scrapy]
+# Keep in sync with .github/workflows/tests-ubuntu.yml.
 python-version = "3.13"
