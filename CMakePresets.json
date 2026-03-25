@@ -1,0 +1,53 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "documentation",
+      "displayName": "Documentation Build",
+      "description": "Configure project with documentation environment setup",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "html",
+      "displayName": "Build HTML Documentation",
+      "configurePreset": "documentation",
+      "targets": ["html"]
+    },
+    {
+      "name": "markdown",
+      "displayName": "Build Markdown Documentation",
+      "configurePreset": "documentation",
+      "targets": ["markdown"]
+    },
+    {
+      "name": "singlemarkdown",
+      "displayName": "Build Single Markdown Documentation",
+      "configurePreset": "documentation",
+      "targets": ["singlemarkdown"]
+    },
+    {
+      "name": "docs-parallel",
+      "displayName": "Build all output formats in parallel",
+      "configurePreset": "documentation",
+      "targets": ["html", "markdown", "singlemarkdown"]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "documentation-workflow",
+      "displayName": "Documentation Build Workflow",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "documentation"
+        },
+        {
+          "type": "build",
+          "name": "docs-parallel"
+        }
+      ]
+    }
+  ]
+}

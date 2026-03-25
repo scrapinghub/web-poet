@@ -21,3 +21,7 @@ repos:
   rev: v1.0.2
   hooks:
     - id: sphinx-lint
+- repo: https://github.com/scrapy/sphinx-scrapy
+  rev: 912fa2fdc03279e2a5d00961d098cb57791b1992
+  hooks:
+  - id: sphinx-scrapy
