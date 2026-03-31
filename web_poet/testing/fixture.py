@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from inspect import isawaitable
 from pathlib import Path
+from threading import Thread
 from typing import TYPE_CHECKING, Any, cast
 from zoneinfo import ZoneInfo
 
@@ -18,7 +20,7 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
+from web_poet.utils import get_fq_class_name, memoizemethod_noargs
 
 from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
@@ -57,6 +59,32 @@ def _get_available_filename(template: str, directory: str | os.PathLike[str]) ->
         if not result.exists():
             return result.name
         i += 1
+
+
+def _maybe_sync_await(maybe_awaitable: Any) -> Any:
+    if not isawaitable(maybe_awaitable):
+        return maybe_awaitable
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(maybe_awaitable)
+    else:
+        result: dict[str, object] = {}
+
+        def worker() -> None:
+            try:
+                result["value"] = asyncio.run(maybe_awaitable)
+            except Exception as exc:
+                result["exc"] = exc
+
+        thread = Thread(target=worker)
+        thread.start()
+        thread.join()
+
+        if "exc" in result:
+            raise result["exc"]
+
+        return result.get("value")
 
 
 class Fixture:
@@ -132,7 +160,7 @@ class Fixture:
 
     def _get_output(self) -> dict:
         page = self.get_page()
-        item = asyncio.run(ensure_awaitable(page.to_item()))
+        item = _maybe_sync_await(page.to_item())
         return self._get_adapter_cls()(item).asdict()
 
     @memoizemethod_noargs

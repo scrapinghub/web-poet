@@ -9,8 +9,12 @@ for book detail pages from `books.toscrape.com`_.
 
 .. _books.toscrape.com: http://books.toscrape.com/
 
-To follow this tutorial you must first be familiar with Python_ and have
-:ref:`installed web-poet <install>`.
+To follow this tutorial you must first be familiar with Python_ and
+:ref:`install web-poet <install>` with the built-in simple framework:
+
+.. code-block:: bash
+
+    pip install 'web-poet[simple_framework]'
 
 .. _Python: https://docs.python.org/
 
@@ -189,10 +193,6 @@ Use your page object class
 
 Now that you have a page object class defined, it is time to use it.
 
-First, install requests_, which is required by ``web_poet.example``.
-
-.. _requests: https://requests.readthedocs.io/en/latest/user/install/
-
 Then copy the following code into ``tutorial-project/run.py``:
 
 .. literalinclude:: /tutorial-project/run.py
@@ -211,14 +211,13 @@ And the ``print(item)`` statement should output the following:
 
    Book(title="The Exiled")
 
-In this tutorial you use ``web_poet.example.get_item``, which is a simple,
-incomplete implementation of the web-poet specification, built specifically for
-this tutorial, for demonstration purposes. In real projects, use instead an
-actual :ref:`web-poet framework <frameworks>`.
+In this tutorial you use :meth:`web_poet.simple_framework.get_item`.
+:mod:`web_poet.simple_framework` is a simple, built-in :ref:`web-poet framework
+<frameworks>` for simple use cases, including this tutorial.
 
-``web_poet.example.get_item`` serves to illustrate the power of web-poet: once
-you have defined your page object class, a web-poet framework only needs 2
-inputs from you:
+``web_poet.simple_framework.get_item`` serves to illustrate the power of
+web-poet: once you have defined your page object class, a web-poet framework
+only needs 2 inputs from you:
 
 -   the URL from which you want to extract data, and
 -   the desired output, either a :ref:`page object class <page-object-classes>`

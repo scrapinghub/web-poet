@@ -1,5 +1,5 @@
 from web_poet import consume_modules
-from web_poet.example import get_item
+from web_poet.simple_framework import get_item
 
 from tutorial.items import Book
 from tutorial.items import CategorizedBook

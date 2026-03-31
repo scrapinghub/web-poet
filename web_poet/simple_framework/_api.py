@@ -2,24 +2,13 @@ from __future__ import annotations
 
 from asyncio import run
 from typing import Any
-from warnings import warn
 
 import andi
 import requests
 
-from . import default_registry
-from .page_inputs import HttpClient, HttpResponse, PageParams
-from .pages import ItemPage, is_injectable
-from .utils import ensure_awaitable
-
-warn(
-    (
-        "You should only be importing web_poet.example to follow the web-poet "
-        "tutorial, never as part of production code."
-    ),
-    UserWarning,
-    stacklevel=2,
-)
+from web_poet.page_inputs import HttpClient, HttpResponse, PageParams
+from web_poet.pages import ItemPage, is_injectable
+from web_poet.utils import ensure_awaitable
 
 
 class _HttpClient:
@@ -28,7 +17,7 @@ class _HttpClient:
 
 
 def _get_http_response(url: str) -> HttpResponse:
-    response = requests.get(url)
+    response = requests.get(url, timeout=300)
     return HttpResponse(
         response.url,
         status=response.status_code,
@@ -77,6 +66,8 @@ def get_item(
     This function is an example of a minimal, incomplete web-poet framework
     implementation, intended for use in the web-poet tutorial.
     """
+    from web_poet import default_registry  # noqa: PLC0415
+
     page_cls = default_registry.page_cls_for_item(url, item_cls)
     if page_cls is None:
         raise ValueError(f"No page object class found for URL: {url}")

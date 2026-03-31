@@ -30,6 +30,11 @@ setup(
         "time-machine >= 2.7.1",
         "packaging >= 20.0",
     ],
+    extras_require={
+        "simple_framework": [
+            "aiohttp >= 3.8.0",
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

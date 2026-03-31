@@ -1,7 +1,7 @@
 from attrs import define
 
 from web_poet import ItemPage, default_registry, field, handle_urls
-from web_poet.example import get_item
+from web_poet.simple_framework import get_item
 
 
 def _revert_add_rule():
