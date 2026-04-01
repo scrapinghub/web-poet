@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^(uvx )?tox -e py -- -q tests/\\w+\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

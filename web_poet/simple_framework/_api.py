@@ -8,6 +8,7 @@ import requests
 
 from web_poet.page_inputs import HttpClient, HttpResponse, PageParams
 from web_poet.pages import ItemPage, is_injectable
+from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
 
 
@@ -59,6 +60,7 @@ def get_item(
     item_cls: type,
     *,
     page_params: dict[Any, Any] | None = None,
+    registry: RulesRegistry | None = None,
 ) -> Any:
     """Returns an item built from the specified URL using a page object class
     from the default registry.
@@ -66,9 +68,12 @@ def get_item(
     This function is an example of a minimal, incomplete web-poet framework
     implementation, intended for use in the web-poet tutorial.
     """
-    from web_poet import default_registry  # noqa: PLC0415
+    if registry is None:  # pragma: no cover
+        from web_poet import default_registry  # noqa: PLC0415
 
-    page_cls = default_registry.page_cls_for_item(url, item_cls)
+        registry = default_registry
+
+    page_cls = registry.page_cls_for_item(url, item_cls)
     if page_cls is None:
         raise ValueError(f"No page object class found for URL: {url}")
     page = _get_page(url, page_cls, page_params=page_params)

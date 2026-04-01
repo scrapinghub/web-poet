@@ -1,51 +1,45 @@
+import pytest
 from attrs import define
 
-from web_poet import ItemPage, default_registry, field, handle_urls
+from web_poet import ItemPage, field
 from web_poet.simple_framework import get_item
 
 
-def _revert_add_rule():
-    default_registry._rule_counter -= 1
-    rule_id = list(default_registry._rules)[-1]
-    default_registry._rules.pop(rule_id)
-    default_registry._overrides_matchers[None].remove(rule_id)
-    default_registry._item_matchers[None].remove(rule_id)
+@define
+class SampleItem:
+    foo: str
 
 
-def test_async_to_item():
-    @define
-    class Item:
-        foo: str
-
-    try:
-
-        @handle_urls("")
-        class Page(ItemPage[Item]):
-            @field
-            async def foo(self):
-                return "bar"
-
-        item = get_item("file:///dev/null", Item)
-        assert isinstance(item, Item)
-        assert item.foo == "bar"
-    finally:
-        _revert_add_rule()
+class SampleItemPageStub:
+    def to_item(self):
+        return SampleItem(foo="bar")
 
 
-def test_sync_to_item():
-    @define
-    class Item:
-        foo: str
+def test_async_to_item(registry):
+    @registry.handle_urls("a.example")
+    class Page(ItemPage[SampleItem]):
+        @field
+        async def foo(self):
+            return "bar"
 
-    try:
+    item = get_item("https://a.example", SampleItem, registry=registry)
+    assert isinstance(item, SampleItem)
+    assert item.foo == "bar"
 
-        @handle_urls("")
-        class Page(ItemPage[Item]):
-            def to_item(self):
-                return Item(foo="bar")
 
-        item = get_item("file:///dev/null", Item)
-        assert isinstance(item, Item)
-        assert item.foo == "bar"
-    finally:
-        _revert_add_rule()
+def test_sync_to_item(registry):
+    @registry.handle_urls("a.example")
+    class Page(ItemPage[SampleItem]):
+        def to_item(self):
+            return SampleItem(foo="bar")
+
+    item = get_item("https://a.example", SampleItem, registry=registry)
+    assert isinstance(item, SampleItem)
+    assert item.foo == "bar"
+
+
+def test_get_item_no_page(registry):
+    with pytest.raises(
+        ValueError, match=r"No page object class found for URL: https://a.example"
+    ):
+        get_item("https://a.example", SampleItem, registry=registry)
