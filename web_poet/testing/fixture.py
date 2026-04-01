@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from inspect import isawaitable
+from inspect import iscoroutine
 from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING, Any, cast
@@ -61,19 +61,19 @@ def _get_available_filename(template: str, directory: str | os.PathLike[str]) ->
         i += 1
 
 
-def _maybe_sync_await(maybe_awaitable: Any) -> Any:
-    if not isawaitable(maybe_awaitable):
-        return maybe_awaitable
+def _maybe_sync_run_coro(maybe_coroutine: Any) -> Any:
+    if not iscoroutine(maybe_coroutine):
+        return maybe_coroutine
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(maybe_awaitable)
+        return asyncio.run(maybe_coroutine)
     else:
         result: dict[str, object] = {}
 
         def worker() -> None:
             try:
-                result["value"] = asyncio.run(maybe_awaitable)
+                result["value"] = asyncio.run(maybe_coroutine)
             except Exception as exc:
                 result["exc"] = exc
 
@@ -82,7 +82,7 @@ def _maybe_sync_await(maybe_awaitable: Any) -> Any:
         thread.join()
 
         if "exc" in result:
-            raise result["exc"]
+            raise cast("BaseException", result["exc"])
 
         return result.get("value")
 
@@ -160,7 +160,7 @@ class Fixture:
 
     def _get_output(self) -> dict:
         page = self.get_page()
-        item = _maybe_sync_await(page.to_item())
+        item = _maybe_sync_run_coro(page.to_item())
         return self._get_adapter_cls()(item).asdict()
 
     @memoizemethod_noargs

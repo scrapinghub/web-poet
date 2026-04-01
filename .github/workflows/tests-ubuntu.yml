@@ -21,7 +21,13 @@ jobs:
         include:
           - python-version: '3.10'
             env:
-              TOXENV: pinned
+              TOXENV: min
+          - python-version: '3.10'
+            env:
+              TOXENV: min-framework
+          - python-version: '3.14'
+            env:
+              TOXENV: framework
 
     steps:
     - uses: actions/checkout@v5
