@@ -7,6 +7,7 @@ from web_poet.page_inputs.client import HttpClient
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestBody,
+    HttpRequestHeaders,
     HttpResponse,
     HttpResponseBody,
 )
@@ -146,6 +147,23 @@ async def test_request_body(registry):
             return SAMPLE_ITEM
 
     request = HttpRequest(url="https://a.example", body=b"foo")
+    item = await get_item(request, SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+
+
+@pytest.mark.asyncio
+async def test_request_headers(registry):
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        headers: HttpRequestHeaders
+
+        async def to_item(self):
+            assert isinstance(self.headers, HttpRequestHeaders)
+            assert self.headers.get("x-foo") == "bar"
+            return SAMPLE_ITEM
+
+    request = HttpRequest(url="https://a.example", headers={"X-Foo": "bar"})
     item = await get_item(request, SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
 
