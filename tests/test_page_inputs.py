@@ -398,7 +398,7 @@ def test_bom_encoding() -> None:
 
 def test_bom_encoding_mismatch() -> None:
     text = "Привет"
-    body = codecs.BOM + text.encode("utf-8")
+    body = codecs.BOM_UTF16_LE + text.encode("utf-8")
     response = HttpResponse(
         url="http://example.com",
         headers={"Content-Type": "text/html; charset=cp1251"},
