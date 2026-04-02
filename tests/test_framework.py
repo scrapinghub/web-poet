@@ -1,9 +1,12 @@
+import niquests
 import pytest
 from attrs import define
 
-from web_poet import ItemPage, field
+from web_poet import Injectable, ItemPage, field
 from web_poet.page_inputs.client import HttpClient
+from web_poet.page_inputs.http import HttpResponse
 from web_poet.page_inputs.page_params import PageParams
+from web_poet.page_inputs.url import ResponseUrl
 from web_poet.simple_framework import get_item
 
 
@@ -18,6 +21,24 @@ SAMPLE_ITEM = SampleItem(foo="bar")
 class SampleItemPageStub:
     def to_item(self):
         return SAMPLE_ITEM
+
+
+def patch_aget(monkeypatch):
+    class DummyResponse:
+        def __init__(self):
+            self.url = "https://b.example"
+            self.status_code = 200
+            self.content = b""
+            self.headers = {}
+
+    state = {"calls": 0}
+
+    async def fake_aget(url, timeout=300):
+        state["calls"] += 1
+        return DummyResponse()
+
+    monkeypatch.setattr(niquests, "aget", fake_aget)
+    return state
 
 
 @pytest.mark.asyncio
@@ -68,7 +89,9 @@ async def test_http_client(registry):
 
 
 @pytest.mark.asyncio
-async def test_page_params(registry):
+async def test_page_params(registry, monkeypatch):
+    state = patch_aget(monkeypatch)
+
     @registry.handle_urls("a.example")
     @define
     class Page(ItemPage[SampleItem]):
@@ -81,3 +104,48 @@ async def test_page_params(registry):
         "https://a.example", SampleItem, registry=registry, page_params={"foo": "bar"}
     )
     assert item == SAMPLE_ITEM
+    assert state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_response_url(registry, monkeypatch):
+    state = patch_aget(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        url: ResponseUrl
+
+        async def to_item(self):
+            assert str(self.url) == "https://b.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert state["calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_multiple_response_dependencies(registry, monkeypatch):
+    state = patch_aget(monkeypatch)
+
+    @define
+    class Page2(Injectable):
+        url: ResponseUrl
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        url: ResponseUrl
+        response: HttpResponse
+        page2: Page2
+
+        async def to_item(self):
+            assert str(self.url) == "https://b.example"
+            assert str(self.page2.url) == "https://b.example"
+            assert str(self.response.url) == "https://b.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert state["calls"] == 1

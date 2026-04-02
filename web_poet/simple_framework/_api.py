@@ -8,7 +8,7 @@ from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
 
-from ._providers import PROVIDERS
+from ._providers import PROVIDERS, ResponseFetcher
 
 
 async def _get_page(
@@ -24,6 +24,7 @@ async def _get_page(
         externally_provided=set(PROVIDERS),
     )
     instances: dict[Any, Any] = {}
+    response_fetcher = ResponseFetcher()
     for fn_or_cls, kwargs_spec in plan:
         kwargs = kwargs_spec.kwargs(instances)
         provider = PROVIDERS.get(fn_or_cls)
@@ -34,6 +35,7 @@ async def _get_page(
                     page_params=page_params,
                     page_cls=page_cls,
                     registry=registry,
+                    response_fetcher=response_fetcher,
                     **kwargs,
                 )
             )
