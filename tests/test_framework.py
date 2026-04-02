@@ -6,7 +6,7 @@ from web_poet import Injectable, ItemPage, field
 from web_poet.page_inputs.client import HttpClient
 from web_poet.page_inputs.http import HttpResponse
 from web_poet.page_inputs.page_params import PageParams
-from web_poet.page_inputs.url import ResponseUrl
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 from web_poet.simple_framework import get_item
 
 
@@ -118,6 +118,44 @@ async def test_response_url(registry, monkeypatch):
 
         async def to_item(self):
             assert str(self.url) == "https://b.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert state["calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_request_url(registry, monkeypatch):
+    state = patch_aget(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        request_url: RequestUrl
+
+        async def to_item(self):
+            assert str(self.request_url) == "https://a.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_both_urls(registry, monkeypatch):
+    state = patch_aget(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        request_url: RequestUrl
+        response_url: ResponseUrl
+
+        async def to_item(self):
+            assert str(self.request_url) == "https://a.example"
+            assert str(self.response_url) == "https://b.example"
             return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)

@@ -4,7 +4,13 @@ from typing import TYPE_CHECKING, Any, get_type_hints
 
 import niquests
 
-from web_poet.page_inputs import HttpClient, HttpResponse, PageParams, ResponseUrl
+from web_poet.page_inputs import (
+    HttpClient,
+    HttpResponse,
+    PageParams,
+    RequestUrl,
+    ResponseUrl,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -55,6 +61,11 @@ async def _get_response_url(
 ) -> ResponseUrl:
     response = await response_fetcher.get(url)
     return ResponseUrl(response.url or url)
+
+
+@_provider_func
+def _get_request_url(url: str, **_kwargs) -> RequestUrl:
+    return RequestUrl(url)
 
 
 @_provider_func
