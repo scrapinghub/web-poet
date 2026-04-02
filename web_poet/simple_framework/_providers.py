@@ -12,23 +12,13 @@ if TYPE_CHECKING:
 PROVIDERS: dict[type, Callable[..., Any]] = {}
 
 
-def provider_func(func: Callable[..., Any]):
-    hints = get_type_hints(func)
-    dep = hints.get("return")
-    if dep is None:
-        raise ValueError(
-            f"provider_func() requires the decorated function to have a "
-            f"return type hint: {func!r}"
-        )
-    if not isinstance(dep, type):
-        raise ValueError(
-            f"provider_func() return type must be a concrete type, got: {dep!r}"
-        )
+def _provider_func(func: Callable[..., Any]):
+    dep = get_type_hints(func).get("return")
     PROVIDERS[dep] = func
     return func
 
 
-def provider_cls(dep: type):
+def _provider_cls(dep: type):
     def _provider(cls: Any) -> Any:
         PROVIDERS[dep] = cls
         return cls()
@@ -36,7 +26,7 @@ def provider_cls(dep: type):
     return _provider
 
 
-@provider_func
+@_provider_func
 async def _get_http_response(url: str, **_kwargs) -> HttpResponse:
     response = await niquests.aget(url, timeout=300)
     return HttpResponse(
@@ -47,13 +37,15 @@ async def _get_http_response(url: str, **_kwargs) -> HttpResponse:
     )
 
 
-@provider_func
-def get_params(page_params: dict[Any, Any] | None = None, **_kwargs) -> PageParams:
+@_provider_func
+def _get_page_params(
+    page_params: dict[Any, Any] | None = None, **_kwargs
+) -> PageParams:
     return PageParams(page_params or {})
 
 
-@provider_cls(HttpClient)
-class HttpClientImplementation:
+@_provider_cls(HttpClient)
+class _HttpClient:
     def __init__(self, **_kwargs):
         pass
 

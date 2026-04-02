@@ -3,6 +3,7 @@ from attrs import define
 
 from web_poet import ItemPage, field
 from web_poet.page_inputs.client import HttpClient
+from web_poet.page_inputs.page_params import PageParams
 from web_poet.simple_framework import get_item
 
 
@@ -51,7 +52,7 @@ async def test_get_item_no_page(registry):
 
 
 @pytest.mark.asyncio
-async def test_http_client_provider(registry):
+async def test_http_client(registry):
     @registry.handle_urls("a.example")
     @define
     class Page(ItemPage[SampleItem]):
@@ -63,4 +64,20 @@ async def test_http_client_provider(registry):
             return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+
+
+@pytest.mark.asyncio
+async def test_page_params(registry):
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        page_params: PageParams
+
+        async def to_item(self):
+            return SampleItem(foo=self.page_params["foo"])
+
+    item = await get_item(
+        "https://a.example", SampleItem, registry=registry, page_params={"foo": "bar"}
+    )
     assert item == SAMPLE_ITEM
