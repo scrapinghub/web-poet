@@ -136,7 +136,7 @@ async def test_response_url(registry, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_request_body(registry):
+async def test_http_request_body(registry):
     @registry.handle_urls("a.example")
     @define
     class Page(ItemPage[SampleItem]):
@@ -153,7 +153,7 @@ async def test_request_body(registry):
 
 
 @pytest.mark.asyncio
-async def test_request_headers(registry):
+async def test_http_request_headers(registry):
     @registry.handle_urls("a.example")
     @define
     class Page(ItemPage[SampleItem]):
@@ -170,7 +170,24 @@ async def test_request_headers(registry):
 
 
 @pytest.mark.asyncio
-async def test_response_body(registry, monkeypatch):
+async def test_http_request(registry):
+    request = HttpRequest(url="https://a.example")
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        request: HttpRequest
+
+        async def to_item(self):
+            assert self.request is request
+            return SAMPLE_ITEM
+
+    item = await get_item(request, SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+
+
+@pytest.mark.asyncio
+async def test_http_response_body(registry, monkeypatch):
     state = {"calls": 0}
 
     class DummyResponse:
@@ -202,7 +219,7 @@ async def test_response_body(registry, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_response_headers(registry, monkeypatch):
+async def test_http_response_headers(registry, monkeypatch):
     state = {"calls": 0}
 
     class DummyResponse:

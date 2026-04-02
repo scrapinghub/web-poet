@@ -116,6 +116,11 @@ def _get_page_params(
     return PageParams(page_params or {})
 
 
+@_provider_func
+def _get_request(request: HttpRequest, **_kwargs) -> HttpRequest:
+    return request
+
+
 @_provider_cls(HttpClient)
 class _HttpClient:
     def __init__(self, **_kwargs):
