@@ -32,7 +32,7 @@ setup(
     ],
     extras_require={
         "simple_framework": [
-            "niquests >= 3",
+            "niquests >= 3.14.0",
         ],
     },
     classifiers=[

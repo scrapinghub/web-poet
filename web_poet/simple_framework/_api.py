@@ -21,7 +21,7 @@ async def _get_page(
     plan = andi.plan(
         page_cls,
         is_injectable=is_injectable,
-        externally_provided=set(PROVIDERS.keys()),
+        externally_provided=set(PROVIDERS),
     )
     instances: dict[Any, Any] = {}
     for fn_or_cls, kwargs_spec in plan:

@@ -2,6 +2,7 @@ import pytest
 from attrs import define
 
 from web_poet import ItemPage, field
+from web_poet.page_inputs.client import HttpClient
 from web_poet.simple_framework import get_item
 
 
@@ -10,9 +11,12 @@ class SampleItem:
     foo: str
 
 
+SAMPLE_ITEM = SampleItem(foo="bar")
+
+
 class SampleItemPageStub:
     def to_item(self):
-        return SampleItem(foo="bar")
+        return SAMPLE_ITEM
 
 
 @pytest.mark.asyncio
@@ -24,8 +28,7 @@ async def test_async_to_item(registry):
             return "bar"
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
-    assert isinstance(item, SampleItem)
-    assert item.foo == "bar"
+    assert item == SAMPLE_ITEM
 
 
 @pytest.mark.asyncio
@@ -33,11 +36,10 @@ async def test_sync_to_item(registry):
     @registry.handle_urls("a.example")
     class Page(ItemPage[SampleItem]):
         def to_item(self):
-            return SampleItem(foo="bar")
+            return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
-    assert isinstance(item, SampleItem)
-    assert item.foo == "bar"
+    assert item == SAMPLE_ITEM
 
 
 @pytest.mark.asyncio
@@ -46,3 +48,19 @@ async def test_get_item_no_page(registry):
         ValueError, match=r"No page object class found for URL: https://a.example"
     ):
         await get_item("https://a.example", SampleItem, registry=registry)
+
+
+@pytest.mark.asyncio
+async def test_http_client_provider(registry):
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        http_client: HttpClient
+
+        async def to_item(self):
+            response = await self.http_client.get("https://httpbin.org/get")
+            assert response.status == 200
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
