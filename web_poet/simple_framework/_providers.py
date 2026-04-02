@@ -9,6 +9,7 @@ from web_poet.page_inputs import (
     HttpRequest,
     HttpRequestBody,
     HttpResponse,
+    HttpResponseBody,
     PageParams,
     RequestUrl,
     ResponseUrl,
@@ -70,6 +71,14 @@ async def _get_http_response(
 @_provider_func
 def _get_request_body(request: HttpRequest, **_kwargs) -> HttpRequestBody:
     return HttpRequestBody(request.body)
+
+
+@_provider_func
+async def _get_response_body(
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
+) -> HttpResponseBody:
+    response = await response_fetcher.fetch(request)
+    return response.body
 
 
 @_provider_func
