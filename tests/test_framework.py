@@ -10,6 +10,7 @@ from web_poet.page_inputs.http import (
     HttpRequestHeaders,
     HttpResponse,
     HttpResponseBody,
+    HttpResponseHeaders,
 )
 from web_poet.page_inputs.page_params import PageParams
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
@@ -193,6 +194,38 @@ async def test_response_body(registry, monkeypatch):
         async def to_item(self):
             assert isinstance(self.body, HttpResponseBody)
             assert bytes(self.body) == b"hello"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert state["calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_response_headers(registry, monkeypatch):
+    state = {"calls": 0}
+
+    class DummyResponse:
+        def __init__(self):
+            self.url = "https://b.example"
+            self.status_code = 200
+            self.content = b""
+            self.headers = {"X-Foo": "bar"}
+
+    async def fake_aget(url, timeout=300):
+        state["calls"] += 1
+        return DummyResponse()
+
+    monkeypatch.setattr(niquests, "aget", fake_aget)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        headers: HttpResponseHeaders
+
+        async def to_item(self):
+            assert isinstance(self.headers, HttpResponseHeaders)
+            assert self.headers.get("x-foo") == "bar"
             return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)

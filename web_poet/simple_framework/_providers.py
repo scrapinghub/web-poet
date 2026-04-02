@@ -11,6 +11,7 @@ from web_poet.page_inputs import (
     HttpRequestHeaders,
     HttpResponse,
     HttpResponseBody,
+    HttpResponseHeaders,
     PageParams,
     RequestUrl,
     ResponseUrl,
@@ -85,6 +86,14 @@ async def _get_response_body(
 ) -> HttpResponseBody:
     response = await response_fetcher.fetch(request)
     return response.body
+
+
+@_provider_func
+async def _get_response_headers(
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
+) -> HttpResponseHeaders:
+    response = await response_fetcher.fetch(request)
+    return response.headers
 
 
 @_provider_func
