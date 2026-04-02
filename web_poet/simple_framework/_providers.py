@@ -6,6 +6,8 @@ import niquests
 
 from web_poet.page_inputs import (
     HttpClient,
+    HttpRequest,
+    HttpRequestBody,
     HttpResponse,
     PageParams,
     RequestUrl,
@@ -18,14 +20,30 @@ if TYPE_CHECKING:
 PROVIDERS: dict[type, Callable[..., Any]] = {}
 
 
+def _get_http_response_from_nirequests_response(
+    request: HttpRequest, response: niquests.Response
+) -> HttpResponse:
+    return HttpResponse(
+        response.url or request.url,
+        status=response.status_code,
+        body=response.content or b"",
+        headers=response.headers,
+    )
+
+
+async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResponse:
+    response = await niquests.aget(request.url, timeout=300)
+    return _get_http_response_from_nirequests_response(request, response)
+
+
 class ResponseFetcher:
     def __init__(self) -> None:
-        self._responses: dict[str, Any] = {}
+        self.response: niquests.Response | None = None
 
-    async def get(self, url: str) -> Any:
-        if url not in self._responses:
-            self._responses[url] = await niquests.aget(url, timeout=300)
-        return self._responses[url]
+    async def fetch(self, request: HttpRequest) -> HttpResponse:
+        if self.response is None:
+            self.response = await _get_http_response_from_http_request(request)
+        return self.response
 
 
 def _provider_func(func: Callable[..., Any]):
@@ -44,28 +62,27 @@ def _provider_cls(dep: type):
 
 @_provider_func
 async def _get_http_response(
-    url: str, response_fetcher: ResponseFetcher, **_kwargs
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponse:
-    response = await response_fetcher.get(url)
-    return HttpResponse(
-        response.url or url,
-        status=response.status_code,
-        body=response.content or b"",
-        headers=response.headers,
-    )
+    return await response_fetcher.fetch(request)
+
+
+@_provider_func
+def _get_request_body(request: HttpRequest, **_kwargs) -> HttpRequestBody:
+    return HttpRequestBody(request.body)
 
 
 @_provider_func
 async def _get_response_url(
-    url: str, response_fetcher: ResponseFetcher | None = None, **_kwargs
+    request: HttpRequest, response_fetcher: ResponseFetcher | None = None, **_kwargs
 ) -> ResponseUrl:
-    response = await response_fetcher.get(url)
-    return ResponseUrl(response.url or url)
+    response = await response_fetcher.fetch(request)
+    return response.url
 
 
 @_provider_func
-def _get_request_url(url: str, **_kwargs) -> RequestUrl:
-    return RequestUrl(url)
+def _get_request_url(request: HttpRequest, **_kwargs) -> RequestUrl:
+    return request.url
 
 
 @_provider_func
@@ -77,8 +94,8 @@ def _get_page_params(
 
 @_provider_cls(HttpClient)
 class _HttpClient:
-    def __init__(self, response_fetcher: ResponseFetcher, **_kwargs):
-        self._response_fetcher = response_fetcher
+    def __init__(self, **_kwargs):
+        pass
 
     async def get(self, url: str) -> HttpResponse:
-        return await _get_http_response(url, response_fetcher=self._response_fetcher)
+        return await _get_http_response_from_http_request(HttpRequest(url=url))

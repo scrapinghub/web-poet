@@ -4,6 +4,7 @@ from typing import Any
 
 import andi
 
+from web_poet.page_inputs import HttpRequest, RequestUrl
 from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
@@ -12,7 +13,7 @@ from ._providers import PROVIDERS, ResponseFetcher
 
 
 async def _get_page(
-    url: str,
+    request: HttpRequest,
     page_cls: type[ItemPage],
     *,
     page_params: dict[Any, Any] | None = None,
@@ -31,7 +32,7 @@ async def _get_page(
         if provider is not None:
             value = await ensure_awaitable(
                 provider(
-                    url=url,
+                    request=request,
                     page_params=page_params,
                     page_cls=page_cls,
                     registry=registry,
@@ -46,13 +47,13 @@ async def _get_page(
 
 
 async def get_item(
-    url: str,
+    request: str | RequestUrl | HttpRequest,
     item_cls: type,
     *,
     page_params: dict[Any, Any] | None = None,
     registry: RulesRegistry | None = None,
 ) -> Any:
-    """Return an *item_cls* object built from *url*.
+    """Return an *item_cls* object built from *request*.
 
     *page_params* is a dict that the page object may access through the
     :class:`~web_poet.page_inputs.PageParams` dependency.
@@ -61,13 +62,18 @@ async def get_item(
     object is selected to build the output item. If ``None``,
     :data:`~web_poet.default_registry` is used.
     """
+    if not isinstance(request, HttpRequest):
+        request = HttpRequest(url=request)
+
     if registry is None:  # pragma: no cover
         from web_poet import default_registry  # noqa: PLC0415
 
         registry = default_registry
 
-    page_cls = registry.page_cls_for_item(url, item_cls)
+    page_cls = registry.page_cls_for_item(request.url, item_cls)
     if page_cls is None:
-        raise ValueError(f"No page object class found for URL: {url}")
-    page = await _get_page(url, page_cls, page_params=page_params, registry=registry)
+        raise ValueError(f"No page object class found for URL: {request.url}")
+    page = await _get_page(
+        request, page_cls, page_params=page_params, registry=registry
+    )
     return await ensure_awaitable(page.to_item())
