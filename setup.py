@@ -32,7 +32,7 @@ setup(
     ],
     extras_require={
         "simple_framework": [
-            "aiohttp >= 3.8.0",
+            "niquests >= 3",
         ],
     },
     classifiers=[

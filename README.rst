@@ -54,5 +54,5 @@ staged files:
 * `isort`
 * `flake8`
 
-You can also directly invoke `pre-commit run --all-files` or `tox -e linters`
+You can also directly invoke `pre-commit run --all-files` or `tox -e pre-commit`
 to run them without performing a commit.

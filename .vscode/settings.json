@@ -1,8 +1,12 @@
 {
     "chat.tools.terminal.autoApprove": {
+        "/^(uvx )?tox -e (pre-commit|mypy|types|docs|twinecheck|min|min-framework|py\\d3|framework)$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
         "/^(uvx )?tox -e py -- -q tests/\\w+\\.py$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
     }
 }
