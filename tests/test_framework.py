@@ -16,6 +16,7 @@ from web_poet.page_inputs.http import (
     HttpResponseHeaders,
 )
 from web_poet.page_inputs.page_params import PageParams
+from web_poet.page_inputs.response import AnyResponse
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 from web_poet.simple_framework import _providers, browser, get_item
 
@@ -240,6 +241,56 @@ async def test_browser_response(registry, monkeypatch):
             assert str(self.response.url) == "https://c.example"
             assert self.response.status == 201
             assert self.response.text == "<html><body>hello</body></html>"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["calls"] == 1
+    assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_any_response_prefers_http(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch, response_url="https://b.example")
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: AnyResponse
+
+        async def to_item(self):
+            assert isinstance(self.response, AnyResponse)
+            assert isinstance(self.response.response, HttpResponse)
+            assert str(self.response.url) == "https://b.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_any_response_uses_browser_when_browser_needed(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch,
+        response_url="https://c.example",
+        html="<html><body>hello</body></html>",
+        status=201,
+    )
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        browser_response: BrowserResponse
+        response: AnyResponse
+
+        async def to_item(self):
+            assert isinstance(self.response, AnyResponse)
+            assert isinstance(self.response.response, BrowserResponse)
+            assert str(self.response.url) == "https://c.example"
             return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)

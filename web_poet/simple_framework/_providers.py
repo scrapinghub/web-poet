@@ -183,6 +183,15 @@ async def _get_response_url(
 
 
 @_provider_func
+async def _get_any_response(
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
+) -> AnyResponse:
+    return await response_fetcher.get_any_response(
+        request, browser=_kwargs.get("browser")
+    )
+
+
+@_provider_func
 def _get_request_url(request: HttpRequest, **_kwargs) -> RequestUrl:
     return request.url
 
