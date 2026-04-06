@@ -33,6 +33,7 @@ setup(
     extras_require={
         "simple_framework": [
             "niquests >= 3.14.0",
+            "playwright >= 1.20.0",
         ],
     },
     classifiers=[

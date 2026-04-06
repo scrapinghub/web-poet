@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 import niquests
+from playwright.async_api import async_playwright
 
 from web_poet.page_inputs import (
+    AnyResponse,
+    BrowserResponse,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -39,14 +42,52 @@ async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResp
     return _get_http_response_from_nirequests_response(request, response)
 
 
-class ResponseFetcher:
-    def __init__(self) -> None:
-        self.response: niquests.Response | None = None
+async def _get_browser_response_from_http_request(
+    request: HttpRequest,
+) -> BrowserResponse:
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch()
+        try:
+            page = await browser.new_page()
+            goto_response = await page.goto(str(request.url))
+            html = await page.content()
+            return BrowserResponse(
+                url=page.url or str(request.url),
+                html=html,
+                status=None if goto_response is None else goto_response.status,
+            )
+        finally:
+            await browser.close()
 
-    async def fetch(self, request: HttpRequest) -> HttpResponse:
-        if self.response is None:
-            self.response = await _get_http_response_from_http_request(request)
-        return self.response
+
+class ResponseFetcher:
+    def __init__(self, required_deps: set[type] | None = None) -> None:
+        self.http_response: HttpResponse | None = None
+        self.browser_response: BrowserResponse | None = None
+        required_deps = required_deps or set()
+        self._needs_http_response = bool(
+            required_deps & {HttpResponse, HttpResponseBody, HttpResponseHeaders}
+        )
+        self._needs_browser_response = BrowserResponse in required_deps
+
+    async def get_http_response(self, request: HttpRequest) -> HttpResponse:
+        if self.http_response is None:
+            self.http_response = await _get_http_response_from_http_request(request)
+        return self.http_response
+
+    async def get_browser_response(self, request: HttpRequest) -> BrowserResponse:
+        if self.browser_response is None:
+            self.browser_response = await _get_browser_response_from_http_request(
+                request
+            )
+        return self.browser_response
+
+    async def get_any_response(self, request: HttpRequest) -> AnyResponse:
+        if self._needs_browser_response:
+            browser_response = await self.get_browser_response(request)
+            return AnyResponse(response=browser_response)
+        http_response = await self.get_http_response(request)
+        return AnyResponse(response=http_response)
 
 
 def _provider_func(func: Callable[..., Any]):
@@ -67,7 +108,14 @@ def _provider_cls(dep: type):
 async def _get_http_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponse:
-    return await response_fetcher.fetch(request)
+    return await response_fetcher.get_http_response(request)
+
+
+@_provider_func
+async def _get_browser_response(
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
+) -> BrowserResponse:
+    return await response_fetcher.get_browser_response(request)
 
 
 @_provider_func
@@ -84,7 +132,7 @@ def _get_request_headers(request: HttpRequest, **_kwargs) -> HttpRequestHeaders:
 async def _get_response_body(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponseBody:
-    response = await response_fetcher.fetch(request)
+    response = await response_fetcher.get_http_response(request)
     return response.body
 
 
@@ -92,15 +140,15 @@ async def _get_response_body(
 async def _get_response_headers(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponseHeaders:
-    response = await response_fetcher.fetch(request)
+    response = await response_fetcher.get_http_response(request)
     return response.headers
 
 
 @_provider_func
 async def _get_response_url(
-    request: HttpRequest, response_fetcher: ResponseFetcher | None = None, **_kwargs
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> ResponseUrl:
-    response = await response_fetcher.fetch(request)
+    response = await response_fetcher.get_any_response(request)
     return response.url
 
 

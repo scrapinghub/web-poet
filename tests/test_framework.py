@@ -3,6 +3,7 @@ import pytest
 from attrs import define
 
 from web_poet import Injectable, ItemPage, field
+from web_poet.page_inputs.browser import BrowserResponse
 from web_poet.page_inputs.client import HttpClient
 from web_poet.page_inputs.http import (
     HttpRequest,
@@ -14,7 +15,7 @@ from web_poet.page_inputs.http import (
 )
 from web_poet.page_inputs.page_params import PageParams
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
-from web_poet.simple_framework import get_item
+from web_poet.simple_framework import _providers, get_item
 
 
 @define
@@ -30,21 +31,83 @@ class SampleItemPageStub:
         return SAMPLE_ITEM
 
 
-def patch_aget(monkeypatch):
+def patch_aget(
+    monkeypatch,
+    *,
+    response_url="https://b.example",
+    status=200,
+    content=b"",
+    headers=None,
+):
     class DummyResponse:
         def __init__(self):
-            self.url = "https://b.example"
-            self.status_code = 200
-            self.content = b""
-            self.headers = {}
+            self.url = response_url
+            self.status_code = status
+            self.content = content
+            self.headers = headers or {}
 
     state = {"calls": 0}
 
-    async def fake_aget(url, timeout=300):
+    async def fake_aget(_url, timeout=300):
         state["calls"] += 1
         return DummyResponse()
 
     monkeypatch.setattr(niquests, "aget", fake_aget)
+    return state
+
+
+def patch_async_playwright(
+    monkeypatch,
+    *,
+    response_url="https://c.example",
+    html="<html></html>",
+    status=200,
+):
+    state = {"calls": 0}
+
+    class DummyGotoResponse:
+        def __init__(self, status_code):
+            self.status = status_code
+
+    class DummyPage:
+        def __init__(self):
+            self.url = "about:blank"
+
+        async def goto(self, _url):
+            state["calls"] += 1
+            self.url = response_url
+            if status is None:
+                return None
+            return DummyGotoResponse(status)
+
+        async def content(self):
+            return html
+
+    class DummyBrowser:
+        async def new_page(self):
+            return DummyPage()
+
+        async def close(self):
+            return None
+
+    class DummyChromium:
+        async def launch(self):
+            return DummyBrowser()
+
+    class DummyPlaywright:
+        chromium = DummyChromium()
+
+    class DummyPlaywrightContext:
+        async def __aenter__(self):
+            return DummyPlaywright()
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    def fake_async_playwright():
+        return DummyPlaywrightContext()
+
+    monkeypatch.setattr(_providers, "async_playwright", fake_async_playwright)
     return state
 
 
@@ -81,7 +144,8 @@ async def test_get_item_no_page(registry):
 
 @pytest.mark.asyncio
 async def test_http_client(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @registry.handle_urls("a.example")
     @define
@@ -95,12 +159,14 @@ async def test_http_client(registry, monkeypatch):
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 1
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
 
 
 @pytest.mark.asyncio
 async def test_page_params(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @registry.handle_urls("a.example")
     @define
@@ -114,12 +180,14 @@ async def test_page_params(registry, monkeypatch):
         "https://a.example", SampleItem, registry=registry, page_params={"foo": "bar"}
     )
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 0
+    assert http_state["calls"] == 0
+    assert browser_state["calls"] == 0
 
 
 @pytest.mark.asyncio
 async def test_response_url(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @registry.handle_urls("a.example")
     @define
@@ -132,7 +200,60 @@ async def test_response_url(registry, monkeypatch):
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 1
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_browser_response(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch,
+        response_url="https://c.example",
+        html="<html><body>hello</body></html>",
+        status=201,
+    )
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            assert isinstance(self.response, BrowserResponse)
+            assert str(self.response.url) == "https://c.example"
+            assert self.response.status == 201
+            assert self.response.text == "<html><body>hello</body></html>"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["calls"] == 1
+    assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_response_url_with_browser_response(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch, response_url="https://c.example"
+    )
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response_url: ResponseUrl
+        browser_response: BrowserResponse
+
+        async def to_item(self):
+            assert str(self.browser_response.url) == "https://c.example"
+            assert str(self.response_url) == "https://c.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["calls"] == 1
+    assert http_state["calls"] == 0
 
 
 @pytest.mark.asyncio
@@ -188,20 +309,7 @@ async def test_http_request(registry):
 
 @pytest.mark.asyncio
 async def test_http_response_body(registry, monkeypatch):
-    state = {"calls": 0}
-
-    class DummyResponse:
-        def __init__(self):
-            self.url = "https://b.example"
-            self.status_code = 200
-            self.content = b"hello"
-            self.headers = {}
-
-    async def fake_aget(url, timeout=300):
-        state["calls"] += 1
-        return DummyResponse()
-
-    monkeypatch.setattr(niquests, "aget", fake_aget)
+    state = patch_aget(monkeypatch, content=b"hello")
 
     @registry.handle_urls("a.example")
     @define
@@ -220,20 +328,7 @@ async def test_http_response_body(registry, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_http_response_headers(registry, monkeypatch):
-    state = {"calls": 0}
-
-    class DummyResponse:
-        def __init__(self):
-            self.url = "https://b.example"
-            self.status_code = 200
-            self.content = b""
-            self.headers = {"X-Foo": "bar"}
-
-    async def fake_aget(url, timeout=300):
-        state["calls"] += 1
-        return DummyResponse()
-
-    monkeypatch.setattr(niquests, "aget", fake_aget)
+    state = patch_aget(monkeypatch, headers={"X-Foo": "bar"})
 
     @registry.handle_urls("a.example")
     @define
@@ -252,7 +347,8 @@ async def test_http_response_headers(registry, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_request_url(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @registry.handle_urls("a.example")
     @define
@@ -265,12 +361,14 @@ async def test_request_url(registry, monkeypatch):
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 0
+    assert http_state["calls"] == 0
+    assert browser_state["calls"] == 0
 
 
 @pytest.mark.asyncio
 async def test_both_urls(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @registry.handle_urls("a.example")
     @define
@@ -285,12 +383,40 @@ async def test_both_urls(registry, monkeypatch):
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 1
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
 
 
 @pytest.mark.asyncio
-async def test_multiple_response_dependencies(registry, monkeypatch):
-    state = patch_aget(monkeypatch)
+async def test_http_and_browser_responses(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch, response_url="https://b.example")
+    browser_state = patch_async_playwright(
+        monkeypatch, response_url="https://c.example"
+    )
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        http_response: HttpResponse
+        browser_response: BrowserResponse
+        response_url: ResponseUrl
+
+        async def to_item(self):
+            assert str(self.http_response.url) == "https://b.example"
+            assert str(self.browser_response.url) == "https://c.example"
+            assert str(self.response_url) == "https://c.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_multiple_http_response_dependencies(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
 
     @define
     class Page2(Injectable):
@@ -311,4 +437,35 @@ async def test_multiple_response_dependencies(registry, monkeypatch):
 
     item = await get_item("https://a.example", SampleItem, registry=registry)
     assert item == SAMPLE_ITEM
-    assert state["calls"] == 1
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_multiple_browser_response_dependencies(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch, response_url="https://c.example"
+    )
+
+    @define
+    class Page2(Injectable):
+        url: ResponseUrl
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        url: ResponseUrl
+        response: BrowserResponse
+        page2: Page2
+
+        async def to_item(self):
+            assert str(self.url) == "https://c.example"
+            assert str(self.page2.url) == "https://c.example"
+            assert str(self.response.url) == "https://c.example"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["calls"] == 1
+    assert http_state["calls"] == 0

@@ -4,7 +4,10 @@ from typing import Any
 
 import andi
 
-from web_poet.page_inputs import HttpRequest, RequestUrl
+from web_poet.page_inputs import (
+    HttpRequest,
+    RequestUrl,
+)
 from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
@@ -25,7 +28,8 @@ async def _get_page(
         externally_provided=set(PROVIDERS),
     )
     instances: dict[Any, Any] = {}
-    response_fetcher = ResponseFetcher()
+    required_deps = {fn_or_cls for fn_or_cls, _ in plan}
+    response_fetcher = ResponseFetcher(required_deps=required_deps)
     for fn_or_cls, kwargs_spec in plan:
         kwargs = kwargs_spec.kwargs(instances)
         provider = PROVIDERS.get(fn_or_cls)
