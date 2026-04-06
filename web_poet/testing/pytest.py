@@ -25,32 +25,51 @@ class TestCase(pytest.File):
     """Represents the ``output.json`` or ``exception.json`` file in a testcase
     directory."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, type_name: str | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fixture = Fixture(self.path.parent)
+        self.type_name: str = type_name or self.fixture.type_name
 
     def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
         if self.fixture.exception_path.exists():
             return [
                 WebPoetExpectedException.from_parent(
-                    parent=self, name="TO_ITEM_RAISES", fixture=self.fixture
+                    parent=self,
+                    name="TO_ITEM_RAISES",
+                    fixture=self.fixture,
+                    type_name=self.type_name,
                 )
             ]
         if self.config.getoption("WEB_POET_TEST_PER_ITEM", default=False):
             return [
-                WebPoetItem.from_parent(parent=self, name="item", fixture=self.fixture)
+                WebPoetItem.from_parent(
+                    parent=self,
+                    name="item",
+                    fixture=self.fixture,
+                    type_name=self.type_name,
+                )
             ]
         overall_tests: list[pytest.Item] = [
             WebPoetNoToItemException.from_parent(
-                parent=self, name="TO_ITEM_DOESNT_RAISE", fixture=self.fixture
+                parent=self,
+                name="TO_ITEM_DOESNT_RAISE",
+                fixture=self.fixture,
+                type_name=self.type_name,
             ),
             WebPoetNoExtraFieldsItem.from_parent(
-                parent=self, name="NO_EXTRA_FIELDS", fixture=self.fixture
+                parent=self,
+                name="NO_EXTRA_FIELDS",
+                fixture=self.fixture,
+                type_name=self.type_name,
             ),
         ]
         field_tests: list[pytest.Item] = [
             WebPoetFieldItem.from_parent(
-                parent=self, name=field, fixture=self.fixture, field_name=field
+                parent=self,
+                name=field,
+                fixture=self.fixture,
+                type_name=self.type_name,
+                field_name=field,
             )
             for field in self.fixture.get_expected_output_fields()
         ]
@@ -58,17 +77,19 @@ class TestCase(pytest.File):
 
 
 class _WebPoetItem(pytest.Item):
-    def __init__(self, *, fixture: Fixture, **kwargs) -> None:
+    def __init__(self, *, fixture: Fixture, type_name: str, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.fixture = fixture
+        self.fixture: Fixture = fixture
+        self.type_name: str = type_name
+        self.testname: str = f"{self.type_name}/{self.fixture.test_name}"
 
 
 class WebPoetItem(_WebPoetItem):
     def runtest(self) -> None:
-        self.fixture.assert_full_item_correct()
+        self.fixture.assert_full_item_correct(type_name=self.type_name)
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name}"
+        return self.path, 0, self.testname
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, ItemValueIncorrect):
@@ -90,10 +111,10 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
                 "Skipping a test for unexpected item fields "
                 "because to_item raised an exception."
             )
-        self.fixture.assert_no_extra_fields()
+        self.fixture.assert_no_extra_fields(type_name=self.type_name)
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name}: extra fields"
+        return self.path, 0, f"{self.testname}: extra fields"
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, FieldsUnexpected):
@@ -110,25 +131,27 @@ class WebPoetNoExtraFieldsItem(_WebPoetItem):
 
 class WebPoetNoToItemException(_WebPoetItem):
     def runtest(self) -> None:
-        self.fixture.assert_no_toitem_exceptions()
+        self.fixture.assert_no_toitem_exceptions(type_name=self.type_name)
 
     def reportinfo(self):
         return (
             self.path,
             0,
-            f"{self.fixture.short_name}: to_item doesn't raise an error",
+            f"{self.testname}: to_item doesn't raise an error",
         )
 
 
 class WebPoetExpectedException(_WebPoetItem):
     def runtest(self) -> None:
-        self.fixture.assert_toitem_exception(user_props=self.user_properties)
+        self.fixture.assert_toitem_exception(
+            type_name=self.type_name, user_props=self.user_properties
+        )
 
     def reportinfo(self):
         return (
             self.path,
             0,
-            f"{self.fixture.short_name}: to_item raises {self.fixture.get_expected_exception().__class__.__name__}",
+            f"{self.testname}: to_item raises {self.fixture.get_expected_exception().__class__.__name__}",
         )
 
     def repr_failure(self, excinfo, style=None):
@@ -164,11 +187,11 @@ class WebPoetFieldItem(_WebPoetItem):
                 f"because to_item raised an exception"
             )
         self.fixture.assert_field_correct(
-            self.field_name, user_props=self.user_properties
+            self.field_name, type_name=self.type_name, user_props=self.user_properties
         )
 
     def reportinfo(self):
-        return self.path, 0, f"{self.fixture.short_name} @ {self.field_name}"
+        return self.path, 0, f"{self.testname} @ {self.field_name}"
 
     def repr_failure(self, excinfo, style=None):
         if isinstance(excinfo.value, FieldValueIncorrect):
