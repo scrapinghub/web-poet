@@ -11,10 +11,9 @@ except ImportError:
     )
     raise ImportError(message) from None
 
-from ._api import (
-    get_item,
-)
+from ._api import browser, get_item
 
 __all__ = [
+    "browser",
     "get_item",
 ]

@@ -1,3 +1,5 @@
+from typing import Annotated
+
 import niquests
 import pytest
 from attrs import define
@@ -15,7 +17,7 @@ from web_poet.page_inputs.http import (
 )
 from web_poet.page_inputs.page_params import PageParams
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
-from web_poet.simple_framework import _providers, get_item
+from web_poet.simple_framework import _providers, browser, get_item
 
 
 @define
@@ -60,18 +62,19 @@ def patch_async_playwright(
     monkeypatch,
     *,
     response_url="https://c.example",
-    html="<html></html>",
+    html="<html><body>engine:{engine}</body></html>",
     status=200,
 ):
-    state = {"calls": 0}
+    state = {"calls": 0, "launches": {}}
 
     class DummyGotoResponse:
         def __init__(self, status_code):
             self.status = status_code
 
     class DummyPage:
-        def __init__(self):
+        def __init__(self, engine_name: str):
             self.url = "about:blank"
+            self._engine = engine_name
 
         async def goto(self, _url):
             state["calls"] += 1
@@ -81,21 +84,34 @@ def patch_async_playwright(
             return DummyGotoResponse(status)
 
         async def content(self):
-            return html
+            try:
+                return html.format(engine=self._engine)
+            except Exception:
+                return html
 
     class DummyBrowser:
+        def __init__(self, engine_name: str):
+            self._engine = engine_name
+
         async def new_page(self):
-            return DummyPage()
+            return DummyPage(self._engine)
 
         async def close(self):
             return None
 
-    class DummyChromium:
+    class DummyEngine:
+        def __init__(self, name: str):
+            self.name = name
+
         async def launch(self):
-            return DummyBrowser()
+            state["launches"].setdefault(self.name, 0)
+            state["launches"][self.name] += 1
+            return DummyBrowser(self.name)
 
     class DummyPlaywright:
-        chromium = DummyChromium()
+        chromium = DummyEngine("chromium")
+        firefox = DummyEngine("firefox")
+        webkit = DummyEngine("webkit")
 
     class DummyPlaywrightContext:
         async def __aenter__(self):
@@ -230,6 +246,164 @@ async def test_browser_response(registry, monkeypatch):
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_request_specific_browser_annotation(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: Annotated[BrowserResponse, browser("firefox")]
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 0
+    assert browser_state["launches"] == {"firefox": 1}
+
+
+@pytest.mark.asyncio
+async def test_default_browser_param_override(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    item = await get_item(
+        "https://a.example", SampleItem, registry=registry, default_browser="webkit"
+    )
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 0
+    assert browser_state["launches"] == {"webkit": 1}
+
+
+@pytest.mark.asyncio
+async def test_multiple_browser_responses_and_unannotated_choice(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        resp_a: Annotated[BrowserResponse, browser("firefox")]
+        resp_b: Annotated[BrowserResponse, browser("chromium")]
+        resp_c: BrowserResponse
+
+        async def to_item(self):
+            # When annotated deps include the default browser, unannotated deps
+            # should use the default.
+            assert isinstance(self.resp_a, BrowserResponse)
+            assert "engine:firefox" in self.resp_a.text
+            assert isinstance(self.resp_b, BrowserResponse)
+            assert "engine:chromium" in self.resp_b.text
+            assert isinstance(self.resp_c, BrowserResponse)
+            assert "engine:chromium" in self.resp_c.text
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["launches"] == {"chromium": 1, "firefox": 1}
+    assert http_state["calls"] == 0
+
+    # repeat with default override to firefox (unannotated should pick default)
+    browser_state2 = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("b.example")
+    @define
+    class Page2(ItemPage[SampleItem]):
+        resp_a: Annotated[BrowserResponse, browser("firefox")]
+        resp_b: Annotated[BrowserResponse, browser("chromium")]
+        resp_c: BrowserResponse
+
+        async def to_item(self):
+            # with default override to firefox, unannotated resp_c should use firefox
+            assert isinstance(self.resp_a, BrowserResponse)
+            assert "engine:firefox" in self.resp_a.text
+            assert isinstance(self.resp_b, BrowserResponse)
+            assert "engine:chromium" in self.resp_b.text
+            assert isinstance(self.resp_c, BrowserResponse)
+            assert "engine:firefox" in self.resp_c.text
+            return SAMPLE_ITEM
+
+    item = await get_item(
+        "https://b.example", SampleItem, registry=registry, default_browser="firefox"
+    )
+    assert item == SAMPLE_ITEM
+    assert browser_state2["launches"] == {"chromium": 1, "firefox": 1}
+    assert http_state["calls"] == 0
+
+    # scenario: resp_a uses firefox and resp_b uses webkit => unannotated picks
+    # alphabetical (firefox)
+    browser_state3 = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example/page3")
+    @define
+    class Page3(ItemPage[SampleItem]):
+        resp_a: Annotated[BrowserResponse, browser("firefox")]
+        resp_b: Annotated[BrowserResponse, browser("webkit")]
+        resp_c: BrowserResponse
+
+        async def to_item(self):
+            # resp_a (firefox), resp_b (webkit), resp_c should pick alphabetical (firefox)
+            assert isinstance(self.resp_a, BrowserResponse)
+            assert "engine:firefox" in self.resp_a.text
+            assert isinstance(self.resp_b, BrowserResponse)
+            assert "engine:webkit" in self.resp_b.text
+            assert isinstance(self.resp_c, BrowserResponse)
+            assert "engine:firefox" in self.resp_c.text
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example/page3", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state3["launches"] == {"firefox": 1, "webkit": 1}
+
+
+@pytest.mark.asyncio
+async def test_browser_html_annotation(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        html: Annotated[BrowserHtml, browser("firefox")]
+
+        async def to_item(self):
+            assert isinstance(self.html, BrowserHtml)
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["launches"] == {"firefox": 1}
+    assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_unsupported_browser_raises(registry, monkeypatch):
+    patch_aget(monkeypatch)
+    patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: Annotated[BrowserResponse, browser("foo")]
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    with pytest.raises(ValueError, match=r"Playwright does not provide engine"):
+        await get_item("https://a.example", SampleItem, registry=registry)
 
 
 @pytest.mark.asyncio

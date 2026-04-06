@@ -24,6 +24,7 @@ from web_poet.page_inputs import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+DEFAULT_BROWSER = "chromium"
 PROVIDERS: dict[type, Callable[..., Any]] = {}
 
 
@@ -44,12 +45,14 @@ async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResp
 
 
 async def _get_browser_response_from_http_request(
-    request: HttpRequest,
+    request: HttpRequest, browser: str | None = None
 ) -> BrowserResponse:
+    browser_name = browser or DEFAULT_BROWSER
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch()
+        engine = getattr(playwright, browser_name)
+        browser_obj = await engine.launch()
         try:
-            page = await browser.new_page()
+            page = await browser_obj.new_page()
             goto_response = await page.goto(str(request.url))
             html = await page.content()
             return BrowserResponse(
@@ -58,13 +61,16 @@ async def _get_browser_response_from_http_request(
                 status=None if goto_response is None else goto_response.status,
             )
         finally:
-            await browser.close()
+            await browser_obj.close()
 
 
 class ResponseFetcher:
-    def __init__(self, required_deps: set[type] | None = None) -> None:
+    def __init__(
+        self, required_deps: set[type] | None = None, default_browser: str | None = None
+    ) -> None:
         self.http_response: HttpResponse | None = None
-        self.browser_response: BrowserResponse | None = None
+        self._browser_responses: dict[str, BrowserResponse] = {}
+        self.default_browser = default_browser
         required_deps = required_deps or set()
         self._needs_http_response = bool(
             required_deps & {HttpResponse, HttpResponseBody, HttpResponseHeaders}
@@ -78,16 +84,23 @@ class ResponseFetcher:
             self.http_response = await _get_http_response_from_http_request(request)
         return self.http_response
 
-    async def get_browser_response(self, request: HttpRequest) -> BrowserResponse:
-        if self.browser_response is None:
-            self.browser_response = await _get_browser_response_from_http_request(
-                request
+    async def get_browser_response(
+        self, request: HttpRequest, browser: str | None = None
+    ) -> BrowserResponse:
+        browser_name = browser or self.default_browser or DEFAULT_BROWSER
+        if browser_name not in self._browser_responses:
+            self._browser_responses[
+                browser_name
+            ] = await _get_browser_response_from_http_request(
+                request, browser=browser_name
             )
-        return self.browser_response
+        return self._browser_responses[browser_name]
 
-    async def get_any_response(self, request: HttpRequest) -> AnyResponse:
+    async def get_any_response(
+        self, request: HttpRequest, browser: str | None = None
+    ) -> AnyResponse:
         if self._needs_browser_response:
-            browser_response = await self.get_browser_response(request)
+            browser_response = await self.get_browser_response(request, browser=browser)
             return AnyResponse(response=browser_response)
         http_response = await self.get_http_response(request)
         return AnyResponse(response=http_response)
@@ -118,14 +131,18 @@ async def _get_http_response(
 async def _get_browser_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserResponse:
-    return await response_fetcher.get_browser_response(request)
+    return await response_fetcher.get_browser_response(
+        request, browser=_kwargs.get("browser")
+    )
 
 
 @_provider_func
 async def _get_browser_html(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserHtml:
-    response = await response_fetcher.get_browser_response(request)
+    response = await response_fetcher.get_browser_response(
+        request, browser=_kwargs.get("browser")
+    )
     return response.html
 
 
@@ -159,7 +176,9 @@ async def _get_response_headers(
 async def _get_response_url(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> ResponseUrl:
-    response = await response_fetcher.get_any_response(request)
+    response = await response_fetcher.get_any_response(
+        request, browser=_kwargs.get("browser")
+    )
     return response.url
 
 
