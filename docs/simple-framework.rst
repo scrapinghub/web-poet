@@ -11,8 +11,16 @@ It is designed to be easy to use for quick proof-of-concepts, simple scripts,
 and for generating test fixtures. It can also serve as a reference
 implementation for framework authors.
 
-It is not a complete scraping framework like :doc:`scrapy <scrapy:index>`,
-though, which supports web-poet with :doc:`scrapy-poet <scrapy-poet:index>`.
+Limitations
+===========
+
+The main limitation of the simple framework is that it is not a complete
+scraping framework like :doc:`Scrapy <scrapy:index>`, which can support
+web-poet thanks to :doc:`scrapy-poet <scrapy-poet:index>`.
+
+As a web-poet framework, the simple framework also lacks support for
+:ref:`custom input classes <custom-inputs>`, :exc:`~web_poet.exceptions.Retry`
+and :exc:`~web_poet.exceptions.UseFallback`.
 
 Installation
 ============
