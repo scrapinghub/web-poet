@@ -3,7 +3,7 @@ import pytest
 from attrs import define
 
 from web_poet import Injectable, ItemPage, field
-from web_poet.page_inputs.browser import BrowserResponse
+from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
 from web_poet.page_inputs.http import (
     HttpRequest,
@@ -224,6 +224,33 @@ async def test_browser_response(registry, monkeypatch):
             assert str(self.response.url) == "https://c.example"
             assert self.response.status == 201
             assert self.response.text == "<html><body>hello</body></html>"
+            return SAMPLE_ITEM
+
+    item = await get_item("https://a.example", SampleItem, registry=registry)
+    assert item == SAMPLE_ITEM
+    assert browser_state["calls"] == 1
+    assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_browser_html_dependency(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch,
+        response_url="https://c.example",
+        html="<html><body>hello</body></html>",
+        status=200,
+    )
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        html: BrowserHtml
+
+        async def to_item(self):
+            assert isinstance(self.html, BrowserHtml)
+            assert str(self.html) == "<html><body>hello</body></html>"
+            assert self.html.xpath("//body/text()").get("").strip() == "hello"
             return SAMPLE_ITEM
 
     item = await get_item("https://a.example", SampleItem, registry=registry)

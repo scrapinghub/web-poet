@@ -7,6 +7,7 @@ from playwright.async_api import async_playwright
 
 from web_poet.page_inputs import (
     AnyResponse,
+    BrowserHtml,
     BrowserResponse,
     HttpClient,
     HttpRequest,
@@ -68,7 +69,9 @@ class ResponseFetcher:
         self._needs_http_response = bool(
             required_deps & {HttpResponse, HttpResponseBody, HttpResponseHeaders}
         )
-        self._needs_browser_response = BrowserResponse in required_deps
+        self._needs_browser_response = bool(
+            required_deps & {BrowserResponse, BrowserHtml}
+        )
 
     async def get_http_response(self, request: HttpRequest) -> HttpResponse:
         if self.http_response is None:
@@ -116,6 +119,14 @@ async def _get_browser_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserResponse:
     return await response_fetcher.get_browser_response(request)
+
+
+@_provider_func
+async def _get_browser_html(
+    request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
+) -> BrowserHtml:
+    response = await response_fetcher.get_browser_response(request)
+    return response.html
 
 
 @_provider_func
