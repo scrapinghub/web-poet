@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, get_args, get_origin
+from typing import Annotated, Any, TypeAlias, get_args, get_origin
 
 import andi
 from andi.typeutils import strip_annotated
 from playwright.async_api import async_playwright
 
+from web_poet import default_registry
 from web_poet.annotated import annotation_encode
 from web_poet.page_inputs import (
     BrowserHtml,
@@ -34,14 +35,31 @@ def browser(name: str) -> str:
     return annotation_encode(f"{ANNOTATION_PREFIX}{name}")
 
 
-async def _get_page(
-    request: HttpRequest,
+RequestLike: TypeAlias = HttpRequest | RequestUrl | str
+
+
+async def get_page(
+    request: RequestLike,
     page_cls: type[ItemPage],
     *,
     page_params: dict[Any, Any] | None = None,
     registry: RulesRegistry | None = None,
     default_browser: str | None = None,
 ) -> ItemPage:
+    """Return a page object built from *request* and *page_cls*.
+
+    *page_params* is a dict that the page object may access through the
+    :class:`~web_poet.page_inputs.PageParams` dependency.
+
+    *registry* is the :class:`~web_poet.rules.RulesRegistry` from where page
+    objects resolve their dependencies. If ``None``,
+    :data:`~web_poet.default_registry` is used.
+
+    *default_browser* is the Playwright browser engine to use when browser
+    inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
+    ``"webkit"``.
+    """
+    request, registry = _normalize_input(request, registry)
     plan = andi.plan(
         page_cls,
         is_injectable=is_injectable,
@@ -123,8 +141,16 @@ async def _get_page(
     return instances[page_cls]
 
 
+def _normalize_input(
+    request: RequestLike, registry: RulesRegistry
+) -> tuple[HttpRequest, RulesRegistry]:
+    if not isinstance(request, HttpRequest):
+        request = HttpRequest(url=request)
+    return request, registry or default_registry
+
+
 async def get_item(
-    request: str | RequestUrl | HttpRequest,
+    request: RequestLike,
     item_cls: type,
     *,
     page_params: dict[Any, Any] | None = None,
@@ -139,19 +165,16 @@ async def get_item(
     *registry* is the :class:`~web_poet.rules.RulesRegistry` from where a page
     object is selected to build the output item. If ``None``,
     :data:`~web_poet.default_registry` is used.
+
+    *default_browser* is the Playwright browser engine to use when browser
+    inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
+    ``"webkit"``.
     """
-    if not isinstance(request, HttpRequest):
-        request = HttpRequest(url=request)
-
-    if registry is None:  # pragma: no cover
-        from web_poet import default_registry  # noqa: PLC0415
-
-        registry = default_registry
-
+    request, registry = _normalize_input(request, registry)
     page_cls = registry.page_cls_for_item(request.url, item_cls)
     if page_cls is None:
         raise ValueError(f"No page object class found for URL: {request.url}")
-    page = await _get_page(
+    page = await get_page(
         request,
         page_cls,
         page_params=page_params,
