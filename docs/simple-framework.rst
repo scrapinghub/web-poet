@@ -5,7 +5,7 @@ Simple framework
 ================
 
 :mod:`web_poet.simple_framework` is a simple, built-in :ref:`web-poet framework
-<frameworks>` for sime use cases.
+<frameworks>` for simple use cases.
 
 It is designed to be easy to use for quick proof-of-concepts, simple scripts,
 and for generating test fixtures. It can also serve as a reference
@@ -62,8 +62,8 @@ Basic use
 
 .. _simple-browser:
 
-Browser support
-===============
+Browser
+=======
 
 The simple framework can use `Playwright
 <https://playwright.dev/python/docs/library>`_ to resolve browser dependencies
@@ -87,3 +87,22 @@ require. For example:
 
     class MyPageObject(WebPage[Item]):
         response = Annotated[BrowserResponse, browser("firefox")]
+
+Stats
+=====
+
+The simple framework supports :class:`~web_poet.page_inputs.stats.Stats`. You
+can pass an an object that implements the
+:class:`~web_poet.page_inputs.stats.StatCollector` interface when calling
+:func:`~web_poet.simple_framework.get_item` or
+:func:`~web_poet.simple_framework.get_page` to collect stats across multiple
+calls. For example:
+
+.. code-block:: python
+
+    from web_poet.page_inputs.stats import DictStatCollector
+    from web_poet.simple_framework import get_item
+
+    stats = DictStatCollector()
+    item1 = await get_item("http://example.com/book/1", Book, stats=stats)
+    item2 = await get_item("http://example.com/book/2", Book, stats=stats)

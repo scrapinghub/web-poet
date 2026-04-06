@@ -5,6 +5,7 @@ import pytest
 from attrs import define
 
 from web_poet import Injectable, ItemPage, field
+from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
 from web_poet.page_inputs.http import (
@@ -17,6 +18,7 @@ from web_poet.page_inputs.http import (
 )
 from web_poet.page_inputs.page_params import PageParams
 from web_poet.page_inputs.response import AnyResponse
+from web_poet.page_inputs.stats import DictStatCollector
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 from web_poet.simple_framework import _providers, browser, get_item
 
@@ -247,6 +249,44 @@ async def test_browser_response(registry, monkeypatch):
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_stats_no_collector_passed(registry):
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[dict]):
+        stats: Stats
+
+        async def to_item(self):
+            self.stats.set("a", "1")
+            self.stats.inc("b")
+            # return the underlying collector dict for assertion
+            return self.stats._stats._stats
+
+    item = await get_item("https://a.example", dict, registry=registry)
+    assert item == {"a": "1", "b": 1}
+
+
+@pytest.mark.asyncio
+async def test_stats_with_collector_passed(registry):
+    collector = DictStatCollector()
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        stats: Stats
+
+        async def to_item(self):
+            self.stats.set("latest", "ok")
+            self.stats.inc("hits")
+            return SAMPLE_ITEM
+
+    item = await get_item(
+        "https://a.example", SampleItem, registry=registry, stats=collector
+    )
+    assert item == SAMPLE_ITEM
+    assert collector.data == {"latest": "ok", "hits": 1}
 
 
 @pytest.mark.asyncio

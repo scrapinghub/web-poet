@@ -39,6 +39,13 @@ class DummyStatCollector(StatCollector):
             self._stats[key] = value
 
 
+class DictStatCollector(DummyStatCollector):
+    @property
+    def data(self) -> dict[str, Any]:
+        """Dictionary data."""
+        return self._stats
+
+
 class Stats:
     """Page input class to write key-value data pairs during parsing that you
     can inspect later. See :ref:`stats`.

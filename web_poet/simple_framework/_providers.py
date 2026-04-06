@@ -19,7 +19,9 @@ from web_poet.page_inputs import (
     PageParams,
     RequestUrl,
     ResponseUrl,
+    Stats,
 )
+from web_poet.page_inputs.stats import StatCollector
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -206,6 +208,11 @@ def _get_page_params(
 @_provider_func
 def _get_request(request: HttpRequest, **_kwargs) -> HttpRequest:
     return request
+
+
+@_provider_func
+def _get_stats(stats: StatCollector | None = None, **_kwargs) -> Stats:
+    return Stats(stat_collector=stats)
 
 
 @_provider_cls(HttpClient)

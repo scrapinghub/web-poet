@@ -14,6 +14,7 @@ from web_poet.page_inputs import (
     HttpRequest,
     RequestUrl,
 )
+from web_poet.page_inputs.stats import StatCollector
 from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
@@ -45,6 +46,7 @@ async def get_page(
     page_params: dict[Any, Any] | None = None,
     registry: RulesRegistry | None = None,
     default_browser: str | None = None,
+    stats: StatCollector | None = None,
 ) -> ItemPage:
     """Return a page object built from *request* and *page_cls*.
 
@@ -58,6 +60,10 @@ async def get_page(
     *default_browser* is the Playwright browser engine to use when browser
     inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
     ``"webkit"``.
+
+    *stats* is a :class:`~web_poet.page_inputs.stats.StatCollector` instance to
+    collect stats written by the page object through the
+    :class:`~web_poet.page_inputs.stats.Stats` dependency.
     """
     request, registry = _normalize_input(request, registry)
     plan = andi.plan(
@@ -129,6 +135,7 @@ async def get_page(
                 "page_cls": page_cls,
                 "registry": registry,
                 "response_fetcher": response_fetcher,
+                "stats": stats,
                 **kwargs,
             }
             if browser_kw is not None:
@@ -156,6 +163,7 @@ async def get_item(
     page_params: dict[Any, Any] | None = None,
     registry: RulesRegistry | None = None,
     default_browser: str | None = None,
+    stats: StatCollector | None = None,
 ) -> Any:
     """Return an *item_cls* object built from *request*.
 
@@ -169,6 +177,10 @@ async def get_item(
     *default_browser* is the Playwright browser engine to use when browser
     inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
     ``"webkit"``.
+
+    *stats* is a :class:`~web_poet.page_inputs.stats.StatCollector` instance to
+    collect stats written by the page object through the
+    :class:`~web_poet.page_inputs.stats.Stats` dependency.
     """
     request, registry = _normalize_input(request, registry)
     page_cls = registry.page_cls_for_item(request.url, item_cls)
@@ -180,5 +192,6 @@ async def get_item(
         page_params=page_params,
         registry=registry,
         default_browser=default_browser,
+        stats=stats,
     )
     return await ensure_awaitable(page.to_item())
