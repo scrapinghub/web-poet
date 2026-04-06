@@ -4,6 +4,7 @@ import json
 from collections import deque
 from typing import TYPE_CHECKING, Any
 
+import pytest
 from itemadapter import ItemAdapter
 from itemadapter.adapter import DictAdapter
 
@@ -117,3 +118,30 @@ def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
     assert loaded_output["foo"] == "Bar"
     actual_output = loaded_fixture.get_expected_output()
     assert actual_output["foo"] == "Bar"
+
+
+def test_fixture_asserts(book_list_html_response, tmp_path) -> None:
+    item = {"foo": "bar"}
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage)
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    loaded_fixture = Fixture(base_dir / "test-1")
+    loaded_fixture.assert_full_item_correct()
+    loaded_fixture.assert_field_correct("foo")
+    loaded_fixture.assert_no_extra_fields()
+    loaded_fixture.assert_no_toitem_exceptions()
+    with pytest.raises(KeyError):
+        loaded_fixture.assert_field_correct("bar")
+
+
+def test_fixture_asserts_standalone(book_list_html_response, tmp_path) -> None:
+    item = {"foo": "bar"}
+    type_name = get_fq_class_name(MyItemPage)
+    base_dir = tmp_path / "fixtures" / "unrelated"
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    loaded_fixture = Fixture(base_dir / "test-1")
+    loaded_fixture.assert_full_item_correct(type_name=type_name)
+    loaded_fixture.assert_field_correct("foo", type_name=type_name)
+    loaded_fixture.assert_no_extra_fields(type_name=type_name)
+    loaded_fixture.assert_no_toitem_exceptions(type_name=type_name)
+    with pytest.raises(KeyError):
+        loaded_fixture.assert_field_correct("bar", type_name=type_name)
