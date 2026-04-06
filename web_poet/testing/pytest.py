@@ -122,7 +122,7 @@ class WebPoetNoToItemException(_WebPoetItem):
 
 class WebPoetExpectedException(_WebPoetItem):
     def runtest(self) -> None:
-        self.fixture.assert_toitem_exception(self.user_properties)
+        self.fixture.assert_toitem_exception(user_props=self.user_properties)
 
     def reportinfo(self):
         return (
@@ -163,7 +163,9 @@ class WebPoetFieldItem(_WebPoetItem):
                 f"Skipping a test for item.{self.field_name} "
                 f"because to_item raised an exception"
             )
-        self.fixture.assert_field_correct(self.field_name, self.user_properties)
+        self.fixture.assert_field_correct(
+            self.field_name, user_props=self.user_properties
+        )
 
     def reportinfo(self):
         return self.path, 0, f"{self.fixture.short_name} @ {self.field_name}"

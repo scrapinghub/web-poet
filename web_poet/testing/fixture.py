@@ -18,7 +18,12 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
+from web_poet.utils import (
+    cached_method,
+    ensure_awaitable,
+    get_fq_class_name,
+    memoizemethod_noargs,
+)
 
 from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
@@ -78,7 +83,7 @@ class Fixture:
 
     @property
     def short_name(self) -> str:
-        """The name of this fixture"""
+        """The name of this fixture."""
         return f"{self.type_name}/{self.test_name}"
 
     @property
@@ -107,11 +112,13 @@ class Fixture:
             self.output_path.is_file() or self.exception_path.is_file()
         )
 
-    def get_page(self) -> ItemPage:
+    def get_page(self, type_name: str | None = None) -> ItemPage:
         """Return the page object created from the saved input."""
-        cls = load_class(self.type_name)
+        if type_name is None:
+            type_name = self.type_name
+        cls = load_class(type_name)
         if not issubclass(cls, ItemPage):
-            raise TypeError(f"{self.type_name} is not a descendant of ItemPage")
+            raise TypeError(f"{type_name} is not a descendant of ItemPage")
         storage = SerializedDataFileStorage(self.input_path)
         return deserialize(cls, storage.read())
 
@@ -130,13 +137,13 @@ class Fixture:
             return WebPoetTestItemAdapter
         return cast("type[ItemAdapter]", cls)
 
-    def _get_output(self) -> dict:
-        page = self.get_page()
+    def _get_output(self, type_name: str | None = None) -> dict:
+        page = self.get_page(type_name)
         item = asyncio.run(ensure_awaitable(page.to_item()))
         return self._get_adapter_cls()(item).asdict()
 
-    @memoizemethod_noargs
-    def get_output(self) -> dict:
+    @cached_method
+    def get_output(self, type_name: str | None = None) -> dict:
         """
         Return the output from the recreated Page Object,
         taking frozen time in account.
@@ -147,9 +154,9 @@ class Fixture:
             if frozen_time:
                 frozen_time_parsed = self._parse_frozen_time(frozen_time)
                 with time_machine.travel(frozen_time_parsed):
-                    return self._get_output()
+                    return self._get_output(type_name)
             else:
-                return self._get_output()
+                return self._get_output(type_name)
         except Exception as e:
             self._output_error = e
             raise
@@ -200,20 +207,24 @@ class Fixture:
         output = self.get_expected_output()
         return list(output.keys())
 
-    def assert_full_item_correct(self) -> None:
+    def assert_full_item_correct(self, *, type_name: str | None = None) -> None:
         """Get the output and assert that it matches the expected output."""
-        output = _format_json(self.get_output())
+        output = _format_json(self.get_output(type_name))
         expected_output = _format_json(self.get_expected_output())
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
 
     def assert_field_correct(
-        self, name: str, user_props: list[tuple[str, object]] | None = None
+        self,
+        name: str,
+        *,
+        type_name: str | None = None,
+        user_props: list[tuple[str, object]] | None = None,
     ) -> None:
-        """Assert that a certain field in the output matches the expected value"""
+        """Assert that a certain field in the output matches the expected value."""
         expected_field = json.loads(_format_json(self.get_expected_output()[name]))
         self._append_user_prop(user_props, "expected_value", expected_field)
-        actual_item = self.get_output()
+        actual_item = self.get_output(type_name)
         if name not in actual_item:
             raise FieldMissing(name)
         actual_field = json.loads(_format_json(actual_item[name]))
@@ -221,9 +232,9 @@ class Fixture:
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
 
-    def assert_no_extra_fields(self) -> None:
-        """Assert that there are no extra fields in the output"""
-        output = self.get_output()
+    def assert_no_extra_fields(self, *, type_name: str | None = None) -> None:
+        """Assert that there are no extra fields in the output."""
+        output = self.get_output(type_name)
         expected_output = self.get_expected_output()
         extra_field_keys = output.keys() - expected_output.keys()
         extra_fields = {key: output[key] for key in extra_field_keys}
@@ -236,20 +247,23 @@ class Fixture:
         """
         return self._output_error is not None
 
-    def assert_no_toitem_exceptions(self) -> None:
-        """Assert that to_item() can be run (doesn't raise an error)"""
-        self.get_output()
+    def assert_no_toitem_exceptions(self, *, type_name: str | None = None) -> None:
+        """Assert that to_item() can be run (doesn't raise an error)."""
+        self.get_output(type_name)
 
     def assert_toitem_exception(
-        self, user_props: list[tuple[str, object]] | None = None
+        self,
+        *,
+        type_name: str | None = None,
+        user_props: list[tuple[str, object]] | None = None,
     ) -> None:
-        """Assert that to_item() raises an exception of the expected type"""
+        """Assert that to_item() raises an exception of the expected type."""
         expected_exception = self.get_expected_exception()
         self._append_user_prop(
             user_props, "expected_exception", _exception_to_dict(expected_exception)
         )
         try:
-            self.get_output()
+            self.get_output(type_name)
         except Exception as ex:
             self._append_user_prop(
                 user_props, "actual_exception", _exception_to_dict(ex)
@@ -276,7 +290,7 @@ class Fixture:
         item: Any = None,
         exception: Exception | None = None,
         meta: dict | None = None,
-        fixture_name=None,
+        fixture_name: str | None = None,
     ) -> Self:
         """Save and return a fixture."""
         if not fixture_name:
