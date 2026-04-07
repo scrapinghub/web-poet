@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.23.3 (2026-04-07)
+0.23.3 (unreleased)
 -------------------
 
 * Added :ref:`ai` to the docs.
