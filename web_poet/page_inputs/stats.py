@@ -40,6 +40,10 @@ class DummyStatCollector(StatCollector):
 
 
 class DictStatCollector(DummyStatCollector):
+    """Simple :class:`~web_poet.page_inputs.stats.StatCollector` implementation
+    that stores stats in a :class:`dict` accessible through the :attr:`data`
+    property."""
+
     @property
     def data(self) -> dict[str, Any]:
         """Dictionary data."""
