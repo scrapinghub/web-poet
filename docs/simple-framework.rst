@@ -4,7 +4,7 @@
 Simple framework
 ================
 
-:mod:`web_poet.simple_framework` is a simple, built-in :ref:`web-poet framework
+:mod:`web_poet.simple_framework` is a built-in :ref:`web-poet framework
 <frameworks>` for simple use cases.
 
 It is designed to be easy to use for quick proof-of-concepts, simple scripts,

@@ -1,5 +1,4 @@
-"""Simple, built-in :ref:`web-poet framework <frameworks>` for simple use
-cases."""
+"""Built-in :ref:`web-poet framework <frameworks>` for simple use cases."""
 
 try:
     import niquests  # noqa: F401

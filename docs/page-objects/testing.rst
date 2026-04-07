@@ -83,7 +83,10 @@ it, that contains data for Page Object inputs and output::
 
 .. _fixture-save:
 
-Use :func:`web_poet.simple_framework.save_fixture` to create fixtures.
+:func:`web_poet.testing.Fixture.save` can be used to create a fixture inside a
+Page Object directory from an iterable of dependencies, an output item and an
+optional metadata dictionary. It can optionally take a name for the fixture
+directory. By default it uses incrementing names "test-1", "test-2" etc.
 
 .. note::
     ``output.json`` contains a result of ``page_object.to_item()`` converted to
