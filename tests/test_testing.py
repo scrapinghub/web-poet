@@ -208,3 +208,21 @@ def test_cli_rerun_fields_unknown_names(
         in captured.err
     )
     assert json.loads(captured.out) == {"foo": "bar"}
+
+
+def test_cli_rerun_standalone_fixture(
+    tmp_path: Path,
+    book_list_html_response: HttpResponse,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base_dir = tmp_path / "fixtures" / "unrelated"
+    fixture = Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+
+    cli_main(["rerun", str(fixture.path), "-p", get_fq_class_name(MyItemPage3)])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}

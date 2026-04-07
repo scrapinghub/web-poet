@@ -132,15 +132,16 @@ class Fixture:
         return meta_dict
 
     def _get_adapter_cls(self) -> type[ItemAdapter]:
+        """Return the adapter class set in the metadata."""
         cls = self.get_meta().get("adapter")
         if not cls:
             return WebPoetTestItemAdapter
         return cast("type[ItemAdapter]", cls)
 
-    def _get_output(self, type_name: str | None = None) -> dict:
+    def _get_output(self, type_name: str | None = None) -> dict[str, Any]:
         page = self.get_page(type_name)
         item = asyncio.run(ensure_awaitable(page.to_item()))
-        return self._get_adapter_cls()(item).asdict()
+        return self._item_to_dict(item)
 
     @cached_method
     def get_output(self, type_name: str | None = None) -> dict:
@@ -161,9 +162,19 @@ class Fixture:
             self._output_error = e
             raise
 
+    def _item_to_dict(self, item: Any) -> dict[str, Any]:
+        """Convert an item to a dict.
+
+        Uses the adapter class set in the metadata.
+        """
+        return self._get_adapter_cls()(item).asdict()
+
     def item_to_json(self, item: Any) -> str:
-        """Convert an item to a JSON string."""
-        return _format_json(self._get_adapter_cls()(item).asdict())
+        """Convert an item to a JSON string.
+
+        Uses the adapter class set in the metadata.
+        """
+        return _format_json(self._item_to_dict(item))
 
     @memoizemethod_noargs
     def get_expected_output(self) -> dict:
