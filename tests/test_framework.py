@@ -1,3 +1,8 @@
+import pytest
+
+pytest.importorskip("nirequests")
+pytest.importorskip("playwright")
+
 from typing import Annotated
 
 import niquests
