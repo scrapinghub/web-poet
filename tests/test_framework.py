@@ -1,6 +1,6 @@
 import pytest
 
-pytest.importorskip("nirequests")
+pytest.importorskip("niquests")
 pytest.importorskip("playwright")
 
 from typing import Annotated
