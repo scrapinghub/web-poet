@@ -42,7 +42,7 @@ def _get_http_response_from_nirequests_response(
 
 
 async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResponse:
-    response = await niquests.aget(request.url, timeout=300)
+    response = await niquests.aget(str(request.url), timeout=300)
     return _get_http_response_from_nirequests_response(request, response)
 
 
@@ -110,6 +110,7 @@ class ResponseFetcher:
 
 def _provider(func: Callable[..., Any]):
     dep = get_type_hints(func).get("return")
+    assert isinstance(dep, type)
     PROVIDERS[dep] = func
     return func
 

@@ -94,7 +94,11 @@ class Poet:
             externally_provided=set(PROVIDERS),
         )
         instances: dict[Any, Any] = {}
-        required_deps = {strip_annotated(fn_or_cls) for fn_or_cls, _ in plan}
+        required_deps: set[type] = set()
+        for fn_or_cls, _ in plan:
+            base = strip_annotated(fn_or_cls)
+            assert isinstance(base, type)
+            required_deps.add(base)
         response_fetcher = ResponseFetcher(
             required_deps=required_deps, default_browser=self._default_browser
         )
@@ -136,6 +140,7 @@ class Poet:
         for fn_or_cls, kwargs_spec in plan:
             kwargs = kwargs_spec.kwargs(instances)
             base = strip_annotated(fn_or_cls)
+            assert isinstance(base, type)
             browser_kw: str | None = None
             if (
                 base in {BrowserResponse, BrowserHtml}
