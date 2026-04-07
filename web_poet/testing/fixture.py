@@ -3,9 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from inspect import iscoroutine
 from pathlib import Path
-from threading import Thread
 from typing import TYPE_CHECKING, Any, cast
 from zoneinfo import ZoneInfo
 
@@ -20,7 +18,7 @@ from web_poet.serialization import (
     load_class,
     serialize,
 )
-from web_poet.utils import get_fq_class_name, memoizemethod_noargs
+from web_poet.utils import ensure_awaitable, get_fq_class_name, memoizemethod_noargs
 
 from ..serialization.utils import _exception_from_dict, _exception_to_dict, _format_json
 from .exceptions import (
@@ -59,32 +57,6 @@ def _get_available_filename(template: str, directory: str | os.PathLike[str]) ->
         if not result.exists():
             return result.name
         i += 1
-
-
-def _maybe_sync_run_coro(maybe_coroutine: Any) -> Any:
-    if not iscoroutine(maybe_coroutine):
-        return maybe_coroutine
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(maybe_coroutine)
-    else:
-        result: dict[str, object] = {}
-
-        def worker() -> None:
-            try:
-                result["value"] = asyncio.run(maybe_coroutine)
-            except Exception as exc:
-                result["exc"] = exc
-
-        thread = Thread(target=worker)
-        thread.start()
-        thread.join()
-
-        if "exc" in result:
-            raise cast("BaseException", result["exc"])
-
-        return result.get("value")
 
 
 class Fixture:
@@ -160,7 +132,7 @@ class Fixture:
 
     def _get_output(self) -> dict:
         page = self.get_page()
-        item = _maybe_sync_run_coro(page.to_item())
+        item = asyncio.run(ensure_awaitable(page.to_item()))
         return self._get_adapter_cls()(item).asdict()
 
     @memoizemethod_noargs
