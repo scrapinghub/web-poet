@@ -158,10 +158,14 @@ class WebPoetFieldItem(_WebPoetItem):
         self.field_name = field_name
 
     def runtest(self) -> None:
-        if self.fixture.to_item_raised():
+        if (
+            self.fixture.to_item_raised()
+            and not self.fixture._can_read_field_separately(self.field_name)
+        ):
             raise pytest.skip(
                 f"Skipping a test for item.{self.field_name} "
-                f"because to_item raised an exception"
+                f"because to_item raised an exception and this field "
+                f"can't be read separately"
             )
         self.fixture.assert_field_correct(self.field_name, self.user_properties)
 

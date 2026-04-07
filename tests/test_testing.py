@@ -227,9 +227,10 @@ def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> Non
         page_inputs=[book_list_html_response],
         expected_output={"foo": "foo", "bar": "bar"},
     )
-    result = pytester.runpytest()
-    result.assert_outcomes(failed=1, skipped=3)
+    result = pytester.runpytest("-vv")
+    result.assert_outcomes(failed=2, passed=1, skipped=1)
     result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
+    result.stdout.fnmatch_lines("*foo*PASSED*")
 
 
 def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
