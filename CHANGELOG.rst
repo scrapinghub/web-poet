@@ -2,6 +2,14 @@
 Changelog
 =========
 
+0.23.3 (2026-04-07)
+-------------------
+
+* Added :ref:`ai` to the docs.
+
+* Made the documentation more LLM-friendly, with markdown versions of every
+  page and :file:`llms.txt` and :file:`llms-full.txt` files.
+
 0.23.2 (2026-03-10)
 -------------------
 
