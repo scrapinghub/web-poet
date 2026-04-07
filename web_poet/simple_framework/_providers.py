@@ -108,28 +108,20 @@ class ResponseFetcher:
         return AnyResponse(response=http_response)
 
 
-def _provider_func(func: Callable[..., Any]):
+def _provider(func: Callable[..., Any]):
     dep = get_type_hints(func).get("return")
     PROVIDERS[dep] = func
     return func
 
 
-def _provider_cls(dep: type):
-    def _provider(cls: Any) -> Any:
-        PROVIDERS[dep] = cls
-        return cls
-
-    return _provider
-
-
-@_provider_func
+@_provider
 async def _get_http_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponse:
     return await response_fetcher.get_http_response(request)
 
 
-@_provider_func
+@_provider
 async def _get_browser_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserResponse:
@@ -138,7 +130,7 @@ async def _get_browser_response(
     )
 
 
-@_provider_func
+@_provider
 async def _get_browser_html(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserHtml:
@@ -148,17 +140,17 @@ async def _get_browser_html(
     return response.html
 
 
-@_provider_func
+@_provider
 def _get_request_body(request: HttpRequest, **_kwargs) -> HttpRequestBody:
     return HttpRequestBody(request.body)
 
 
-@_provider_func
+@_provider
 def _get_request_headers(request: HttpRequest, **_kwargs) -> HttpRequestHeaders:
     return request.headers
 
 
-@_provider_func
+@_provider
 async def _get_response_body(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponseBody:
@@ -166,7 +158,7 @@ async def _get_response_body(
     return response.body
 
 
-@_provider_func
+@_provider
 async def _get_response_headers(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> HttpResponseHeaders:
@@ -174,7 +166,7 @@ async def _get_response_headers(
     return response.headers
 
 
-@_provider_func
+@_provider
 async def _get_response_url(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> ResponseUrl:
@@ -184,7 +176,7 @@ async def _get_response_url(
     return response.url
 
 
-@_provider_func
+@_provider
 async def _get_any_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> AnyResponse:
@@ -193,32 +185,28 @@ async def _get_any_response(
     )
 
 
-@_provider_func
+@_provider
 def _get_request_url(request: HttpRequest, **_kwargs) -> RequestUrl:
     return request.url
 
 
-@_provider_func
+@_provider
 def _get_page_params(
     page_params: dict[Any, Any] | None = None, **_kwargs
 ) -> PageParams:
     return PageParams(page_params or {})
 
 
-@_provider_func
+@_provider
 def _get_request(request: HttpRequest, **_kwargs) -> HttpRequest:
     return request
 
 
-@_provider_func
+@_provider
 def _get_stats(stats: StatCollector | None = None, **_kwargs) -> Stats:
     return Stats(stat_collector=stats)
 
 
-@_provider_cls(HttpClient)
-class _HttpClient:
-    def __init__(self, **_kwargs):
-        pass
-
-    async def get(self, url: str) -> HttpResponse:
-        return await _get_http_response_from_http_request(HttpRequest(url=url))
+@_provider
+def _get_http_client(**_kwargs) -> HttpClient:
+    return HttpClient(request_downloader=_get_http_response_from_http_request)

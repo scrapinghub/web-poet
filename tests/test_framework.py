@@ -5,6 +5,7 @@ import pytest
 from attrs import define
 
 from web_poet import Injectable, ItemPage, field
+from web_poet.exceptions import HttpResponseError
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
@@ -183,6 +184,33 @@ async def test_http_client(registry, monkeypatch):
     item = await poet.get_item("https://a.example", SampleItem)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_http_client_allow_status(registry, monkeypatch):
+    http_state = patch_aget(monkeypatch, status=404)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @registry.handle_urls("a.example")
+    @define
+    class Page(ItemPage[SampleItem]):
+        http_client: HttpClient
+
+        async def to_item(self):
+            # Default behavior: 404 raises HttpResponseError
+            with pytest.raises(HttpResponseError):
+                await self.http_client.get("https://a.example")
+
+            # Allow 404 via allow_status
+            resp = await self.http_client.get("https://a.example", allow_status=404)
+            assert resp.status == 404
+            return SAMPLE_ITEM
+
+    poet = Poet(registry=registry)
+    item = await poet.get_item("https://a.example", SampleItem)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 2
     assert browser_state["calls"] == 0
 
 
