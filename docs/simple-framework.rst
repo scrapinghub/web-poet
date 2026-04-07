@@ -47,17 +47,19 @@ Basic use
 .. code-block:: python
 
     from web_poet import consume_modules
-    from web_poet.simple_framework import get_item, get_page
+    from web_poet.simple_framework import Poet
     from web_poet.utils import ensure_awaitable
 
     # Load your page objects.
     consume_modules("myproject.pages")
 
+    poet = Poet()
+
     # Get an item directly.
-    item = await get_item("http://example.com/book/1", Book)
+    item = await poet.get_item("http://example.com/book/1", Book)
 
     # Or, if you prefer, get a page object first.
-    page = await get_page("http://example.com/book/1", BookPage)
+    page = await poet.get_page("http://example.com/book/1", BookPage)
     item = await ensure_awaitable(page.to_item())
 
 .. _simple-browser:
@@ -70,9 +72,9 @@ The simple framework can use `Playwright
 like :class:`~web_poet.page_inputs.browser.BrowserHtml` or
 :class:`~web_poet.page_inputs.browser.BrowserResponse`.
 
-Chromium is used by default. You can override that with the ``default_browser``
-parameter of :func:`~web_poet.simple_framework.get_item`. Page objects can also
-annotate their browser dependencies with
+Chromium is used by default. You can override that by passing
+``default_browser`` to :class:`~web_poet.simple_framework.Poet`. Page objects
+can also annotate their browser dependencies with
 :func:`~web_poet.simple_framework.browser` to specify which browser they
 require. For example:
 
@@ -91,18 +93,32 @@ require. For example:
 Stats
 =====
 
-The simple framework supports :class:`~web_poet.page_inputs.stats.Stats`. You
-can pass an an object that implements the
-:class:`~web_poet.page_inputs.stats.StatCollector` interface when calling
-:func:`~web_poet.simple_framework.get_item` or
-:func:`~web_poet.simple_framework.get_page` to collect stats across multiple
-calls. For example:
+The simple framework supports :class:`~web_poet.page_inputs.stats.Stats`.
+
+By default, :class:`~web_poet.simple_framework.Poet` creates a
+:class:`~web_poet.page_inputs.stats.DictStatCollector` object, exposes it to
+any page object that requests :class:`~web_poet.page_inputs.stats.Stats`, and
+exposes that object as the :data:`stats <web_poet.simple_framework.Poet.stats>`
+attribute of the poet:
 
 .. code-block:: python
 
-    from web_poet.page_inputs.stats import DictStatCollector
-    from web_poet.simple_framework import get_item
+    from web_poet.simple_framework import Poet
 
-    stats = DictStatCollector()
-    item1 = await get_item("http://example.com/book/1", Book, stats=stats)
-    item2 = await get_item("http://example.com/book/2", Book, stats=stats)
+    poet = Poet()
+    item1 = await poet.get_item("http://example.com/book/1", Book)
+    item2 = await poet.get_item("http://example.com/book/2", Book)
+    all_stats = poet.stats
+
+:class:`~web_poet.simple_framework.Poet` also supports passing a custom stats
+collector:
+
+.. code-block:: python
+
+    from web_poet.page_inputs.stats import StatCollector
+
+
+    class MyStatCollector(StatCollector): ...
+
+
+    poet = Poet(stats=MyStatCollector())

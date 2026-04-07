@@ -197,7 +197,6 @@ Then copy the following code into ``tutorial-project/run.py``:
 
 .. literalinclude:: /tutorial-project/run.py
    :language: python
-   :lines: 1-4, 6-12, 18
 
 Execute that code:
 
@@ -309,10 +308,9 @@ In the code above:
 After you update your ``tutorial-project/run.py`` script to request a
 ``CategorizedBook`` item:
 
-.. literalinclude:: /tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run_categorized.py
    :language: python
-   :lines: 1-3, 5-8, 13-15, 17-18
-   :emphasize-lines: 4, 10
+   :emphasize-lines: 6, 14
 
 And you execute it again:
 
@@ -434,10 +432,9 @@ additional requests to find the value.
 You can now update your ``tutorial-project/run.py`` script to pass that
 parameter to ``get_item``:
 
-.. literalinclude:: /tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run_params.py
    :language: python
-   :lines: 13-17
-   :emphasize-lines: 4
+   :emphasize-lines: 15
 
 When you execute ``tutorial-project/run.py`` now, execution should take less
 time, but the result should be the same as before:
