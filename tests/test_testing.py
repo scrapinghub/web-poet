@@ -8,8 +8,9 @@ import pytest
 from itemadapter import ItemAdapter
 from itemadapter.adapter import DictAdapter
 
-from web_poet import WebPage
+from web_poet import HttpResponse, WebPage
 from web_poet.testing import Fixture
+from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
@@ -145,3 +146,65 @@ def test_fixture_asserts_standalone(book_list_html_response, tmp_path) -> None:
     loaded_fixture.assert_no_toitem_exceptions(type_name=type_name)
     with pytest.raises(KeyError):
         loaded_fixture.assert_field_correct("bar", type_name=type_name)
+
+
+class MyItemPage3(WebPage):
+    async def to_item(self) -> dict:
+        return {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun(
+    tmp_path: Path,
+    book_list_html_response: HttpResponse,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
+    fixture = Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+
+    cli_main(["rerun", str(fixture.path)])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
+
+
+def test_cli_rerun_fields(
+    tmp_path: Path,
+    book_list_html_response: HttpResponse,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
+    fixture = Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
+
+
+def test_cli_rerun_fields_unknown_names(
+    tmp_path: Path,
+    book_list_html_response: HttpResponse,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
+    fixture = Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
+    captured = capsys.readouterr()
+    assert (
+        "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
+        in captured.err
+    )
+    assert json.loads(captured.out) == {"foo": "bar"}

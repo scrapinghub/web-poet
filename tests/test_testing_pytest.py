@@ -19,7 +19,6 @@ from web_poet.exceptions import HttpRequestError, HttpResponseError, Retry, UseF
 from web_poet.page_inputs.client import _SavedResponseData
 from web_poet.page_inputs.url import RequestUrl
 from web_poet.testing import Fixture
-from web_poet.testing.__main__ import main as cli_main
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
@@ -411,55 +410,6 @@ def test_httpclient_request_exception(pytester, book_list_html_response) -> None
     assert (fixture.input_path / "HttpClient-0-exception.json").exists()
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
-
-
-class MyItemPage3(WebPage):
-    async def to_item(self) -> dict:
-        return {"foo": "bar", "egg": "spam", "hello": "world"}
-
-
-def test_cli_rerun(pytester, book_list_html_response, capsys) -> None:
-    fixture = _save_fixture(
-        pytester,
-        page_cls=MyItemPage3,
-        page_inputs=[book_list_html_response],
-        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
-    )
-    cli_main(["rerun", str(fixture.path)])
-    captured = capsys.readouterr()
-    assert not captured.err
-    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
-
-
-def test_cli_rerun_fields(pytester, book_list_html_response, capsys) -> None:
-    fixture = _save_fixture(
-        pytester,
-        page_cls=MyItemPage3,
-        page_inputs=[book_list_html_response],
-        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
-    )
-    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
-    captured = capsys.readouterr()
-    assert not captured.err
-    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
-
-
-def test_cli_rerun_fields_unknown_names(
-    pytester, book_list_html_response, capsys
-) -> None:
-    fixture = _save_fixture(
-        pytester,
-        page_cls=MyItemPage3,
-        page_inputs=[book_list_html_response],
-        expected_output={"foo": "bar2", "egg": "spam", "hello": "world"},
-    )
-    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
-    captured = capsys.readouterr()
-    assert (
-        "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
-        in captured.err
-    )
-    assert json.loads(captured.out) == {"foo": "bar"}
 
 
 class RetryItemPage(WebPage):
