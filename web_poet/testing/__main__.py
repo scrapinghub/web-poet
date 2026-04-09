@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from web_poet.serialization import load_class
 from web_poet.testing import Fixture
 
 if TYPE_CHECKING:
@@ -13,7 +14,8 @@ if TYPE_CHECKING:
 
 def rerun(args: argparse.Namespace) -> None:
     fixture = Fixture(Path(args.fixture_path))
-    item = fixture.get_output(type_name=args.page_object)
+    page_cls: type = load_class(args.page_object)
+    item = fixture.get_output(page_cls)
     if args.fields:
         fields = args.fields.split(",")
         unknown_fields = sorted(set(fields) - item.keys())
@@ -27,7 +29,7 @@ def rerun(args: argparse.Namespace) -> None:
     print(fixture.item_to_json(item))
 
 
-def main(argv: Sequence[str] | None = None):
+def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="python -m web_poet.testing",
         description="web-poet testing utilities",
@@ -42,7 +44,7 @@ def main(argv: Sequence[str] | None = None):
     )
     parser_rerun.add_argument("fixture_path", type=str, help="Path to a fixture")
     parser_rerun.add_argument(
-        "--page-object", "-p", type=str, help="Page object type name"
+        "--page-object", "-p", type=str, help="Page object type name", required=True
     )
     parser_rerun.add_argument(
         "--fields", "-f", type=str, help="Field names, comma-separated"

@@ -72,19 +72,9 @@ class Fixture:
         self._output_error: Exception | None = None
 
     @property
-    def type_name(self) -> str:
-        """The name of the type being tested."""
-        return self.path.parent.name
-
-    @property
     def test_name(self) -> str:
         """The name of the test."""
         return self.path.name
-
-    @property
-    def short_name(self) -> str:
-        """The name of this fixture."""
-        return f"{self.type_name}/{self.test_name}"
 
     @property
     def input_path(self) -> Path:
@@ -112,15 +102,14 @@ class Fixture:
             self.output_path.is_file() or self.exception_path.is_file()
         )
 
-    def get_page(self, type_name: str | None = None) -> ItemPage:
+    def get_page(self, page_cls: type) -> ItemPage:
         """Return the page object created from the saved input."""
-        if type_name is None:
-            type_name = self.type_name
-        cls = load_class(type_name)
-        if not issubclass(cls, ItemPage):
-            raise TypeError(f"{type_name} is not a descendant of ItemPage")
+        if not issubclass(page_cls, ItemPage):
+            raise TypeError(
+                f"{type(page_cls).__name__} is not a descendant of ItemPage"
+            )
         storage = SerializedDataFileStorage(self.input_path)
-        return deserialize(cls, storage.read())
+        return deserialize(page_cls, storage.read())
 
     def get_meta(self) -> dict:
         """Return the test metadata."""
@@ -138,13 +127,13 @@ class Fixture:
             return WebPoetTestItemAdapter
         return cast("type[ItemAdapter]", cls)
 
-    def _get_output(self, type_name: str | None = None) -> dict[str, Any]:
-        page = self.get_page(type_name)
+    def _get_output(self, page_cls: type) -> dict[str, Any]:
+        page = self.get_page(page_cls)
         item = asyncio.run(ensure_awaitable(page.to_item()))
         return self._item_to_dict(item)
 
     @cached_method
-    def get_output(self, type_name: str | None = None) -> dict:
+    def get_output(self, page_cls: type) -> dict:
         """
         Return the output from the recreated Page Object,
         taking frozen time in account.
@@ -155,9 +144,9 @@ class Fixture:
             if frozen_time:
                 frozen_time_parsed = self._parse_frozen_time(frozen_time)
                 with time_machine.travel(frozen_time_parsed):
-                    return self._get_output(type_name)
+                    return self._get_output(page_cls)
             else:
-                return self._get_output(type_name)
+                return self._get_output(page_cls)
         except Exception as e:
             self._output_error = e
             raise
@@ -218,9 +207,9 @@ class Fixture:
         output = self.get_expected_output()
         return list(output.keys())
 
-    def assert_full_item_correct(self, *, type_name: str | None = None) -> None:
+    def assert_full_item_correct(self, page_cls: type) -> None:
         """Get the output and assert that it matches the expected output."""
-        output = _format_json(self.get_output(type_name))
+        output = _format_json(self.get_output(page_cls))
         expected_output = _format_json(self.get_expected_output())
         if output != expected_output:
             raise ItemValueIncorrect(output, expected_output)
@@ -228,14 +217,14 @@ class Fixture:
     def assert_field_correct(
         self,
         name: str,
+        page_cls: type,
         *,
-        type_name: str | None = None,
         user_props: list[tuple[str, object]] | None = None,
     ) -> None:
         """Assert that a certain field in the output matches the expected value."""
         expected_field = json.loads(_format_json(self.get_expected_output()[name]))
         self._append_user_prop(user_props, "expected_value", expected_field)
-        actual_item = self.get_output(type_name)
+        actual_item = self.get_output(page_cls)
         if name not in actual_item:
             raise FieldMissing(name)
         actual_field = json.loads(_format_json(actual_item[name]))
@@ -243,9 +232,9 @@ class Fixture:
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
 
-    def assert_no_extra_fields(self, *, type_name: str | None = None) -> None:
+    def assert_no_extra_fields(self, page_cls: type) -> None:
         """Assert that there are no extra fields in the output."""
-        output = self.get_output(type_name)
+        output = self.get_output(page_cls)
         expected_output = self.get_expected_output()
         extra_field_keys = output.keys() - expected_output.keys()
         extra_fields = {key: output[key] for key in extra_field_keys}
@@ -258,14 +247,14 @@ class Fixture:
         """
         return self._output_error is not None
 
-    def assert_no_toitem_exceptions(self, *, type_name: str | None = None) -> None:
+    def assert_no_toitem_exceptions(self, page_cls: type) -> None:
         """Assert that to_item() can be run (doesn't raise an error)."""
-        self.get_output(type_name)
+        self.get_output(page_cls)
 
     def assert_toitem_exception(
         self,
+        page_cls: type,
         *,
-        type_name: str | None = None,
         user_props: list[tuple[str, object]] | None = None,
     ) -> None:
         """Assert that to_item() raises an exception of the expected type."""
@@ -274,7 +263,7 @@ class Fixture:
             user_props, "expected_exception", _exception_to_dict(expected_exception)
         )
         try:
-            self.get_output(type_name)
+            self.get_output(page_cls)
         except Exception as ex:
             self._append_user_prop(
                 user_props, "actual_exception", _exception_to_dict(ex)
