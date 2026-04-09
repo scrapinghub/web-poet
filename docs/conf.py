@@ -5,6 +5,7 @@
 # http://www.sphinx-doc.org/en/master/config
 
 import sys
+import warnings
 from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
@@ -27,7 +28,7 @@ author = "Zyte Group Ltd"
 # The short X.Y version
 version = ""
 # The full version, including alpha/beta/rc tags
-release = "0.23.2"
+release = "0.23.3"
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,9 +41,7 @@ release = "0.23.2"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.viewcode",
+    "sphinx_scrapy",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -180,40 +179,24 @@ epub_exclude_files = ["search.html"]
 
 autodoc_member_order = "bysource"
 
-# -- Options for intersphinx extension ---------------------------------------
+# -- Filter warnings ---------------------------------------------------------
 
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {
-    "attrs": (
-        "https://www.attrs.org/en/stable/",
-        None,
+warnings.filterwarnings(
+    "ignore",
+    message=(
+        "You should only be importing web_poet.example to follow the web-poet "
+        "tutorial, never as part of production code."
     ),
-    "form2request": (
-        "https://form2request.readthedocs.io/en/latest/",
-        None,
-    ),
-    "python": (
-        "https://docs.python.org/3",
-        None,
-    ),
-    "scrapy": (
-        "https://docs.scrapy.org/en/latest",
-        None,
-    ),
-    "url-matcher": (
-        "https://url-matcher.readthedocs.io/en/latest/",
-        None,
-    ),
-    "parsel": (
-        "https://parsel.readthedocs.io/en/latest/",
-        None,
-    ),
-    "multidict": (
-        "https://multidict.aio-libs.org/en/latest/",
-        None,
-    ),
-    "scrapy-poet": (
-        "https://scrapy-poet.readthedocs.io/en/latest/",
-        None,
-    ),
-}
+    category=UserWarning,
+)
+
+# -- sphinx-scrapy -----------------------------------------------------------
+
+scrapy_intersphinx_enable = [
+    "attrs",
+    "form2request",
+    "multidict",
+    "parsel",
+    "scrapy-poet",
+    "url-matcher",
+]

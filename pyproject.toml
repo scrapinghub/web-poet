@@ -1,5 +1,5 @@
 [tool.bumpversion]
-current_version = "0.23.2"
+current_version = "0.23.3"
 commit = true
 tag = true
 tag_name = "{new_version}"
@@ -178,3 +178,7 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
+
+[tool.sphinx-scrapy]
+# Keep in sync with .github/workflows/tests-ubuntu.yml.
+python-version = "3.13"
