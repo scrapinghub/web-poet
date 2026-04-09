@@ -11,6 +11,7 @@ from attrs import define
 
 from web_poet import Injectable, ItemPage, field
 from web_poet.exceptions import HttpResponseError
+from web_poet.framework import Poet, _providers, browser
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
@@ -26,7 +27,6 @@ from web_poet.page_inputs.page_params import PageParams
 from web_poet.page_inputs.response import AnyResponse
 from web_poet.page_inputs.stats import DictStatCollector
 from web_poet.page_inputs.url import RequestUrl, ResponseUrl
-from web_poet.simple_framework import Poet, _providers, browser
 
 
 @define

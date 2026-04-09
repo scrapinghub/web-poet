@@ -31,7 +31,7 @@ setup(
         "packaging >= 20.0",
     ],
     extras_require={
-        "simple_framework": [
+        "framework": [
             "niquests >= 3.14.0",
             "playwright >= 1.20.0",
         ],

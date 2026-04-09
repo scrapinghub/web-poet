@@ -32,7 +32,7 @@ a dictionary of :ref:`page parameters <page-params>`.
 You can implement dependency injection with the andi_ library, which handles
 signature inspection, :data:`~typing.Optional` and :data:`~typing.Union`
 annotations, as well as indirect dependencies. For practical examples, see the
-source code of :mod:`web_poet.simple_framework` and of :doc:`scrapy-poet
+source code of :mod:`web_poet.framework` and of :doc:`scrapy-poet
 <scrapy-poet:index>`.
 
 .. _andi: https://github.com/scrapinghub/andi

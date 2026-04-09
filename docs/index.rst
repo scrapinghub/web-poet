@@ -39,7 +39,7 @@ web-poet
    :caption: Using page objects
    :maxdepth: 1
 
-   simple-framework
+   framework
 
 .. toctree::
    :caption: Writing frameworks

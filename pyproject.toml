@@ -32,7 +32,7 @@ allow_untyped_defs = true
 allow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = "web_poet.simple_framework"
+module = "web_poet.framework"
 ignore_errors = true
 
 [[tool.mypy.overrides]]

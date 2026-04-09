@@ -1,7 +1,7 @@
 import asyncio
 
 from web_poet import consume_modules
-from web_poet.simple_framework import Poet
+from web_poet.framework import Poet
 
 from tutorial.items import CategorizedBook
 

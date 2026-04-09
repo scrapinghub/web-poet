@@ -46,7 +46,7 @@ def _normalize_request(request: RequestLike) -> HttpRequest:
 
 
 class Poet:
-    """Manager of the :ref:`simple framework <simple_framework>`.
+    """Manager of the :ref:`built-in framework <framework>`.
 
     *registry* is the :class:`~web_poet.rules.RulesRegistry` from where page
     objects resolve their dependencies. If ``None``,

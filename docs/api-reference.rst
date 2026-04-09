@@ -157,8 +157,8 @@ Utils
     :members:
 
 
-Simple framework
-================
+Built-in framework
+==================
 
-.. automodule:: web_poet.simple_framework
+.. automodule:: web_poet.framework
    :members:
