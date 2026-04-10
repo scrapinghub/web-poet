@@ -39,6 +39,17 @@ class DummyStatCollector(StatCollector):
             self._stats[key] = value
 
 
+class DictStatCollector(DummyStatCollector):
+    """Simple :class:`~web_poet.page_inputs.stats.StatCollector` implementation
+    that stores stats in a :class:`dict` accessible through the :attr:`data`
+    property."""
+
+    @property
+    def data(self) -> dict[str, Any]:
+        """Dictionary data."""
+        return self._stats
+
+
 class Stats:
     """Page input class to write key-value data pairs during parsing that you
     can inspect later. See :ref:`stats`.

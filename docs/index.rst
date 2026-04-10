@@ -36,6 +36,12 @@ web-poet
    page-objects/frameworks
 
 .. toctree::
+   :caption: Using page objects
+   :maxdepth: 1
+
+   framework
+
+.. toctree::
    :caption: Writing frameworks
    :maxdepth: 1
 
