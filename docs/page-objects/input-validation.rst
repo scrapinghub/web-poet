@@ -62,8 +62,10 @@ For example:
    def validate_input(self):
        if self.css(".product-id::text") is not None:
            return
-       if self.css(".http-503-error"):
+       if self.css(".http-429-error"):
            raise Retry()
+       if self.css(".http-503-error"):
+           raise Retry(max_retries=2)
        if self.css(".product"):
            raise UseFallback()
        if self.css(".product-list"):
