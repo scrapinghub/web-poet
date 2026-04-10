@@ -12,6 +12,7 @@ from attrs import define
 from web_poet import Injectable, ItemPage, field
 from web_poet.exceptions import HttpResponseError
 from web_poet.framework import Poet, _providers, browser
+from web_poet.framework._api import _normalize_request
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
@@ -808,3 +809,21 @@ async def test_multiple_browser_response_dependencies(monkeypatch):
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
+
+
+@pytest.mark.parametrize(
+    "input_value",
+    [
+        HttpRequest(url="https://a.example"),
+        RequestUrl("https://a.example"),
+        ResponseUrl("https://a.example"),
+        "https://a.example",
+    ],
+)
+def test_normalize_request(input_value):
+    result = _normalize_request(input_value)
+    assert isinstance(result, HttpRequest)
+    assert str(result.url) == "https://a.example"
+    assert isinstance(result.url, RequestUrl)
+    if isinstance(input_value, HttpRequest):
+        assert result is input_value

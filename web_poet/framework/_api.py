@@ -12,9 +12,9 @@ from web_poet.page_inputs import (
     BrowserHtml,
     BrowserResponse,
     HttpRequest,
-    RequestUrl,
 )
 from web_poet.page_inputs.stats import DictStatCollector, StatCollector
+from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
@@ -36,7 +36,7 @@ def browser(name: str) -> str:
     return annotation_encode(f"{ANNOTATION_PREFIX}{name}")
 
 
-RequestLike: TypeAlias = HttpRequest | RequestUrl | str
+RequestLike: TypeAlias = HttpRequest | RequestUrl | ResponseUrl | str
 
 
 def _normalize_request(request: RequestLike) -> HttpRequest:
