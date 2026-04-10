@@ -14,7 +14,7 @@ from attrs import define
 
 from web_poet import Injectable, ItemPage, field
 from web_poet.exceptions import HttpRequestError, HttpResponseError
-from web_poet.framework import Framework, _providers, browser
+from web_poet.framework import Framework, _providers, playwright_engine
 from web_poet.framework._api import _normalize_request
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
@@ -404,7 +404,7 @@ async def test_request_specific_browser_annotation(monkeypatch):
 
     @define
     class Page(ItemPage[SampleItem]):
-        response: Annotated[BrowserResponse, browser("firefox")]
+        response: Annotated[BrowserResponse, playwright_engine("firefox")]
 
         async def to_item(self):
             return SAMPLE_ITEM
@@ -428,7 +428,7 @@ async def test_default_browser_param_override(monkeypatch):
         async def to_item(self):
             return SAMPLE_ITEM
 
-    framework = Framework(default_browser="webkit")
+    framework = Framework(default_playwright_engine="webkit")
     item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 0
@@ -442,8 +442,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
 
     @define
     class Page(ItemPage[SampleItem]):
-        resp_a: Annotated[BrowserResponse, browser("firefox")]
-        resp_b: Annotated[BrowserResponse, browser("chromium")]
+        resp_a: Annotated[BrowserResponse, playwright_engine("firefox")]
+        resp_b: Annotated[BrowserResponse, playwright_engine("chromium")]
         resp_c: BrowserResponse
 
         async def to_item(self):
@@ -468,8 +468,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
 
     @define
     class Page2(ItemPage[SampleItem]):
-        resp_a: Annotated[BrowserResponse, browser("firefox")]
-        resp_b: Annotated[BrowserResponse, browser("chromium")]
+        resp_a: Annotated[BrowserResponse, playwright_engine("firefox")]
+        resp_b: Annotated[BrowserResponse, playwright_engine("chromium")]
         resp_c: BrowserResponse
 
         async def to_item(self):
@@ -482,7 +482,7 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
             assert "engine:firefox" in self.resp_c.text
             return SAMPLE_ITEM
 
-    framework = Framework(default_browser="firefox")
+    framework = Framework(default_playwright_engine="firefox")
     item = await framework.get_item("https://b.example", Page2)
     assert item == SAMPLE_ITEM
     assert browser_state2["launches"] == {"chromium": 1, "firefox": 1}
@@ -494,8 +494,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
 
     @define
     class Page3(ItemPage[SampleItem]):
-        resp_a: Annotated[BrowserResponse, browser("firefox")]
-        resp_b: Annotated[BrowserResponse, browser("webkit")]
+        resp_a: Annotated[BrowserResponse, playwright_engine("firefox")]
+        resp_b: Annotated[BrowserResponse, playwright_engine("webkit")]
         resp_c: BrowserResponse
 
         async def to_item(self):
@@ -521,7 +521,7 @@ async def test_browser_html_annotation(monkeypatch):
 
     @define
     class Page(ItemPage[SampleItem]):
-        html: Annotated[BrowserHtml, browser("firefox")]
+        html: Annotated[BrowserHtml, playwright_engine("firefox")]
 
         async def to_item(self):
             assert isinstance(self.html, BrowserHtml)
@@ -541,7 +541,7 @@ async def test_unsupported_browser_raises(monkeypatch):
 
     @define
     class Page(ItemPage[SampleItem]):
-        response: Annotated[BrowserResponse, browser("foo")]
+        response: Annotated[BrowserResponse, playwright_engine("foo")]
 
         async def to_item(self):
             return SAMPLE_ITEM

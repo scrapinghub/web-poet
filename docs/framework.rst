@@ -114,9 +114,10 @@ like :class:`~web_poet.page_inputs.browser.BrowserHtml` or
 :class:`~web_poet.page_inputs.browser.BrowserResponse`.
 
 Chromium is used by default. You can override that by passing
-``default_browser`` to :class:`~web_poet.framework.Framework`. Page objects can also
-annotate their browser dependencies with :func:`~web_poet.framework.browser` to
-specify which browser they require. For example:
+``default_playwright_engine`` to :class:`~web_poet.framework.Framework`. Page
+objects can also annotate their Playwright engine dependencies with
+:func:`~web_poet.framework.playwright_engine` to specify which engine they
+require. For example:
 
 .. code-block:: python
 
@@ -124,11 +125,11 @@ specify which browser they require. For example:
 
     from web_poet import WebPage, Item
     from web_poet.page_inputs.browser import BrowserResponse
-    from web_poet.framework import browser
+    from web_poet.framework import playwright_engine
 
 
     class MyPageObject(WebPage[Item]):
-        response = Annotated[BrowserResponse, browser("firefox")]
+        response = Annotated[BrowserResponse, playwright_engine("firefox")]
 
 Stats
 =====

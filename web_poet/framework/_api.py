@@ -19,19 +19,20 @@ from web_poet.pages import ItemPage, is_injectable
 from web_poet.rules import RulesRegistry
 from web_poet.utils import ensure_awaitable
 
-from ._providers import DEFAULT_BROWSER, PROVIDERS, ResponseFetcher
+from ._providers import DEFAULT_PLAYWRIGHT_ENGINE, PROVIDERS, ResponseFetcher
 
-ANNOTATION_PREFIX = "browser."
+ANNOTATION_PREFIX = "playwright_engine."
 
 
-def browser(name: str) -> str:
-    """Helper to create a hashable metadata value for Annotated browser names.
+def playwright_engine(name: str) -> str:
+    """Helper to create a hashable metadata value for Annotated Playwright
+    engine names.
 
     Example usage:
 
     .. code-block:: python
 
-        Annotated[BrowserResponse, browser("firefox")]
+        Annotated[BrowserResponse, playwright_engine("firefox")]
     """
     return annotation_encode(f"{ANNOTATION_PREFIX}{name}")
 
@@ -52,8 +53,8 @@ class Framework:
     objects resolve their dependencies. If ``None``,
     :data:`~web_poet.default_registry` is used.
 
-    *default_browser* is the Playwright browser engine to use when browser
-    inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
+    *default_playwright_engine* is the Playwright browser engine to use when
+    browser inputs do not specify one. Examples: ``"chromium"``, ``"firefox"``,
     ``"webkit"``.
 
     *stats* is a :class:`~web_poet.page_inputs.stats.StatCollector` instance to
@@ -68,11 +69,11 @@ class Framework:
         self,
         *,
         registry: RulesRegistry | None = None,
-        default_browser: str | None = None,
+        default_playwright_engine: str | None = None,
         stats: StatCollector | None = None,
     ) -> None:
         self._registry = registry or default_registry
-        self._default_browser = default_browser
+        self._default_playwright_engine = default_playwright_engine
         self.stats: StatCollector = stats or DictStatCollector()
 
     async def get_page(
@@ -100,11 +101,13 @@ class Framework:
             assert isinstance(base, type)
             required_deps.add(base)
         response_fetcher = ResponseFetcher(
-            required_deps=required_deps, default_browser=self._default_browser
+            required_deps=required_deps,
+            default_playwright_engine=self._default_playwright_engine,
         )
 
-        # first pass: collect explicit browser names from Annotated browser deps
-        explicit_browsers: set[str] = set()
+        # first pass: collect explicit Playwright engine names from Annotated
+        # browser deps
+        explicit_engines: set[str] = set()
         for fn_or_cls, _ in plan:
             base = strip_annotated(fn_or_cls)
             if (
@@ -115,21 +118,25 @@ class Framework:
                 if meta and isinstance(meta[0], str):
                     m = meta[0]
                     if m.startswith(ANNOTATION_PREFIX):
-                        explicit_browsers.add(m.split(".", 1)[1])
+                        explicit_engines.add(m.split(".", 1)[1])
 
-        # choose browser for un-annotated browser deps per rules
-        if not explicit_browsers:
-            chosen_browser_for_unannotated = self._default_browser or DEFAULT_BROWSER
-        elif self._default_browser and self._default_browser in explicit_browsers:
-            chosen_browser_for_unannotated = self._default_browser
+        if not explicit_engines:
+            chosen_engine_for_unannotated = (
+                self._default_playwright_engine or DEFAULT_PLAYWRIGHT_ENGINE
+            )
+        elif (
+            self._default_playwright_engine
+            and self._default_playwright_engine in explicit_engines
+        ):
+            chosen_engine_for_unannotated = self._default_playwright_engine
         else:
-            chosen_browser_for_unannotated = min(explicit_browsers)
+            chosen_engine_for_unannotated = min(explicit_engines)
 
         # validate requested browsers are available in playwright before doing work
-        needed_browsers = set(explicit_browsers)
+        needed_browsers = set(explicit_engines)
         # include chosen browser for unannotated deps if there are any browser deps
         if required_deps & {BrowserResponse, BrowserHtml}:
-            needed_browsers.add(chosen_browser_for_unannotated)
+            needed_browsers.add(chosen_engine_for_unannotated)
         if needed_browsers:
             async with async_playwright() as playwright:
                 for b in needed_browsers:
@@ -141,7 +148,7 @@ class Framework:
             kwargs = kwargs_spec.kwargs(instances)
             base = strip_annotated(fn_or_cls)
             assert isinstance(base, type)
-            browser_kw: str | None = None
+            playwright_engine_kw: str | None = None
             if (
                 base in {BrowserResponse, BrowserHtml}
                 and get_origin(fn_or_cls) is Annotated
@@ -150,9 +157,9 @@ class Framework:
                 if meta and isinstance(meta[0], str):
                     m = meta[0]
                     if m.startswith(ANNOTATION_PREFIX):
-                        browser_kw = m.split(".", 1)[1]
+                        playwright_engine_kw = m.split(".", 1)[1]
             elif base in {BrowserResponse, BrowserHtml}:
-                browser_kw = chosen_browser_for_unannotated
+                playwright_engine_kw = chosen_engine_for_unannotated
 
             provider = PROVIDERS.get(base)
             if provider is not None:
@@ -165,8 +172,8 @@ class Framework:
                     "stats": self.stats,
                     **kwargs,
                 }
-                if browser_kw is not None:
-                    call_kwargs["browser"] = browser_kw
+                if playwright_engine_kw is not None:
+                    call_kwargs["playwright_engine"] = playwright_engine_kw
                 value = await ensure_awaitable(provider(**call_kwargs))
             else:
                 value = await ensure_awaitable(base(**kwargs))

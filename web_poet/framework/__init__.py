@@ -9,9 +9,9 @@ except ImportError as exception:
     )
     raise ImportError(message) from exception
 
-from ._api import Framework, browser
+from ._api import Framework, playwright_engine
 
 __all__ = [
     "Framework",
-    "browser",
+    "playwright_engine",
 ]

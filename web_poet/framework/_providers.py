@@ -28,7 +28,7 @@ from web_poet.page_inputs.stats import StatCollector
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-DEFAULT_BROWSER = "chromium"
+DEFAULT_PLAYWRIGHT_ENGINE = "chromium"
 PROVIDERS: dict[type, Callable[..., Any]] = {}
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResp
 
 
 async def _get_browser_response_from_http_request(
-    request: HttpRequest, browser: str | None = None
+    request: HttpRequest, playwright_engine: str | None = None
 ) -> BrowserResponse:
     if request.method.upper() != "GET":
         raise HttpRequestError(
@@ -74,10 +74,10 @@ async def _get_browser_response_from_http_request(
             request=request,
         )
 
-    browser_name = browser or DEFAULT_BROWSER
+    engine_name = playwright_engine or DEFAULT_PLAYWRIGHT_ENGINE
     try:
         async with async_playwright() as playwright:
-            engine = getattr(playwright, browser_name)
+            engine = getattr(playwright, engine_name)
             browser_obj = await engine.launch()
             try:
                 page = await browser_obj.new_page()
@@ -96,11 +96,13 @@ async def _get_browser_response_from_http_request(
 
 class ResponseFetcher:
     def __init__(
-        self, required_deps: set[type] | None = None, default_browser: str | None = None
+        self,
+        required_deps: set[type] | None = None,
+        default_playwright_engine: str | None = None,
     ) -> None:
         self.http_response: HttpResponse | None = None
         self._browser_responses: dict[str, BrowserResponse] = {}
-        self.default_browser = default_browser
+        self.default_playwright_engine = default_playwright_engine
         required_deps = required_deps or set()
         self._needs_http_response = bool(
             required_deps & {HttpResponse, HttpResponseBody, HttpResponseHeaders}
@@ -115,22 +117,28 @@ class ResponseFetcher:
         return self.http_response
 
     async def get_browser_response(
-        self, request: HttpRequest, browser: str | None = None
+        self, request: HttpRequest, playwright_engine: str | None = None
     ) -> BrowserResponse:
-        browser_name = browser or self.default_browser or DEFAULT_BROWSER
-        if browser_name not in self._browser_responses:
+        engine_name = (
+            playwright_engine
+            or self.default_playwright_engine
+            or DEFAULT_PLAYWRIGHT_ENGINE
+        )
+        if engine_name not in self._browser_responses:
             self._browser_responses[
-                browser_name
+                engine_name
             ] = await _get_browser_response_from_http_request(
-                request, browser=browser_name
+                request, playwright_engine=engine_name
             )
-        return self._browser_responses[browser_name]
+        return self._browser_responses[engine_name]
 
     async def get_any_response(
-        self, request: HttpRequest, browser: str | None = None
+        self, request: HttpRequest, playwright_engine: str | None = None
     ) -> AnyResponse:
         if self._needs_browser_response:
-            browser_response = await self.get_browser_response(request, browser=browser)
+            browser_response = await self.get_browser_response(
+                request, playwright_engine=playwright_engine
+            )
             return AnyResponse(response=browser_response)
         http_response = await self.get_http_response(request)
         return AnyResponse(response=http_response)
@@ -155,7 +163,7 @@ async def _get_browser_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserResponse:
     return await response_fetcher.get_browser_response(
-        request, browser=_kwargs.get("browser")
+        request, playwright_engine=_kwargs.get("playwright_engine")
     )
 
 
@@ -164,7 +172,7 @@ async def _get_browser_html(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> BrowserHtml:
     response = await response_fetcher.get_browser_response(
-        request, browser=_kwargs.get("browser")
+        request, playwright_engine=_kwargs.get("playwright_engine")
     )
     return response.html
 
@@ -200,7 +208,7 @@ async def _get_response_url(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> ResponseUrl:
     response = await response_fetcher.get_any_response(
-        request, browser=_kwargs.get("browser")
+        request, playwright_engine=_kwargs.get("playwright_engine")
     )
     return response.url
 
@@ -210,7 +218,7 @@ async def _get_any_response(
     request: HttpRequest, response_fetcher: ResponseFetcher, **_kwargs
 ) -> AnyResponse:
     return await response_fetcher.get_any_response(
-        request, browser=_kwargs.get("browser")
+        request, playwright_engine=_kwargs.get("playwright_engine")
     )
 
 
