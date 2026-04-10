@@ -617,6 +617,58 @@ async def test_http_request_body():
 
 
 @pytest.mark.asyncio
+async def test_browser_non_get():
+    request = HttpRequest(url="https://a.example", method="POST")
+
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    framework = Framework()
+    with pytest.raises(HttpRequestError, match=r"plain GET"):
+        await framework.get_item(request, Page)
+
+
+@pytest.mark.asyncio
+async def test_browser_request_headers():
+    request = HttpRequest(url="https://a.example", headers={"X-Foo": "bar"})
+
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    framework = Framework()
+    with pytest.raises(
+        HttpRequestError, match=r"does not support requests with headers"
+    ):
+        await framework.get_item(request, Page)
+
+
+@pytest.mark.asyncio
+async def test_browser_request_body():
+    request = HttpRequest(url="https://a.example", body=b"foo")
+
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    framework = Framework()
+    with pytest.raises(
+        HttpRequestError, match=r"does not support requests with a body"
+    ):
+        await framework.get_item(request, Page)
+
+
+@pytest.mark.asyncio
 async def test_http_request_headers():
     @define
     class Page(ItemPage[SampleItem]):

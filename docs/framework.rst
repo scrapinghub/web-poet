@@ -22,6 +22,10 @@ As a web-poet framework, the built-in framework also lacks support for
 :ref:`custom input classes <custom-inputs>`, :exc:`~web_poet.exceptions.Retry`
 and :exc:`~web_poet.exceptions.UseFallback`.
 
+Also, :ref:`browser inputs <framework-browser>` only support plain GET
+requests. Requests with a non-GET method, headers or a body raise
+:exc:`~web_poet.exceptions.http.HttpRequestError`.
+
 Installation
 ============
 

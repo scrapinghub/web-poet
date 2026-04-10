@@ -53,6 +53,25 @@ async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResp
 async def _get_browser_response_from_http_request(
     request: HttpRequest, browser: str | None = None
 ) -> BrowserResponse:
+    if request.method.upper() != "GET":
+        raise HttpRequestError(
+            "Browser provider only supports plain GET requests with a URL (no "
+            "headers or body)",
+            request=request,
+        )
+    if request.headers and len(request.headers):
+        raise HttpRequestError(
+            "Browser provider does not support requests with headers; only "
+            "plain GET with a URL is supported",
+            request=request,
+        )
+    if request.body and len(request.body):
+        raise HttpRequestError(
+            "Browser provider does not support requests with a body; only "
+            "plain GET with a URL is supported",
+            request=request,
+        )
+
     browser_name = browser or DEFAULT_BROWSER
     try:
         async with async_playwright() as playwright:
