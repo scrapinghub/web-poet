@@ -6,6 +6,7 @@ pytest.importorskip("playwright")
 from typing import Annotated
 
 import niquests
+import niquests.structures
 import pytest
 from attrs import define
 
@@ -829,3 +830,32 @@ def test_normalize_request(input_value):
     assert isinstance(result.url, RequestUrl)
     if isinstance(input_value, HttpRequest):
         assert result is input_value
+
+
+def test_get_http_response_from_nirequests_response():
+    niquests_response = niquests.Response()
+    niquests_response.url = "https://a.example"
+    niquests_response.status_code = 200
+    niquests_response._content = b"foo"
+    niquests_response.headers = niquests.structures.CaseInsensitiveDict(
+        [
+            ("User-Agent", "mozilla"),
+            # Niquests response headers never contain multiple headers with the
+            # same name, their values are merged with commas:
+            # https://niquests.readthedocs.io/en/latest/user/quickstart.html#response-headers
+            ("X-Multi", "a, b"),
+        ]
+    )
+    request = HttpRequest(url="https://a.example")
+    http_response = _providers._get_http_response_from_nirequests_response(
+        request, niquests_response
+    )
+
+    assert isinstance(http_response, HttpResponse)
+    assert str(http_response.url) == "https://a.example"
+    assert http_response.status == 200
+    assert isinstance(http_response.body, HttpResponseBody)
+    assert bytes(http_response.body) == b"foo"
+    assert isinstance(http_response.headers, HttpResponseHeaders)
+    assert http_response.headers.get("user-agent") == "mozilla"
+    assert http_response.headers.get("x-multi") == "a, b"
