@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, get_type_hints
 import niquests
 from playwright.async_api import async_playwright
 
+from web_poet.exceptions import HttpRequestError
 from web_poet.page_inputs import (
     AnyResponse,
     BrowserHtml,
@@ -42,7 +43,10 @@ def _get_http_response_from_nirequests_response(
 
 
 async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResponse:
-    response = await niquests.aget(str(request.url), timeout=300)
+    try:
+        response = await niquests.aget(str(request.url), timeout=300)
+    except Exception as exc:
+        raise HttpRequestError(str(exc), request=request) from exc
     return _get_http_response_from_nirequests_response(request, response)
 
 
@@ -50,20 +54,23 @@ async def _get_browser_response_from_http_request(
     request: HttpRequest, browser: str | None = None
 ) -> BrowserResponse:
     browser_name = browser or DEFAULT_BROWSER
-    async with async_playwright() as playwright:
-        engine = getattr(playwright, browser_name)
-        browser_obj = await engine.launch()
-        try:
-            page = await browser_obj.new_page()
-            goto_response = await page.goto(str(request.url))
-            html = await page.content()
-            return BrowserResponse(
-                url=page.url or str(request.url),
-                html=html,
-                status=None if goto_response is None else goto_response.status,
-            )
-        finally:
-            await browser_obj.close()
+    try:
+        async with async_playwright() as playwright:
+            engine = getattr(playwright, browser_name)
+            browser_obj = await engine.launch()
+            try:
+                page = await browser_obj.new_page()
+                goto_response = await page.goto(str(request.url))
+                html = await page.content()
+                return BrowserResponse(
+                    url=page.url or str(request.url),
+                    html=html,
+                    status=None if goto_response is None else goto_response.status,
+                )
+            finally:
+                await browser_obj.close()
+    except Exception as exc:
+        raise HttpRequestError(str(exc), request=request) from exc
 
 
 class ResponseFetcher:

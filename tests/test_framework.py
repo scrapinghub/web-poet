@@ -11,7 +11,7 @@ import pytest
 from attrs import define
 
 from web_poet import Injectable, ItemPage, field
-from web_poet.exceptions import HttpResponseError
+from web_poet.exceptions import HttpRequestError, HttpResponseError
 from web_poet.framework import Framework, _providers, browser
 from web_poet.framework._api import _normalize_request
 from web_poet.page_inputs import Stats
@@ -859,3 +859,64 @@ def test_get_http_response_from_nirequests_response():
     assert isinstance(http_response.headers, HttpResponseHeaders)
     assert http_response.headers.get("user-agent") == "mozilla"
     assert http_response.headers.get("x-multi") == "a, b"
+
+
+@pytest.mark.asyncio
+async def test_nirequests_exceptions_are_wrapped(monkeypatch):
+    async def fake_aget(_url, timeout=300):
+        raise RuntimeError("niquests boom")
+
+    monkeypatch.setattr(niquests, "aget", fake_aget)
+
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: HttpResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    with pytest.raises(HttpRequestError) as exc:
+        await Framework().get_item("https://a.example", Page)
+
+    assert isinstance(exc.value, HttpRequestError)
+    assert isinstance(exc.value.request, HttpRequest)
+    assert str(exc.value.request.url) == "https://a.example"
+    assert "niquests boom" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_playwright_exceptions_are_wrapped(monkeypatch):
+    class BadEngine:
+        async def launch(self):
+            raise RuntimeError("playwright boom")
+
+    class DummyPlaywright:
+        chromium = BadEngine()
+        firefox = BadEngine()
+        webkit = BadEngine()
+
+    class DummyContext:
+        async def __aenter__(self):
+            return DummyPlaywright()
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    def fake_async_playwright():
+        return DummyContext()
+
+    monkeypatch.setattr(_providers, "async_playwright", fake_async_playwright)
+
+    @define
+    class Page(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    with pytest.raises(HttpRequestError) as exc:
+        await Framework().get_item("https://a.example", Page)
+
+    assert isinstance(exc.value.request, HttpRequest)
+    assert str(exc.value.request.url) == "https://a.example"
+    assert "playwright boom" in str(exc.value)
