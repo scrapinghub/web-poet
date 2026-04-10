@@ -69,7 +69,7 @@ Basic use
     framework = Framework()
     item = await framework.get_item("https://books.example.com/book/1", BookPage)
 
-    # Or, if you prefer, get a page object first.
+    # Or, if you prefer, get a page object instance first.
     page = await framework.get_page("https://books.example.com/book/1", BookPage)
     item = await ensure_awaitable(page.to_item())
 
