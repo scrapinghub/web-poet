@@ -1,5 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "web-poet"
+version = "0.23.3"
+description = "Zyte's Page Object pattern for web scraping"
+readme = "README.rst"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Zyte Group Ltd", email = "opensource@zyte.com" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "attrs >= 21.3.0",
+    "parsel >= 1.5.0",
+    "url-matcher >= 0.4.0",
+    "multidict >= 0.5.0",
+    "w3lib >= 1.22.0",
+    "async-lru >= 1.0.3",
+    "itemadapter >= 0.8.0",
+    "andi >= 0.5.0",
+    "python-dateutil >= 2.7.0",
+    "time-machine >= 2.7.1",
+    "packaging >= 20.0",
+]
+
+[project.optional-dependencies]
+framework = [
+    "niquests >= 3.14.0",
+    "playwright >= 1.20.0",
+]
+
+[project.entry-points."pytest11"]
+"web-poet" = "web_poet.testing.pytest"
+
+[project.urls]
+Homepage = "https://github.com/scrapinghub/web-poet"
+Documentation = "https://web-poet.readthedocs.io/en/stable/"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/web_poet",
+    "/tests",
+    "/docs",
+    "/CHANGELOG.rst",
+    "/tox.ini",
+    "/README.rst",
+]
+
 [tool.bumpversion]
-current_version = "0.23.3"
 commit = true
 tag = true
 tag_name = "{new_version}"
@@ -12,10 +76,6 @@ regex = true
 
 [[tool.bumpversion.files]]
 filename = "docs/conf.py"
-
-[[tool.bumpversion.files]]
-filename = "setup.py"
-parse = "version\\s*=\\s*['\"](?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 
 [tool.coverage.report]
 exclude_also = [
@@ -30,10 +90,6 @@ implicit_reexport = false
 module = "tests.*"
 allow_untyped_defs = true
 allow_incomplete_defs = true
-
-[[tool.mypy.overrides]]
-module = "web_poet.example"
-ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "tests.po_lib_to_return.*"
@@ -171,7 +227,6 @@ ignore = [
 "web_poet/testing/__init__.py" = ["F401", "F403"]
 "web_poet/testing/pytest.py" = ["D102"]
 "tests/**" = ["B018", "D102", "S"]
-"web_poet/example.py" = ["S"]
 # Documentation examples may miss docstrings and include undefined, example
 # names.
 "docs/**" = ["D102", "F821"]
