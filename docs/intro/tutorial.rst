@@ -221,18 +221,15 @@ only needs 2 inputs from you:
 -   the desired output, either a :ref:`page object class <page-object-classes>`
     or, in this case, an :ref:`item class <items>`.
 
-Notice that, if you pass an item class to
-:meth:`~web_poet.framework.Framework.get_item`, you must also call
-:func:`~web_poet.rules.consume_modules` once before your first call to
-:meth:`~web_poet.framework.Framework.get_item`, so that all your page object
-classes get registered and :class:`~web_poet.framework.Framework` is able to
-determine which one to use. You pass :func:`~web_poet.rules.consume_modules`
-the import paths of the modules where your page object classes are defined.
-After loading those modules, :meth:`~web_poet.handle_urls` decorators register
-the page object classes that they decorate into
+If you pass an item class to :meth:`~web_poet.framework.Framework.get_item`,
+call :func:`~web_poet.rules.consume_modules` once beforehand so your page
+object classes are registered and the framework can select the correct one.
+Pass to :func:`~web_poet.rules.consume_modules` the import paths of the modules
+that define your page object classes. When those modules are loaded, the
+:meth:`~web_poet.handle_urls` decorators register the classes in
 :data:`web_poet.default_registry`, which
-:meth:`~web_poet.framework.Framework.get_item` uses to determine which page
-object class to use based on its input parameters (URL and item class).
+:meth:`~web_poet.framework.Framework.get_item` consults to match a page object
+class to the given URL and item class.
 
 Your web-poet framework can take care of everything else:
 
