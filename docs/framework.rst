@@ -45,21 +45,59 @@ Basic use
 
 .. code-block:: python
 
-    from web_poet import consume_modules
+    from dataclasses import dataclass
+    from web_poet import WebPage
     from web_poet.framework import Poet
     from web_poet.utils import ensure_awaitable
 
-    # Load your page objects.
-    consume_modules("myproject.pages")
+
+    @dataclass
+    class Book:
+        title: str
+
+
+    class BookPage(WebPage[Book]):
+        @field
+        def title(self) -> str:
+            return self.response.css("h1::text").get()
+
 
     poet = Poet()
-
-    # Get an item directly.
-    item = await poet.get_item("http://example.com/book/1", Book)
+    item = await poet.get_item("https://books.example.com/book/1", BookPage)
 
     # Or, if you prefer, get a page object first.
-    page = await poet.get_page("http://example.com/book/1", BookPage)
+    page = await poet.get_page("https://books.example.com/book/1", BookPage)
     item = await ensure_awaitable(page.to_item())
+
+Choosing a page object class automatically
+==========================================
+
+If you decorate your page object classes with :func:`~web_poet.handle_urls` and
+make sure they are imported, e.g. with :func:`~web_poet.consume_modules`, you
+can pass :meth:`~web_poet.framework.Poet.get_item` an item class, and let it
+determine which page object class to use:
+
+.. code-block:: python
+
+    from dataclasses import dataclass
+    from web_poet import WebPage, handle_urls
+    from web_poet.framework import Poet
+
+
+    @dataclass
+    class Book:
+        title: str
+
+
+    @handle_urls("books.example.com")
+    class BookPage(WebPage[Book]):
+        @field
+        def title(self) -> str:
+            return self.response.css("h1::text").get()
+
+
+    poet = Poet()
+    item = await poet.get_item("https://books.example.com/book/1", Book)
 
 .. _framework-browser:
 
@@ -104,8 +142,8 @@ attribute of the poet:
     from web_poet.framework import Poet
 
     poet = Poet()
-    item1 = await poet.get_item("http://example.com/book/1", Book)
-    item2 = await poet.get_item("http://example.com/book/2", Book)
+    item1 = await poet.get_item("http://example.com/book/1", BookPage)
+    item2 = await poet.get_item("http://example.com/book/2", BookPage)
     all_stats = poet.stats
 
 :class:`~web_poet.framework.Poet` also supports passing a custom stats

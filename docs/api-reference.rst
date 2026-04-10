@@ -126,11 +126,13 @@ Apply Rules
 
 See :ref:`rules` for more context about its use cases and some examples.
 
-.. data:: web_poet.default_registry
+.. currentmodule:: web_poet
+
+.. data:: default_registry
 
     Default :class:`~rules.RulesRegistry`.
 
-.. function:: web_poet.handle_urls
+.. function:: handle_urls
 
     :meth:`~rules.RulesRegistry.handle_urls` of the :data:`default_registry`.
 

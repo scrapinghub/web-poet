@@ -177,18 +177,26 @@ class Poet:
     async def get_item(
         self,
         request: RequestLike,
-        item_cls: type,
+        item_or_page_cls: type,
         *,
         page_params: dict[Any, Any] | None = None,
     ) -> Any:
-        """Return an *item_cls* object built from *request*.
+        """Return an item built from *request*.
+
+        *item_or_page_cls* is either an item class or a page object class. If
+        it is an item class, the page class to use is determined by the
+        :class:`~web_poet.rules.RulesRegistry` passed to
+        :class:`~web_poet.framework.Poet`.
 
         *page_params* is a dict that the page object may access through the
         :class:`~web_poet.page_inputs.PageParams` dependency
         """
         request = _normalize_request(request)
-        page_cls = self._registry.page_cls_for_item(request.url, item_cls)
-        if page_cls is None:
-            raise ValueError(f"No page object class found for URL: {request.url}")
+        if issubclass(item_or_page_cls, ItemPage):
+            page_cls = item_or_page_cls
+        else:
+            page_cls = self._registry.page_cls_for_item(request.url, item_or_page_cls)
+            if page_cls is None:
+                raise ValueError(f"No page object class found for URL: {request.url}")
         page = await self.get_page(request, page_cls, page_params=page_params)
         return await ensure_awaitable(page.to_item())
