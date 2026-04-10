@@ -92,10 +92,6 @@ allow_untyped_defs = true
 allow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = "web_poet.framework"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = "tests.po_lib_to_return.*"
 # Ignore mypy errors since the Page Objects contain arbitrary reference values
 # used for assertions which have varying types. This upsets mypy.
