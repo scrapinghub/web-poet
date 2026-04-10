@@ -210,26 +210,26 @@ And the ``print(item)`` statement should output the following:
 
     Book(title="The Exiled")
 
-In this tutorial you use :class:`web_poet.framework.Poet`.
+In this tutorial you use :class:`web_poet.framework.Framework`.
 :mod:`web_poet.framework` is a built-in :ref:`web-poet framework <frameworks>`
 for simple use cases, including this tutorial.
-:class:`~web_poet.framework.Poet` serves to illustrate the power of web-poet:
-once you have defined your page object class, a web-poet framework only needs 2
-inputs from you:
+:class:`~web_poet.framework.Framework` serves to illustrate the power of
+web-poet: once you have defined your page object class, a web-poet framework
+only needs 2 inputs from you:
 
 -   the URL from which you want to extract data, and
 -   the desired output, either a :ref:`page object class <page-object-classes>`
     or, in this case, an :ref:`item class <items>`.
 
 :Notice that you must also call :func:`~web_poet.rules.consume_modules` once
-before your first call to :meth:`~web_poet.framework.Poet.get_item`.
+before your first call to :meth:`~web_poet.framework.Framework.get_item`.
 :func:`~web_poet.rules.consume_modules` ensures that the specified Python
 modules are loaded. You pass :func:`~web_poet.rules.consume_modules` the import
 paths of the modules where your page object classes are defined. After loading
 those modules, :meth:`~web_poet.handle_urls` decorators register the page
 object classes that they decorate into :data:`web_poet.default_registry`, which
-:meth:`~web_poet.framework.Poet.get_item` uses to determine which page object
-class to use based on its input parameters (URL and item class).
+:meth:`~web_poet.framework.Framework.get_item` uses to determine which page
+object class to use based on its input parameters (URL and item class).
 
 Your web-poet framework can take care of everything else:
 
@@ -430,7 +430,7 @@ called ``category_rank``, and if so, you return that value instead of using
 additional requests to find the value.
 
 You can now update your ``tutorial-project/run.py`` script to pass that
-parameter to :meth:`~web_poet.framework.Poet.get_item`:
+parameter to :meth:`~web_poet.framework.Framework.get_item`:
 
 .. literalinclude:: /tutorial-project/run_params.py
    :language: python

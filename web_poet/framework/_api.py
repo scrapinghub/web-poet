@@ -45,7 +45,7 @@ def _normalize_request(request: RequestLike) -> HttpRequest:
     return request
 
 
-class Poet:
+class Framework:
     """Manager of the :ref:`built-in framework <framework>`.
 
     *registry* is the :class:`~web_poet.rules.RulesRegistry` from where page
@@ -60,7 +60,7 @@ class Poet:
     collect stats written by the page object through the
     :class:`~web_poet.page_inputs.stats.Stats` dependency. If not specified, a
     :class:`~web_poet.page_inputs.stats.DictStatCollector` is used. You can
-    access the collector throught the :attr:`stats` attribute, e.g. to read its
+    access the collector through the :attr:`stats` attribute, e.g. to read its
     data.
     """
 
@@ -186,17 +186,18 @@ class Poet:
         *item_or_page_cls* is either an item class or a page object class. If
         it is an item class, the page class to use is determined by the
         :class:`~web_poet.rules.RulesRegistry` passed to
-        :class:`~web_poet.framework.Poet`.
+        :class:`~web_poet.framework.Framework`.
 
         *page_params* is a dict that the page object may access through the
         :class:`~web_poet.page_inputs.PageParams` dependency
         """
         request = _normalize_request(request)
         if issubclass(item_or_page_cls, ItemPage):
-            page_cls = item_or_page_cls
+            page_cls: type | None = item_or_page_cls
         else:
             page_cls = self._registry.page_cls_for_item(request.url, item_or_page_cls)
             if page_cls is None:
                 raise ValueError(f"No page object class found for URL: {request.url}")
+        assert page_cls is not None
         page = await self.get_page(request, page_cls, page_params=page_params)
         return await ensure_awaitable(page.to_item())

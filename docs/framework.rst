@@ -47,7 +47,7 @@ Basic use
 
     from dataclasses import dataclass
     from web_poet import WebPage
-    from web_poet.framework import Poet
+    from web_poet.framework import Framework
     from web_poet.utils import ensure_awaitable
 
 
@@ -62,11 +62,11 @@ Basic use
             return self.response.css("h1::text").get()
 
 
-    poet = Poet()
-    item = await poet.get_item("https://books.example.com/book/1", BookPage)
+    framework = Framework()
+    item = await framework.get_item("https://books.example.com/book/1", BookPage)
 
     # Or, if you prefer, get a page object first.
-    page = await poet.get_page("https://books.example.com/book/1", BookPage)
+    page = await framework.get_page("https://books.example.com/book/1", BookPage)
     item = await ensure_awaitable(page.to_item())
 
 Choosing a page object class automatically
@@ -74,14 +74,14 @@ Choosing a page object class automatically
 
 If you decorate your page object classes with :func:`~web_poet.handle_urls` and
 make sure they are imported, e.g. with :func:`~web_poet.consume_modules`, you
-can pass :meth:`~web_poet.framework.Poet.get_item` an item class, and let it
-determine which page object class to use:
+can pass :meth:`~web_poet.framework.Framework.get_item` an item class, and let
+it determine which page object class to use:
 
 .. code-block:: python
 
     from dataclasses import dataclass
     from web_poet import WebPage, handle_urls
-    from web_poet.framework import Poet
+    from web_poet.framework import Framework
 
 
     @dataclass
@@ -96,8 +96,8 @@ determine which page object class to use:
             return self.response.css("h1::text").get()
 
 
-    poet = Poet()
-    item = await poet.get_item("https://books.example.com/book/1", Book)
+    framework = Framework()
+    item = await framework.get_item("https://books.example.com/book/1", Book)
 
 .. _framework-browser:
 
@@ -110,7 +110,7 @@ like :class:`~web_poet.page_inputs.browser.BrowserHtml` or
 :class:`~web_poet.page_inputs.browser.BrowserResponse`.
 
 Chromium is used by default. You can override that by passing
-``default_browser`` to :class:`~web_poet.framework.Poet`. Page objects can also
+``default_browser`` to :class:`~web_poet.framework.Framework`. Page objects can also
 annotate their browser dependencies with :func:`~web_poet.framework.browser` to
 specify which browser they require. For example:
 
@@ -131,22 +131,22 @@ Stats
 
 The built-in framework supports :class:`~web_poet.page_inputs.stats.Stats`.
 
-By default, :class:`~web_poet.framework.Poet` creates a
+By default, :class:`~web_poet.framework.Framework` creates a
 :class:`~web_poet.page_inputs.stats.DictStatCollector` object, exposes it to
 any page object that requests :class:`~web_poet.page_inputs.stats.Stats`, and
-exposes that object as the :data:`stats <web_poet.framework.Poet.stats>`
-attribute of the poet:
+exposes that object as the :data:`stats <web_poet.framework.Framework.stats>`
+attribute of the framework:
 
 .. code-block:: python
 
-    from web_poet.framework import Poet
+    from web_poet.framework import Framework
 
-    poet = Poet()
-    item1 = await poet.get_item("http://example.com/book/1", BookPage)
-    item2 = await poet.get_item("http://example.com/book/2", BookPage)
-    all_stats = poet.stats
+    framework = Framework()
+    item1 = await framework.get_item("http://example.com/book/1", BookPage)
+    item2 = await framework.get_item("http://example.com/book/2", BookPage)
+    all_stats = framework.stats
 
-:class:`~web_poet.framework.Poet` also supports passing a custom stats
+:class:`~web_poet.framework.Framework` also supports passing a custom stats
 collector:
 
 .. code-block:: python
@@ -157,4 +157,4 @@ collector:
     class MyStatCollector(StatCollector): ...
 
 
-    poet = Poet(stats=MyStatCollector())
+    framework = Framework(stats=MyStatCollector())

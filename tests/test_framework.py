@@ -11,7 +11,7 @@ from attrs import define
 
 from web_poet import Injectable, ItemPage, field
 from web_poet.exceptions import HttpResponseError
-from web_poet.framework import Poet, _providers, browser
+from web_poet.framework import Framework, _providers, browser
 from web_poet.framework._api import _normalize_request
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
@@ -144,8 +144,8 @@ async def test_async_to_item():
         async def foo(self):
             return "bar"
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
 
 
@@ -155,8 +155,8 @@ async def test_sync_to_item():
         def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
 
 
@@ -166,8 +166,8 @@ async def test_get_item_page_cls():
         def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
 
 
@@ -178,18 +178,18 @@ async def test_get_item_item_cls(registry):
         def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet(registry=registry)
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework(registry=registry)
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
 
 
 @pytest.mark.asyncio
 async def test_get_item_no_page(registry):
-    poet = Poet(registry=registry)
+    framework = Framework(registry=registry)
     with pytest.raises(
         ValueError, match=r"No page object class found for URL: https://a.example"
     ):
-        await poet.get_item("https://a.example", SampleItem)
+        await framework.get_item("https://a.example", SampleItem)
 
 
 @pytest.mark.asyncio
@@ -206,8 +206,8 @@ async def test_http_client(monkeypatch):
             assert response.status == 200
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 0
@@ -232,8 +232,8 @@ async def test_http_client_allow_status(monkeypatch):
             assert resp.status == 404
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 2
     assert browser_state["calls"] == 0
@@ -251,8 +251,10 @@ async def test_page_params(monkeypatch):
         async def to_item(self):
             return SampleItem(foo=self.page_params["foo"])
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page, page_params={"foo": "bar"})
+    framework = Framework()
+    item = await framework.get_item(
+        "https://a.example", Page, page_params={"foo": "bar"}
+    )
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 0
     assert browser_state["calls"] == 0
@@ -271,8 +273,8 @@ async def test_response_url(monkeypatch):
             assert str(self.url) == "https://b.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 0
@@ -299,8 +301,8 @@ async def test_browser_response(monkeypatch):
             assert self.response.text == "<html><body>hello</body></html>"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
@@ -318,8 +320,8 @@ async def test_stats_no_collector_passed():
             # return the underlying collector dict for assertion
             return self.stats._stats._stats
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == {"a": "1", "b": 1}
 
 
@@ -336,8 +338,8 @@ async def test_stats_with_collector_passed():
             self.stats.inc("hits")
             return SAMPLE_ITEM
 
-    poet = Poet(stats=collector)
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework(stats=collector)
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert collector.data == {"latest": "ok", "hits": 1}
 
@@ -357,8 +359,8 @@ async def test_any_response_prefers_http(monkeypatch):
             assert str(self.response.url) == "https://b.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 0
@@ -385,8 +387,8 @@ async def test_any_response_uses_browser_when_browser_needed(monkeypatch):
             assert str(self.response.url) == "https://c.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
@@ -404,8 +406,8 @@ async def test_request_specific_browser_annotation(monkeypatch):
         async def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 0
     assert browser_state["launches"] == {"firefox": 1}
@@ -423,8 +425,8 @@ async def test_default_browser_param_override(monkeypatch):
         async def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet(default_browser="webkit")
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework(default_browser="webkit")
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 0
     assert browser_state["launches"] == {"webkit": 1}
@@ -452,8 +454,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
             assert "engine:chromium" in self.resp_c.text
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["launches"] == {"chromium": 1, "firefox": 1}
     assert http_state["calls"] == 0
@@ -477,8 +479,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
             assert "engine:firefox" in self.resp_c.text
             return SAMPLE_ITEM
 
-    poet = Poet(default_browser="firefox")
-    item = await poet.get_item("https://b.example", Page2)
+    framework = Framework(default_browser="firefox")
+    item = await framework.get_item("https://b.example", Page2)
     assert item == SAMPLE_ITEM
     assert browser_state2["launches"] == {"chromium": 1, "firefox": 1}
     assert http_state["calls"] == 0
@@ -503,8 +505,8 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
             assert "engine:firefox" in self.resp_c.text
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example/page3", Page3)
+    framework = Framework()
+    item = await framework.get_item("https://a.example/page3", Page3)
     assert item == SAMPLE_ITEM
     assert browser_state3["launches"] == {"firefox": 1, "webkit": 1}
 
@@ -522,8 +524,8 @@ async def test_browser_html_annotation(monkeypatch):
             assert isinstance(self.html, BrowserHtml)
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["launches"] == {"firefox": 1}
     assert http_state["calls"] == 0
@@ -541,9 +543,9 @@ async def test_unsupported_browser_raises(monkeypatch):
         async def to_item(self):
             return SAMPLE_ITEM
 
-    poet = Poet()
+    framework = Framework()
     with pytest.raises(ValueError, match=r"Playwright does not provide engine"):
-        await poet.get_item("https://a.example", Page)
+        await framework.get_item("https://a.example", Page)
 
 
 @pytest.mark.asyncio
@@ -566,8 +568,8 @@ async def test_browser_html_dependency(monkeypatch):
             assert self.html.xpath("//body/text()").get("").strip() == "hello"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
@@ -590,7 +592,7 @@ async def test_response_url_with_browser_response(monkeypatch):
             assert str(self.response_url) == "https://c.example"
             return SAMPLE_ITEM
 
-    item = await Poet().get_item("https://a.example", Page)
+    item = await Framework().get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
@@ -608,8 +610,8 @@ async def test_http_request_body():
             return SAMPLE_ITEM
 
     request = HttpRequest(url="https://a.example", body=b"foo")
-    poet = Poet()
-    item = await poet.get_item(request, Page)
+    framework = Framework()
+    item = await framework.get_item(request, Page)
     assert item == SAMPLE_ITEM
 
 
@@ -625,8 +627,8 @@ async def test_http_request_headers():
             return SAMPLE_ITEM
 
     request = HttpRequest(url="https://a.example", headers={"X-Foo": "bar"})
-    poet = Poet()
-    item = await poet.get_item(request, Page)
+    framework = Framework()
+    item = await framework.get_item(request, Page)
     assert item == SAMPLE_ITEM
 
 
@@ -642,8 +644,8 @@ async def test_http_request():
             assert self.request is request
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item(request, Page)
+    framework = Framework()
+    item = await framework.get_item(request, Page)
     assert item == SAMPLE_ITEM
 
 
@@ -660,8 +662,8 @@ async def test_http_response_body(monkeypatch):
             assert bytes(self.body) == b"hello"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert state["calls"] == 1
 
@@ -679,8 +681,8 @@ async def test_http_response_headers(monkeypatch):
             assert self.headers.get("x-foo") == "bar"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert state["calls"] == 1
 
@@ -698,8 +700,8 @@ async def test_request_url(monkeypatch):
             assert str(self.request_url) == "https://a.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 0
     assert browser_state["calls"] == 0
@@ -720,8 +722,8 @@ async def test_both_urls(monkeypatch):
             assert str(self.response_url) == "https://b.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 0
@@ -746,8 +748,8 @@ async def test_http_and_browser_responses(monkeypatch):
             assert str(self.response_url) == "https://c.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 1
@@ -774,8 +776,8 @@ async def test_multiple_http_response_dependencies(monkeypatch):
             assert str(self.response.url) == "https://b.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert http_state["calls"] == 1
     assert browser_state["calls"] == 0
@@ -804,8 +806,8 @@ async def test_multiple_browser_response_dependencies(monkeypatch):
             assert str(self.response.url) == "https://c.example"
             return SAMPLE_ITEM
 
-    poet = Poet()
-    item = await poet.get_item("https://a.example", Page)
+    framework = Framework()
+    item = await framework.get_item("https://a.example", Page)
     assert item == SAMPLE_ITEM
     assert browser_state["calls"] == 1
     assert http_state["calls"] == 0
