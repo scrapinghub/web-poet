@@ -220,17 +220,64 @@ class FieldExceptionPage(WebPage):
         raise Exception
 
 
-def test_pytest_plugin_field_exception(pytester, book_list_html_response) -> None:
+def test_pytest_plugin_field_exception_per_field(
+    pytester, book_list_html_response
+) -> None:
     _save_fixture(
         pytester,
         page_cls=FieldExceptionPage,
         page_inputs=[book_list_html_response],
         expected_output={"foo": "foo", "bar": "bar"},
     )
-    result = pytester.runpytest("-vv")
+    result = pytester.runpytest("--web-poet-field-mode=per-field", "-vv")
     result.assert_outcomes(failed=2, passed=1, skipped=1)
     result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
     result.stdout.fnmatch_lines("*foo*PASSED*")
+
+
+def test_pytest_plugin_field_exception_to_item(
+    pytester, book_list_html_response
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=FieldExceptionPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "foo", "bar": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, skipped=3)
+    result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
+
+
+class ToItemOverridesFieldPage(WebPage):
+    @field
+    def foo(self):
+        return "field-foo"
+
+    async def to_item(self) -> dict:
+        return {"foo": "item-foo"}
+
+
+def test_field_mode_per_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=ToItemOverridesFieldPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "field-foo"},
+    )
+    result = pytester.runpytest("--web-poet-field-mode=per-field")
+    result.assert_outcomes(passed=3)
+
+
+def test_field_mode_to_item(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=ToItemOverridesFieldPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "item-foo"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
 
 
 def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:

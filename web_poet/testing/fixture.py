@@ -12,7 +12,6 @@ import dateutil.tz
 import time_machine
 
 from web_poet import ItemPage
-from web_poet.fields import get_fields_dict
 from web_poet.serialization import (
     SerializedDataFileStorage,
     deserialize,
@@ -147,20 +146,7 @@ class Fixture:
         with time_machine.travel(frozen_time_parsed):
             return callback()
 
-    @memoizemethod_noargs
-    def _get_readable_fields(self) -> set[str]:
-        return set(get_fields_dict(self.get_page()))
-
-    def _can_read_field_separately(self, name: str) -> bool:
-        return name in self._get_readable_fields()
-
     def _get_output_field(self, name: str) -> Any:
-        if not self._can_read_field_separately(name):
-            actual_item = self.get_output()
-            if name not in actual_item:
-                raise FieldMissing(name)
-            return actual_item[name]
-
         def _read_field() -> dict[str, Any]:
             page = self.get_page()
             field_value = asyncio.run(ensure_awaitable(getattr(page, name)))
@@ -237,12 +223,29 @@ class Fixture:
             raise ItemValueIncorrect(output, expected_output)
 
     def assert_field_correct(
-        self, name: str, user_props: list[tuple[str, object]] | None = None
+        self,
+        name: str,
+        user_props: list[tuple[str, object]] | None = None,
+        *,
+        field_mode: str | None = None,
     ) -> None:
-        """Assert that a certain field in the output matches the expected value"""
+        """Assert that a certain field in the output matches the expected
+        value.
+
+        When *field_mode* is set to "to_item" (default), read the whole item
+        via ``to_item()`` and then pick the field from that item. When
+        "per-field" read the field directly.
+        """
         expected_field = json.loads(_format_json(self.get_expected_output()[name]))
         self._append_user_prop(user_props, "expected_value", expected_field)
-        actual_field = json.loads(_format_json(self._get_output_field(name)))
+        mode = field_mode or "to_item"
+        if mode == "to_item":
+            actual_item = self.get_output()
+            if name not in actual_item:
+                raise FieldMissing(name)
+            actual_field = json.loads(_format_json(actual_item[name]))
+        else:
+            actual_field = json.loads(_format_json(self._get_output_field(name)))
         self._append_user_prop(user_props, "actual_value", actual_field)
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
