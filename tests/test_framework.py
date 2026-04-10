@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 pytest.importorskip("niquests")
@@ -633,7 +635,11 @@ async def test_browser_non_get():
 
 
 @pytest.mark.asyncio
-async def test_browser_request_headers():
+async def test_browser_request_headers(monkeypatch, caplog):
+    # Patch Playwright and capture warnings
+    patch_async_playwright(monkeypatch)
+    caplog.set_level(logging.WARNING)
+
     request = HttpRequest(url="https://a.example", headers={"X-Foo": "bar"})
 
     @define
@@ -644,10 +650,11 @@ async def test_browser_request_headers():
             return SAMPLE_ITEM
 
     framework = Framework()
-    with pytest.raises(
-        HttpRequestError, match=r"does not support requests with headers"
-    ):
-        await framework.get_item(request, Page)
+    item = await framework.get_item(request, Page)
+    assert item == SAMPLE_ITEM
+    # Warning should mention the header name and that headers are ignored
+    assert "X-Foo" in caplog.text
+    assert "ignoring headers" in caplog.text.lower()
 
 
 @pytest.mark.asyncio

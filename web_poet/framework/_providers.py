@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 import niquests
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
 
 DEFAULT_BROWSER = "chromium"
 PROVIDERS: dict[type, Callable[..., Any]] = {}
+logger = logging.getLogger(__name__)
 
 
 def _get_http_response_from_nirequests_response(
@@ -60,10 +62,10 @@ async def _get_browser_response_from_http_request(
             request=request,
         )
     if request.headers and len(request.headers):
-        raise HttpRequestError(
-            "Browser provider does not support requests with headers; only "
-            "plain GET with a URL is supported",
-            request=request,
+        header_names = ", ".join(map(str, list(request.headers.keys())))
+        logger.warning(
+            "Browser provider does not support requests with headers; ignoring headers: %s",
+            header_names,
         )
     if request.body and len(request.body):
         raise HttpRequestError(
