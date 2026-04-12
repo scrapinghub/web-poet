@@ -158,12 +158,15 @@ class WebPoetFieldItem(_WebPoetItem):
         self.field_name = field_name
 
     def runtest(self) -> None:
-        if self.fixture.to_item_raised():
+        field_mode = self.config.getoption("WEB_POET_FIELD_MODE", default="to_item")
+        if field_mode == "to_item" and self.fixture.to_item_raised():
             raise pytest.skip(
                 f"Skipping a test for item.{self.field_name} "
-                f"because to_item raised an exception"
+                f"because to_item raised an exception."
             )
-        self.fixture.assert_field_correct(self.field_name, self.user_properties)
+        self.fixture.assert_field_correct(
+            self.field_name, self.user_properties, field_mode=field_mode
+        )
 
     def reportinfo(self):
         return self.path, 0, f"{self.fixture.short_name} @ {self.field_name}"
@@ -190,6 +193,17 @@ def pytest_addoption(parser: pytest.Parser, pluginmanager: pytest.PytestPluginMa
         dest="WEB_POET_TEST_PER_ITEM",
         action="store_true",
         help="web-poet: use a single test per item, not a test per field",
+    )
+    parser.addoption(
+        "--web-poet-field-mode",
+        dest="WEB_POET_FIELD_MODE",
+        choices=["to_item", "per-field"],
+        default="to_item",
+        help=(
+            "web-poet: when running per-field tests, choose how fields are "
+            "read. 'to_item' (default) reads the whole item via to_item() and "
+            "then takes the field; 'per-field' reads the field directly."
+        ),
     )
 
 
