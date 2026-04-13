@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class TestCase(pytest.File):
     """Represents the ``output.json`` or ``exception.json`` file in a testcase
-    directory."""
+    directory and is tied to a specific page class."""
 
     def __init__(self, *args, type_name: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)
