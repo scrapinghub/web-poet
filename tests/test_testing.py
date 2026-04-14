@@ -115,8 +115,8 @@ def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
     assert saved_output["foo"] == "Bar"
 
     loaded_fixture = Fixture(base_dir / "test-1")
-    loaded_output = loaded_fixture.get_output(MyItemPage)
-    assert loaded_output["foo"] == "Bar"
+    page_output = loaded_fixture.get_output(MyItemPage)
+    assert page_output["foo"] == "Bar"
     actual_output = loaded_fixture.get_expected_output()
     assert actual_output["foo"] == "Bar"
 
