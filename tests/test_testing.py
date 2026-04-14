@@ -142,20 +142,18 @@ class MyItemPage3(WebPage):
         return {"foo": "bar", "egg": "spam", "hello": "world"}
 
 
-@pytest.mark.parametrize("dir_name", [get_fq_class_name(MyItemPage3), "unrelated"])
 def test_cli_rerun(
     tmp_path: Path,
     book_list_html_response: HttpResponse,
     capsys: pytest.CaptureFixture[str],
-    dir_name: str,
 ) -> None:
-    base_dir = tmp_path / "fixtures" / dir_name
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
     fixture = Fixture.save(
         base_dir,
         inputs=[book_list_html_response],
         item={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
-    cli_main(["rerun", str(fixture.path), "-p", get_fq_class_name(MyItemPage3)])
+    cli_main(["rerun", str(fixture.path)])
     captured = capsys.readouterr()
     assert not captured.err
     assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}
@@ -166,14 +164,13 @@ def test_cli_rerun_fields(
     book_list_html_response: HttpResponse,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    type_name = get_fq_class_name(MyItemPage3)
-    base_dir = tmp_path / "fixtures" / type_name
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
     fixture = Fixture.save(
         base_dir,
         inputs=[book_list_html_response],
         item={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
-    cli_main(["rerun", str(fixture.path), "-p", type_name, "--fields=foo,egg"])
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg"])
     captured = capsys.readouterr()
     assert not captured.err
     assert json.loads(captured.out) == {"foo": "bar", "egg": "spam"}
@@ -184,17 +181,34 @@ def test_cli_rerun_fields_unknown_names(
     book_list_html_response: HttpResponse,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    type_name = get_fq_class_name(MyItemPage3)
-    base_dir = tmp_path / "fixtures" / type_name
+    base_dir = tmp_path / "fixtures" / get_fq_class_name(MyItemPage3)
     fixture = Fixture.save(
         base_dir,
         inputs=[book_list_html_response],
         item={"foo": "bar2", "egg": "spam", "hello": "world"},
     )
-    cli_main(["rerun", str(fixture.path), "-p", type_name, "--fields=foo,egg2"])
+    cli_main(["rerun", str(fixture.path), "--fields=foo,egg2"])
     captured = capsys.readouterr()
     assert (
         "Unknown field names: ['egg2']. Allowed names are: ['egg', 'foo', 'hello']"
         in captured.err
     )
     assert json.loads(captured.out) == {"foo": "bar"}
+
+
+def test_cli_rerun_standalone_fixture(
+    tmp_path: Path,
+    book_list_html_response: HttpResponse,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base_dir = tmp_path / "fixtures" / "unrelated"
+    fixture = Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar2", "egg": "spam", "hello": "world"},
+    )
+
+    cli_main(["rerun", str(fixture.path), "-p", get_fq_class_name(MyItemPage3)])
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert json.loads(captured.out) == {"foo": "bar", "egg": "spam", "hello": "world"}

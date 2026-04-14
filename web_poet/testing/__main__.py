@@ -13,8 +13,10 @@ if TYPE_CHECKING:
 
 
 def rerun(args: argparse.Namespace) -> None:
-    fixture = Fixture(Path(args.fixture_path))
-    page_cls: type = load_class(args.page_object)
+    fixture_path = Path(args.fixture_path)
+    fixture = Fixture(fixture_path)
+    page_name = args.page_object or fixture_path.parent.name
+    page_cls: type = load_class(page_name)
     item = fixture.get_output(page_cls)
     if args.fields:
         fields = args.fields.split(",")
@@ -44,7 +46,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     parser_rerun.add_argument("fixture_path", type=str, help="Path to a fixture")
     parser_rerun.add_argument(
-        "--page-object", "-p", type=str, help="Page object type name", required=True
+        "--page-object", "-p", type=str, help="Page object type name"
     )
     parser_rerun.add_argument(
         "--fields", "-f", type=str, help="Field names, comma-separated"
