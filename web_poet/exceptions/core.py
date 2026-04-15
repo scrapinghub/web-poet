@@ -38,7 +38,17 @@ class PageObjectAction(ValueError):
 
 class Retry(PageObjectAction):
     """The page object found that the input data is partial or empty, and a
-    request retry may provide better input."""
+    request retry may provide better input.
+
+    *message* is the reason for the retry.
+
+    *max_retries* is the desired maximum retries. If not specified, the
+    framework defaults are used instead.
+    """
+
+    def __init__(self, message: str | None = None, max_retries: int | None = None):
+        self.max_retries = max_retries
+        super().__init__(message)
 
 
 class UseFallback(PageObjectAction):
