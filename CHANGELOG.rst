@@ -2,6 +2,42 @@
 Changelog
 =========
 
+0.24.0 (unreleased)
+-------------------
+
+Backward-incompatible changes:
+
+* The tutorial-only ``web_poet.example`` module has been removed.
+
+* :class:`~web_poet.testing.Fixture` got some backward-incompatible changes:
+
+  * The ``type_name`` and ``short_name`` properties have been removed.
+
+  * | The following methogs got a new ``page_cls`` parameter:
+    | :meth:`~web_poet.testing.Fixture.assert_field_correct`
+    | :meth:`~web_poet.testing.Fixture.assert_full_item_correct`
+    | :meth:`~web_poet.testing.Fixture.assert_no_extra_fields`
+    | :meth:`~web_poet.testing.Fixture.assert_no_toitem_exceptions`
+    | :meth:`~web_poet.testing.Fixture.assert_toitem_exception`
+    | :meth:`~web_poet.testing.Fixture.get_output`
+    | :meth:`~web_poet.testing.Fixture.get_page`
+
+Improvements:
+
+* Added a :ref:`built-in framework <framework>` for simple use cases.
+
+* :class:`~web_poet.testing.Fixture` instances are no longer tied to a single
+  page object class.
+
+  While pytest discovery still requires the parent folder name to be named
+  after a page object class, a new ``--page-object`` option allows specifying a
+  different page object class.
+
+* :class:`~web_poet.exceptions.Retry` now accepts an optional ``max_retries``
+  parameter.
+
+* Added :class:`~web_poet.page_inputs.stats.DictStatCollector`.
+
 0.23.3 (2026-04-07)
 -------------------
 
