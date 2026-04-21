@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.24.0 (unreleased)
+0.24.0 (2026-04-21)
 -------------------
 
 Backward-incompatible changes:
