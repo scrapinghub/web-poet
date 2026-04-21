@@ -30,8 +30,8 @@ Improvements:
   page object class.
 
   While pytest discovery still requires the parent folder name to be named
-  after a page object class, a new ``--page-object`` option allows specifying a
-  different page object class.
+  after a page object class, a new ``--page-object`` option of ``python -m
+  web_poet.testing`` allows specifying a different page object class.
 
 * :class:`~web_poet.exceptions.Retry` now accepts an optional ``max_retries``
   parameter.
