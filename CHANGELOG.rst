@@ -13,7 +13,7 @@ Backward-incompatible changes:
 
   * The ``type_name`` and ``short_name`` properties have been removed.
 
-  * | The following methogs got a new ``page_cls`` parameter:
+  * | The following methods got a new ``page_cls`` parameter:
     | :meth:`~web_poet.testing.Fixture.assert_field_correct`
     | :meth:`~web_poet.testing.Fixture.assert_full_item_correct`
     | :meth:`~web_poet.testing.Fixture.assert_no_extra_fields`
