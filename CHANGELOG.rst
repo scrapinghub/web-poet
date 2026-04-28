@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.24.1 (unreleased)
+-------------------
+
+* Fixed links in https://web-poet.readthedocs.io/llms.txt.
+
 0.24.0 (2026-04-21)
 -------------------
 
