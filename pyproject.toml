@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "web-poet"
-version = "0.24.0"
+version = "0.24.1"
 description = "Zyte's Page Object pattern for web scraping"
 readme = "README.rst"
 license = "BSD-3-Clause"
