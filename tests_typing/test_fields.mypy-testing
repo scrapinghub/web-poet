@@ -59,59 +59,57 @@ class Item:
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 def test_field_type_no_params() -> None:
     page = TypedPage()
     reveal_type(page.description)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 def test_field_type() -> None:
     page = TypedPage()
     reveal_type(page.currency)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 def test_field_type_out() -> None:
     page = TypedPage()
     reveal_type(page.name)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
+@pytest.mark.xfail(
+    reason="mypy does not infer @field(out=...) transformed return type"
+)
 def test_field_type_changed_type() -> None:
     page = TypedPage()
     reveal_type(page.price)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 async def test_field_type_no_params_async() -> None:
     page = TypedPage()
     reveal_type(await page.adescription)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 async def test_field_type_async() -> None:
     page = TypedPage()
     reveal_type(await page.acurrency)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 async def test_field_type_out_async() -> None:
     page = TypedPage()
-    reveal_type(await page.name)  # R: builtins.str
+    reveal_type(await page.aname)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
+@pytest.mark.xfail(
+    reason="mypy does not infer async @field(out=...) transformed return type"
+)
 async def test_field_type_changed_type_async() -> None:
     page = TypedPage()
-    reveal_type(await page.price)  # R: builtins.str
+    reveal_type(await page.aprice)  # R: builtins.str
 
 
 @pytest.mark.mypy_testing
@@ -133,8 +131,14 @@ def test_item_from_fields_sync() -> None:
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
 async def test_item_from_fields_default_item_cls() -> None:
     page = Page()
     item1 = await item_from_fields(page)
+    reveal_type(item1)  # R: builtins.dict[Any, Any]
+
+
+@pytest.mark.mypy_testing
+def test_item_from_fields_sync_default_item_cls() -> None:
+    page = Page()
+    item1 = item_from_fields_sync(page)
     reveal_type(item1)  # R: builtins.dict[Any, Any]
