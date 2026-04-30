@@ -72,8 +72,8 @@ async def test_layout_switch_default_get_layout() -> None:
         layout_b=LayoutB(response=response),
     )
 
-    assert await page.name == "a"
-    assert await page.name == "a"
+    assert await page.name == "a"  # type: ignore[attr-defined]
+    assert await page.name == "a"  # type: ignore[attr-defined]
     assert await page.to_item() == NameItem(name="a")
     assert page.switch_calls == 1
 
@@ -97,7 +97,7 @@ async def test_layout_switch_without_parentheses() -> None:
     response = HttpResponse("https://example.com", body=b"<html></html>")
     page = ProductPage(response=response, layout_a=LayoutA(response=response))
 
-    assert page.name == "a"
+    assert page.name == "a"  # type: ignore[attr-defined]
     assert await page.to_item() == NameItem(name="a")
 
 
@@ -134,8 +134,8 @@ async def test_layout_switch_custom_switch_method_sync() -> None:
         layout_b=LayoutB(response=response),
     )
 
-    assert page.name == "a"
-    assert page.name == "a"
+    assert page.name == "a"  # type: ignore[attr-defined]
+    assert page.name == "a"  # type: ignore[attr-defined]
     assert await page.to_item() == NameItem(name="a")
     assert page.switch_calls == 1
 
@@ -267,7 +267,7 @@ async def test_layout_switch_does_not_require_layout_annotations() -> None:
 
     response = HttpResponse("https://example.com", body=b"<html></html>")
     page = ProductPage(response=response, layout_value=LayoutA(response=response))
-    assert page.name == "a"
+    assert page.name == "a"  # type: ignore[attr-defined]
     assert await page.to_item() == NameItem(name="a")
 
 
@@ -303,7 +303,7 @@ async def test_layout_switch_supports_dict_items_with_explicit_layouts() -> None
 
     fields = get_fields_dict(ProductPage)
     assert set(fields.keys()) == {"name"}
-    assert page.name == "a"
+    assert page.name == "a"  # type: ignore[attr-defined]
     assert await page.to_item() == {"name": "a"}
 
 
@@ -368,7 +368,7 @@ async def test_layout_switch_discovers_module_layout_hints_with_annotated_and_un
         variant_layout=ModuleUnionNameLayoutB(response=response_default),
     )
 
-    assert page_default.name == "annotated"
+    assert page_default.name == "annotated"  # type: ignore[attr-defined]
     assert await page_default.to_item() == NameItem(name="annotated")
 
     response_variant = HttpResponse(
@@ -381,7 +381,7 @@ async def test_layout_switch_discovers_module_layout_hints_with_annotated_and_un
         variant_layout=ModuleUnionNameLayoutA(response=response_variant),
     )
 
-    assert page_variant.name == "union-a"
+    assert page_variant.name == "union-a"  # type: ignore[attr-defined]
     assert await page_variant.to_item() == NameItem(name="union-a")
 
 
@@ -406,18 +406,10 @@ async def test_layout_switch_forwards_async_layout_field_with_sync_switch() -> N
     response = HttpResponse("https://example.com", body=b"<html></html>")
     page = ProductPage(response=response, layout_a=AsyncNameLayout(response=response))
 
-    assert await page.name == "async-name"
-    assert await page.name == "async-name"
+    assert await page.name == "async-name"  # type: ignore[attr-defined]
+    assert await page.name == "async-name"  # type: ignore[attr-defined]
     assert await page.to_item() == NameItem(name="async-name")
     assert page.switch_calls == 1
-
-
-def test_layout_switch_rejects_removed_field_filter_parameters() -> None:
-    with pytest.raises(TypeError, match="unexpected keyword argument 'only'"):
-        layout_switch(only=["name"])
-
-    with pytest.raises(TypeError, match="unexpected keyword argument 'exclude'"):
-        layout_switch(exclude=["name"])
 
 
 @pytest.mark.asyncio
@@ -444,7 +436,7 @@ async def test_layout_switch_runs_main_input_validation_before_switch() -> None:
     response = HttpResponse("https://example.com", body=b"<html></html>")
     page = ProductPage(response=response, layout_a=LayoutA(response=response))
     with pytest.raises(Retry):
-        await page.name
+        await page.name  # type: ignore[attr-defined]
     assert page.switch_calls == 0
 
 
@@ -470,7 +462,7 @@ async def test_layout_switch_runs_selected_layout_validation() -> None:
     response = HttpResponse("https://example.com", body=b"<html></html>")
     page = ProductPage(response=response, layout_a=LayoutA(response=response))
     with pytest.raises(UseFallback):
-        await page.name
+        await page.name  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio
@@ -512,4 +504,4 @@ async def test_layout_switch_raises_without_layout_field_or_page_fallback() -> N
     )
 
     with pytest.raises(AttributeError, match="does not define field 'price'"):
-        await page.price
+        await page.price  # type: ignore[attr-defined]

@@ -4,11 +4,19 @@ import inspect
 import sys
 import types
 import typing
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 from itemadapter import ItemAdapter
 
-from web_poet.fields import FieldInfo, field, get_fields_dict
+from web_poet.fields import (
+    _FIELDS_INFO_ATTRIBUTE_READ,
+    FieldInfo,
+    field,
+    get_fields_dict,
+)
 from web_poet.pages import ItemPage, get_item_cls
 from web_poet.utils import cached_method, ensure_awaitable
 
@@ -102,7 +110,7 @@ def _item_fields_from_page_cls(page_cls: type[ItemPage]) -> list[str]:
     return list(item_field_names)
 
 
-def _discover_layout_classes(page_cls: type[ItemPage]) -> list[type[ItemPage]]:
+def _discover_layout_classes(page_cls: type[ItemPage]) -> Iterable[type[ItemPage]]:
     hints = _get_type_hints(page_cls)
     classes: list[type[ItemPage]] = []
     for annotation in hints.values():
@@ -121,7 +129,7 @@ def _get_type_hints(page_cls: type) -> dict[str, Any]:
         return dict(getattr(page_cls, "__annotations__", {}))
 
 
-def _get_item_page_classes(annotation: Any) -> list[type[ItemPage]]:
+def _get_item_page_classes(annotation: Any) -> Iterable[type[ItemPage]]:
     if isinstance(annotation, str):
         return []
 
@@ -141,7 +149,7 @@ def _get_item_page_classes(annotation: Any) -> list[type[ItemPage]]:
     return []
 
 
-def _layout_fields(layout_classes: list[type[ItemPage]]) -> list[str]:
+def _layout_fields(layout_classes: Iterable[type[ItemPage]]) -> list[str]:
     names: list[str] = []
     for layout_cls in layout_classes:
         for field_name in get_fields_dict(layout_cls):
@@ -178,7 +186,7 @@ def _install_cached_layout_helpers(
 
 def _should_forward_async(
     page_cls: type[ItemPage],
-    layout_classes: list[type[ItemPage]],
+    layout_classes: Iterable[type[ItemPage]],
     field_name: str,
     switch_method: str,
     fallback_attr: Any,
@@ -242,4 +250,4 @@ def _register_field(page_cls: type[ItemPage], field_name: str) -> None:
     if field_name in fields:
         return
     fields[field_name] = FieldInfo(name=field_name)
-    page_cls._web_poet_fields_info = fields
+    setattr(page_cls, _FIELDS_INFO_ATTRIBUTE_READ, fields)
