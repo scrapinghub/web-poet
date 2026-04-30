@@ -28,6 +28,7 @@ web-poet
    page-objects/items
    page-objects/rules
    page-objects/fields
+   page-objects/layouts
    page-objects/additional-requests
    page-objects/input-validation
    page-objects/page-params
