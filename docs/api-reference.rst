@@ -145,6 +145,11 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
+Layouts
+=======
+
+.. autofunction:: web_poet.layout_switch
+
 Annotation support
 ==================
 

@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import abc
-from typing import Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
-from web_poet.page_inputs.url import RequestUrl, ResponseUrl
+if TYPE_CHECKING:
+    from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
 class _ResponseLike(Protocol):
@@ -80,6 +83,8 @@ class UrlShortcutsMixin:
 
         If *url* is relative, it is made absolute relative to the base URL of
         *self*."""
+        from web_poet.page_inputs.url import RequestUrl  # noqa: PLC0415
+
         return RequestUrl(urljoin(self._base_url, str(url)))
 
 
