@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
 from collections import deque
 from typing import TYPE_CHECKING, Any
@@ -59,6 +60,19 @@ def test_save_fixture_unicode_item(book_list_html_response, tmp_path) -> None:
     fixture = Fixture(base_dir / "test-1")
     assert json.loads(fixture.output_path.read_bytes()) == item
     assert fixture.get_expected_output() == item
+
+
+def test_save_fixture_datetime_item(book_list_html_response, tmp_path) -> None:
+    base_dir = tmp_path / "fixtures" / "some.po"
+    datetime = dt.datetime(2026, 5, 14, 11, 22, 33, tzinfo=dt.timezone.utc)
+    date = dt.date(2026, 5, 14)
+    item = {"datetime": datetime, "date": date}
+
+    Fixture.save(base_dir, inputs=[book_list_html_response], item=item)
+    fixture = Fixture(base_dir / "test-1")
+    expected = {"datetime": datetime.isoformat(), "date": date.isoformat()}
+    assert json.loads(fixture.output_path.read_bytes()) == expected
+    assert fixture.get_expected_output() == expected
 
 
 def test_save_fixture_unicode_exception(book_list_html_response, tmp_path) -> None:
