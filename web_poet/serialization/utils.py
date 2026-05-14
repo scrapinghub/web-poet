@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
 from typing import Any, cast
 
@@ -38,4 +39,6 @@ class _CustomJSONEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
         if isinstance(o, _Url):
             return str(o)
+        if isinstance(o, (dt.datetime, dt.date)):
+            return o.isoformat()
         return super().default(o)
