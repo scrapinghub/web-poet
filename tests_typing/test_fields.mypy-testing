@@ -134,11 +134,11 @@ def test_item_from_fields_sync() -> None:
 async def test_item_from_fields_default_item_cls() -> None:
     page = Page()
     item1 = await item_from_fields(page)
-    reveal_type(item1)  # R: builtins.dict[Any, Any]
+    reveal_type(item1)  # R: builtins.dict[builtins.str, Any]
 
 
 @pytest.mark.mypy_testing
 def test_item_from_fields_sync_default_item_cls() -> None:
     page = Page()
     item1 = item_from_fields_sync(page)
-    reveal_type(item1)  # R: builtins.dict[Any, Any]
+    reveal_type(item1)  # R: builtins.dict[builtins.str, Any]
