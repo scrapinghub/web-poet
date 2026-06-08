@@ -1,3 +1,4 @@
+from ._layouts import layout_switch
 from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from .fields import field, item_from_fields, item_from_fields_sync
 from .page_inputs import (
@@ -68,6 +69,7 @@ __all__ = [
     "handle_urls",
     "item_from_fields",
     "item_from_fields_sync",
+    "layout_switch",
     "request_downloader_var",
     "validates_input",
 ]
