@@ -59,6 +59,31 @@ class Item:
 
 
 @pytest.mark.mypy_testing
+def test_field_with_args_return_type() -> None:
+    f = field(meta={"expensive": True})
+    reveal_type(f)  # R: def (def (*Any, **Any) -> Any) -> web_poet.fields._field
+
+    g = field(cached=True)
+    reveal_type(g)  # R: def (def (*Any, **Any) -> Any) -> web_poet.fields._field
+
+
+@pytest.mark.mypy_testing
+def test_field_with_args_as_decorator() -> None:
+    class MyPage(ItemPage):
+        @field(meta={"expensive": True})
+        def title(self) -> str:
+            return "hello"
+
+        @field(cached=True)
+        def body(self) -> str:
+            return "world"
+
+        @field(meta={"expensive": True}, cached=True, out=[str.strip])
+        def subtitle(self) -> str:
+            return "world"
+
+
+@pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_field_type_no_params() -> None:
     page = TypedPage()

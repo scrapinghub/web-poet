@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import inspect
 from contextlib import suppress
-from functools import update_wrapper, wraps
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from functools import partial, update_wrapper, wraps
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 import attrs
 from itemadapter import ItemAdapter
@@ -61,6 +61,126 @@ class FieldsMixin:
         setattr(cls, _FIELD_METHODS_ATTRIBUTE, {})
 
 
+class _field:
+    def __init__(
+        self,
+        method,
+        *,
+        cached: bool = False,
+        meta: dict | None = None,
+        out: list[Callable] | None = None,
+    ):
+        if not callable(method):
+            raise TypeError(
+                f"@field decorator must be used on methods, {method!r} is decorated instead"
+            )
+        self.original_method = method
+        self.name: str | None = None
+        self._cached = cached
+        self._meta = meta
+        self._out = out
+        update_wrapper(cast("Callable", self), method)
+
+    def __set_name__(self, owner, name: str) -> None:
+        self.name = name
+        if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
+            setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
+
+        field_info = FieldInfo(name=name, meta=self._meta, out=self._out)
+        getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
+
+    def __get__(self, instance, owner=None):
+        # When accessed on the class (instance is None) return the
+        # descriptor itself (which has been wrapped with the original
+        # function attributes) so that __doc__ and other metadata are
+        # preserved.
+        if instance is None:
+            return self
+
+        # We use the original method and the out arg from the field and
+        # the Processors class from the instance class, so caching needs to
+        # take into account the instance class and the field object. So we
+        # use the field object id() as a key when caching the method in
+        # the instance class.
+        cache_key = id(self)
+        method = self._get_processed_method(owner, cache_key)
+        if method is None:
+            if self._out is not None:
+                processor_functions = self._out
+            elif hasattr(owner, "Processors"):
+                assert self.name is not None
+                processor_functions = getattr(owner.Processors, self.name, [])
+            else:
+                processor_functions = []
+            processors: list[tuple[Callable, bool]] = []
+            for processor_function in processor_functions:
+                takes_page = callable_has_parameter(processor_function, "page")
+                processors.append((processor_function, takes_page))
+            method = self._processed(self.original_method, processors)
+            if self._cached:
+                method = cached_method(method)
+            self._set_processed_method(owner, cache_key, method)
+
+        return method(instance)
+
+    @staticmethod
+    def _get_processed_method(page_cls, key: int):
+        return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
+
+    @staticmethod
+    def _set_processed_method(page_cls, key: int, method) -> None:
+        getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
+
+    @staticmethod
+    def _process(value: Any, page, processors: list[tuple[Callable, bool]]) -> Any:
+        for processor, takes_page in processors:
+            value = processor(value, page=page) if takes_page else processor(value)
+        return value
+
+    @staticmethod
+    def _processed(method, processors: list[tuple[Callable, bool]]):
+        """Returns a wrapper for method that calls processors on its result"""
+        if inspect.iscoroutinefunction(method):
+
+            async def processed(page):
+                if hasattr(page, "_validate_input"):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                return _field._process(await method(page), page, processors)
+
+        else:
+
+            def processed(page):
+                if hasattr(page, "_validate_input"):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                return _field._process(method(page), page, processors)
+
+        return wraps(method)(processed)
+
+
+@overload
+def field(
+    method: Callable,
+    *,
+    cached: bool = ...,
+    meta: dict | None = ...,
+    out: list[Callable] | None = ...,
+) -> _field: ...
+
+
+@overload
+def field(
+    method: None = ...,
+    *,
+    cached: bool = ...,
+    meta: dict | None = ...,
+    out: list[Callable] | None = ...,
+) -> Callable[[Callable], _field]: ...
+
+
 def field(
     method=None,
     *,
@@ -83,103 +203,13 @@ def field(
     The ``out`` parameter is an optional list of field processors, which are
     functions applied to the value of the field before returning it.
     """
-
-    class _field:
-        def __init__(self, method):
-            if not callable(method):
-                raise TypeError(
-                    f"@field decorator must be used on methods, {method!r} is decorated instead"
-                )
-            self.original_method = method
-            self.name: str | None = None
-            update_wrapper(self, method)
-
-        def __set_name__(self, owner, name: str) -> None:
-            self.name = name
-            if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
-                setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-
-            field_info = FieldInfo(name=name, meta=meta, out=out)
-            getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
-
-        def __get__(self, instance, owner=None):
-            # When accessed on the class (instance is None) return the
-            # descriptor itself (which has been wrapped with the original
-            # function attributes) so that __doc__ and other metadata are
-            # preserved.
-            if instance is None:
-                return self
-
-            # We use the original method and the out arg from the field and
-            # the Processors class from the instance class, so caching needs to
-            # take into account the instance class and the field object. So we
-            # use the field object id() as a key when caching the method in
-            # the instance class.
-            cache_key = id(self)
-            method = self._get_processed_method(owner, cache_key)
-            if method is None:
-                if out is not None:
-                    processor_functions = out
-                elif hasattr(owner, "Processors"):
-                    assert self.name is not None
-                    processor_functions = getattr(owner.Processors, self.name, [])
-                else:
-                    processor_functions = []
-                processors: list[tuple[Callable, bool]] = []
-                for processor_function in processor_functions:
-                    takes_page = callable_has_parameter(processor_function, "page")
-                    processors.append((processor_function, takes_page))
-                method = self._processed(self.original_method, processors)
-                if cached:
-                    method = cached_method(method)
-                self._set_processed_method(owner, cache_key, method)
-
-            return method(instance)
-
-        @staticmethod
-        def _get_processed_method(page_cls, key: int):
-            return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
-
-        @staticmethod
-        def _set_processed_method(page_cls, key: int, method) -> None:
-            getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
-
-        @staticmethod
-        def _process(value: Any, page, processors: list[tuple[Callable, bool]]) -> Any:
-            for processor, takes_page in processors:
-                value = processor(value, page=page) if takes_page else processor(value)
-            return value
-
-        @staticmethod
-        def _processed(method, processors: list[tuple[Callable, bool]]):
-            """Returns a wrapper for method that calls processors on its result"""
-            if inspect.iscoroutinefunction(method):
-
-                async def processed(page):
-                    if hasattr(page, "_validate_input"):
-                        validation_item = page._validate_input()
-                        if validation_item is not None:
-                            return getattr(validation_item, method.__name__)
-                    return _field._process(await method(page), page, processors)
-
-            else:
-
-                def processed(page):
-                    if hasattr(page, "_validate_input"):
-                        validation_item = page._validate_input()
-                        if validation_item is not None:
-                            return getattr(validation_item, method.__name__)
-                    return _field._process(method(page), page, processors)
-
-            return wraps(method)(processed)
-
     if method is not None:
         # @field syntax
-        res = _field(method)
+        res = _field(method, cached=cached, meta=meta, out=out)
         update_wrapper(cast("Callable", res), method)
         return res
     # @field(...) syntax
-    return _field
+    return partial(_field, cached=cached, meta=meta, out=out)
 
 
 def get_fields_dict(cls_or_instance) -> dict[str, FieldInfo]:
