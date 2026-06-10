@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, get_type_hints
+from typing import TYPE_CHECKING, Any, cast, get_type_hints
 
 import niquests
 from playwright.async_api import async_playwright
@@ -27,7 +27,7 @@ from web_poet.page_inputs import (
 from web_poet.page_inputs.stats import StatCollector
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
 
 DEFAULT_PLAYWRIGHT_ENGINE = "chromium"
 PROVIDERS: dict[type, Callable[..., Any]] = {}
@@ -252,6 +252,6 @@ def _get_http_client(**_kwargs) -> HttpClient:
 
 @_provider
 def _get_fetcher(**_kwargs) -> Fetcher:
-    get_page = _kwargs.get("get_page")
-    get_item = _kwargs.get("get_item")
+    get_page = cast("Callable[..., Awaitable[Any]]", _kwargs.get("get_page"))
+    get_item = cast("Callable[..., Awaitable[Any]]", _kwargs.get("get_item"))
     return Fetcher(get_page, get_item)
