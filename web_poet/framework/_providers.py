@@ -11,6 +11,7 @@ from web_poet.page_inputs import (
     AnyResponse,
     BrowserHtml,
     BrowserResponse,
+    Fetcher,
     HttpClient,
     HttpRequest,
     HttpRequestBody,
@@ -247,3 +248,10 @@ def _get_stats(stats: StatCollector | None = None, **_kwargs) -> Stats:
 @_provider
 def _get_http_client(**_kwargs) -> HttpClient:
     return HttpClient(request_downloader=_get_http_response_from_http_request)
+
+
+@_provider
+def _get_fetcher(**_kwargs) -> Fetcher:
+    get_page = _kwargs.get("get_page")
+    get_item = _kwargs.get("get_item")
+    return Fetcher(get_page, get_item)

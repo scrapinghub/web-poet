@@ -7,6 +7,11 @@ Supporting additional requests
 To support :ref:`additional requests <additional-requests>`, your framework must
 provide the request download implementation of :class:`~.HttpClient`.
 
+To also support :ref:`fetching additional page objects <fetcher>` via
+:class:`~.Fetcher`, your framework must provide a :class:`~.Fetcher` instance
+backed by its own ``get_page`` and ``get_item`` implementations — see
+:ref:`framework-fetcher` below.
+
 .. _advanced-downloader-impl:
 
 Providing the Downloader
@@ -241,3 +246,43 @@ exception.
 
 From this distinction, the framework MUST NOT raise :class:`web_poet.exceptions.http.HttpResponseError`
 on its own at all, since the :class:`~.HttpClient` already handles that.
+
+
+.. _framework-fetcher:
+
+Supporting Fetcher
+==================
+
+:class:`~.Fetcher` gives page objects the ability to fetch fully constructed
+page objects for additional URLs, with the complete dependency injection
+machinery available to each of those page objects. See :ref:`fetcher` for the
+page object author perspective.
+
+To support :class:`~.Fetcher`, your framework must supply a :class:`~.Fetcher`
+instance when building page objects. :class:`~.Fetcher` wraps two callables:
+
+- ``get_page(request, page_cls, *, page_params=None)`` — builds and returns a
+  page object of type *page_cls* for *request*, resolving all its dependencies
+  through the framework.
+- ``get_item(request, item_or_page_cls, *, page_params=None)`` — like
+  ``get_page`` but also calls ``to_item()`` and returns the resulting item.
+
+These are the same signatures as :meth:`Framework.get_page
+<web_poet.framework.Framework.get_page>` and :meth:`Framework.get_item
+<web_poet.framework.Framework.get_item>` in the built-in framework.
+
+The built-in :class:`~web_poet.framework.Framework` wires this up
+automatically. For other frameworks, the typical approach is to register a
+provider for :class:`~.Fetcher` that creates an instance pointing at the
+framework's own resolution logic:
+
+.. code-block:: python
+
+    import web_poet
+
+
+    def build_fetcher_for_framework(my_framework):
+        return web_poet.Fetcher(
+            _get_page=my_framework.get_page,
+            _get_item=my_framework.get_item,
+        )
