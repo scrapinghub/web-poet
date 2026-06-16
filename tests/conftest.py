@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from web_poet.page_inputs import HttpResponse, HttpResponseBody
+from web_poet.rules import RulesRegistry
 
 pytest_plugins = ["pytester"]
 
@@ -43,3 +44,8 @@ def book_list_html_response(book_list_html):
     return HttpResponse(
         url="http://books.toscrape.com/index.html", body=body, encoding="utf-8"
     )
+
+
+@pytest.fixture
+def registry():
+    return RulesRegistry()

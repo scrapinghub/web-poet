@@ -9,8 +9,12 @@ for book detail pages from `books.toscrape.com`_.
 
 .. _books.toscrape.com: http://books.toscrape.com/
 
-To follow this tutorial you must first be familiar with Python_ and have
-:ref:`installed web-poet <install>`.
+To follow this tutorial you must first be familiar with Python_ and
+:ref:`install web-poet <install>` with the built-in framework:
+
+.. code-block:: bash
+
+    pip install 'web-poet[framework]'
 
 .. _Python: https://docs.python.org/
 
@@ -189,15 +193,10 @@ Use your page object class
 
 Now that you have a page object class defined, it is time to use it.
 
-First, install requests_, which is required by ``web_poet.example``.
-
-.. _requests: https://requests.readthedocs.io/en/latest/user/install/
-
 Then copy the following code into ``tutorial-project/run.py``:
 
 .. literalinclude:: /tutorial-project/run.py
    :language: python
-   :lines: 1-4, 6-12, 18
 
 Execute that code:
 
@@ -209,29 +208,28 @@ And the ``print(item)`` statement should output the following:
 
 .. code-block:: python
 
-   Book(title="The Exiled")
+    Book(title="The Exiled")
 
-In this tutorial you use ``web_poet.example.get_item``, which is a simple,
-incomplete implementation of the web-poet specification, built specifically for
-this tutorial, for demonstration purposes. In real projects, use instead an
-actual :ref:`web-poet framework <frameworks>`.
-
-``web_poet.example.get_item`` serves to illustrate the power of web-poet: once
-you have defined your page object class, a web-poet framework only needs 2
-inputs from you:
+In this tutorial you use :class:`web_poet.framework.Framework`.
+:mod:`web_poet.framework` is a built-in :ref:`web-poet framework <frameworks>`
+for simple use cases, including this tutorial.
+:class:`~web_poet.framework.Framework` serves to illustrate the power of
+web-poet: once you have defined your page object class, a web-poet framework
+only needs 2 inputs from you:
 
 -   the URL from which you want to extract data, and
 -   the desired output, either a :ref:`page object class <page-object-classes>`
     or, in this case, an :ref:`item class <items>`.
 
-Notice that you must also call :func:`~web_poet.rules.consume_modules` once
-before your first call to ``get_item``. ``consume_modules`` ensures that the
-specified Python modules are loaded. You pass ``consume_modules`` the import
-paths of the modules where your page object classes are defined. After loading
-those modules, :meth:`~web_poet.handle_urls` decorators register the page
-object classes that they decorate into ``web_poet.default_registry``, which
-``get_item`` uses to determine which page object class to use based on its
-input parameters (URL and item class).
+If you pass an item class to :meth:`~web_poet.framework.Framework.get_item`,
+call :func:`~web_poet.rules.consume_modules` once beforehand so your page
+object classes are registered and the framework can select the correct one.
+Pass to :func:`~web_poet.rules.consume_modules` the import paths of the modules
+that define your page object classes. When those modules are loaded, the
+:meth:`~web_poet.handle_urls` decorators register the classes in
+:data:`web_poet.default_registry`, which
+:meth:`~web_poet.framework.Framework.get_item` consults to match a page object
+class to the given URL and item class.
 
 Your web-poet framework can take care of everything else:
 
@@ -310,10 +308,9 @@ In the code above:
 After you update your ``tutorial-project/run.py`` script to request a
 ``CategorizedBook`` item:
 
-.. literalinclude:: /tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run_categorized.py
    :language: python
-   :lines: 1-3, 5-8, 13-15, 17-18
-   :emphasize-lines: 4, 10
+   :emphasize-lines: 6, 14
 
 And you execute it again:
 
@@ -433,12 +430,11 @@ called ``category_rank``, and if so, you return that value instead of using
 additional requests to find the value.
 
 You can now update your ``tutorial-project/run.py`` script to pass that
-parameter to ``get_item``:
+parameter to :meth:`~web_poet.framework.Framework.get_item`:
 
-.. literalinclude:: /tutorial-project/run.py
+.. literalinclude:: /tutorial-project/run_params.py
    :language: python
-   :lines: 13-17
-   :emphasize-lines: 4
+   :emphasize-lines: 15
 
 When you execute ``tutorial-project/run.py`` now, execution should take less
 time, but the result should be the same as before:

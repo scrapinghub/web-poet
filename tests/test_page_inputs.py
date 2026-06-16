@@ -16,10 +16,8 @@ from web_poet.page_inputs import (
     HttpResponse,
     HttpResponseBody,
     HttpResponseHeaders,
-    Stats,
 )
 from web_poet.page_inputs.http import request_fingerprint
-from web_poet.page_inputs.stats import DummyStatCollector
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
@@ -611,18 +609,6 @@ def test_request_fingerprint() -> None:
     req10 = HttpRequest(url="http://toscrape.com/1", headers=[("a", "b"), ("a", "c")])
     assert request_fingerprint(req1) != request_fingerprint(req10)
     assert request_fingerprint(req8) != request_fingerprint(req10)
-
-
-def test_stats() -> None:
-    stats = Stats()
-    stats.set("a", "1")
-    stats.set("b", 2)
-    stats.inc("b")
-    stats.inc("b", 5)
-    stats.inc("c")
-
-    assert isinstance(stats._stats, DummyStatCollector)
-    assert stats._stats._stats == {"a": "1", "b": 8, "c": 1}
 
 
 def test_http_or_browser_response() -> None:

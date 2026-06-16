@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+from typing import Any, ClassVar
+
 from url_matcher import Patterns
 
 from tests.po_lib import POBase
@@ -16,4 +19,4 @@ class PONestedPkg(POBase):
     expected_instead_of = PONestedPkgOverriden
     expected_patterns = Patterns(["example.com", "example.org"], ["/*.jpg|"])
     expected_to_return = None
-    expected_meta = {}
+    expected_meta: ClassVar[dict[str, Any] | Iterable[dict[str, Any]]] = {}

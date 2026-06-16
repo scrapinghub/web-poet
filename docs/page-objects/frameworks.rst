@@ -16,5 +16,7 @@ scrapy-poet_, which brings web-poet support to Scrapy_.
 .. _Scrapy: https://scrapy.org/
 .. _scrapy-poet: https://scrapy-poet.readthedocs.io/en/stable/
 
+There is also a :ref:`built-in framework <framework>` for simple use cases.
+
 As web-poet matures and sees wider adoption, we hope to see more frameworks add
 support for it.

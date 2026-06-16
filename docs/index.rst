@@ -28,12 +28,19 @@ web-poet
    page-objects/items
    page-objects/rules
    page-objects/fields
+   page-objects/layouts
    page-objects/additional-requests
    page-objects/input-validation
    page-objects/page-params
    page-objects/stats
    page-objects/testing
    page-objects/frameworks
+
+.. toctree::
+   :caption: Using page objects
+   :maxdepth: 1
+
+   framework
 
 .. toctree::
    :caption: Writing frameworks
