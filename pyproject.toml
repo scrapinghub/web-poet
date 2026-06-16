@@ -37,7 +37,7 @@ dependencies = [
     "andi >= 0.5.0",
     "python-dateutil >= 2.7.0",
     "time-machine >= 2.7.1",
-    "packaging >= 20.0",
+    "packaging >= 22.0",
 ]
 
 [project.optional-dependencies]
