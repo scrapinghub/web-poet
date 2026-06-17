@@ -12,7 +12,10 @@ class Item:
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
+# For unparameterized ItemPage, mypy leaves ItemT unresolved (Any). The runtime
+# default item class (dict) comes from Returns.item_cls and is not visible in
+# static type inference for to_item().
+@pytest.mark.xfail(reason="unparameterized ItemPage.to_item() is inferred as Any")
 async def test_item_page() -> None:
     class MyPage(ItemPage):
         @field
@@ -68,7 +71,11 @@ async def test_item_page_subclass_parametrized() -> None:
 
 
 @pytest.mark.mypy_testing
-@pytest.mark.xfail
+# Runtime Returns[MyItem] changes item_cls, but mypy keeps ItemT from the
+# ItemPage[Item] base specialization, so to_item() is inferred as Item.
+@pytest.mark.xfail(
+    reason="mypy does not narrow ItemPage[Item] to Returns[MyItem] override"
+)
 async def test_item_page_change_type() -> None:
 
     class BasePage(ItemPage[Item]):
