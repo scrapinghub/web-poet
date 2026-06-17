@@ -9,9 +9,10 @@ import pytest
 from itemadapter import ItemAdapter
 from itemadapter.adapter import DictAdapter
 
-from web_poet import HttpResponse, WebPage
+from web_poet import HttpResponse, WebPage, field
 from web_poet.testing import Fixture
 from web_poet.testing.__main__ import main as cli_main
+from web_poet.testing.exceptions import FieldMissing
 from web_poet.testing.fixture import INPUT_DIR_NAME, META_FILE_NAME, OUTPUT_FILE_NAME
 from web_poet.utils import get_fq_class_name
 
@@ -105,6 +106,11 @@ class MyItemPage(WebPage):
         return {"foo": "bar"}
 
 
+class MyItemPage2(WebPage):
+    async def to_item(self) -> dict:
+        return {"foo": None}
+
+
 class CapitalizingDictAdapter(DictAdapter):
     def __getitem__(self, field_name: str) -> Any:
         item = super().__getitem__(field_name)
@@ -115,6 +121,22 @@ class CapitalizingDictAdapter(DictAdapter):
 
 class CustomItemAdapter(ItemAdapter):
     ADAPTER_CLASSES = deque([CapitalizingDictAdapter])
+
+
+class EmptyAdapter:
+    """An adapter that always returns an empty mapping."""
+
+    def __init__(self, item: Any) -> None:
+        self._item = item
+
+    def asdict(self) -> dict:
+        return {}
+
+
+class SimpleFieldPage(WebPage):
+    @field
+    def foo(self):
+        return "bar"
 
 
 def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
@@ -133,6 +155,172 @@ def test_fixture_adapter(book_list_html_response, tmp_path) -> None:
     assert page_output["foo"] == "Bar"
     actual_output = loaded_fixture.get_expected_output()
     assert actual_output["foo"] == "Bar"
+
+
+def test_get_output_field_missing_raises(pytester, book_list_html_response) -> None:
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(SimpleFieldPage)
+    # save a fixture using an adapter that drops all fields
+    Fixture.save(
+        base_dir,
+        inputs=[book_list_html_response],
+        item={"foo": "bar"},
+        meta={"adapter": EmptyAdapter},
+    )
+    fixture = Fixture(base_dir / "test-1")
+    with pytest.raises(FieldMissing):
+        fixture._get_output_field("foo", SimpleFieldPage)
+
+
+def _save_fixture(
+    pytester, page_cls, page_inputs, *, expected_output=None, expected_exception=None
+):
+    base_dir = pytester.path / "fixtures" / get_fq_class_name(page_cls)
+    return Fixture.save(
+        base_dir, inputs=page_inputs, item=expected_output, exception=expected_exception
+    )
+
+
+def test_pytest_plugin_pass(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
+def test_pytest_plugin_bad_field_value(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "not bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, passed=2)
+    result.stdout.fnmatch_lines("item.foo is not correct*")
+
+
+def test_pytest_plugin_bad_field_value_None(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage2,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, passed=2)
+    result.stdout.fnmatch_lines("item.foo is not correct*")
+    result.stdout.fnmatch_lines("Expected: 'bar', got: None*")
+
+
+def test_pytest_plugin_missing_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar", "foo2": "bar2"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, passed=3)
+    result.stdout.fnmatch_lines("item.foo2 is missing*")
+
+
+def test_pytest_plugin_extra_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo2": "bar2"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=2, passed=1)
+    result.stdout.fnmatch_lines("item.foo2 is missing*")
+    result.stdout.fnmatch_lines("*unexpected fields*")
+    result.stdout.fnmatch_lines("*foo = 'bar'*")
+
+
+class FieldExceptionPage(WebPage):
+    @field
+    def foo(self):
+        return "foo"
+
+    @field
+    def bar(self):
+        raise Exception
+
+
+def test_pytest_plugin_field_exception_per_field(
+    pytester, book_list_html_response
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=FieldExceptionPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "foo", "bar": "bar"},
+    )
+    result = pytester.runpytest("--web-poet-field-mode=per-field", "-vv")
+    result.assert_outcomes(failed=2, passed=1, skipped=1)
+    result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
+    result.stdout.fnmatch_lines("*foo*PASSED*")
+
+
+def test_pytest_plugin_field_exception_to_item(
+    pytester, book_list_html_response
+) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=FieldExceptionPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "foo", "bar": "bar"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1, skipped=3)
+    result.stdout.fnmatch_lines("*FAILED*TO_ITEM_DOESNT_RAISE*")
+
+
+class ToItemOverridesFieldPage(WebPage):
+    @field
+    def foo(self):
+        return "field-foo"
+
+    async def to_item(self) -> dict:
+        return {"foo": "item-foo"}
+
+
+def test_field_mode_per_field(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=ToItemOverridesFieldPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "field-foo"},
+    )
+    result = pytester.runpytest("--web-poet-field-mode=per-field")
+    result.assert_outcomes(passed=3)
+
+
+def test_field_mode_to_item(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=ToItemOverridesFieldPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "item-foo"},
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
+def test_pytest_plugin_compare_item(pytester, book_list_html_response) -> None:
+    _save_fixture(
+        pytester,
+        page_cls=MyItemPage,
+        page_inputs=[book_list_html_response],
+        expected_output={"foo": "bar"},
+    )
+    result = pytester.runpytest("--web-poet-test-per-item")
+    result.assert_outcomes(passed=1)
 
 
 @pytest.mark.parametrize("dir_name", [get_fq_class_name(MyItemPage), "unrelated"])

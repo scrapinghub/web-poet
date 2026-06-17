@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
@@ -39,7 +39,7 @@ from .itemadapter import WebPoetTestItemAdapter
 if TYPE_CHECKING:
     import datetime
     import os
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from itemadapter import ItemAdapter
 
@@ -47,6 +47,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 
 INPUT_DIR_NAME = "inputs"
@@ -132,6 +134,26 @@ class Fixture:
         item = asyncio.run(ensure_awaitable(page.to_item()))
         return self._item_to_dict(item)
 
+    def _run_with_frozen_time(self, callback: Callable[[], _T]) -> _T:
+        meta = self.get_meta()
+        frozen_time: str | None = meta.get("frozen_time")
+        if not frozen_time:
+            return callback()
+        frozen_time_parsed = self._parse_frozen_time(frozen_time)
+        with time_machine.travel(frozen_time_parsed):
+            return callback()
+
+    def _get_output_field(self, name: str, page_cls: type) -> Any:
+        def _read_field() -> dict[str, Any]:
+            page = self.get_page(page_cls)
+            field_value = asyncio.run(ensure_awaitable(getattr(page, name)))
+            return self._get_adapter_cls()({name: field_value}).asdict()
+
+        actual_item = self._run_with_frozen_time(_read_field)
+        if name not in actual_item:
+            raise FieldMissing(name)
+        return actual_item[name]
+
     @cached_method
     def get_output(self, page_cls: type) -> dict:
         """
@@ -139,14 +161,7 @@ class Fixture:
         taking frozen time in account.
         """
         try:
-            meta = self.get_meta()
-            frozen_time: str | None = meta.get("frozen_time")
-            if frozen_time:
-                frozen_time_parsed = self._parse_frozen_time(frozen_time)
-                with time_machine.travel(frozen_time_parsed):
-                    return self._get_output(page_cls)
-            else:
-                return self._get_output(page_cls)
+            return self._run_with_frozen_time(lambda: self._get_output(page_cls))
         except Exception as e:
             self._output_error = e
             raise
@@ -220,14 +235,27 @@ class Fixture:
         page_cls: type,
         *,
         user_props: list[tuple[str, object]] | None = None,
+        field_mode: str | None = None,
     ) -> None:
-        """Assert that a certain field in the output matches the expected value."""
+        """Assert that a certain field in the output matches the expected
+        value.
+
+        When *field_mode* is set to "to_item" (default), read the whole item
+        via ``to_item()`` and then pick the field from that item. When
+        "per-field" read the field directly.
+        """
         expected_field = json.loads(_format_json(self.get_expected_output()[name]))
         self._append_user_prop(user_props, "expected_value", expected_field)
-        actual_item = self.get_output(page_cls)
-        if name not in actual_item:
-            raise FieldMissing(name)
-        actual_field = json.loads(_format_json(actual_item[name]))
+        mode = field_mode or "to_item"
+        if mode == "to_item":
+            actual_item = self.get_output(page_cls)
+            if name not in actual_item:
+                raise FieldMissing(name)
+            actual_field = json.loads(_format_json(actual_item[name]))
+        else:
+            actual_field = json.loads(
+                _format_json(self._get_output_field(name, page_cls))
+            )
         self._append_user_prop(user_props, "actual_value", actual_field)
         if actual_field != expected_field:
             raise FieldValueIncorrect(actual_field, expected_field)
