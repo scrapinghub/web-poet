@@ -12,13 +12,14 @@ import niquests.structures
 import pytest
 from attrs import define
 
-from web_poet import Injectable, ItemPage, field
+from web_poet import BrowserPage, Injectable, ItemPage, field
 from web_poet.exceptions import HttpRequestError, HttpResponseError
 from web_poet.framework import Framework, _providers, playwright_engine
 from web_poet.framework._api import _normalize_request
 from web_poet.page_inputs import Stats
 from web_poet.page_inputs.browser import BrowserHtml, BrowserResponse
 from web_poet.page_inputs.client import HttpClient
+from web_poet.page_inputs.fetcher import Fetcher
 from web_poet.page_inputs.http import (
     HttpRequest,
     HttpRequestBody,
@@ -979,3 +980,157 @@ async def test_playwright_exceptions_are_wrapped(monkeypatch):
     assert isinstance(exc.value.request, HttpRequest)
     assert str(exc.value.request.url) == "https://a.example"
     assert "playwright boom" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_fetcher_get_page_http(monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @define
+    class AdditionalPage(ItemPage[SampleItem]):
+        response: HttpResponse
+
+        async def to_item(self):
+            assert str(self.response.url) == "https://b.example"
+            return SAMPLE_ITEM
+
+    @define
+    class MainPage(ItemPage[SampleItem]):
+        fetcher: Fetcher
+
+        async def to_item(self):
+            page = await self.fetcher.get_page(
+                "https://additional.example", AdditionalPage
+            )
+            return await page.to_item()
+
+    framework = Framework()
+    item = await framework.get_item("https://a.example", MainPage)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_fetcher_get_item(monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(monkeypatch)
+
+    @define
+    class AdditionalPage(ItemPage[SampleItem]):
+        response: HttpResponse
+
+        async def to_item(self):
+            return SAMPLE_ITEM
+
+    @define
+    class MainPage(ItemPage[SampleItem]):
+        fetcher: Fetcher
+
+        async def to_item(self):
+            return await self.fetcher.get_item(
+                "https://additional.example", AdditionalPage
+            )
+
+    framework = Framework()
+    item = await framework.get_item("https://a.example", MainPage)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 0
+
+
+@pytest.mark.asyncio
+async def test_fetcher_browser_response(monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch,
+        response_url="https://c.example",
+        html="<html><body>additional</body></html>",
+        status=200,
+    )
+
+    @define
+    class BrowserAdditionalPage(ItemPage[SampleItem]):
+        response: BrowserResponse
+
+        async def to_item(self):
+            assert isinstance(self.response, BrowserResponse)
+            assert str(self.response.url) == "https://c.example"
+            assert "additional" in self.response.text
+            return SAMPLE_ITEM
+
+    @define
+    class MainPage(ItemPage[SampleItem]):
+        response: HttpResponse
+        fetcher: Fetcher
+
+        async def to_item(self):
+            page = await self.fetcher.get_page(
+                "https://browser.example", BrowserAdditionalPage
+            )
+            return await page.to_item()
+
+    framework = Framework()
+    item = await framework.get_item("https://a.example", MainPage)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 1
+
+
+@pytest.mark.asyncio
+async def test_fetcher_page_params(monkeypatch):
+    patch_aget(monkeypatch)
+    patch_async_playwright(monkeypatch)
+
+    @define
+    class AdditionalPage(ItemPage[SampleItem]):
+        params: PageParams
+
+        async def to_item(self):
+            return SampleItem(foo=self.params["key"])
+
+    @define
+    class MainPage(ItemPage[SampleItem]):
+        fetcher: Fetcher
+
+        async def to_item(self):
+            return await self.fetcher.get_item(
+                "https://additional.example",
+                AdditionalPage,
+                page_params={"key": "bar"},
+            )
+
+    framework = Framework()
+    item = await framework.get_item("https://a.example", MainPage)
+    assert item == SampleItem(foo="bar")
+
+
+@pytest.mark.asyncio
+async def test_fetcher_browser_page(monkeypatch):
+    http_state = patch_aget(monkeypatch)
+    browser_state = patch_async_playwright(
+        monkeypatch,
+        response_url="https://c.example",
+        html="<html><body><h1>Hello</h1></body></html>",
+        status=200,
+    )
+
+    @define
+    class MainPage(ItemPage[SampleItem]):
+        response: HttpResponse
+        fetcher: Fetcher
+
+        async def to_item(self):
+            page = await self.fetcher.get_page("https://browser.example", BrowserPage)
+            assert isinstance(page, BrowserPage)
+            assert isinstance(page.response, BrowserResponse)
+            assert str(page.response.url) == "https://c.example"
+            assert page.css("h1::text").get() == "Hello"
+            return SAMPLE_ITEM
+
+    framework = Framework()
+    item = await framework.get_item("https://a.example", MainPage)
+    assert item == SAMPLE_ITEM
+    assert http_state["calls"] == 1
+    assert browser_state["calls"] == 1
