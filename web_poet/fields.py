@@ -6,21 +6,23 @@ into separate Page Object methods / properties.
 from __future__ import annotations
 
 import inspect
+from collections.abc import Callable
 from contextlib import suppress
 from functools import update_wrapper, wraps
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast, overload
 
 import attrs
 from itemadapter import ItemAdapter
 
 from web_poet.utils import cached_method, callable_has_parameter, ensure_awaitable
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
 _FIELD_METHODS_ATTRIBUTE = "_web_poet_field_methods"
+
+_PageT = TypeVar("_PageT")
+_ReturnT = TypeVar("_ReturnT")
+_FieldMethod = Callable[[_PageT], _ReturnT]
 
 
 @attrs.define
@@ -61,8 +63,138 @@ class FieldsMixin:
         setattr(cls, _FIELD_METHODS_ATTRIBUTE, {})
 
 
+class _FieldDescriptor(Generic[_PageT, _ReturnT]):
+    def __init__(
+        self,
+        method: _FieldMethod[_PageT, _ReturnT],
+        *,
+        cached: bool,
+        meta: dict | None,
+        out: list[Callable] | None,
+    ):
+        if not callable(method):
+            raise TypeError(
+                f"@field decorator must be used on methods, {method!r} is decorated instead"
+            )
+        self.original_method = method
+        self.cached = cached
+        self.meta = meta
+        self.out = out
+        self.name: str | None = None
+        update_wrapper(cast("Callable", self), method)
+
+    def __set_name__(self, owner, name: str) -> None:
+        self.name = name
+        if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
+            setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
+
+        field_info = FieldInfo(name=name, meta=self.meta, out=self.out)
+        getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
+
+    @overload
+    def __get__(
+        self, instance: None, owner: type[_PageT] | None = None
+    ) -> _FieldDescriptor[_PageT, _ReturnT]: ...
+
+    @overload
+    def __get__(
+        self, instance: _PageT, owner: type[_PageT] | None = None
+    ) -> _ReturnT: ...
+
+    def __get__(self, instance, owner=None):
+        # When accessed on the class (instance is None) return the
+        # descriptor itself (which has been wrapped with the original
+        # function attributes) so that __doc__ and other metadata are
+        # preserved.
+        if instance is None:
+            return self
+
+        # We use the original method and the out arg from the field and
+        # the Processors class from the instance class, so caching needs to
+        # take into account the instance class and the field object. So we
+        # use the field object id() as a key when caching the method in
+        # the instance class.
+        cache_key = id(self)
+        method = self._get_processed_method(owner, cache_key)
+        if method is None:
+            if self.out is not None:
+                processor_functions = self.out
+            elif hasattr(owner, "Processors"):
+                assert self.name is not None
+                processor_functions = getattr(owner.Processors, self.name, [])
+            else:
+                processor_functions = []
+            processors: list[tuple[Callable, bool]] = []
+            for processor_function in processor_functions:
+                takes_page = callable_has_parameter(processor_function, "page")
+                processors.append((processor_function, takes_page))
+            method = self._processed(self.original_method, processors)
+            if self.cached:
+                method = cached_method(method)
+            self._set_processed_method(owner, cache_key, method)
+
+        return cast("_ReturnT", method(instance))
+
+    @staticmethod
+    def _get_processed_method(page_cls, key: int):
+        return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
+
+    @staticmethod
+    def _set_processed_method(page_cls, key: int, method) -> None:
+        getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
+
+    @staticmethod
+    def _process(value: Any, page, processors: list[tuple[Callable, bool]]) -> Any:
+        for processor, takes_page in processors:
+            value = processor(value, page=page) if takes_page else processor(value)
+        return value
+
+    @staticmethod
+    def _processed(method, processors: list[tuple[Callable, bool]]):
+        """Returns a wrapper for method that calls processors on its result"""
+        if inspect.iscoroutinefunction(method):
+
+            async def processed(page):
+                if hasattr(page, "_validate_input"):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                return _FieldDescriptor._process(await method(page), page, processors)
+
+        else:
+
+            def processed(page):
+                if hasattr(page, "_validate_input"):
+                    validation_item = page._validate_input()
+                    if validation_item is not None:
+                        return getattr(validation_item, method.__name__)
+                return _FieldDescriptor._process(method(page), page, processors)
+
+        return wraps(method)(processed)
+
+
+@overload
 def field(
-    method=None,
+    method: _FieldMethod[_PageT, _ReturnT],
+    *,
+    cached: bool = False,
+    meta: dict | None = None,
+    out: list[Callable] | None = None,
+) -> _FieldDescriptor[_PageT, _ReturnT]: ...
+
+
+@overload
+def field(
+    method: None = None,
+    *,
+    cached: bool = False,
+    meta: dict | None = None,
+    out: list[Callable] | None = None,
+) -> Callable[[_FieldMethod[_PageT, _ReturnT]], _FieldDescriptor[_PageT, _ReturnT]]: ...
+
+
+def field(
+    method: _FieldMethod[Any, Any] | None = None,
     *,
     cached: bool = False,
     meta: dict | None = None,
@@ -70,11 +202,11 @@ def field(
 ):
     """
     Page Object method decorated with ``@field`` decorator becomes a property,
-    which is then used by :class:`~.ItemPage`'s to_item() method to populate
-    a corresponding item attribute.
+    which is then used by :class:`~.ItemPage`'s to_item() method to populate a
+    corresponding item attribute.
 
-    By default, the value is computed on each property access.
-    Use ``@field(cached=True)`` to cache the property value.
+    By default, the value is computed on each property access. Use
+    ``@field(cached=True)`` to cache the property value.
 
     The ``meta`` parameter allows to store arbitrary information for the field,
     e.g. ``@field(meta={"expensive": True})``. This information can be later
@@ -84,102 +216,24 @@ def field(
     functions applied to the value of the field before returning it.
     """
 
-    class _field:
-        def __init__(self, method):
-            if not callable(method):
-                raise TypeError(
-                    f"@field decorator must be used on methods, {method!r} is decorated instead"
-                )
-            self.original_method = method
-            self.name: str | None = None
-            update_wrapper(self, method)
-
-        def __set_name__(self, owner, name: str) -> None:
-            self.name = name
-            if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
-                setattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE, {})
-
-            field_info = FieldInfo(name=name, meta=meta, out=out)
-            getattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE)[name] = field_info
-
-        def __get__(self, instance, owner=None):
-            # When accessed on the class (instance is None) return the
-            # descriptor itself (which has been wrapped with the original
-            # function attributes) so that __doc__ and other metadata are
-            # preserved.
-            if instance is None:
-                return self
-
-            # We use the original method and the out arg from the field and
-            # the Processors class from the instance class, so caching needs to
-            # take into account the instance class and the field object. So we
-            # use the field object id() as a key when caching the method in
-            # the instance class.
-            cache_key = id(self)
-            method = self._get_processed_method(owner, cache_key)
-            if method is None:
-                if out is not None:
-                    processor_functions = out
-                elif hasattr(owner, "Processors"):
-                    assert self.name is not None
-                    processor_functions = getattr(owner.Processors, self.name, [])
-                else:
-                    processor_functions = []
-                processors: list[tuple[Callable, bool]] = []
-                for processor_function in processor_functions:
-                    takes_page = callable_has_parameter(processor_function, "page")
-                    processors.append((processor_function, takes_page))
-                method = self._processed(self.original_method, processors)
-                if cached:
-                    method = cached_method(method)
-                self._set_processed_method(owner, cache_key, method)
-
-            return method(instance)
-
-        @staticmethod
-        def _get_processed_method(page_cls, key: int):
-            return getattr(page_cls, _FIELD_METHODS_ATTRIBUTE).get(key)
-
-        @staticmethod
-        def _set_processed_method(page_cls, key: int, method) -> None:
-            getattr(page_cls, _FIELD_METHODS_ATTRIBUTE)[key] = method
-
-        @staticmethod
-        def _process(value: Any, page, processors: list[tuple[Callable, bool]]) -> Any:
-            for processor, takes_page in processors:
-                value = processor(value, page=page) if takes_page else processor(value)
-            return value
-
-        @staticmethod
-        def _processed(method, processors: list[tuple[Callable, bool]]):
-            """Returns a wrapper for method that calls processors on its result"""
-            if inspect.iscoroutinefunction(method):
-
-                async def processed(page):
-                    if hasattr(page, "_validate_input"):
-                        validation_item = page._validate_input()
-                        if validation_item is not None:
-                            return getattr(validation_item, method.__name__)
-                    return _field._process(await method(page), page, processors)
-
-            else:
-
-                def processed(page):
-                    if hasattr(page, "_validate_input"):
-                        validation_item = page._validate_input()
-                        if validation_item is not None:
-                            return getattr(validation_item, method.__name__)
-                    return _field._process(method(page), page, processors)
-
-            return wraps(method)(processed)
-
     if method is not None:
         # @field syntax
-        res = _field(method)
+        res = _FieldDescriptor(method, cached=cached, meta=meta, out=out)
         update_wrapper(cast("Callable", res), method)
         return res
+
     # @field(...) syntax
-    return _field
+    def decorator(
+        wrapped_method: _FieldMethod[_PageT, _ReturnT],
+    ) -> _FieldDescriptor[_PageT, _ReturnT]:
+        return _FieldDescriptor(
+            wrapped_method,
+            cached=cached,
+            meta=meta,
+            out=out,
+        )
+
+    return decorator
 
 
 def get_fields_dict(cls_or_instance) -> dict[str, FieldInfo]:
@@ -193,15 +247,29 @@ def get_fields_dict(cls_or_instance) -> dict[str, FieldInfo]:
 T = TypeVar("T")
 
 
-# FIXME: type is ignored as a workaround for https://github.com/python/mypy/issues/3737
-# inference works properly if a non-default item_cls is passed; for dict
-# it's not working (return type is Any)
+@overload
 async def item_from_fields(
     obj,
-    item_cls: type[T] = dict,  # type: ignore[assignment]
+    item_cls: type[T],
     *,
     skip_nonitem_fields: bool = False,
-) -> T:
+) -> T: ...
+
+
+@overload
+async def item_from_fields(
+    obj,
+    *,
+    skip_nonitem_fields: bool = False,
+) -> dict[str, Any]: ...
+
+
+async def item_from_fields(
+    obj,
+    item_cls: type[T | dict[str, Any]] = dict,
+    *,
+    skip_nonitem_fields: bool = False,
+) -> T | dict[str, Any]:
     """Return an item of ``item_cls`` type, with its attributes populated
     from the ``obj`` methods decorated with :class:`field` decorator.
 
@@ -221,12 +289,29 @@ async def item_from_fields(
     )
 
 
+@overload
 def item_from_fields_sync(
     obj,
-    item_cls: type[T] = dict,  # type: ignore[assignment]
+    item_cls: type[T],
     *,
     skip_nonitem_fields: bool = False,
-) -> T:
+) -> T: ...
+
+
+@overload
+def item_from_fields_sync(
+    obj,
+    *,
+    skip_nonitem_fields: bool = False,
+) -> dict[str, Any]: ...
+
+
+def item_from_fields_sync(
+    obj,
+    item_cls: type[T | dict[str, Any]] = dict,
+    *,
+    skip_nonitem_fields: bool = False,
+) -> T | dict[str, Any]:
     """Synchronous version of :func:`item_from_fields`."""
     field_names = list(get_fields_dict(obj))
     if skip_nonitem_fields:
