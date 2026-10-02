@@ -27,10 +27,10 @@ jobs:
               TOXENV: min
           - python-version: '3.10'
             env:
-              TOXENV: min-framework
+              TOXENV: min-extra
           - python-version: '3.14'
             env:
-              TOXENV: framework
+              TOXENV: extra
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

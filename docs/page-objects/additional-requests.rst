@@ -84,6 +84,40 @@ Request methods may either raise an :class:`~.HttpError` or return an
     trail.
 
 
+.. _additional-requests-page-objects:
+
+Parsing responses with page objects
+===================================
+
+To parse the response of an additional request, you can write a page object
+class for it, fields and :ref:`declarative selectors <declarative-selectors>`
+included, and build it from the response:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import HttpClient, WebPage, css, field
+
+
+    @attrs.define
+    class PricePage(WebPage):
+        currency = field(css(".currency::text").get())
+
+        @field
+        def price(self) -> str | None:
+            return self.css(".price::text").re_first(r"[\d.]+")
+
+
+    @attrs.define
+    class MyPage(WebPage):
+        http: HttpClient
+
+        @field
+        async def price(self) -> str | None:
+            response = await self.http.get("https://example.com/api/price")
+            return PricePage(response=response).price
+
+
 Concurrent requests
 ===================
 

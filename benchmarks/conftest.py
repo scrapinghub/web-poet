@@ -4,11 +4,14 @@ import asyncio
 import gzip
 from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from web_poet import HttpResponse, ItemPage
+
+if TYPE_CHECKING:
+    import parsel
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -55,15 +58,17 @@ def _build(page_cls: type[ItemPage], name: str, bodies: dict[str, bytes]) -> Any
 
 @pytest.fixture(scope="session")
 def warm_pages(bodies: dict[str, bytes]) -> PageBuilder:
-    pages: dict[tuple[type[ItemPage], str], Any] = {}
+    warm: dict[tuple[type[ItemPage], str], tuple[Any, parsel.Selector]] = {}
 
     def warm_page(page_cls: type[ItemPage], name: str) -> Any:
         key = (page_cls, name)
-        if key not in pages:
+        if key not in warm:
             page = _build(page_cls, name, bodies)
-            page.selector
-            pages[key] = page
-        return pages[key]
+            warm[key] = page.response, page.selector
+        response, selector = warm[key]
+        page = page_cls(response=response)  # type: ignore[call-arg]
+        page._SelectableMixin__cached_selector = selector
+        return page
 
     return warm_page
 
@@ -78,12 +83,11 @@ def page(
 
     A cold page object is a new one over a new response, and so it decodes and
     parses the document again on every call, as it does when a spider downloads
-    a page. A warm one is reused, and its selector already exists, which leaves
-    only the queries and the field machinery to measure.
-
-    A page object parses the response on its own, rather than sharing the
-    selector of the response, so reusing the response is not enough to warm
-    one up."""
+    a page. A warm one is new too, so that nothing that it caches carries over,
+    but it shares the response and the parsed selector of the ones before it,
+    which leaves only the queries and the field machinery to measure. A
+    frostwork scan works on the response, so a warm page saves it the decoding
+    alone."""
     if request.param == "warm":
         return warm_pages
     return lambda page_cls, name: _build(page_cls, name, bodies)

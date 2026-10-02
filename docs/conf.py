@@ -199,4 +199,5 @@ scrapy_intersphinx_enable = [
     "parsel",
     "scrapy-poet",
     "url-matcher",
+    "zyte-parsers",
 ]

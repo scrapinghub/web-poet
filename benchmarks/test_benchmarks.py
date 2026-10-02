@@ -7,6 +7,10 @@ import pytest
 
 from benchmarks.pages import (
     ArticlePage,
+    DeclarativeArticlePage,
+    DeclarativeJobPostingPage,
+    DeclarativeMinimalPage,
+    DeclarativeProductPage,
     JmesPathArticlePage,
     JobPostingPage,
     JsonLdArticlePage,
@@ -26,13 +30,25 @@ if TYPE_CHECKING:
 #: changes to the page object it measures.
 BENCHMARKS: dict[str, tuple[type[ItemPage], str]] = {
     "product_imperative": (ProductPage, "product"),
+    "product_declarative": (DeclarativeProductPage, "product"),
     "product_details_nodes": (ProductDetailsPage, "product"),
     "article_imperative": (ArticlePage, "article"),
+    "article_declarative": (DeclarativeArticlePage, "article"),
     "article_jsonld": (JsonLdArticlePage, "article"),
     "article_jmespath": (JmesPathArticlePage, "article"),
     "job_imperative": (JobPostingPage, "job"),
+    "job_declarative": (DeclarativeJobPostingPage, "job"),
     "minimal": (MinimalPage, "minimal"),
+    "minimal_declarative": (DeclarativeMinimalPage, "minimal"),
 }
+
+TWINS = {
+    "product_declarative": "product_imperative",
+    "article_declarative": "article_imperative",
+    "job_declarative": "job_imperative",
+    "minimal_declarative": "minimal",
+}
+"""Every declarative benchmark, mapped to the imperative one it mirrors."""
 
 
 def _extract(loop: asyncio.AbstractEventLoop, page: PageBuilder, name: str) -> Any:
@@ -43,6 +59,13 @@ def _extract(loop: asyncio.AbstractEventLoop, page: PageBuilder, name: str) -> A
 @pytest.mark.parametrize("name", list(BENCHMARKS))
 def test_extraction(benchmark, loop, page, name: str) -> None:
     benchmark(_extract, loop, page, name)
+
+
+@pytest.mark.parametrize(("declarative", "imperative"), TWINS.items())
+def test_twins_agree(loop, page, declarative: str, imperative: str) -> None:
+    """A declarative page object extracts what the imperative one that it
+    mirrors extracts, so that their benchmarks compare like with like."""
+    assert _extract(loop, page, declarative) == _extract(loop, page, imperative)
 
 
 @pytest.mark.parametrize("name", list(BENCHMARKS))

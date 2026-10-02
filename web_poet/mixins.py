@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Literal, Protocol, TypeVar
 from urllib.parse import urljoin
 
 import parsel
 from w3lib.html import get_base_url
 
+from web_poet._frostwork import _check_class as _frostwork_check_class
+from web_poet._frostwork import _extract as _frostwork_extract
+from web_poet._selectors import _JMESPATH_ERROR, _jmespath_supported
+from web_poet.utils import cached_method
+
 if TYPE_CHECKING:
+    from web_poet._selectors import _SelectorDeclaration
     from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
 
@@ -21,7 +27,30 @@ class _ResponseLike(Protocol):
 ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
 
+_DeclarativeBackend = Literal["parsel", "frostwork"]
+
+
 class SelectorShortcutsMixin:
+    _declarative_backend: _DeclarativeBackend = "parsel"
+    _frostwork_declined = False
+
+    def __init_subclass__(
+        cls, declarative_backend: _DeclarativeBackend | None = None, **kwargs: Any
+    ) -> None:
+        super().__init_subclass__(**kwargs)
+        # attrs recreates the class without this keyword, and the recreated
+        # class keeps the value set on the original one (see issue #141).
+        if declarative_backend is not None:
+            if declarative_backend not in ("parsel", "frostwork"):
+                raise ValueError(
+                    f"{cls.__qualname__} sets declarative_backend to "
+                    f"{declarative_backend!r}, but it must be 'parsel' or "
+                    f"'frostwork'."
+                )
+            cls._declarative_backend = declarative_backend
+        if cls._declarative_backend == "frostwork":
+            _frostwork_check_class(cls)
+
     def xpath(self, query, **kwargs) -> parsel.SelectorList:
         """A shortcut to ``.selector.xpath()``."""
         return self.selector.xpath(query, **kwargs)  # type: ignore[attr-defined]
@@ -32,11 +61,45 @@ class SelectorShortcutsMixin:
 
     def jmespath(self, query: str, **kwargs) -> parsel.SelectorList:
         """A shortcut to ``.selector.jmespath()``."""
-        if not hasattr(self.selector, "jmespath"):  # type: ignore[attr-defined]
-            raise AttributeError(
-                "Please install parsel >= 1.8.1 to get jmespath support"
-            )
+        if not _jmespath_supported():
+            raise AttributeError(_JMESPATH_ERROR)
         return self.selector.jmespath(query, **kwargs)  # type: ignore[attr-defined]
+
+    @cached_method
+    def _selector_value_cache(self) -> dict[_SelectorDeclaration, Any]:
+        return {}
+
+    def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
+        """Return the value of *declaration* for this object, extracting it on
+        the first call.
+
+        frostwork extracts *declaration* along with every other declaration of
+        the object that it supports, in a single pass; those extra values are
+        cached and reused, so that a single pass happens only once."""
+        values = self._selector_value_cache()
+        if declaration not in values:
+            if (
+                self._declarative_backend == "frostwork"
+                and not self._frostwork_declined
+            ):
+                document = self._selector_document()  # type: ignore[attr-defined]
+                extracted = _frostwork_extract(type(self), declaration, document)
+                if extracted is None:
+                    self._frostwork_declined = True
+                else:
+                    values.update(extracted)
+            if declaration not in values:
+                values[declaration] = self._parsel_value(declaration)
+        return values[declaration]
+
+    def _parsel_value(self, declaration: _SelectorDeclaration) -> Any:
+        query = getattr(self.selector, declaration.syntax)  # type: ignore[attr-defined]
+        selector_list = query(declaration.expression)
+        # Modes other than selector are named after the parsel selector list
+        # method that implements them.
+        if declaration.mode == "selector":
+            return selector_list
+        return getattr(selector_list, declaration.mode)()
 
 
 class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
@@ -111,6 +174,16 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
 
     def _selector_input(self) -> str:
         return self.html
+
+    def _selector_document(self) -> tuple[bytes | str, str | None]:
+        """Return the raw document of this object and its encoding, for
+        frostwork to scan directly instead of using ``self.selector``."""
+        response: Any = self.response
+        body = getattr(response, "body", None)
+        if body is None:
+            # A browser response is HTML that has already been decoded.
+            return self.html, None
+        return body, getattr(response, "encoding", None)
 
     @property
     def base_url(self) -> str:

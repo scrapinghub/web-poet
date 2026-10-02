@@ -1,0 +1,88 @@
+import attrs
+import pytest
+
+from web_poet import (
+    HttpResponse,
+    WebPage,
+    css,
+    field,
+    jmespath,
+    xpath,
+)
+
+
+@attrs.define
+class Page(WebPage):
+    name = field(css("h1::text").get())
+    price = field(css(".price::text").get())
+    brand = field(xpath("//meta[@itemprop='brand']/@content").get())
+    images = field(css("img::attr(src)").getall())
+    length = field(css("h1::text").get(), out=[len])
+
+    json = field(jmespath("price").get())
+    jsons = field(jmespath("tags").getall())
+
+    helper = css(".sku::text").get()
+    helpers = css(".sku::text").getall()
+    helper_selector = css(".sku::text")
+
+
+@pytest.mark.mypy_testing
+def test_field_str() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.name)  # R: str | None
+
+
+@pytest.mark.mypy_testing
+def test_field_css() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.price)  # R: str | None
+
+
+@pytest.mark.mypy_testing
+def test_field_xpath() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.brand)  # R: str | None
+
+
+@pytest.mark.mypy_testing
+def test_field_all() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.images)  # R: list[str]
+
+
+@pytest.mark.mypy_testing
+def test_field_jmespath() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.json)  # R: Any
+
+
+@pytest.mark.mypy_testing
+def test_field_jmespath_all() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.jsons)  # R: list[Any]
+
+
+@pytest.mark.mypy_testing
+def test_declaration() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.helper)  # R: str | None
+
+
+@pytest.mark.mypy_testing
+def test_declaration_all() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.helpers)  # R: list[str]
+
+
+@pytest.mark.mypy_testing
+def test_declaration_selector() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.helper_selector)  # R: parsel.selector.SelectorList[parsel.selector.Selector]
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail(reason="mypy does not infer field(out=...) transformed return type")
+def test_field_out() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.length)  # R: int
