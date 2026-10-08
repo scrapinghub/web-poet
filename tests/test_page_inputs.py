@@ -453,7 +453,7 @@ def test_replace_wrong_encoding() -> None:
     r = HttpResponse(
         "http://www.example.com", encoding="utf-8", body=b"PREFIX\xe3\xabSUFFIX"
     )
-    # XXX: Policy for replacing invalid chars may suffer minor variations
+    # Policy for replacing invalid chars may suffer minor variations
     # but it should always contain the unicode replacement char ('\ufffd')
     assert "\ufffd" in r.text, repr(r.text)
     assert "PREFIX" in r.text, repr(r.text)

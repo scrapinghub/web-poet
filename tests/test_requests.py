@@ -20,26 +20,22 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def async_mock():
-    """Workaround since python 3.7 doesn't ship with asyncmock."""
-
+def fake_downloader():
     async def async_test(req):
         return HttpResponse(str(req.url), body=b"")
-
-    mock.MagicMock.__await__ = lambda x: async_test(x).__await__()
 
     return async_test
 
 
 @pytest.mark.asyncio
-async def test_perform_request_from_httpclient(async_mock) -> None:
+async def test_perform_request_from_httpclient(fake_downloader) -> None:
     url = "http://example.com"
     client = HttpClient()
 
     with pytest.raises(RequestDownloaderVarError):
         await client.get(url)
 
-    request_downloader_var.set(async_mock)
+    request_downloader_var.set(fake_downloader)
     response = await client.get(url)
 
     # The async downloader implementation should return the HttpResponse
@@ -48,8 +44,8 @@ async def test_perform_request_from_httpclient(async_mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_http_client_single_requests(async_mock) -> None:
-    client = HttpClient(async_mock)
+async def test_http_client_single_requests(fake_downloader) -> None:
+    client = HttpClient(fake_downloader)
 
     with mock.patch("web_poet.page_inputs.client.HttpRequest") as mock_request:
         await client.request("url")
@@ -94,9 +90,9 @@ def client_with_status() -> Callable:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method_name", ["request", "get", "post", "execute"])
 async def test_http_client_allow_status(
-    async_mock, client_with_status, method_name
+    fake_downloader, client_with_status, method_name
 ) -> None:
-    client = HttpClient(async_mock)
+    client = HttpClient(fake_downloader)
 
     # Simulate 500 Internal Server Error responses
     client._request_downloader = client_with_status(500)
@@ -149,10 +145,10 @@ async def test_http_client_allow_status(
 
 
 @pytest.mark.asyncio
-async def test_http_client_keyword_enforcing(async_mock) -> None:
+async def test_http_client_keyword_enforcing(fake_downloader) -> None:
     """Only keyword args are allowed after the url param."""
 
-    client = HttpClient(async_mock)
+    client = HttpClient(fake_downloader)
 
     with pytest.raises(TypeError):
         await client.request("url", "PATCH")  # type: ignore[misc]
@@ -165,8 +161,8 @@ async def test_http_client_keyword_enforcing(async_mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_http_client_execute(async_mock) -> None:
-    client = HttpClient(async_mock)
+async def test_http_client_execute(fake_downloader) -> None:
+    client = HttpClient(fake_downloader)
 
     request = HttpRequest("url-1")
     response = await client.execute(request)
@@ -176,8 +172,8 @@ async def test_http_client_execute(async_mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_http_client_batch_execute(async_mock) -> None:
-    client = HttpClient(async_mock)
+async def test_http_client_batch_execute(fake_downloader) -> None:
+    client = HttpClient(fake_downloader)
 
     requests = [
         HttpRequest("url-1"),
@@ -190,8 +186,8 @@ async def test_http_client_batch_execute(async_mock) -> None:
 
 
 @pytest.fixture
-def client_that_errs(async_mock) -> HttpClient:
-    client = HttpClient(async_mock)
+def client_that_errs(fake_downloader) -> HttpClient:
+    client = HttpClient(fake_downloader)
 
     # Simulate errors inside the request coroutines
     async def stub_request_downloader(*args, **kwargs):
@@ -233,9 +229,9 @@ async def test_http_client_batch_execute_with_exception_raised(
 
 @pytest.mark.asyncio
 async def test_http_client_batch_execute_allow_status(
-    async_mock, client_with_status
+    fake_downloader, client_with_status
 ) -> None:
-    client = HttpClient(async_mock)
+    client = HttpClient(fake_downloader)
 
     # Simulate 400 Bad Request
     client._request_downloader = client_with_status(400)
