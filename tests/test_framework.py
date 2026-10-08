@@ -2,15 +2,15 @@ import logging
 
 import pytest
 
-pytest.importorskip("niquests")
+pytest.importorskip("aiohttp")
 pytest.importorskip("playwright")
 
 from typing import Annotated
 
-import niquests
-import niquests.structures
+import aiohttp
 import pytest
 from attrs import define
+from multidict import CIMultiDict
 
 from web_poet import Injectable, ItemPage, field
 from web_poet.exceptions import HttpRequestError, HttpResponseError
@@ -46,7 +46,7 @@ class SampleItemPageStub:
         return SAMPLE_ITEM
 
 
-def patch_aget(
+def patch_get(
     monkeypatch,
     *,
     response_url="https://b.example",
@@ -57,17 +57,25 @@ def patch_aget(
     class DummyResponse:
         def __init__(self):
             self.url = response_url
-            self.status_code = status
-            self.content = content
-            self.headers = headers or {}
+            self.status = status
+            self.headers = CIMultiDict(headers or {})
+
+        async def read(self):
+            return content
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
 
     state = {"calls": 0}
 
-    async def fake_aget(_url, timeout=300):
+    def fake_get(_session, _url):
         state["calls"] += 1
         return DummyResponse()
 
-    monkeypatch.setattr(niquests, "aget", fake_aget)
+    monkeypatch.setattr(aiohttp.ClientSession, "get", fake_get)
     return state
 
 
@@ -197,7 +205,7 @@ async def test_get_item_no_page(registry):
 
 @pytest.mark.asyncio
 async def test_http_client(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -218,7 +226,7 @@ async def test_http_client(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_http_client_allow_status(monkeypatch):
-    http_state = patch_aget(monkeypatch, status=404)
+    http_state = patch_get(monkeypatch, status=404)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -244,7 +252,7 @@ async def test_http_client_allow_status(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_page_params(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -265,7 +273,7 @@ async def test_page_params(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_response_url(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -285,7 +293,7 @@ async def test_response_url(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_browser_response(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(
         monkeypatch,
         response_url="https://c.example",
@@ -349,7 +357,7 @@ async def test_stats_with_collector_passed():
 
 @pytest.mark.asyncio
 async def test_any_response_prefers_http(monkeypatch):
-    http_state = patch_aget(monkeypatch, response_url="https://b.example")
+    http_state = patch_get(monkeypatch, response_url="https://b.example")
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -371,7 +379,7 @@ async def test_any_response_prefers_http(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_any_response_uses_browser_when_browser_needed(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(
         monkeypatch,
         response_url="https://c.example",
@@ -399,7 +407,7 @@ async def test_any_response_uses_browser_when_browser_needed(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_request_specific_browser_annotation(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -418,7 +426,7 @@ async def test_request_specific_browser_annotation(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_default_browser_param_override(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -437,7 +445,7 @@ async def test_default_browser_param_override(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -516,7 +524,7 @@ async def test_multiple_browser_responses_and_unannotated_choice(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_browser_html_annotation(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -536,7 +544,7 @@ async def test_browser_html_annotation(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_unsupported_browser_raises(monkeypatch):
-    patch_aget(monkeypatch)
+    patch_get(monkeypatch)
     patch_async_playwright(monkeypatch)
 
     @define
@@ -553,7 +561,7 @@ async def test_unsupported_browser_raises(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_browser_html_dependency(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(
         monkeypatch,
         response_url="https://c.example",
@@ -580,7 +588,7 @@ async def test_browser_html_dependency(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_response_url_with_browser_response(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(
         monkeypatch, response_url="https://c.example"
     )
@@ -711,7 +719,7 @@ async def test_http_request():
 
 @pytest.mark.asyncio
 async def test_http_response_body(monkeypatch):
-    state = patch_aget(monkeypatch, content=b"hello")
+    state = patch_get(monkeypatch, content=b"hello")
 
     @define
     class Page(ItemPage[SampleItem]):
@@ -730,7 +738,7 @@ async def test_http_response_body(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_http_response_headers(monkeypatch):
-    state = patch_aget(monkeypatch, headers={"X-Foo": "bar"})
+    state = patch_get(monkeypatch, headers={"X-Foo": "bar"})
 
     @define
     class Page(ItemPage[SampleItem]):
@@ -749,7 +757,7 @@ async def test_http_response_headers(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_request_url(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -769,7 +777,7 @@ async def test_request_url(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_both_urls(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -791,7 +799,7 @@ async def test_both_urls(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_http_and_browser_responses(monkeypatch):
-    http_state = patch_aget(monkeypatch, response_url="https://b.example")
+    http_state = patch_get(monkeypatch, response_url="https://b.example")
     browser_state = patch_async_playwright(
         monkeypatch, response_url="https://c.example"
     )
@@ -817,7 +825,7 @@ async def test_http_and_browser_responses(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_multiple_http_response_dependencies(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(monkeypatch)
 
     @define
@@ -845,7 +853,7 @@ async def test_multiple_http_response_dependencies(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_multiple_browser_response_dependencies(monkeypatch):
-    http_state = patch_aget(monkeypatch)
+    http_state = patch_get(monkeypatch)
     browser_state = patch_async_playwright(
         monkeypatch, response_url="https://c.example"
     )
@@ -891,41 +899,27 @@ def test_normalize_request(input_value):
         assert result is input_value
 
 
-def test_get_http_response_from_nirequests_response():
-    niquests_response = niquests.Response()
-    niquests_response.url = "https://a.example"
-    niquests_response.status_code = 200
-    niquests_response._content = b"foo"
-    niquests_response.headers = niquests.structures.CaseInsensitiveDict(
-        [
-            ("User-Agent", "mozilla"),
-            # Niquests response headers never contain multiple headers with the
-            # same name, their values are merged with commas:
-            # https://niquests.readthedocs.io/en/latest/user/quickstart.html#response-headers
-            ("X-Multi", "a, b"),
-        ]
-    )
-    request = HttpRequest(url="https://a.example")
-    http_response = _providers._get_http_response_from_nirequests_response(
-        request, niquests_response
-    )
+@pytest.mark.asyncio
+async def test_http_response_repeated_headers(monkeypatch):
+    patch_get(monkeypatch, headers=[("X-Multi", "a"), ("X-Multi", "b")])
 
-    assert isinstance(http_response, HttpResponse)
-    assert str(http_response.url) == "https://a.example"
-    assert http_response.status == 200
-    assert isinstance(http_response.body, HttpResponseBody)
-    assert bytes(http_response.body) == b"foo"
-    assert isinstance(http_response.headers, HttpResponseHeaders)
-    assert http_response.headers.get("user-agent") == "mozilla"
-    assert http_response.headers.get("x-multi") == "a, b"
+    @define
+    class Page(ItemPage[SampleItem]):
+        headers: HttpResponseHeaders
+
+        async def to_item(self):
+            assert self.headers.getall("x-multi") == ["a", "b"]
+            return SAMPLE_ITEM
+
+    assert await Framework().get_item("https://a.example", Page) == SAMPLE_ITEM
 
 
 @pytest.mark.asyncio
-async def test_nirequests_exceptions_are_wrapped(monkeypatch):
-    async def fake_aget(_url, timeout=300):
-        raise RuntimeError("niquests boom")
+async def test_aiohttp_exceptions_are_wrapped(monkeypatch):
+    def fake_get(_session, _url):
+        raise RuntimeError("aiohttp boom")
 
-    monkeypatch.setattr(niquests, "aget", fake_aget)
+    monkeypatch.setattr(aiohttp.ClientSession, "get", fake_get)
 
     @define
     class Page(ItemPage[SampleItem]):
@@ -940,7 +934,7 @@ async def test_nirequests_exceptions_are_wrapped(monkeypatch):
     assert isinstance(exc.value, HttpRequestError)
     assert isinstance(exc.value.request, HttpRequest)
     assert str(exc.value.request.url) == "https://a.example"
-    assert "niquests boom" in str(exc.value)
+    assert "aiohttp boom" in str(exc.value)
 
 
 @pytest.mark.asyncio

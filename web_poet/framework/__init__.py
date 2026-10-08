@@ -1,7 +1,7 @@
 """Built-in :ref:`web-poet framework <frameworks>` for simple use cases."""
 
 try:
-    import niquests  # noqa: F401
+    import aiohttp  # noqa: F401
     from playwright.async_api import async_playwright  # noqa: F401
 except ImportError as exception:
     message = (

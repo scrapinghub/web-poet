@@ -42,7 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 framework = [
-    "niquests >= 3.14.0",
+    "aiohttp >= 3.7.0",
     "playwright >= 1.20.0",
 ]
 
