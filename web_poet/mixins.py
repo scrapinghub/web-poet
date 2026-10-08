@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 from urllib.parse import urljoin
 
 import parsel
@@ -52,6 +52,9 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
     def _selector_input(self) -> str:
         raise NotImplementedError  # pragma: nocover
 
+    def _selector_kwargs(self) -> dict[str, Any]:
+        return {"text": self._selector_input()}
+
     @property
     def selector(self) -> parsel.Selector:
         """Cached instance of :external:class:`parsel.selector.Selector`."""
@@ -60,7 +63,7 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
         if self.__cached_selector is not None:
             return self.__cached_selector
         base_url = str(self.url) if hasattr(self, "url") else None
-        sel = parsel.Selector(text=self._selector_input(), base_url=base_url)
+        sel = parsel.Selector(**self._selector_kwargs(), base_url=base_url)
         self.__cached_selector = sel
         return sel
 
@@ -111,6 +114,11 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
 
     def _selector_input(self) -> str:
         return self.html
+
+    def _selector_kwargs(self) -> dict[str, Any]:
+        if isinstance(self.response, SelectableMixin):
+            return self.response._selector_kwargs()
+        return super()._selector_kwargs()
 
     @property
     def base_url(self) -> str:

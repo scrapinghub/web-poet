@@ -4,6 +4,8 @@ from typing import Any
 from urllib.parse import urljoin
 
 import attrs
+import parsel
+from packaging.version import Version
 from w3lib.encoding import (
     html_body_declared_encoding,
     html_to_unicode,
@@ -19,6 +21,9 @@ from web_poet.utils import memoizemethod_noargs
 
 from .url import RequestUrl as _RequestUrl
 from .url import ResponseUrl as _ResponseUrl
+
+# body decoding fixes for non-UTF-8 encodings, https://github.com/scrapy/parsel/pull/356
+_PARSEL_BODY_ENCODING_FIXED = Version(parsel.__version__) >= Version("1.12.0")
 
 
 class HttpRequestBody(bytes):
@@ -187,6 +192,25 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
 
     def _selector_input(self) -> str:
         return self.text
+
+    def _selector_kwargs(self) -> dict[str, Any]:
+        # parsel treats an empty body as absent, and only detects JSON in
+        # UTF-8 bodies.
+        if _PARSEL_BODY_ENCODING_FIXED and self.body:
+            encoding = self.encoding
+            # self.text is cached if the encoding was inferred by decoding the
+            # body. Otherwise, the encoding that self.text would use is
+            # resolved the same way html_to_unicode() does.
+            if (
+                self._cached_text is None
+                and (
+                    self._body_bom_encoding()
+                    or http_content_type_encoding(f"charset={encoding}")
+                )
+                == "utf-8"
+            ):
+                return {"body": self.body, "encoding": "utf-8"}
+        return super()._selector_kwargs()
 
     @property
     def encoding(self) -> str | None:

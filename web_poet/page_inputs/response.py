@@ -1,3 +1,5 @@
+from typing import Any
+
 import attrs
 
 from web_poet.mixins import SelectableMixin, UrlShortcutsMixin
@@ -29,3 +31,6 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
 
     def _selector_input(self) -> str:
         return self.text
+
+    def _selector_kwargs(self) -> dict[str, Any]:
+        return self.response._selector_kwargs()

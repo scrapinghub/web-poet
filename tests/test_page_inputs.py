@@ -6,7 +6,7 @@ import parsel
 import pytest
 import requests
 
-from web_poet import BrowserResponse, RequestUrl, ResponseUrl
+from web_poet import BrowserResponse, RequestUrl, ResponseUrl, WebPage
 from web_poet.page_inputs import (
     AnyResponse,
     BrowserHtml,
@@ -17,7 +17,7 @@ from web_poet.page_inputs import (
     HttpResponseBody,
     HttpResponseHeaders,
 )
-from web_poet.page_inputs.http import request_fingerprint
+from web_poet.page_inputs.http import _PARSEL_BODY_ENCODING_FIXED, request_fingerprint
 
 
 @pytest.mark.parametrize("body_cls", [HttpRequestBody, HttpResponseBody])
@@ -502,6 +502,44 @@ def test_html5_meta_charset() -> None:
     response = HttpResponse("http://www.example.com", body=body)
     assert response.encoding == "gb18030"
     assert response.text == body.decode("gb18030")
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "decoded"),
+    [
+        ({"headers": {"Content-Type": "text/html; charset=utf-8"}}, False),
+        ({"body": b"<meta charset=utf-8><p>\xc3\xb1</p>"}, False),
+        ({"body": b"\xef\xbb\xbf<p>\xc3\xb1</p>"}, False),
+        ({"encoding": "utf8"}, False),
+        # Inferred encoding.
+        ({}, True),
+        # latin-1 is decoded as cp1252.
+        (
+            {"body": "<p>\u201cx\u201d</p>".encode("cp1252"), "encoding": "latin-1"},
+            True,
+        ),
+        # A BOM takes precedence over the declared encoding.
+        ({"body": "\ufeff<p>\xf1</p>".encode("utf-16-le"), "encoding": "utf-8"}, True),
+    ],
+)
+def test_http_response_selector_body(kwargs, decoded) -> None:
+    kwargs.setdefault("body", b"<p>\xc3\xb1</p>")
+    response = HttpResponse("https://example.com", **kwargs)
+    expected = parsel.Selector(text=response.text).xpath("//p/text()").getall()
+    response = HttpResponse("https://example.com", **kwargs)
+    assert response.xpath("//p/text()").getall() == expected
+    assert (response._cached_text is not None) is (
+        decoded or not _PARSEL_BODY_ENCODING_FIXED
+    )
+
+
+def test_http_response_selector_body_wrappers() -> None:
+    for response_cls in (AnyResponse, WebPage):
+        response = HttpResponse(
+            "https://example.com", body=b"<meta charset=utf-8><p>\xc3\xb1</p>"
+        )
+        assert response_cls(response=response).css("p::text").getall() == ["\xf1"]
+        assert (response._cached_text is None) is _PARSEL_BODY_ENCODING_FIXED
 
 
 def test_browser_html() -> None:
