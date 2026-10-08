@@ -14,7 +14,12 @@ from typing import Any, Generic, TypeVar, cast, overload
 import attrs
 from itemadapter import ItemAdapter
 
-from web_poet.utils import cached_method, callable_has_parameter, ensure_awaitable
+from web_poet.utils import (
+    cached_method,
+    callable_has_parameter,
+    ensure_awaitable,
+    get_fq_class_name,
+)
 
 _FIELDS_INFO_ATTRIBUTE_READ = "_web_poet_fields_info"
 _FIELDS_INFO_ATTRIBUTE_WRITE = "_web_poet_fields_info_temp"
@@ -292,8 +297,10 @@ async def item_from_fields(
     field_names = list(item_dict.keys())
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
-    return item_cls(
-        **{name: await ensure_awaitable(item_dict[name]) for name in field_names}
+    return _build_item(
+        obj,
+        item_cls,
+        {name: await ensure_awaitable(item_dict[name]) for name in field_names},
     )
 
 
@@ -324,7 +331,33 @@ def item_from_fields_sync(
     field_names = list(get_fields_dict(obj))
     if skip_nonitem_fields:
         field_names = _without_unsupported_field_names(item_cls, field_names)
-    return item_cls(**{name: getattr(obj, name) for name in field_names})
+    return _build_item(
+        obj, item_cls, {name: getattr(obj, name) for name in field_names}
+    )
+
+
+def _build_item(obj, item_cls: type[T], field_values: dict[str, Any]) -> T:
+    try:
+        return item_cls(**field_values)
+    except TypeError as error:
+        obj_cls = obj if isinstance(obj, type) else type(obj)
+        message = (
+            f"Could not build {get_fq_class_name(item_cls)} out of the fields "
+            f"of {get_fq_class_name(obj_cls)}: {error}"
+        )
+        item_field_names = ItemAdapter.get_field_names_from_class(item_cls)
+        if item_field_names is not None:
+            extra_field_names = sorted(set(field_values) - set(item_field_names))
+            if extra_field_names:
+                message += (
+                    f". {obj_cls.__name__} defines fields that "
+                    f"{item_cls.__name__} does not support: "
+                    f"{', '.join(extra_field_names)}. Remove those fields, add "
+                    f"them to {item_cls.__name__}, or define {obj_cls.__name__} "
+                    f"with skip_nonitem_fields=True to leave them out of the "
+                    f"item."
+                )
+        raise TypeError(message) from error
 
 
 def _without_unsupported_field_names(
