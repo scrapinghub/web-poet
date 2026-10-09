@@ -16,7 +16,7 @@ a page object based on rules:
 
     from web_poet import default_registry
 
-    page_cls = default_registry.page_cls_for_item("https://example.com", MyItem)
+    page_cls = default_registry.page_cls_for("https://example.com", MyItem)
 
 You should also let your users know what is the best approach to :ref:`load
 rules <load-rules>` when using your framework. For example, let them know the
