@@ -1,5 +1,6 @@
 from .browser import BrowserHtml, BrowserResponse
 from .client import HttpClient
+from .fetcher import Fetcher
 from .http import (
     HttpRequest,
     HttpRequestBody,
@@ -17,6 +18,7 @@ __all__ = [
     "AnyResponse",
     "BrowserHtml",
     "BrowserResponse",
+    "Fetcher",
     "HttpClient",
     "HttpRequest",
     "HttpRequestBody",
