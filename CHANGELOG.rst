@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.25.0 (unreleased)
+-------------------
+
+* Added :func:`~web_poet.layout_switch` decorator, which automatically
+  forwards fields from a selected layout page object to the main page object
+  (see :ref:`layouts`).
+
+* :ref:`Test fixture <web-poet-testing>` saving now supports
+  :class:`datetime.date` and :class:`datetime.datetime` values in item fields.
+
 0.24.1 (2026-04-28)
 -------------------
 
