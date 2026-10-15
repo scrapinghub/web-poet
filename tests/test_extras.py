@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.mark.skipif(
-    find_spec("niquests") is not None, reason="the framework extra is installed"
+    find_spec("playwright") is not None, reason="the framework extra is installed"
 )
 def test_framework():
     with pytest.raises(ImportError, match="web-poet\\[framework\\]"):

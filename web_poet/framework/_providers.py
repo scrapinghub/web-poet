@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, get_type_hints
 
-import niquests
+import aiohttp
 from playwright.async_api import async_playwright
 
 from web_poet.exceptions import HttpRequestError
@@ -33,23 +33,21 @@ PROVIDERS: dict[type, Callable[..., Any]] = {}
 logger = logging.getLogger(__name__)
 
 
-def _get_http_response_from_nirequests_response(
-    request: HttpRequest, response: niquests.Response
-) -> HttpResponse:
-    return HttpResponse(
-        response.url or request.url,
-        status=response.status_code,
-        body=response.content or b"",
-        headers=response.headers,
-    )
-
-
 async def _get_http_response_from_http_request(request: HttpRequest) -> HttpResponse:
     try:
-        response = await niquests.aget(str(request.url), timeout=300)
+        async with (
+            aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300)) as session,
+            session.get(str(request.url)) as response,
+        ):
+            body = await response.read()
     except Exception as exc:
         raise HttpRequestError(str(exc), request=request) from exc
-    return _get_http_response_from_nirequests_response(request, response)
+    return HttpResponse(
+        str(response.url),
+        status=response.status,
+        body=body,
+        headers=list(response.headers.items()),
+    )
 
 
 async def _get_browser_response_from_http_request(

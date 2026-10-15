@@ -83,3 +83,14 @@ def test_custom_baseurl() -> None:
     assert page.base_url == "http://example.com/foo/"
     assert page.urljoin("bar") == "http://example.com/foo/bar"
     assert page.urljoin("http://example.com/1") == "http://example.com/1"
+
+
+def test_duck_typed_response() -> None:
+    class Response:
+        url = "https://example.com"
+        text = "<p>foo</p>"
+
+    class Page(ResponseShortcutsMixin):
+        response = Response()
+
+    assert Page().css("p::text").get() == "foo"

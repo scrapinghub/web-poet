@@ -96,6 +96,37 @@ async def test_fields_invalid_page() -> None:
         await page.to_item()
 
 
+@pytest.mark.asyncio
+async def test_item_build_error() -> None:
+    class ExtraFieldPage(Page):
+        @field
+        def extra(self):
+            return "foo"
+
+    with pytest.raises(TypeError) as extra_field_error:
+        await ExtraFieldPage(response=EXAMPLE_RESPONSE).to_item()
+    message = str(extra_field_error.value)
+    assert "Could not build tests.test_fields.Item out of the fields of" in message
+    assert "ExtraFieldPage" in message
+    assert "does not support: extra" in message
+    assert "skip_nonitem_fields=True" in message
+
+    @attrs.define
+    class RequiredFieldItem:
+        name: str
+
+    class MissingFieldPage(ItemPage[RequiredFieldItem]):
+        pass
+
+    with pytest.raises(TypeError) as missing_field_error:
+        await MissingFieldPage().to_item()
+    message = str(missing_field_error.value)
+    assert "Could not build" in message
+    assert "RequiredFieldItem" in message
+    assert "MissingFieldPage" in message
+    assert "does not support" not in message
+
+
 def test_item_from_fields_sync() -> None:
     @attrs.define
     class Page(ItemPage):
