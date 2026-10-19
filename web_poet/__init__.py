@@ -1,5 +1,5 @@
 from ._layouts import layout_switch
-from ._selectors import css, jmespath, xpath
+from ._selectors import css_get, css_getall, xpath_get, xpath_getall
 from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from .fields import field, item_from_fields, item_from_fields_sync
 from .page_inputs import (
@@ -25,6 +25,7 @@ from .pages import (
     ItemPage,
     Returns,
     SelectorExtractor,
+    SelectorGroup,
     WebPage,
     validates_input,
 )
@@ -59,23 +60,25 @@ __all__ = [
     "Returns",
     "RulesRegistry",
     "SelectorExtractor",
+    "SelectorGroup",
     "Stats",
     "WebPage",
     "annotation_decode",
     "annotation_encode",
     "cached_method",
     "consume_modules",
-    "css",
+    "css_get",
+    "css_getall",
     "default_registry",
     "field",
     "handle_urls",
     "item_from_fields",
     "item_from_fields_sync",
-    "jmespath",
     "layout_switch",
     "request_downloader_var",
     "validates_input",
-    "xpath",
+    "xpath_get",
+    "xpath_getall",
 ]
 
 default_registry = RulesRegistry()

@@ -251,7 +251,7 @@ def field(
     corresponding item attribute.
 
     Instead of a method, you can pass a selector declaration, e.g. from
-    :func:`~web_poet.css`. See :ref:`declarative-selectors`. Its value is
+    :func:`~web_poet.css_get`. See :ref:`declarative-selectors`. Its value is
     extracted once per page object, so *cached* only spares the processors.
 
     By default, the value is computed on each property access. Use
@@ -266,7 +266,7 @@ def field(
     """
 
     if isinstance(method, _SelectorDeclaration):
-        # field(css(...).get()) syntax
+        # field(css_get(...)) syntax
         return _FieldDescriptor(
             method.__get__,
             cached=cached,

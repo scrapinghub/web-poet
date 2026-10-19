@@ -36,21 +36,35 @@ Declarative selectors
 =====================
 
 When a field is exactly one selector, you can declare that selector with
-:func:`~web_poet.css`, :func:`~web_poet.xpath` or :func:`~web_poet.jmespath`
-instead of writing a method for it:
+:func:`~web_poet.css_get`, :func:`~web_poet.css_getall`,
+:func:`~web_poet.xpath_get` or :func:`~web_poet.xpath_getall` instead of
+writing a method for it:
 
 .. code-block:: python
 
     import attrs
-    from web_poet import WebPage, css, field, xpath
+    from web_poet import WebPage, css_get, css_getall, field, xpath_get
     from zyte_parsers import extract_price
 
 
     @attrs.define
     class MyPage(WebPage):
-        price = field(css(".price::text").get(), out=[extract_price])
-        brand = field(xpath("//meta[@itemprop='brand']/@content").get())
-        images = field(css("img::attr(src)").getall())
+        price = field(css_get(".price::text"), out=[extract_price])
+        brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
+        images = field(css_getall("img::attr(src)"))
+
+Declared selectors are extracted with frostwork_, all of them in a single pass
+over the response. Extraction is several times faster than with parsel for a
+page object whose every field is declared, and more so the larger the document.
+
+Declared selectors must be within the `frostwork selector contract`_, and fit
+its budget together, or defining the class raises :exc:`TypeError`. To extract
+a field with parsel instead, write it as a method, e.g.
+``self.css(".price::text").get()``. frostwork output can differ slightly from
+parsel’s.
+
+.. _frostwork: https://github.com/scrapy/frostwork
+.. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md
 
 Combining selectors
 -------------------
@@ -62,70 +76,43 @@ value. Use that to combine several declarations into a single field:
 .. code-block:: python
 
     import attrs
-    from web_poet import WebPage, css, field, xpath
+    from web_poet import WebPage, css_get, field, xpath_get
 
 
     @attrs.define
     class MyPage(WebPage):
-        _sku_meta = xpath("//meta[@itemprop='sku']/@content").get()
-        _sku_text = css(".sku::text").get()
+        _sku_meta = xpath_get("//meta[@itemprop='sku']/@content")
+        _sku_text = css_get(".sku::text")
 
         @field
         def sku(self) -> str | None:
             return self._sku_meta or self._sku_text
 
-A declaration without ``get()`` or ``getall()`` is a
-:class:`~parsel.selector.SelectorList`, which you can query further, e.g. to
-read JSON embedded in a web page:
+Sharing selectors
+-----------------
+
+To share selector declarations between page object classes, declare them in a
+subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
+classes:
 
 .. code-block:: python
 
     import attrs
-    from web_poet import WebPage, css, field
+    from web_poet import SelectorGroup, WebPage, css_get, field, xpath_get
+
+
+    class SkuSelectors(SelectorGroup):
+        meta = xpath_get("//meta[@itemprop='sku']/@content")
+        text = css_get(".sku::text")
 
 
     @attrs.define
     class MyPage(WebPage):
-        _ld = css('script[type="application/ld+json"]::text')
+        skus: SkuSelectors
 
         @field
-        def price(self) -> str | None:
-            return self._ld.jmespath("offers.price").get()
-
-Extracting with frostwork
--------------------------
-
-For faster extraction of CSS and XPath declarations that use ``get()`` or
-``getall()``, install the ``frostwork`` extra:
-
-.. code-block:: shell
-
-    pip install web-poet[frostwork]
-
-And set ``declarative_backend="frostwork"`` on your page object class:
-
-.. code-block:: python
-
-    import attrs
-    from web_poet import WebPage, css, field
-
-
-    @attrs.define
-    class MyPage(WebPage, declarative_backend="frostwork"):
-        name = field(css("h1::text").get())
-
-Subclasses can set it back to ``"parsel"``, the default.
-
-Extraction is several times faster for a page object whose every field is
-declared, and more so the larger the document.
-
-Those declarations must be within the `frostwork selector contract`_, and fit
-its budget together, or defining the class raises :exc:`TypeError`. To extract
-a field with parsel instead, write it as a method, e.g.
-``self.css(".price::text").get()``. frostwork output can differ slightly from
-parsel’s.
-
-.. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md
+        def sku(self) -> str | None:
+            return self.skus.meta or self.skus.text
 
 .. _fields-sync-async:
 
@@ -677,14 +664,6 @@ provides ``css()`` and ``xpath()``:
         @field(out=[str.strip])
         def color(self) -> str:
             return self.css(".name::text").get() or ""
-
-:class:`~.SelectorExtractor` also supports :ref:`declarative selectors
-<declarative-selectors>`:
-
-.. code-block:: python
-
-    class VariantExtractor(SelectorExtractor):
-        color = field(css(".name::text").get())
 
 You can also pass other data in addition to, or instead of, selectors, such as
 dictionaries with some data:

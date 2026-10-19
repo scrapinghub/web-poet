@@ -149,11 +149,16 @@ Fields
 .. automodule:: web_poet.fields
     :members:
 
-.. autofunction:: web_poet.css
+.. autofunction:: web_poet.css_get
 
-.. autofunction:: web_poet.xpath
+.. autofunction:: web_poet.css_getall
 
-.. autofunction:: web_poet.jmespath
+.. autofunction:: web_poet.xpath_get
+
+.. autofunction:: web_poet.xpath_getall
+
+.. autoclass:: web_poet.SelectorGroup
+    :show-inheritance:
 
 Layouts
 =======

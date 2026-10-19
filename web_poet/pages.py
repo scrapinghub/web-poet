@@ -170,6 +170,14 @@ class BrowserPage(ItemPage[ItemT], ResponseShortcutsMixin):
 
 
 @attr.s(auto_attribs=True)
+class SelectorGroup(Injectable, ResponseShortcutsMixin):
+    """Base class for a group of :ref:`selector declarations
+    <declarative-selectors>` that page objects can share as a dependency."""
+
+    response: HttpResponse
+
+
+@attr.s(auto_attribs=True)
 class SelectorExtractor(Extractor[ItemT], SelectorShortcutsMixin):
     """Extractor that takes a :class:`parsel.Selector` and provides shortcuts
     for its methods."""

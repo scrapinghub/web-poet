@@ -96,12 +96,12 @@ included, and build it from the response:
 .. code-block:: python
 
     import attrs
-    from web_poet import HttpClient, WebPage, css, field
+    from web_poet import HttpClient, WebPage, css_get, field
 
 
     @attrs.define
     class PricePage(WebPage):
-        currency = field(css(".currency::text").get())
+        currency = field(css_get(".currency::text"))
 
         @field
         def price(self) -> str | None:

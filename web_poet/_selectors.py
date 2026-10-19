@@ -4,9 +4,6 @@ import inspect
 import sys
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, overload
 
-import parsel
-from lxml.etree import XPath  # type: ignore[import-untyped]
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -14,42 +11,12 @@ _SELECTORS_DICT_ATTRIBUTE = "_web_poet_selectors_dict"
 
 _ValueT = TypeVar("_ValueT")
 
-# The value of get(), and the value of each match as getall() lists them. A
-# JMESPath value is Any, where get() must stay Any and not Any | None, which
-# mypy treats as optional.
-_GetT = TypeVar("_GetT")
-_MatchT = TypeVar("_MatchT")
+_SelectorSyntax = Literal["css", "xpath"]
 
-_SelectorSyntax = Literal["css", "xpath", "jmespath"]
-
-# How the value of a selector declaration is built out of its matches: the
-# parsel selector list, the value of its first match, or the values of all its
-# matches.
-_SelectorMode = Literal["selector", "get", "getall"]
-
-_JMESPATH_ERROR = "Please install parsel >= 1.8.1 to get jmespath support"
-
-
-def _jmespath_supported() -> bool:
-    return hasattr(parsel.Selector, "jmespath")
-
-
-def _validate(expression: str, syntax: _SelectorSyntax) -> None:
-    """Raise the underlying syntax error of *syntax* if *expression* cannot be
-    parsed."""
-    if syntax == "css":
-        # parsel.css2xpath() translates through its own HTMLTranslator, the
-        # CSS dialect with the largest set of valid expressions, so it never
-        # rejects an expression that some parsel selector could translate.
-        parsel.css2xpath(expression)
-    elif syntax == "xpath":
-        XPath(expression)
-    else:
-        # parsel requires jmespath as of the version that added JMESPath
-        # support, so it is installed wherever the syntax is supported.
-        from jmespath import compile as compile_jmespath  # noqa: PLC0415
-
-        compile_jmespath(expression)
+# Whether the value of a selector declaration is the value of its first match,
+# or the values of all its matches, named after the parsel selector list method
+# that does the same.
+_SelectorMode = Literal["get", "getall"]
 
 
 class _SelectorDeclaration(Generic[_ValueT]):
@@ -59,14 +26,12 @@ class _SelectorDeclaration(Generic[_ValueT]):
         syntax: _SelectorSyntax,
         mode: _SelectorMode,
     ):
-        _validate(expression, syntax)
         self.expression = expression
         self.syntax = syntax
         self.mode = mode
 
     def __repr__(self) -> str:
-        suffix = "" if self.mode == "selector" else f".{self.mode}()"
-        return f"{self.syntax}({self.expression!r}){suffix}"
+        return f"{self.syntax}_{self.mode}({self.expression!r})"
 
     @property
     def _key(self) -> tuple[str, _SelectorSyntax, _SelectorMode]:
@@ -101,26 +66,11 @@ class _SelectorDeclaration(Generic[_ValueT]):
             selector_value = instance._selector_value
         except AttributeError:
             raise TypeError(
-                f"{type(instance).__name__} does not support selector declarations, "
-                f"it provides no parsel selector. Inherit from a class that does, "
-                f"e.g. web_poet.WebPage or web_poet.SelectorExtractor."
+                f"{type(instance).__name__} does not support selector declarations: "
+                f"it provides no response. Inherit from a class that does, e.g. "
+                f"web_poet.WebPage."
             ) from None
         return selector_value(self)
-
-
-class _SelectorListDeclaration(
-    _SelectorDeclaration[parsel.SelectorList[parsel.Selector]],
-    Generic[_GetT, _MatchT],
-):
-    def get(self) -> _SelectorDeclaration[_GetT]:
-        """Return a declaration of the same expression whose value is that of
-        its first match, or ``None``."""
-        return _SelectorDeclaration(self.expression, self.syntax, "get")
-
-    def getall(self) -> _SelectorDeclaration[list[_MatchT]]:
-        """Return a declaration of the same expression whose value is the list
-        of the values of all its matches."""
-        return _SelectorDeclaration(self.expression, self.syntax, "getall")
 
 
 def _check_unannotated(owner: type, name: str) -> None:
@@ -141,40 +91,42 @@ def _check_unannotated(owner: type, name: str) -> None:
         )
 
 
-def css(expression: str) -> _SelectorListDeclaration[str | None, str]:
+def css_get(expression: str) -> _SelectorDeclaration[str | None]:
     """Return a declaration of the CSS *expression*, to be used as a class
     attribute of a page object class, either on its own or through
     :func:`~web_poet.field`.
 
-    Its value is a :class:`~parsel.selector.SelectorList`. Call ``get()`` on
-    the declaration for the value of its first match, or ``None``, and
-    ``getall()`` for the list of the values of all its matches.
+    Its value is that of the first match, or ``None``.
 
     See :ref:`declarative-selectors`.
     """
-    return _SelectorListDeclaration(expression, "css", "selector")
+    return _SelectorDeclaration(expression, "css", "get")
 
 
-def xpath(expression: str) -> _SelectorListDeclaration[str | None, str]:
+def css_getall(expression: str) -> _SelectorDeclaration[list[str]]:
+    """Return a declaration of the CSS *expression* whose value is the list of
+    the values of all its matches.
+
+    See :func:`~web_poet.css_get`.
+    """
+    return _SelectorDeclaration(expression, "css", "getall")
+
+
+def xpath_get(expression: str) -> _SelectorDeclaration[str | None]:
     """Return a declaration of the XPath *expression*.
 
-    An expression that needs namespace prefixes or variables must go through
-    :meth:`~.SelectableMixin.xpath` instead.
-
-    See :func:`~web_poet.css`.
+    See :func:`~web_poet.css_get`.
     """
-    return _SelectorListDeclaration(expression, "xpath", "selector")
+    return _SelectorDeclaration(expression, "xpath", "get")
 
 
-def jmespath(expression: str) -> _SelectorListDeclaration[Any, Any]:
-    """Return a declaration of the JMESPath *expression*, whose ``get()`` and
-    ``getall()`` values are JSON values.
+def xpath_getall(expression: str) -> _SelectorDeclaration[list[str]]:
+    """Return a declaration of the XPath *expression* whose value is the list
+    of the values of all its matches.
 
-    See :func:`~web_poet.css`.
+    See :func:`~web_poet.css_get`.
     """
-    if not _jmespath_supported():
-        raise ImportError(_JMESPATH_ERROR)
-    return _SelectorListDeclaration(expression, "jmespath", "selector")
+    return _SelectorDeclaration(expression, "xpath", "getall")
 
 
 def _get_declaration(value: Any) -> _SelectorDeclaration | None:

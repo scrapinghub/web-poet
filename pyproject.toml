@@ -28,6 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "attrs >= 21.3.0",
+    "frostwork >= 0.1.6",
     "parsel >= 1.5.0",
     "url-matcher >= 0.4.0",
     "multidict >= 0.5.0",
@@ -44,9 +45,6 @@ dependencies = [
 framework = [
     "aiohttp >= 3.7.0",
     "playwright >= 1.20.0",
-]
-frostwork = [
-    "frostwork >= 0.1.6",
 ]
 
 [project.entry-points."pytest11"]
@@ -88,10 +86,6 @@ exclude_also = [
 [tool.mypy]
 ignore_missing_imports = false
 implicit_reexport = false
-
-[[tool.mypy.overrides]]
-module = "jmespath"
-ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
