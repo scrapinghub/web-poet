@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cache
 from typing import TYPE_CHECKING, Any
 
 from frostwork import Page, detect_encoding, resolve_label
@@ -16,6 +17,15 @@ _PAGE_ATTRIBUTE = "_web_poet_frostwork_page"
 _METHODS = {"get": "field", "getall": "field_all"}
 
 
+def _new_page(names: dict[_SelectorDeclaration, str]) -> Page:
+    page = Page()
+    for declaration, name in names.items():
+        getattr(page, _METHODS[declaration.mode])(
+            name, declaration.expression, syntax=declaration.syntax
+        )
+    return page
+
+
 def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
     """Return a frostwork page for the declarations of *cls*, mapped to the
     name that they have on it, or ``None`` if there are none.
@@ -27,11 +37,7 @@ def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | Non
         names.setdefault(declaration, name)
     if not names:
         return None
-    page = Page()
-    for declaration, name in names.items():
-        getattr(page, _METHODS[declaration.mode])(
-            name, declaration.expression, syntax=declaration.syntax
-        )
+    page = _new_page(names)
     report = page.check()
     if not report.ok:
         problems = [
@@ -58,6 +64,22 @@ def _get_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
     return _class_cached(cls, _PAGE_ATTRIBUTE, _build_page)
 
 
+@cache
+def _get_combined_page(
+    classes: tuple[type, ...],
+) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
+    """Return a frostwork page for the declarations of all *classes*, or
+    ``None`` if they do not fit in one."""
+    names: dict[_SelectorDeclaration, str] = {}
+    for cls in classes:
+        for declaration in _get_selectors_dict(cls).values():
+            names.setdefault(declaration, f"_{len(names)}")
+    page = _new_page(names)
+    if not page.check().ok:
+        return None
+    return page, names
+
+
 def _check_class(cls: type) -> None:
     """Raise :exc:`TypeError` if frostwork cannot extract the selector
     declarations of *cls*."""
@@ -70,15 +92,8 @@ def _check_class(cls: type) -> None:
     _get_page(cls)
 
 
-def _extract(
-    cls: type, document: tuple[bytes | str, str | None]
-) -> dict[_SelectorDeclaration, Any] | None:
-    """Return the value of every declaration of *cls* out of *document*, or
-    ``None`` if frostwork cannot extract them."""
-    result = _get_page(cls)
-    if result is None:
-        return None
-    page, names = result
+def _supports(document: tuple[bytes | str, str | None]) -> bool:
+    """Return whether frostwork can extract values out of *document*."""
     html, encoding = document
     if encoding is not None:
         # frostwork sniffs an encoding out of the document when it does not
@@ -86,6 +101,16 @@ def _extract(
         # decodes differently from the parsed one belong to parsel.
         label = resolve_label(encoding)
         if label is None or label != detect_encoding(html, encoding):
-            return None
-    values = page.extract(html, encoding).to_dict()
+            return False
+    return True
+
+
+def _extract(
+    compiled: tuple[Page, dict[_SelectorDeclaration, str]],
+    document: tuple[bytes | str, str | None],
+) -> dict[_SelectorDeclaration, Any]:
+    """Return the value of every declaration of *compiled*, a frostwork page
+    mapped to the names of its declarations, out of *document*."""
+    page, names = compiled
+    values = page.extract(*document).to_dict()
     return {declaration: values[name] for declaration, name in names.items()}

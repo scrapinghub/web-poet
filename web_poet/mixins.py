@@ -4,12 +4,15 @@ import abc
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 from urllib.parse import urljoin
 
+import attrs
 import parsel
 from w3lib.html import get_base_url
 
 from web_poet._frostwork import _check_class as _frostwork_check_class
 from web_poet._frostwork import _extract as _frostwork_extract
-from web_poet.utils import cached_method
+from web_poet._frostwork import _get_combined_page, _get_page
+from web_poet._frostwork import _supports as _frostwork_supports
+from web_poet._selectors import _get_selectors_dict
 
 if TYPE_CHECKING:
     from web_poet._selectors import _SelectorDeclaration
@@ -24,6 +27,8 @@ class _ResponseLike(Protocol):
 
 
 ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
+
+_VALUES_ATTRIBUTE = "_web_poet_frostwork_values"
 
 
 class SelectorShortcutsMixin:
@@ -138,9 +143,49 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             return self.html, None
         return body, getattr(response, "encoding", None)
 
-    @cached_method
     def _frostwork_values(self) -> dict[_SelectorDeclaration, Any] | None:
-        return _frostwork_extract(type(self), self._selector_document())
+        """Return the value of every declaration of this object, or ``None``
+        if frostwork cannot extract them.
+
+        The first call extracts, in the same pass, the declarations of the
+        dependencies of this object that read the same document, e.g.
+        selector groups, and gives them their values."""
+        if hasattr(self, _VALUES_ATTRIBUTE):
+            return getattr(self, _VALUES_ATTRIBUTE)
+        document = self._selector_document()
+        objects = [self, *self._selector_dependencies(document)]
+        values = None
+        if _frostwork_supports(document):
+            page = None
+            if len(objects) > 1:
+                page = _get_combined_page(tuple(type(obj) for obj in objects))
+            if page is None:
+                objects = [self]
+                page = _get_page(type(self))
+            if page is not None:
+                values = _frostwork_extract(page, document)
+        for obj in objects:
+            setattr(obj, _VALUES_ATTRIBUTE, values)
+        return values
+
+    def _selector_dependencies(
+        self, document: tuple[bytes | str, str | None]
+    ) -> list[ResponseShortcutsMixin]:
+        """Return the dependencies of this object with selector declarations
+        that read *document* and have not extracted them yet."""
+        cls: Any = type(self)
+        if not attrs.has(cls):
+            return []
+        return [
+            value
+            for attribute in attrs.fields(cls)
+            if isinstance(
+                value := getattr(self, attribute.name, None), ResponseShortcutsMixin
+            )
+            and not hasattr(value, _VALUES_ATTRIBUTE)
+            and _get_selectors_dict(type(value))
+            and value._selector_document() == document
+        ]
 
     def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
         """Return the value of *declaration* for this object.

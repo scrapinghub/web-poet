@@ -276,6 +276,35 @@ def test_selector_group(page_cls, response, document_type) -> None:
     assert isinstance(page.skus._selector_document()[0], document_type)
 
 
+def test_selector_group_single_pass(monkeypatch, response) -> None:
+    """The declarations of a page object and of its selector groups are
+    extracted in a single pass, whichever is read first."""
+    calls = []
+
+    def counting_extract(*args):
+        calls.append(args)
+        return _frostwork_module._extract(*args)
+
+    monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
+
+    @attrs.define
+    class MixedPage(GroupPage):
+        name = field(css_get("h1::text"))
+        _price = css_get(".price::text")
+
+        @field
+        def price(self) -> str | None:
+            return self._price
+
+    page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
+    assert asyncio.run(page.to_item()) == {
+        "sku": "SKU-1",
+        "name": " Foo ",
+        "price": "10.00",
+    }
+    assert len(calls) == 1
+
+
 def test_field_not_callable() -> None:
     with pytest.raises(TypeError, match="must be used on methods"):
         field(1)  # type: ignore[call-overload]
