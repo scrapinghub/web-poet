@@ -58,10 +58,11 @@ over the response. Extraction is several times faster than with parsel for a
 page object whose every field is declared, and more so the larger the document.
 
 Declared selectors must be within the `frostwork selector contract`_, and fit
-its budget together, or defining the class raises :exc:`TypeError`. To extract
-a field with parsel instead, write it as a method, e.g.
-``self.css(".price::text").get()``. frostwork output can differ slightly from
-parsel’s.
+its budget together, or defining the class raises :exc:`TypeError`. They read
+the response as received, even if the page object overrides
+:attr:`~web_poet.mixins.SelectableMixin.selector`. To extract a field with
+parsel instead, write it as a method, e.g. ``self.css(".price::text").get()``.
+frostwork output can differ slightly from parsel’s.
 
 .. _frostwork: https://github.com/scrapy/frostwork
 .. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md

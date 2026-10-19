@@ -28,7 +28,7 @@ class _ResponseLike(Protocol):
 
 ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
-_VALUES_ATTRIBUTE = "_web_poet_frostwork_values"
+_VALUES_ATTRIBUTE = "_web_poet_selector_values"
 
 
 class SelectorShortcutsMixin:
@@ -143,36 +143,40 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             return self.html, None
         return body, getattr(response, "encoding", None)
 
-    def _frostwork_values(self) -> dict[_SelectorDeclaration, Any] | None:
-        """Return the value of every declaration of this object, or ``None``
-        if frostwork cannot extract them.
+    def _selector_values(self) -> dict[_SelectorDeclaration, Any]:
+        """Return the values of the declarations of this object.
 
-        The first call extracts, in the same pass, the declarations of the
-        dependencies of this object that read the same document, e.g.
-        selector groups, and gives them their values."""
+        The first call extracts with frostwork, in the same pass, the
+        declarations of this object and of its dependencies that read the same
+        document, e.g. selector groups, and gives each of them a copy of the
+        values. :meth:`_selector_value` adds the values that it gets from
+        parsel."""
         if hasattr(self, _VALUES_ATTRIBUTE):
             return getattr(self, _VALUES_ATTRIBUTE)
-        document = self._selector_document()
-        objects = [self, *self._selector_dependencies(document)]
-        values = None
-        if _frostwork_supports(document):
-            page = None
-            if len(objects) > 1:
-                page = _get_combined_page(tuple(type(obj) for obj in objects))
-            if page is None:
-                objects = [self]
-                page = _get_page(type(self))
-            if page is not None:
-                values = _frostwork_extract(page, document)
+        objects = [self, *self._selector_dependencies()]
+        values: dict[_SelectorDeclaration, Any] = {}
+        if len(objects) > 1 or _get_selectors_dict(type(self)):
+            document = self._selector_document()
+            objects = [
+                self,
+                *(obj for obj in objects[1:] if obj._selector_document() == document),
+            ]
+            if _frostwork_supports(document):
+                page = None
+                if len(objects) > 1:
+                    page = _get_combined_page(tuple(type(obj) for obj in objects))
+                if page is None:
+                    objects = [self]
+                    page = _get_page(type(self))
+                if page is not None:
+                    values = _frostwork_extract(page, document)
         for obj in objects:
-            setattr(obj, _VALUES_ATTRIBUTE, values)
-        return values
+            setattr(obj, _VALUES_ATTRIBUTE, dict(values))
+        return getattr(self, _VALUES_ATTRIBUTE)
 
-    def _selector_dependencies(
-        self, document: tuple[bytes | str, str | None]
-    ) -> list[ResponseShortcutsMixin]:
+    def _selector_dependencies(self) -> list[ResponseShortcutsMixin]:
         """Return the dependencies of this object with selector declarations
-        that read *document* and have not extracted them yet."""
+        that have not extracted them yet."""
         cls: Any = type(self)
         if not attrs.has(cls):
             return []
@@ -184,7 +188,6 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             )
             and not hasattr(value, _VALUES_ATTRIBUTE)
             and _get_selectors_dict(type(value))
-            and value._selector_document() == document
         ]
 
     def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
@@ -193,11 +196,13 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         frostwork extracts every declaration of the object in a single pass,
         on the first call. Documents that frostwork cannot extract, and
         declarations assigned after class creation, are left to parsel."""
-        values = self._frostwork_values()
-        if values is not None and declaration in values:
-            return values[declaration]
-        query = getattr(self.selector, declaration.syntax)
-        return getattr(query(declaration.expression), declaration.mode)()
+        values = self._selector_values()
+        if declaration not in values:
+            query = getattr(self.selector, declaration.syntax)
+            values[declaration] = getattr(
+                query(declaration.expression), declaration.mode
+            )()
+        return values[declaration]
 
     def _selector_kwargs(self) -> dict[str, Any]:
         if isinstance(self.response, SelectableMixin):

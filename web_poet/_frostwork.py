@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from functools import cache
 from typing import TYPE_CHECKING, Any
 
 from frostwork import Page, detect_encoding, resolve_label
@@ -11,6 +10,7 @@ if TYPE_CHECKING:
     from web_poet._selectors import _SelectorDeclaration
 
 _PAGE_ATTRIBUTE = "_web_poet_frostwork_page"
+_COMBINED_PAGES_ATTRIBUTE = "_web_poet_frostwork_combined_pages"
 
 # Selector declaration modes, mapped to the frostwork page method with the same
 # cardinality.
@@ -64,12 +64,9 @@ def _get_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
     return _class_cached(cls, _PAGE_ATTRIBUTE, _build_page)
 
 
-@cache
-def _get_combined_page(
+def _build_combined_page(
     classes: tuple[type, ...],
 ) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
-    """Return a frostwork page for the declarations of all *classes*, or
-    ``None`` if they do not fit in one."""
     names: dict[_SelectorDeclaration, str] = {}
     for cls in classes:
         for declaration in _get_selectors_dict(cls).values():
@@ -78,6 +75,20 @@ def _get_combined_page(
     if not page.check().ok:
         return None
     return page, names
+
+
+def _get_combined_page(
+    classes: tuple[type, ...],
+) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
+    """Return a frostwork page for the declarations of all *classes*, or
+    ``None`` if they do not fit in one, building it on the first call.
+
+    The page is cached on the first class, so that it lives as long as the
+    classes that it combines."""
+    pages = _class_cached(classes[0], _COMBINED_PAGES_ATTRIBUTE, lambda cls: {})
+    if classes not in pages:
+        pages[classes] = _build_combined_page(classes)
+    return pages[classes]
 
 
 def _check_class(cls: type) -> None:

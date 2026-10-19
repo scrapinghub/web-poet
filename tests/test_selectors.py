@@ -30,6 +30,7 @@ from web_poet import (
 from web_poet import _frostwork as _frostwork_module
 from web_poet._frostwork import _get_page
 from web_poet._selectors import _get_selectors_dict
+from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.pages import is_injectable
 from web_poet.testing import Fixture
 
@@ -158,7 +159,7 @@ def test_extraction_is_eager(response) -> None:
     pass."""
     page = Page(response=response)
     assert page.name == " Foo "
-    assert page._frostwork_values() == {
+    assert page._selector_values() == {
         declaration: getattr(page, name)
         for name, declaration in _get_selectors_dict(Page).items()
     }
@@ -506,8 +507,8 @@ def test_unknown_encoding() -> None:
     page = EncodedPage(
         response=HttpResponse("http://example.com", body, encoding="cp437")
     )
+    assert page._selector_values() == {}
     assert page.name == "Café"
-    assert page._frostwork_values() is None
 
 
 def test_python_codec_name() -> None:
@@ -522,8 +523,8 @@ def test_python_codec_name() -> None:
     page = EncodedPage(
         response=HttpResponse("http://example.com", body, encoding="cp874")
     )
+    assert page._selector_values() != {}
     assert page.name == "ก"
-    assert page._frostwork_values() is not None
 
 
 def test_rejection_is_cached(monkeypatch) -> None:
@@ -550,6 +551,100 @@ def test_rejection_is_cached(monkeypatch) -> None:
     assert page.name == "Café"
     assert page.brand is None
     assert len(calls) == 1
+
+
+def test_fallback_is_cached(monkeypatch) -> None:
+    """A declaration that parsel extracts is extracted once per page
+    object."""
+    calls = []
+    css = parsel.Selector.css
+
+    def counting_css(self, query):
+        calls.append(query)
+        return css(self, query)
+
+    monkeypatch.setattr(parsel.Selector, "css", counting_css)
+
+    @attrs.define
+    class EncodedPage(WebPage):
+        name = field(css_get("h1::text"))
+
+    body = "<html><body><h1>Café</h1></body></html>".encode("cp437")
+    page = EncodedPage(
+        response=HttpResponse("http://example.com", body, encoding="cp437")
+    )
+    assert page.name == "Café"
+    assert page.name == "Café"
+    assert calls == ["h1::text"]
+
+
+def test_no_declarations(response) -> None:
+    """The fields of a page object without declarations do not read its
+    document."""
+
+    @attrs.define
+    class PlainPage(WebPage):
+        @field
+        def name(self) -> str | None:
+            return self.css("h1::text").get()
+
+        def _selector_document(self):
+            raise AssertionError
+
+    assert PlainPage(response=response).name == " Foo "
+
+
+def test_selector_group_over_budget(monkeypatch) -> None:
+    """A page object and a selector group that do not fit in a single pass
+    together are extracted separately."""
+    calls = []
+
+    def counting_extract(*args):
+        calls.append(args)
+        return _frostwork_module._extract(*args)
+
+    monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
+
+    budget_probe = frostwork.Page()
+    budget_probe.field("name", "h1")
+    count = budget_probe.check().max_members // 2 + 1
+    group_cls = type(
+        "Group",
+        (SelectorGroup,),
+        {f"g{i}": css_get(f".g{i}::text") for i in range(count)},
+    )
+
+    page_cls = attrs.define(
+        type(
+            "BigPage",
+            (WebPage,),
+            {
+                "__annotations__": {"group": group_cls},
+                **{f"p{i}": css_get(f".p{i}::text") for i in range(count)},
+            },
+        )
+    )
+    html = "".join(
+        f"<p class=g{i}>G{i}</p><p class=p{i}>P{i}</p>" for i in range(count)
+    )
+    response = HttpResponse("http://example.com", html.encode(), encoding="utf-8")
+    page = page_cls(response=response, group=group_cls(AnyResponse(response)))
+    assert page.p0 == "P0"
+    assert page.group.g0 == "G0"
+    assert len(calls) == 2
+
+
+def test_not_attrs(response) -> None:
+    """A page object that is not an attrs class has no dependencies to
+    extract along with its declarations."""
+
+    class CustomPage(ResponseShortcutsMixin):
+        name = css_get("h1::text")
+
+        def __init__(self, response):
+            self.response = response
+
+    assert CustomPage(response).name == " Foo "
 
 
 def test_reused_declaration(response) -> None:

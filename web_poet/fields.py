@@ -214,8 +214,8 @@ def _extract_selectors(page: Any) -> None:
     # A field can read the selector declarations of a dependency, e.g. a
     # selector group, before those of the page object, so the page object
     # extracts both first, in a single pass.
-    if hasattr(page, "_frostwork_values"):
-        page._frostwork_values()
+    if hasattr(page, "_selector_values"):
+        page._selector_values()
 
 
 @overload
