@@ -127,7 +127,11 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
     def _selector_document(self) -> tuple[bytes | str, str | None]:
         """Return the raw document of this object and its encoding, for
         frostwork to scan directly instead of using ``self.selector``."""
+        from web_poet.page_inputs import AnyResponse  # noqa: PLC0415
+
         response: Any = self.response
+        if isinstance(response, AnyResponse):
+            response = response.response
         body = getattr(response, "body", None)
         if body is None:
             # A browser response is HTML that has already been decoded.

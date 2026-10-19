@@ -10,7 +10,7 @@ import parsel
 
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
-from web_poet.page_inputs import BrowserResponse, HttpResponse
+from web_poet.page_inputs import AnyResponse, BrowserResponse, HttpResponse
 from web_poet.utils import (
     CallableT,
     cached_method,
@@ -172,9 +172,12 @@ class BrowserPage(ItemPage[ItemT], ResponseShortcutsMixin):
 @attr.s(auto_attribs=True)
 class SelectorGroup(Injectable, ResponseShortcutsMixin):
     """Base class for a group of :ref:`selector declarations
-    <declarative-selectors>` that page objects can share as a dependency."""
+    <declarative-selectors>` that page objects can share as a dependency.
 
-    response: HttpResponse
+    It reads the browser response if the page object needs one, and the HTTP
+    response otherwise."""
+
+    response: AnyResponse
 
 
 @attr.s(auto_attribs=True)

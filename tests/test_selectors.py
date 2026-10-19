@@ -11,6 +11,7 @@ import parsel
 import pytest
 
 from web_poet import (
+    AnyResponse,
     BrowserPage,
     BrowserResponse,
     HttpClient,
@@ -230,18 +231,49 @@ class GroupPage(WebPage):
         return self.skus.meta or self.skus.text
 
 
-def test_selector_group(response) -> None:
-    """A selector group can be built through dependency injection."""
+@attrs.define
+class BrowserGroupPage(BrowserPage):
+    skus: SkuSelectors
+
+    @field
+    def sku(self) -> str | None:
+        return self.skus.meta or self.skus.text
+
+
+@pytest.mark.parametrize(
+    ("page_cls", "response", "document_type"),
+    [
+        (
+            GroupPage,
+            HttpResponse("http://example.com", HTML.encode(), encoding="utf-8"),
+            bytes,
+        ),
+        (
+            BrowserGroupPage,
+            BrowserResponse(url="http://example.com", html=HTML),
+            str,
+        ),
+    ],
+)
+def test_selector_group(page_cls, response, document_type) -> None:
+    """A selector group can be built through dependency injection, and reads
+    the response of the page object."""
     plan = andi.plan(
-        GroupPage, is_injectable=is_injectable, externally_provided={HttpResponse}
+        page_cls,
+        is_injectable=is_injectable,
+        externally_provided={type(response), AnyResponse},
     )
-    instances: dict[Any, Any] = {HttpResponse: response}
+    instances: dict[Any, Any] = {
+        type(response): response,
+        AnyResponse: AnyResponse(response=response),
+    }
     for cls, kwargs in plan:
         if cls not in instances:
             instances[cls] = cls(**{k: instances[v] for k, v in kwargs.items()})
-    page = instances[GroupPage]
-    assert isinstance(page, GroupPage)
+    page = instances[page_cls]
+    assert isinstance(page, page_cls)
     assert asyncio.run(page.to_item()) == {"sku": "SKU-1"}
+    assert isinstance(page.skus._selector_document()[0], document_type)
 
 
 def test_field_not_callable() -> None:
