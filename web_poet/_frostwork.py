@@ -26,17 +26,9 @@ def _new_page(names: dict[_SelectorDeclaration, str]) -> Page:
     return page
 
 
-def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
-    """Return a frostwork page for the declarations of *cls*, mapped to the
-    name that they have on it, or ``None`` if there are none.
-
-    Declarations that are equal are extracted once, under the first attribute
-    name that uses one."""
-    names: dict[_SelectorDeclaration, str] = {}
-    for name, declaration in _get_selectors_dict(cls).items():
-        names.setdefault(declaration, name)
-    if not names:
-        return None
+def _compile(names: dict[_SelectorDeclaration, str], owner: str) -> Page:
+    """Return a frostwork page for *names*, or raise :exc:`TypeError` naming
+    *owner* if frostwork cannot extract them."""
     page = _new_page(names)
     report = page.check()
     if not report.ok:
@@ -51,12 +43,25 @@ def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | Non
                 f"sibling-combinator bits"
             )
         raise TypeError(
-            f"frostwork cannot extract the selector declarations of "
-            f"{cls.__qualname__}:\n  - "
-            + "\n  - ".join(problems)
-            + "\nWrite some fields as methods to extract them with parsel."
+            f"frostwork cannot extract the selector declarations of {owner}:\n"
+            f"  - " + "\n  - ".join(problems) + "\nWrite some fields as methods "
+            "to extract them with parsel."
         )
-    return page, names
+    return page
+
+
+def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
+    """Return a frostwork page for the declarations of *cls*, mapped to the
+    name that they have on it, or ``None`` if there are none.
+
+    Declarations that are equal are extracted once, under the first attribute
+    name that uses one."""
+    names: dict[_SelectorDeclaration, str] = {}
+    for name, declaration in _get_selectors_dict(cls).items():
+        names.setdefault(declaration, name)
+    if not names:
+        return None
+    return _compile(names, cls.__qualname__), names
 
 
 def _get_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
@@ -66,22 +71,20 @@ def _get_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
 
 def _build_combined_page(
     classes: tuple[type, ...],
-) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
+) -> tuple[Page, dict[_SelectorDeclaration, str]]:
     names: dict[_SelectorDeclaration, str] = {}
     for cls in classes:
         for declaration in _get_selectors_dict(cls).values():
             names.setdefault(declaration, f"_{len(names)}")
-    page = _new_page(names)
-    if not page.check().ok:
-        return None
-    return page, names
+    owner = ", ".join(cls.__qualname__ for cls in classes)
+    return _compile(names, f"{owner} together"), names
 
 
 def _get_combined_page(
     classes: tuple[type, ...],
-) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
-    """Return a frostwork page for the declarations of all *classes*, or
-    ``None`` if they do not fit in one, building it on the first call.
+) -> tuple[Page, dict[_SelectorDeclaration, str]]:
+    """Return a frostwork page for the declarations of all *classes*, building
+    it on the first call.
 
     The page is cached on the first class, so that it lives as long as the
     classes that it combines."""
@@ -103,13 +106,13 @@ def _check_class(cls: type) -> None:
     _get_page(cls)
 
 
-def _supports(document: tuple[bytes | str, str | None]) -> bool:
-    """Return whether frostwork can extract values out of *document*."""
+def _decodes_as_declared(document: tuple[bytes | str, str | None]) -> bool:
+    """Return whether frostwork decodes *document* with its declared
+    encoding."""
     html, encoding = document
     if encoding is not None:
         # frostwork sniffs an encoding out of the document when it does not
-        # know the one given to it, and the values of a document that it
-        # decodes differently from the parsed one belong to parsel.
+        # know the one given to it.
         label = resolve_label(encoding)
         if label is None or label != detect_encoding(html, encoding):
             return False

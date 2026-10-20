@@ -94,7 +94,7 @@ Sharing selectors
 To share selector declarations between page object classes, declare them in a
 subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
 classes. Its declarations are extracted in the same pass as those of the page
-object:
+object, so they must fit the frostwork budget together:
 
 .. code-block:: python
 

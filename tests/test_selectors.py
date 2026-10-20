@@ -496,8 +496,8 @@ def test_browser_page() -> None:
 
 
 def test_unknown_encoding() -> None:
-    """A document in an encoding that frostwork does not know is left to
-    parsel, which decodes it as declared."""
+    """A document in an encoding that frostwork does not know is decoded as
+    declared, and then extracted by frostwork."""
 
     @attrs.define
     class EncodedPage(WebPage):
@@ -507,7 +507,7 @@ def test_unknown_encoding() -> None:
     page = EncodedPage(
         response=HttpResponse("http://example.com", body, encoding="cp437")
     )
-    assert page._selector_values() == {}
+    assert page._selector_values() != {}
     assert page.name == "Café"
 
 
@@ -530,7 +530,7 @@ def test_python_codec_name() -> None:
 @pytest.mark.parametrize("encoding", ["utf-8", "cp437"])
 def test_selector_override(encoding: str) -> None:
     """Declarations read the response, even if the page object overrides
-    its selector, both with frostwork and with parsel."""
+    its selector, both from its body and from its decoded text."""
 
     @attrs.define
     class OverridingPage(WebPage):
@@ -549,8 +549,8 @@ def test_selector_override(encoding: str) -> None:
 
 
 def test_rejection_is_cached(monkeypatch) -> None:
-    """A document that frostwork cannot extract is checked once per page
-    object."""
+    """A document that frostwork cannot decode as declared is checked once
+    per page object."""
     calls = []
     resolve_label = frostwork.resolve_label
 
@@ -574,7 +574,7 @@ def test_rejection_is_cached(monkeypatch) -> None:
     assert len(calls) == 1
 
 
-def test_fallback_is_cached(monkeypatch) -> None:
+def test_fallback_is_cached(monkeypatch, response) -> None:
     """A declaration that parsel extracts is extracted once per page
     object."""
     calls = []
@@ -587,15 +587,13 @@ def test_fallback_is_cached(monkeypatch) -> None:
     monkeypatch.setattr(parsel.Selector, "css", counting_css)
 
     @attrs.define
-    class EncodedPage(WebPage):
-        name = field(css_get("h1::text"))
+    class LatePage(WebPage):
+        pass
 
-    body = "<html><body><h1>Café</h1></body></html>".encode("cp437")
-    page = EncodedPage(
-        response=HttpResponse("http://example.com", body, encoding="cp437")
-    )
-    assert page.name == "Café"
-    assert page.name == "Café"
+    LatePage.name = css_get("h1::text")  # type: ignore[attr-defined]
+    page = LatePage(response=response)
+    assert page.name == " Foo "  # type: ignore[attr-defined]
+    assert page.name == " Foo "  # type: ignore[attr-defined]
     assert calls == ["h1::text"]
 
 
@@ -615,17 +613,9 @@ def test_no_declarations(response) -> None:
     assert PlainPage(response=response).name == " Foo "
 
 
-def test_selector_group_over_budget(monkeypatch) -> None:
+def test_selector_group_over_budget() -> None:
     """A page object and a selector group that do not fit in a single pass
-    together are extracted separately."""
-    calls = []
-
-    def counting_extract(*args):
-        calls.append(args)
-        return _frostwork_module._extract(*args)
-
-    monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
-
+    together cannot be extracted."""
     budget_probe = frostwork.Page()
     budget_probe.field("name", "h1")
     count = budget_probe.check().max_members // 2 + 1
@@ -645,14 +635,36 @@ def test_selector_group_over_budget(monkeypatch) -> None:
             },
         )
     )
-    html = "".join(
-        f"<p class=g{i}>G{i}</p><p class=p{i}>P{i}</p>" for i in range(count)
-    )
-    response = HttpResponse("http://example.com", html.encode(), encoding="utf-8")
+    response = HttpResponse("http://example.com", b"", encoding="utf-8")
     page = page_cls(response=response, group=group_cls(AnyResponse(response)))
-    assert page.p0 == "P0"
-    assert page.group.g0 == "G0"
-    assert len(calls) == 2
+    with pytest.raises(TypeError, match=r"BigPage, Group together:\n  - over budget"):
+        page.p0
+
+
+def test_nested_selector_group_single_pass(monkeypatch, response) -> None:
+    """The selector groups of the dependencies of a page object are extracted
+    in the same pass as its own declarations."""
+    calls = []
+
+    def counting_extract(*args):
+        calls.append(args)
+        return _frostwork_module._extract(*args)
+
+    monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
+
+    @attrs.define
+    class OuterPage(WebPage):
+        inner: GroupPage
+        name = field(css_get("h1::text"))
+
+        @field
+        def sku(self) -> str | None:
+            return self.inner.skus.text
+
+    group = SkuSelectors(AnyResponse(response))
+    page = OuterPage(response=response, inner=GroupPage(response, group))
+    assert asyncio.run(page.to_item()) == {"name": " Foo ", "sku": "SKU-1"}
+    assert len(calls) == 1
 
 
 def test_not_attrs(response) -> None:

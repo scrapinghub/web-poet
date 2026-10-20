@@ -9,9 +9,8 @@ import parsel
 from w3lib.html import get_base_url
 
 from web_poet._frostwork import _check_class as _frostwork_check_class
+from web_poet._frostwork import _decodes_as_declared, _get_combined_page, _get_page
 from web_poet._frostwork import _extract as _frostwork_extract
-from web_poet._frostwork import _get_combined_page, _get_page
-from web_poet._frostwork import _supports as _frostwork_supports
 from web_poet._selectors import _get_selectors_dict
 
 if TYPE_CHECKING:
@@ -147,10 +146,10 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         """Return the values of the declarations of this object.
 
         The first call extracts with frostwork, in the same pass, the
-        declarations of this object and of its dependencies that read the same
-        document, e.g. selector groups, and gives each of them a copy of the
-        values. :meth:`_selector_value` adds the values that it gets from
-        parsel."""
+        declarations of this object and of its dependencies, direct or not,
+        that read the same document, e.g. selector groups, and gives each of
+        them a copy of the values. :meth:`_selector_value` adds the values that
+        it gets from parsel."""
         if hasattr(self, _VALUES_ATTRIBUTE):
             return getattr(self, _VALUES_ATTRIBUTE)
         objects = [self, *self._selector_dependencies()]
@@ -161,32 +160,38 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
                 self,
                 *(obj for obj in objects[1:] if obj._selector_document() == document),
             ]
-            if _frostwork_supports(document):
-                page = None
-                if len(objects) > 1:
-                    page = _get_combined_page(tuple(type(obj) for obj in objects))
-                if page is None:
-                    objects = [self]
-                    page = _get_page(type(self))
-                if page is not None:
-                    values = _frostwork_extract(page, document)
+            if not _decodes_as_declared(document):
+                document = (self.html, None)
+            page = (
+                _get_combined_page(tuple(type(obj) for obj in objects))
+                if len(objects) > 1
+                else _get_page(type(self))
+            )
+            if page is not None:
+                values = _frostwork_extract(page, document)
         for obj in objects:
             setattr(obj, _VALUES_ATTRIBUTE, dict(values))
         return getattr(self, _VALUES_ATTRIBUTE)
 
     def _selector_dependencies(self) -> list[ResponseShortcutsMixin]:
-        """Return the dependencies of this object with selector declarations
-        that have not extracted them yet."""
-        cls: Any = type(self)
-        if not attrs.has(cls):
-            return []
+        """Return the dependencies of this object, direct or not, with
+        selector declarations that have not extracted them yet."""
+        found: dict[int, ResponseShortcutsMixin] = {id(self): self}
+        pending: list[ResponseShortcutsMixin] = [self]
+        while pending:
+            obj = pending.pop()
+            cls: Any = type(obj)
+            if not attrs.has(cls):
+                continue
+            for attribute in attrs.fields(cls):
+                value = getattr(obj, attribute.name, None)
+                if isinstance(value, ResponseShortcutsMixin) and id(value) not in found:
+                    found[id(value)] = value
+                    pending.append(value)
         return [
             value
-            for attribute in attrs.fields(cls)
-            if isinstance(
-                value := getattr(self, attribute.name, None), ResponseShortcutsMixin
-            )
-            and not hasattr(value, _VALUES_ATTRIBUTE)
+            for value in list(found.values())[1:]
+            if not hasattr(value, _VALUES_ATTRIBUTE)
             and _get_selectors_dict(type(value))
         ]
 
@@ -194,8 +199,8 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         """Return the value of *declaration* for this object.
 
         frostwork extracts every declaration of the object in a single pass,
-        on the first call. Documents that frostwork cannot extract, and
-        declarations assigned after class creation, are left to parsel."""
+        on the first call. Declarations assigned after class creation are left
+        to parsel."""
         values = self._selector_values()
         if declaration not in values:
             # Declarations read the response as received, even if a subclass

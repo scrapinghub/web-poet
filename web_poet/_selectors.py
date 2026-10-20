@@ -141,9 +141,8 @@ _MISSING = object()
 def _class_cached(cls: type, attribute: str, build: Callable[[type], Any]) -> Any:
     """Return ``build(cls)``, caching it in *attribute* of *cls*.
 
-    The cache lives on the class where it is derived, rather than being filled
-    in on class creation, so that it survives attrs recreating the class (see
-    issue #141)."""
+    Only *cls* itself is looked up, so that each subclass builds its own
+    value."""
     value = cls.__dict__.get(attribute, _MISSING)
     if value is _MISSING:
         value = build(cls)
