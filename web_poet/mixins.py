@@ -160,14 +160,14 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
                 self,
                 *(obj for obj in objects[1:] if obj._selector_document() == document),
             ]
-            if not _decodes_as_declared(document):
-                document = (self.html, None)
             page = (
                 _get_combined_page(tuple(type(obj) for obj in objects))
                 if len(objects) > 1
                 else _get_page(type(self))
             )
             if page is not None:
+                if not _decodes_as_declared(document):
+                    document = (self.html, None)
                 values = _frostwork_extract(page, document)
         for obj in objects:
             setattr(obj, _VALUES_ATTRIBUTE, dict(values))

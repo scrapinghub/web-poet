@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from functools import partial
 from types import SimpleNamespace
 from typing import Any
 
@@ -277,6 +278,23 @@ def test_selector_group(page_cls, response, document_type) -> None:
     assert isinstance(page.skus._selector_document()[0], document_type)
 
 
+def test_selector_group_other_document(monkeypatch) -> None:
+    """A page object without declarations does not decode its document for a
+    selector group that reads another one."""
+
+    def decodes_as_declared(document):
+        assert isinstance(document[0], str)
+        return _frostwork_module._decodes_as_declared(document)
+
+    monkeypatch.setattr("web_poet.mixins._decodes_as_declared", decodes_as_declared)
+    browser_response = BrowserResponse(url="http://example.com", html=HTML)
+    page = GroupPage(
+        response=HttpResponse("http://example.com", HTML.encode(), encoding="cp437"),
+        skus=SkuSelectors(AnyResponse(response=browser_response)),
+    )
+    assert page.sku == "SKU-1"
+
+
 def test_selector_group_single_pass(monkeypatch, response) -> None:
     """The declarations of a page object and of its selector groups are
     extracted in a single pass, whichever is read first."""
@@ -321,6 +339,19 @@ def test_selector_field_name_before_set_name() -> None:
         return "Foo"
 
     assert field(name).name == "name"  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize("cached", [False, True])
+def test_nameless_field_outside_class_body(response, cached) -> None:
+    @attrs.define
+    class LatePage(WebPage):
+        pass
+
+    def get_value(page, value):
+        return value
+
+    LatePage.name = field(partial(get_value, value="Foo"), cached=cached)  # type: ignore[attr-defined]
+    assert LatePage(response=response).name == "Foo"  # type: ignore[attr-defined]
 
 
 def test_selector_field_outside_class_body(response) -> None:

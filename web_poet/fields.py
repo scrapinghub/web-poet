@@ -144,7 +144,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         cache_key = id(self)
         method = self._get_processed_method(owner, cache_key)
         if method is None:
-            if self.name is None:
+            if self.name is None and self.selector_declaration is not None:
                 raise TypeError(
                     "A field built out of a selector declaration must be "
                     "assigned in a class body."
@@ -152,6 +152,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
             if self.out is not None:
                 processor_functions = self.out
             elif hasattr(owner, "Processors"):
+                assert self.name is not None
                 processor_functions = getattr(owner.Processors, self.name, [])
             else:
                 processor_functions = []
@@ -181,7 +182,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         return value
 
     @staticmethod
-    def _processed(method, processors: list[tuple[Callable, bool]], name: str):
+    def _processed(method, processors: list[tuple[Callable, bool]], name: str | None):
         """Returns a wrapper for method that calls processors on its result"""
         if inspect.iscoroutinefunction(method):
 
@@ -206,7 +207,8 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         wrapper = wraps(method)(processed)
         # cached_method names its cache attribute after the function, so the
         # field name is what keeps the cache of each field separate.
-        wrapper.__name__ = name
+        if name is not None:
+            wrapper.__name__ = name
         return wrapper
 
 
