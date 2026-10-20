@@ -198,7 +198,10 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         declarations assigned after class creation, are left to parsel."""
         values = self._selector_values()
         if declaration not in values:
-            query = getattr(self.selector, declaration.syntax)
+            # Declarations read the response as received, even if a subclass
+            # overrides the selector property.
+            selector = SelectableMixin.selector.fget(self)  # type: ignore[attr-defined]
+            query = getattr(selector, declaration.syntax)
             values[declaration] = getattr(
                 query(declaration.expression), declaration.mode
             )()

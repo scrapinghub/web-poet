@@ -527,6 +527,27 @@ def test_python_codec_name() -> None:
     assert page.name == "ก"
 
 
+@pytest.mark.parametrize("encoding", ["utf-8", "cp437"])
+def test_selector_override(encoding: str) -> None:
+    """Declarations read the response, even if the page object overrides
+    its selector, both with frostwork and with parsel."""
+
+    @attrs.define
+    class OverridingPage(WebPage):
+        name = field(css_get("h1::text"))
+
+        @property
+        def selector(self) -> parsel.Selector:
+            return parsel.Selector(text="<h1>Bar</h1>")
+
+    body = b"<html><body><h1>Foo</h1></body></html>"
+    page = OverridingPage(
+        response=HttpResponse("http://example.com", body, encoding=encoding)
+    )
+    assert page.name == "Foo"
+    assert page.css("h1::text").get() == "Bar"
+
+
 def test_rejection_is_cached(monkeypatch) -> None:
     """A document that frostwork cannot extract is checked once per page
     object."""

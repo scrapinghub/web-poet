@@ -44,12 +44,11 @@ writing a method for it:
 
     import attrs
     from web_poet import WebPage, css_get, css_getall, field, xpath_get
-    from zyte_parsers import extract_price
 
 
     @attrs.define
     class MyPage(WebPage):
-        price = field(css_get(".price::text"), out=[extract_price])
+        name = field(css_get("h1::text"), out=[str.strip])
         brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
         images = field(css_getall("img::attr(src)"))
 
