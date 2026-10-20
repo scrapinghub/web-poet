@@ -130,9 +130,9 @@ def xpath_getall(expression: str) -> _SelectorDeclaration[list[str]]:
 
 
 def _get_declaration(value: Any) -> _SelectorDeclaration | None:
-    if isinstance(value, _SelectorDeclaration):
-        return value
-    return getattr(value, "selector_declaration", None)
+    if not isinstance(value, _SelectorDeclaration):
+        value = getattr(value, "selector_declaration", None)
+    return value if isinstance(value, _SelectorDeclaration) else None
 
 
 _MISSING = object()
