@@ -167,6 +167,9 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             )
             if page is not None:
                 if not _decodes_as_declared(document):
+                    # self.html reflects any override of html in a subclass,
+                    # so such overrides only affect documents in encodings
+                    # that frostwork does not know.
                     document = (self.html, None)
                 values = _frostwork_extract(page, document)
         for obj in objects:
