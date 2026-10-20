@@ -77,6 +77,9 @@ def _build_combined_page(
         for declaration in _get_selectors_dict(cls).values():
             names.setdefault(declaration, f"_{len(names)}")
     owner = ", ".join(cls.__qualname__ for cls in classes)
+    # Each class fits the frostwork budget, as checked on class definition, but
+    # their declarations together may not, in which case this raises on the
+    # first field read of the page object.
     return _compile(names, f"{owner} together"), names
 
 

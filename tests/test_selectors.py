@@ -788,12 +788,38 @@ def test_input_validation(response) -> None:
 
 
 def test_no_selector() -> None:
-    @attrs.define
-    class NoSelectorPage(ItemPage):
-        name = field(css_get("h1::text"))
+    with pytest.raises(TypeError, match="no response"):
+
+        @attrs.define
+        class NoSelectorPage(ItemPage):
+            name = field(css_get("h1::text"))
+
+
+def test_no_selector_on_read() -> None:
+    class NoSelectorPage:
+        name = css_get("h1::text")
 
     with pytest.raises(TypeError, match="provides no response"):
         NoSelectorPage().name
+
+
+def test_getall_copies(response) -> None:
+    """Changing a list value in place leaves other reads intact."""
+
+    @attrs.define
+    class AppendingPage(WebPage):
+        _images = css_getall("img::attr(src)")
+
+        @field
+        def mutated(self) -> list[str]:
+            images = self._images
+            images.append("x")
+            return images
+
+    page = AppendingPage(response=response)
+    assert page.mutated == ["a.png", "b.png", "x"]
+    assert page.mutated == ["a.png", "b.png", "x"]
+    assert page._images == ["a.png", "b.png"]
 
 
 def test_fixture(response, tmp_path) -> None:

@@ -14,6 +14,7 @@ from typing import Any, Generic, TypeVar, cast, overload
 import attrs
 from itemadapter import ItemAdapter
 
+from web_poet._frostwork import _check_class as _frostwork_check_class
 from web_poet._selectors import _check_unannotated, _SelectorDeclaration
 from web_poet.utils import (
     cached_method,
@@ -67,6 +68,7 @@ class FieldsMixin:
             with suppress(AttributeError):
                 delattr(cls, _FIELDS_INFO_ATTRIBUTE_WRITE)
         setattr(cls, _FIELD_METHODS_ATTRIBUTE, {})
+        _frostwork_check_class(cls)
 
 
 class _FieldDescriptor(Generic[_PageT, _ReturnT]):

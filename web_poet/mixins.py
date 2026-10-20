@@ -210,7 +210,10 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             values[declaration] = getattr(
                 query(declaration.expression), declaration.mode
             )()
-        return values[declaration]
+        value = values[declaration]
+        # Each read gets its own list, so that changing it in place, e.g. in a
+        # field processor, leaves the value of other reads intact.
+        return list(value) if declaration.mode == "getall" else value
 
     def _selector_kwargs(self) -> dict[str, Any]:
         if isinstance(self.response, SelectableMixin):
