@@ -115,9 +115,10 @@ def _decodes_as_declared(document: tuple[bytes | str, str | None]) -> bool:
     html, encoding = document
     if encoding is not None:
         # frostwork sniffs an encoding out of the document when it does not
-        # know the one given to it.
+        # know the one given to it, and decodes encodings that WHATWG maps to
+        # "replacement" into a single replacement character.
         label = resolve_label(encoding)
-        if label is None or label != detect_encoding(html, encoding):
+        if label in {None, "replacement"} or label != detect_encoding(html, encoding):
             return False
     return True
 

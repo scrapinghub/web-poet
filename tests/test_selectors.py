@@ -558,25 +558,64 @@ def test_python_codec_name() -> None:
     assert page.name == "ก"
 
 
-@pytest.mark.parametrize("encoding", ["utf-8", "cp437"])
-def test_selector_override(encoding: str) -> None:
+class _OverridingMixin:
+    @property
+    def html(self) -> str:
+        return "<h1>Bar</h1>"
+
+    @property
+    def selector(self) -> parsel.Selector:
+        return parsel.Selector(text="<h1>Baz</h1>")
+
+
+@attrs.define
+class OverridingWebPage(_OverridingMixin, WebPage):
+    name = field(css_get("h1::text"))
+
+
+@attrs.define
+class OverridingBrowserPage(_OverridingMixin, BrowserPage):
+    name = field(css_get("h1::text"))
+
+
+@pytest.mark.parametrize(
+    ("page_cls", "response"),
+    [
+        (
+            OverridingWebPage,
+            HttpResponse("http://example.com", HTML.encode(), encoding=encoding),
+        )
+        for encoding in ["utf-8", "cp437"]
+    ]
+    + [
+        (
+            OverridingBrowserPage,
+            BrowserResponse(url="http://example.com", html=HTML),
+        )
+    ],
+)
+def test_selector_override(page_cls, response) -> None:
     """Declarations read the response, even if the page object overrides
-    its selector, both from its body and from its decoded text."""
+    its HTML or its selector, both from its body and from its decoded text."""
+    page = page_cls(response=response)
+    assert page.name == " Foo "
+    assert page.css("h1::text").get() == "Baz"
+
+
+@pytest.mark.parametrize("encoding", ["hz", "iso2022_kr"])
+def test_replacement_encoding(encoding: str) -> None:
+    """A document in an encoding that WHATWG maps to the replacement encoding
+    is decoded as declared."""
 
     @attrs.define
-    class OverridingPage(WebPage):
+    class EncodedPage(WebPage):
         name = field(css_get("h1::text"))
 
-        @property
-        def selector(self) -> parsel.Selector:
-            return parsel.Selector(text="<h1>Bar</h1>")
-
-    body = b"<html><body><h1>Foo</h1></body></html>"
-    page = OverridingPage(
+    body = "<html><body><h1>Foo</h1></body></html>".encode(encoding)
+    page = EncodedPage(
         response=HttpResponse("http://example.com", body, encoding=encoding)
     )
     assert page.name == "Foo"
-    assert page.css("h1::text").get() == "Bar"
 
 
 def test_rejection_is_cached(monkeypatch) -> None:

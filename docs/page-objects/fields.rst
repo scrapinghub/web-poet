@@ -59,6 +59,7 @@ page object whose every field is declared, and more so the larger the document.
 Declared selectors must be within the `frostwork selector contract`_, and fit
 its budget together, or defining the class raises :exc:`TypeError`. They read
 the response as received, even if the page object overrides
+:attr:`~web_poet.mixins.ResponseShortcutsMixin.html` or
 :attr:`~web_poet.mixins.SelectableMixin.selector`. To extract a field with
 parsel instead, write it as a method, e.g. ``self.css(".price::text").get()``.
 frostwork output can differ slightly from parsel’s.
@@ -93,9 +94,10 @@ Sharing selectors
 
 To share selector declarations between page object classes, declare them in a
 subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
-classes. Its declarations are extracted in the same pass as those of the page
-object, so they must fit the frostwork budget together, or reading any field of
-the page object raises :exc:`TypeError`:
+classes. The declarations of the dependencies of a page object, direct or not,
+are extracted in the same pass as those of the page object when they read the
+same response, so they must fit the frostwork budget together, or reading any
+field of the page object raises :exc:`TypeError`:
 
 .. code-block:: python
 

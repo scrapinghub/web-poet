@@ -139,7 +139,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         body = getattr(response, "body", None)
         if body is None:
             # A browser response is HTML that has already been decoded.
-            return self.html, None
+            return response.text, None
         return body, getattr(response, "encoding", None)
 
     def _selector_values(self) -> dict[_SelectorDeclaration, Any]:
@@ -167,10 +167,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             )
             if page is not None:
                 if not _decodes_as_declared(document):
-                    # self.html reflects any override of html in a subclass,
-                    # so such overrides only affect documents in encodings
-                    # that frostwork does not know.
-                    document = (self.html, None)
+                    document = (self.response.text, None)
                 values = _frostwork_extract(page, document)
         for obj in objects:
             setattr(obj, _VALUES_ATTRIBUTE, dict(values))
