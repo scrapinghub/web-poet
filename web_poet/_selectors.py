@@ -100,7 +100,8 @@ def css_get(expression: str) -> _SelectorDeclaration[str | None]:
 
     The declarations of a page object class and of its dependencies count
     together towards a limit set by frostwork, and defining a class over that
-    limit raises :exc:`TypeError`.
+    limit raises :exc:`TypeError`. Reading a value raises it too if the page
+    objects over the same response go over that limit together.
 
     See :ref:`declarative-selectors`.
     """
