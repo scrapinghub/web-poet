@@ -111,7 +111,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
 
     def __set_name__(self, owner, name: str) -> None:
         if self.selector_declaration is not None:
-            _check_unannotated(owner, name)
+            _check_unannotated(owner, name, "declaration")
         self.name = self.__name__ = name
         self.__qualname__ = f"{owner.__qualname__}.{name}"
         if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
@@ -193,7 +193,6 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
                     validation_item = page._validate_input()
                     if validation_item is not None:
                         return getattr(validation_item, name)
-                _extract_selectors(page)
                 return _FieldDescriptor._process(await method(page), page, processors)
 
         else:
@@ -203,7 +202,6 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
                     validation_item = page._validate_input()
                     if validation_item is not None:
                         return getattr(validation_item, name)
-                _extract_selectors(page)
                 return _FieldDescriptor._process(method(page), page, processors)
 
         wrapper = wraps(method)(processed)
@@ -212,14 +210,6 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         if name is not None:
             wrapper.__name__ = name
         return wrapper
-
-
-def _extract_selectors(page: Any) -> None:
-    # A field can read the selector declarations of a dependency, e.g. a
-    # selector group, before those of the page object, so the page object
-    # extracts both first, in a single pass.
-    if hasattr(page, "_selector_values"):
-        page._selector_values()
 
 
 @overload

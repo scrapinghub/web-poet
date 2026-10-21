@@ -1,5 +1,5 @@
 from ._layouts import layout_switch
-from ._selectors import css_get, css_getall, xpath_get, xpath_getall
+from ._selectors import SelectorGroup, css_get, css_getall, xpath_get, xpath_getall
 from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
 from .fields import field, item_from_fields, item_from_fields_sync
 from .page_inputs import (
@@ -25,7 +25,6 @@ from .pages import (
     ItemPage,
     Returns,
     SelectorExtractor,
-    SelectorGroup,
     WebPage,
     validates_input,
 )

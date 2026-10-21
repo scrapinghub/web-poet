@@ -10,26 +10,29 @@ if TYPE_CHECKING:
     from web_poet._selectors import _SelectorDeclaration
 
 _PAGE_ATTRIBUTE = "_web_poet_frostwork_page"
-_COMBINED_PAGES_ATTRIBUTE = "_web_poet_frostwork_combined_pages"
 
 # Selector declaration modes, mapped to the frostwork page method with the same
 # cardinality.
 _METHODS = {"get": "field", "getall": "field_all"}
 
 
-def _new_page(names: dict[_SelectorDeclaration, str]) -> Page:
+def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
+    """Return a frostwork page for the declarations of *cls*, mapped to the
+    name that they have on it, or ``None`` if there are none. Raise
+    :exc:`TypeError` if frostwork cannot extract them.
+
+    Declarations that are equal are extracted once, under the first attribute
+    name that uses one."""
+    names: dict[_SelectorDeclaration, str] = {}
+    for name, declaration in _get_selectors_dict(cls).items():
+        names.setdefault(declaration, name)
+    if not names:
+        return None
     page = Page()
     for declaration, name in names.items():
         getattr(page, _METHODS[declaration.mode])(
             name, declaration.expression, syntax=declaration.syntax
         )
-    return page
-
-
-def _compile(names: dict[_SelectorDeclaration, str], owner: str) -> Page:
-    """Return a frostwork page for *names*, or raise :exc:`TypeError` naming
-    *owner* if frostwork cannot extract them."""
-    page = _new_page(names)
     report = page.check()
     if not report.ok:
         problems = [
@@ -43,60 +46,19 @@ def _compile(names: dict[_SelectorDeclaration, str], owner: str) -> Page:
                 f"sibling-combinator bits"
             )
         raise TypeError(
-            f"frostwork cannot extract the selector declarations of {owner}:\n"
+            f"frostwork cannot extract the selector declarations of "
+            f"{cls.__qualname__}:\n"
             f"  - " + "\n  - ".join(problems) + "\nRewrite them within the "
             "frostwork selector contract "
             "(https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md), "
             "or write some of them as methods to extract them with parsel."
         )
-    return page
-
-
-def _build_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
-    """Return a frostwork page for the declarations of *cls*, mapped to the
-    name that they have on it, or ``None`` if there are none.
-
-    Declarations that are equal are extracted once, under the first attribute
-    name that uses one."""
-    names: dict[_SelectorDeclaration, str] = {}
-    for name, declaration in _get_selectors_dict(cls).items():
-        names.setdefault(declaration, name)
-    if not names:
-        return None
-    return _compile(names, cls.__qualname__), names
+    return page, names
 
 
 def _get_page(cls: type) -> tuple[Page, dict[_SelectorDeclaration, str]] | None:
     """Return the frostwork page of *cls*, building it on the first call."""
     return _class_cached(cls, _PAGE_ATTRIBUTE, _build_page)
-
-
-def _build_combined_page(
-    classes: tuple[type, ...],
-) -> tuple[Page, dict[_SelectorDeclaration, str]]:
-    names: dict[_SelectorDeclaration, str] = {}
-    for cls in classes:
-        for declaration in _get_selectors_dict(cls).values():
-            names.setdefault(declaration, f"_{len(names)}")
-    owner = ", ".join(cls.__qualname__ for cls in classes if _get_selectors_dict(cls))
-    # Each class fits the frostwork budget, as checked on class definition, but
-    # their declarations together may not, in which case this raises on the
-    # first field read of the page object.
-    return _compile(names, f"{owner} together"), names
-
-
-def _get_combined_page(
-    classes: tuple[type, ...],
-) -> tuple[Page, dict[_SelectorDeclaration, str]]:
-    """Return a frostwork page for the declarations of all *classes*, building
-    it on the first call.
-
-    The page is cached on the first class, so that it lives as long as the
-    classes that it combines."""
-    pages = _class_cached(classes[0], _COMBINED_PAGES_ATTRIBUTE, lambda cls: {})
-    if classes not in pages:
-        pages[classes] = _build_combined_page(classes)
-    return pages[classes]
 
 
 def _check_class(cls: type) -> None:

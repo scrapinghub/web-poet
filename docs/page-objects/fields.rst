@@ -90,15 +90,15 @@ a single field:
         def sku(self) -> str | None:
             return self._sku_meta or self._sku_text
 
+.. _sharing-selectors:
+
 Sharing selectors
 -----------------
 
 To share selector declarations between page object classes, declare them in a
-subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
-classes. The declarations of the dependencies of a page object, direct or not,
-are extracted in the same pass as those of the page object when they read the
-same response, so they must fit the frostwork budget together, or reading any
-field of the page object raises :exc:`TypeError`:
+subclass of :class:`~web_poet.SelectorGroup`, and assign an instance of it to
+those classes. The declarations of the group count as declarations of each
+page object class:
 
 .. code-block:: python
 
@@ -113,7 +113,7 @@ field of the page object raises :exc:`TypeError`:
 
     @attrs.define
     class MyPage(WebPage):
-        skus: SkuSelectors
+        skus = SkuSelectors()
 
         @field
         def sku(self) -> str | None:

@@ -3,6 +3,7 @@ import pytest
 
 from web_poet import (
     HttpResponse,
+    SelectorGroup,
     WebPage,
     css_get,
     css_getall,
@@ -10,6 +11,11 @@ from web_poet import (
     xpath_get,
     xpath_getall,
 )
+
+
+class SkuSelectors(SelectorGroup):
+    meta = xpath_get("//meta[@itemprop='sku']/@content")
+    texts = css_getall(".sku::text")
 
 
 @attrs.define
@@ -22,6 +28,7 @@ class Page(WebPage):
 
     helper = css_get(".sku::text")
     helpers = css_getall(".sku::text")
+    skus = SkuSelectors()
 
 
 @pytest.mark.mypy_testing
@@ -58,6 +65,14 @@ def test_declaration() -> None:
 def test_declaration_all() -> None:
     page = Page(response=HttpResponse("http://example.com", b""))
     reveal_type(page.helpers)  # R: list[str]
+
+
+@pytest.mark.mypy_testing
+def test_group() -> None:
+    page = Page(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.skus)  # R: __main__.SkuSelectors
+    reveal_type(page.skus.meta)  # R: str | None
+    reveal_type(page.skus.texts)  # R: list[str]
 
 
 @pytest.mark.mypy_testing

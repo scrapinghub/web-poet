@@ -4,14 +4,12 @@ import abc
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 from urllib.parse import urljoin
 
-import attrs
 import parsel
 from w3lib.html import get_base_url
 
 from web_poet._frostwork import _check_class as _frostwork_check_class
-from web_poet._frostwork import _decodes_as_declared, _get_combined_page, _get_page
+from web_poet._frostwork import _decodes_as_declared, _get_page
 from web_poet._frostwork import _extract as _frostwork_extract
-from web_poet._selectors import _get_selectors_dict
 
 if TYPE_CHECKING:
     from web_poet._selectors import _SelectorDeclaration
@@ -131,69 +129,30 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
     def _selector_document(self) -> tuple[bytes | str, str | None]:
         """Return the raw document of this object and its encoding, for
         frostwork to scan directly instead of using ``self.selector``."""
-        from web_poet.page_inputs import AnyResponse  # noqa: PLC0415
-
-        response: Any = self.response
-        if isinstance(response, AnyResponse):
-            response = response.response
-        body = getattr(response, "body", None)
+        body = getattr(self.response, "body", None)
         if body is None:
-            # A browser response is HTML that has already been decoded.
-            return response.text, None
-        return body, getattr(response, "encoding", None)
+            # A response without a body, e.g. a browser response, has HTML that
+            # has already been decoded.
+            return self.response.text, None
+        return body, getattr(self.response, "encoding", None)
 
     def _selector_values(self) -> dict[_SelectorDeclaration, Any]:
         """Return the values of the declarations of this object.
 
-        The first call extracts with frostwork, in the same pass, the
-        declarations of this object and of its dependencies, direct or not,
-        that read the same document, e.g. selector groups, and gives each of
-        them a copy of the values. :meth:`_selector_value` adds the values that
-        it gets from parsel."""
+        The first call extracts every declaration of the object with
+        frostwork, in a single pass. :meth:`_selector_value` adds the values
+        that it gets from parsel."""
         if hasattr(self, _VALUES_ATTRIBUTE):
             return getattr(self, _VALUES_ATTRIBUTE)
-        objects = [self, *self._selector_dependencies()]
         values: dict[_SelectorDeclaration, Any] = {}
-        if len(objects) > 1 or _get_selectors_dict(type(self)):
+        page = _get_page(type(self))
+        if page is not None:
             document = self._selector_document()
-            objects = [
-                self,
-                *(obj for obj in objects[1:] if obj._selector_document() == document),
-            ]
-            page = (
-                _get_combined_page(tuple(type(obj) for obj in objects))
-                if len(objects) > 1
-                else _get_page(type(self))
-            )
-            if page is not None:
-                if not _decodes_as_declared(document):
-                    document = (self.response.text, None)
-                values = _frostwork_extract(page, document)
-        for obj in objects:
-            setattr(obj, _VALUES_ATTRIBUTE, dict(values))
-        return getattr(self, _VALUES_ATTRIBUTE)
-
-    def _selector_dependencies(self) -> list[ResponseShortcutsMixin]:
-        """Return the dependencies of this object, direct or not, with
-        selector declarations that have not extracted them yet."""
-        found: dict[int, ResponseShortcutsMixin] = {id(self): self}
-        pending: list[ResponseShortcutsMixin] = [self]
-        while pending:
-            obj = pending.pop()
-            cls: Any = type(obj)
-            if not attrs.has(cls):
-                continue
-            for attribute in attrs.fields(cls):
-                value = getattr(obj, attribute.name, None)
-                if isinstance(value, ResponseShortcutsMixin) and id(value) not in found:
-                    found[id(value)] = value
-                    pending.append(value)
-        return [
-            value
-            for value in list(found.values())[1:]
-            if not hasattr(value, _VALUES_ATTRIBUTE)
-            and _get_selectors_dict(type(value))
-        ]
+            if not _decodes_as_declared(document):
+                document = (self.response.text, None)
+            values = _frostwork_extract(page, document)
+        setattr(self, _VALUES_ATTRIBUTE, values)
+        return values
 
     def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
         """Return the value of *declaration* for this object.

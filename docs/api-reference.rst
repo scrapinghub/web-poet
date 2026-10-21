@@ -158,7 +158,6 @@ Fields
 .. autofunction:: web_poet.xpath_getall
 
 .. autoclass:: web_poet.SelectorGroup
-    :show-inheritance:
 
 Layouts
 =======
