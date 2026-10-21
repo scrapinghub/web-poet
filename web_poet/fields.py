@@ -14,6 +14,7 @@ from typing import Any, Generic, TypeVar, cast, overload
 import attrs
 from itemadapter import ItemAdapter
 
+from web_poet._frostwork import _any_pending
 from web_poet._frostwork import _check_class as _frostwork_check_class
 from web_poet._selectors import _check_unannotated, _SelectorDeclaration
 from web_poet.utils import (
@@ -224,7 +225,7 @@ def _extract_selectors(page: Any) -> None:
     Fields call this before running their own code, so that page objects that
     a field builds, e.g. a layout picked at run time, are extracted in a pass
     of their own."""
-    if hasattr(page, _SELECTORS_EXTRACTED_ATTRIBUTE):
+    if not _any_pending() or hasattr(page, _SELECTORS_EXTRACTED_ATTRIBUTE):
         return
     found = {id(page)}
     pending = [page]

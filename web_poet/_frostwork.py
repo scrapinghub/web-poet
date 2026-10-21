@@ -233,6 +233,12 @@ def _unregister(obj: Any) -> None:
     _forget(id(obj))
 
 
+def _any_pending() -> bool:
+    """Return whether any registered object has yet to extract its
+    declarations."""
+    return bool(_unsorted or _response_keys)
+
+
 def _response_or_none(obj: Any) -> Any:
     # An object whose __init__ failed before setting its response can still be
     # registered until it is garbage-collected.
