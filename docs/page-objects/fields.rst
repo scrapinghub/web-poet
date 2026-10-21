@@ -70,9 +70,9 @@ frostwork output can differ slightly from parsel’s.
 Combining selectors
 -------------------
 
-Selector declarations can also be used on their own, as plain class attributes.
-Then they are not fields, but reading them on an instance still returns their
-value. Use that to combine several declarations into a single field:
+Selector declarations can also be used on their own, as plain class attributes
+whose value you read on an instance, e.g. to combine several declarations into
+a single field:
 
 .. code-block:: python
 
