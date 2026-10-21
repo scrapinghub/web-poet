@@ -111,7 +111,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
 
     def __set_name__(self, owner, name: str) -> None:
         if self.selector_declaration is not None:
-            _check_unannotated(owner, name, "declaration")
+            _check_unannotated(owner, name)
         self.name = self.__name__ = name
         self.__qualname__ = f"{owner.__qualname__}.{name}"
         if not hasattr(owner, _FIELDS_INFO_ATTRIBUTE_WRITE):
@@ -189,6 +189,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         if inspect.iscoroutinefunction(method):
 
             async def processed(page):
+                _extract_selectors(page)
                 if hasattr(page, "_validate_input"):
                     validation_item = page._validate_input()
                     if validation_item is not None:
@@ -198,6 +199,7 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         else:
 
             def processed(page):  # type: ignore[misc]
+                _extract_selectors(page)
                 if hasattr(page, "_validate_input"):
                     validation_item = page._validate_input()
                     if validation_item is not None:
@@ -210,6 +212,37 @@ class _FieldDescriptor(Generic[_PageT, _ReturnT]):
         if name is not None:
             wrapper.__name__ = name
         return wrapper
+
+
+_SELECTORS_EXTRACTED_ATTRIBUTE = "_web_poet_selectors_extracted"
+
+
+def _extract_selectors(page: Any) -> None:
+    """Extract the selector declarations of *page* and of its dependencies,
+    direct or not, unless done already.
+
+    Fields call this before running their own code, so that page objects that
+    a field builds, e.g. a layout picked at run time, are extracted in a pass
+    of their own."""
+    if hasattr(page, _SELECTORS_EXTRACTED_ATTRIBUTE):
+        return
+    found = {id(page)}
+    pending = [page]
+    while pending:
+        obj = pending.pop()
+        if hasattr(obj, "_selector_values"):
+            obj._selector_values()
+        cls = type(obj)
+        if not attrs.has(cls):
+            continue
+        for attribute in attrs.fields(cls):
+            value = getattr(obj, attribute.name, None)
+            if id(value) not in found and (
+                isinstance(value, FieldsMixin) or hasattr(value, "_selector_values")
+            ):
+                found.add(id(value))
+                pending.append(value)
+    setattr(page, _SELECTORS_EXTRACTED_ATTRIBUTE, True)
 
 
 @overload

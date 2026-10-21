@@ -52,18 +52,11 @@ writing a method for it:
         brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
         images = field(css_getall("img::attr(src)"))
 
-Declared selectors are extracted with frostwork_, all of them in a single pass
-over the response. Extraction is several times faster than with parsel for a
-page object whose every field is declared, and more so the larger the document.
-
-Declared selectors must be within the `frostwork selector contract`_, and fit
-its budget together, or defining the class raises :exc:`TypeError`. They read
-the response as received, even if the page object overrides
-:attr:`~web_poet.mixins.ResponseShortcutsMixin.html` or
-:attr:`~web_poet.mixins.SelectableMixin.selector`. To keep a field declarative,
-look for an equivalent expression within the contract; to extract it with
-parsel instead, write it as a method, e.g. ``self.css(".price::text").get()``.
-frostwork output can differ slightly from parsel’s.
+Declared selectors are extracted with frostwork_, several times faster than
+with parsel. They must be within the `frostwork selector contract`_, or
+defining the class raises :exc:`TypeError`, and their output can differ
+slightly from parsel’s. To extract a field with parsel instead, write it as a
+method, e.g. ``self.css(".price::text").get()``.
 
 .. _frostwork: https://github.com/scrapy/frostwork
 .. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md
@@ -96,9 +89,8 @@ Sharing selectors
 -----------------
 
 To share selector declarations between page object classes, declare them in a
-subclass of :class:`~web_poet.SelectorGroup`, and assign an instance of it to
-those classes. The declarations of the group count as declarations of each
-page object class:
+subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
+classes, or a base class listed after their page object base class:
 
 .. code-block:: python
 
@@ -113,11 +105,17 @@ page object class:
 
     @attrs.define
     class MyPage(WebPage):
-        skus = SkuSelectors()
+        skus: SkuSelectors
 
         @field
         def sku(self) -> str | None:
             return self.skus.meta or self.skus.text
+
+
+    class MyOtherPage(WebPage, SkuSelectors):
+        @field
+        def sku(self) -> str | None:
+            return self.meta or self.text
 
 .. _fields-sync-async:
 

@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import gc
 from functools import partial
 from types import SimpleNamespace
+from typing import Any
 
+import andi
 import attrs
 import frostwork
 import parsel
 import pytest
 
 from web_poet import (
+    AnyResponse,
     BrowserPage,
     BrowserResponse,
     HttpClient,
@@ -22,6 +26,7 @@ from web_poet import (
     css_get,
     css_getall,
     field,
+    layout_switch,
     xpath_get,
     xpath_getall,
 )
@@ -29,6 +34,7 @@ from web_poet import _frostwork as _frostwork_module
 from web_poet._frostwork import _get_page
 from web_poet._selectors import _get_selectors_dict
 from web_poet.mixins import ResponseShortcutsMixin
+from web_poet.pages import is_injectable
 from web_poet.testing import Fixture
 
 HTML = """
@@ -222,7 +228,7 @@ class SkuSelectors(SelectorGroup):
 
 @attrs.define
 class GroupPage(WebPage):
-    skus = SkuSelectors()
+    skus: SkuSelectors
 
     @field
     def sku(self) -> str | None:
@@ -231,7 +237,7 @@ class GroupPage(WebPage):
 
 @attrs.define
 class BrowserGroupPage(BrowserPage):
-    skus = SkuSelectors()
+    skus: SkuSelectors
 
     @field
     def sku(self) -> str | None:
@@ -239,113 +245,327 @@ class BrowserGroupPage(BrowserPage):
 
 
 @pytest.mark.parametrize(
-    ("page_cls", "response"),
+    ("page_cls", "response", "document_type"),
     [
         (
             GroupPage,
             HttpResponse("http://example.com", HTML.encode(), encoding="utf-8"),
+            bytes,
         ),
-        (BrowserGroupPage, BrowserResponse(url="http://example.com", html=HTML)),
+        (
+            BrowserGroupPage,
+            BrowserResponse(url="http://example.com", html=HTML),
+            str,
+        ),
     ],
 )
-def test_selector_group(page_cls, response) -> None:
-    """The declarations of a selector group are declarations of the page object
-    class that it is assigned to."""
-    assert set(_get_selectors_dict(page_cls)) == {"skus.meta", "skus.text"}
-    assert asyncio.run(page_cls(response=response).to_item()) == {"sku": "SKU-1"}
+def test_selector_group(page_cls, response, document_type) -> None:
+    """A selector group can be built through dependency injection, and reads
+    the response of the page object."""
+    plan = andi.plan(
+        page_cls,
+        is_injectable=is_injectable,
+        externally_provided={type(response), AnyResponse},
+    )
+    instances: dict[Any, Any] = {
+        type(response): response,
+        AnyResponse: AnyResponse(response=response),
+    }
+    for cls, kwargs in plan:
+        if cls not in instances:
+            instances[cls] = cls(**{k: instances[v] for k, v in kwargs.items()})
+    page = instances[page_cls]
+    assert isinstance(page, page_cls)
+    assert asyncio.run(page.to_item()) == {"sku": "SKU-1"}
+    assert isinstance(page.skus._selector_document()[0], document_type)
 
 
-@pytest.mark.parametrize("group_first", [False, True])
-def test_selector_group_single_pass(monkeypatch, response, group_first) -> None:
-    """The declarations of a page object and of its selector groups are
-    extracted in a single pass, whichever is read first."""
-    calls = []
+def test_selector_group_other_document(monkeypatch) -> None:
+    """A page object without declarations does not decode its document for a
+    selector group that reads another one."""
+
+    def decodes_as_declared(document):
+        assert isinstance(document[0], str)
+        return _frostwork_module._decodes_as_declared(document)
+
+    monkeypatch.setattr("web_poet.mixins._decodes_as_declared", decodes_as_declared)
+    browser_response = BrowserResponse(url="http://example.com", html=HTML)
+    page = GroupPage(
+        response=HttpResponse("http://example.com", HTML.encode(), encoding="cp437"),
+        skus=SkuSelectors(AnyResponse(response=browser_response)),
+    )
+    assert page.sku == "SKU-1"
+
+
+@pytest.fixture
+def passes(monkeypatch) -> list[Any]:
+    """Return a list that gets an item for each frostwork pass."""
+    calls: list[Any] = []
 
     def counting_extract(*args):
         calls.append(args)
         return _frostwork_module._extract(*args)
 
     monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
+    return calls
 
-    @attrs.define
-    class MixedPage(GroupPage):
-        name = field(css_get("h1::text"))
 
-    page = MixedPage(response=response)
+@attrs.define
+class MixedPage(GroupPage):
+    name = field(css_get("h1::text"))
+
+
+@pytest.mark.parametrize("group_first", [False, True])
+def test_selector_group_single_pass(passes, response, group_first) -> None:
+    """The declarations of a page object and of its selector groups are
+    extracted in a single pass, whichever is read first."""
+    page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
     if group_first:
         assert page.skus.text == "SKU-1"
-    assert page.name == " Foo "
-    assert page.skus.text == "SKU-1"
-    assert len(calls) == 1
+    assert asyncio.run(page.to_item()) == {"sku": "SKU-1", "name": " Foo "}
+    assert len(passes) == 1
 
 
-def test_nested_selector_group(response) -> None:
-    class ProductSelectors(SelectorGroup):
-        name = css_get("h1::text")
-        skus = SkuSelectors()
-
+@pytest.mark.parametrize("inner_first", [False, True])
+def test_nested_dependency_single_pass(passes, response, inner_first) -> None:
     @attrs.define
-    class NestedPage(WebPage):
-        product = ProductSelectors()
+    class OuterPage(WebPage):
+        inner: GroupPage
+        name = field(css_get("h1::text"))
 
-    assert set(_get_selectors_dict(NestedPage)) == {
-        "product.name",
-        "product.skus.meta",
-        "product.skus.text",
-    }
-    page = NestedPage(response=response)
-    assert page.product.skus.text == "SKU-1"
-    assert page.product.name == " Foo "
+        @field
+        def sku(self) -> str | None:
+            return self.inner.skus.text
+
+    inner = GroupPage(response, SkuSelectors(AnyResponse(response)))
+    page = OuterPage(response=response, inner=inner)
+    if inner_first:
+        assert inner.sku == "SKU-1"
+    assert asyncio.run(page.to_item()) == {"name": " Foo ", "sku": "SKU-1"}
+    assert len(passes) == 1
 
 
-def test_selector_group_over_budget() -> None:
-    """A page object class and its selector groups must fit in a single pass
-    together."""
+@attrs.define
+class PricePage(WebPage):
+    price = field(css_get(".price::text"))
+
+
+@pytest.mark.parametrize("price_first", [False, True])
+def test_unrelated_page_objects_single_pass(passes, response, price_first) -> None:
+    """Page objects over the same response share a single pass, even if
+    neither depends on the other."""
+    page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
+    price_page = PricePage(response=response)
+    if price_first:
+        assert price_page.price == "10.00"
+    assert page.name == " Foo "
+    assert price_page.price == "10.00"
+    assert len(passes) == 1
+
+
+def test_other_response_other_pass(passes) -> None:
+    """Page objects over different response objects get a pass each, even if
+    the responses are equal."""
+    pages = [
+        PricePage(HttpResponse("http://example.com", HTML.encode(), encoding="utf-8"))
+        for _ in range(2)
+    ]
+    assert [page.price for page in pages] == ["10.00", "10.00"]
+    assert len(passes) == 2
+
+
+def test_page_object_built_after_the_pass(passes, response) -> None:
+    """A page object built after the first read over its response gets a pass
+    of its own."""
+    page = PricePage(response=response)
+    assert page.price == "10.00"
+    assert PricePage(response=response).price == "10.00"
+    assert len(passes) == 2
+
+
+def _budget_half() -> int:
     budget_probe = frostwork.Page()
     budget_probe.field("name", "h1")
-    count = budget_probe.check().max_members // 2 + 1
-    group_cls = type(
-        "Group",
-        (SelectorGroup,),
-        {f"g{i}": css_get(f".g{i}::text") for i in range(count)},
+    return budget_probe.check().max_members // 2 + 1
+
+
+def _declaring_class(name: str, base: type, **attributes: Any) -> Any:
+    """Return a subclass of *base* with over half the frostwork budget in
+    declarations."""
+    return type(
+        name,
+        (base,),
+        {
+            **{
+                f"{name}{i}": css_get(f".{name}{i}::text")
+                for i in range(_budget_half())
+            },
+            **attributes,
+        },
     )
-    with pytest.raises(TypeError, match=r"of BigPage:\n  - over budget"):
+
+
+def test_dependencies_over_budget() -> None:
+    """A page object class and its dependencies must fit in a single pass
+    together."""
+    group_cls = _declaring_class("Group", SelectorGroup)
+    with pytest.raises(
+        TypeError, match=r"of BigPage, Group together:\n  - over budget"
+    ):
+        _declaring_class("BigPage", WebPage, __annotations__={"group": group_cls})
+
+
+def test_dependencies_over_budget_without_page_declarations() -> None:
+    group_classes = [
+        _declaring_class(name, SelectorGroup) for name in ("Group1", "Group2")
+    ]
+    with pytest.raises(
+        TypeError, match=r"of Group1, Group2 together:\n  - over budget"
+    ):
         type(
-            "BigPage",
-            (WebPage,),
+            "PlainPage",
+            (ItemPage,),
             {
-                "group": group_cls(),
-                **{f"p{i}": css_get(f".p{i}::text") for i in range(count)},
+                "__annotations__": {
+                    "group1": group_classes[0],
+                    "group2": group_classes[1],
+                }
             },
         )
 
 
-def test_unsupported_group_declaration() -> None:
-    class UnsupportedSelectors(SelectorGroup):
-        name = css_get(":root h1::text")
-
-    with pytest.raises(TypeError, match=r"group\.name = ':root h1::text'"):
-
-        class UnsupportedPage(WebPage):
-            group = UnsupportedSelectors()
-
-
-def test_unbound_selector_group() -> None:
-    with pytest.raises(TypeError, match="through the page object class"):
-        SkuSelectors().meta
+def test_dependencies_over_budget_other_response_kinds() -> None:
+    """Dependencies that read a different kind of response are extracted in a
+    pass of their own."""
+    browser_cls = _declaring_class("BrowserLayout", BrowserPage)
+    http_cls = _declaring_class("HttpLayout", WebPage)
+    type(
+        "SwitchPage",
+        (ItemPage,),
+        {"__annotations__": {"browser": browser_cls, "http": http_cls}},
+    )
 
 
-def test_shadowed_selector_group(response) -> None:
+def test_unresolvable_dependency_annotation() -> None:
     @attrs.define
-    class SubPage(GroupPage):
-        skus = None  # type: ignore[assignment]
+    class ForwardPage(WebPage):
+        later: Later  # type: ignore[name-defined]  # noqa: F821
+        name = field(css_get("h1::text"))
 
-        @field
-        def sku(self) -> str | None:
-            return None
+    assert _frostwork_module._dependency_classes(ForwardPage) == ()
 
-    assert _get_selectors_dict(SubPage) == {}
-    assert SubPage(response=response).sku is None
+
+@pytest.mark.parametrize("first", ["a", "b"])
+def test_page_objects_over_budget(response, first) -> None:
+    """Page objects over the same response that do not fit in a single pass
+    together cannot be extracted, whichever is read first."""
+    page_a = _declaring_class("A", WebPage)(response=response)
+    page_b = _declaring_class("B", WebPage)(response=response)
+    page = page_a if first == "a" else page_b
+    with pytest.raises(TypeError, match=r"of A, B together:\n  - over budget"):
+        getattr(page, f"{type(page).__name__}0")
+
+
+@attrs.define
+class Product:
+    title: str | None
+
+
+class ProductLayout(WebPage[Product]):
+    pass
+
+
+class ProductLayoutA(ProductLayout):
+    title = field(css_get("h1::text"))
+
+
+class ProductLayoutB(ProductLayout):
+    title = field(css_get(".desc::text"))
+
+
+@layout_switch()
+@attrs.define
+class ProductPage(ItemPage[Product]):
+    response: HttpResponse
+    layout_a: ProductLayoutA
+    layout_b: ProductLayoutB
+
+    def get_layout(self) -> ItemPage[Product]:
+        return self.layout_b if self.response.css(".desc") else self.layout_a
+
+
+def test_layouts_single_pass(passes, response) -> None:
+    page = ProductPage(
+        response=response,
+        layout_a=ProductLayoutA(response=response),
+        layout_b=ProductLayoutB(response=response),
+    )
+    assert asyncio.run(page.to_item()) == Product(title="A description")
+    assert len(passes) == 1
+
+
+def test_layout_built_at_run_time(passes, response) -> None:
+    """A layout that a field builds is extracted in a pass of its own, so the
+    layouts that it picks from do not need to fit in a single pass
+    together."""
+    big_a = _declaring_class("BigA", ProductLayout, title=field(css_get("h1::text")))
+    big_b = _declaring_class("BigB", ProductLayout, title=field(css_get(".desc::text")))
+
+    @layout_switch(layouts=[big_a, big_b])
+    @attrs.define
+    class RunTimeProductPage(ItemPage[Product]):
+        response: HttpResponse
+        group: SkuSelectors
+
+        def get_layout(self) -> ItemPage[Product]:
+            layout_cls = big_b if self.response.css(".desc") else big_a
+            return layout_cls(response=self.response)
+
+    page = RunTimeProductPage(
+        response=response, group=SkuSelectors(AnyResponse(response))
+    )
+    assert asyncio.run(page.to_item()) == Product(title="A description")
+    assert len(passes) == 2
+
+
+@attrs.define
+class InheritingPage(WebPage, SkuSelectors):
+    @field
+    def sku(self) -> str | None:
+        return self.meta or self.text
+
+
+def test_inherited_selector_group(passes, response) -> None:
+    page = InheritingPage(response=response)
+    assert page.sku == "SKU-1"
+    assert isinstance(page.response, HttpResponse)
+    assert set(_get_selectors_dict(InheritingPage)) == {"meta", "text"}
+
+
+def test_inherited_selector_group_init(response) -> None:
+    """Page object classes must inherit __init__ from their page object base
+    class."""
+
+    class WrongOrderPage(SkuSelectors, WebPage):
+        pass
+
+    with pytest.raises(TypeError, match="List SelectorGroup subclasses after"):
+        WrongOrderPage(response)
+
+    @attrs.define
+    class AttrsWrongOrderPage(SkuSelectors, WebPage):
+        pass
+
+    assert AttrsWrongOrderPage(response=response).text == "SKU-1"
+
+
+def test_unread_page_object_is_not_kept_alive(response) -> None:
+    page = PricePage(response=response)
+    key = id(page)
+    assert key in _frostwork_module._pending
+    del page
+    gc.collect()
+    assert key not in _frostwork_module._pending
 
 
 def test_field_not_callable() -> None:
@@ -409,15 +629,11 @@ def test_declaration_outside_class_body(response) -> None:
 
 
 @pytest.mark.parametrize(
-    ("declaration", "kind"),
-    [
-        (css_get("h1::text"), "declaration"),
-        (field(css_get("h1::text")), "declaration"),
-        (SkuSelectors(), "group"),
-    ],
-    ids=["declaration", "field", "group"],
+    "declaration",
+    [css_get("h1::text"), field(css_get("h1::text"))],
+    ids=["declaration", "field"],
 )
-def test_annotated_declaration(declaration, kind) -> None:
+def test_annotated_declaration(declaration) -> None:
     # Python < 3.12 wraps errors from __set_name__ in a RuntimeError.
     with pytest.raises((TypeError, RuntimeError)) as exc_info:
 
@@ -428,7 +644,7 @@ def test_annotated_declaration(declaration, kind) -> None:
     if isinstance(error, RuntimeError):
         error = error.__cause__
     assert isinstance(error, TypeError)
-    assert f"AnnotatedPage.name is a selector {kind}" in str(error)
+    assert "AnnotatedPage.name is a selector declaration" in str(error)
 
 
 def test_field_metadata() -> None:

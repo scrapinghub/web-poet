@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import copy
 import inspect
 import sys
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    # typing.Self requires Python 3.11
-    from typing_extensions import Self
 
 _SELECTORS_DICT_ATTRIBUTE = "_web_poet_selectors_dict"
 
@@ -53,7 +49,7 @@ class _SelectorDeclaration(Generic[_ValueT]):
         return hash(self._key)
 
     def __set_name__(self, owner: type, name: str) -> None:
-        _check_unannotated(owner, name, "declaration")
+        _check_unannotated(owner, name)
 
     @overload
     def __get__(
@@ -77,12 +73,11 @@ class _SelectorDeclaration(Generic[_ValueT]):
         return selector_value(self)
 
 
-def _check_unannotated(owner: type, name: str, kind: str) -> None:
-    """Raise :exc:`TypeError` if *name*, a selector *kind*, is annotated in the
-    body of *owner*.
+def _check_unannotated(owner: type, name: str) -> None:
+    """Raise :exc:`TypeError` if *name* is annotated in the body of *owner*.
 
     attrs turns annotated class attributes into instance attributes that
-    default to the class attribute value, hiding what its descriptor returns."""
+    default to the declaration object, hiding its value."""
     if sys.version_info >= (3, 14):
         from annotationlib import Format, get_annotations  # noqa: PLC0415
 
@@ -91,7 +86,7 @@ def _check_unannotated(owner: type, name: str, kind: str) -> None:
         annotations = inspect.get_annotations(owner)
     if name in annotations:
         raise TypeError(
-            f"{owner.__qualname__}.{name} is a selector {kind} with a type "
+            f"{owner.__qualname__}.{name} is a selector declaration with a type "
             f"annotation. Remove the annotation."
         )
 
@@ -102,6 +97,10 @@ def css_get(expression: str) -> _SelectorDeclaration[str | None]:
     :func:`~web_poet.field`.
 
     Its value is that of the first match, or ``None``.
+
+    The declarations of a page object class and of its dependencies count
+    together towards a limit set by frostwork, and defining a class over that
+    limit raises :exc:`TypeError`.
 
     See :ref:`declarative-selectors`.
     """
@@ -134,34 +133,6 @@ def xpath_getall(expression: str) -> _SelectorDeclaration[list[str]]:
     return _SelectorDeclaration(expression, "xpath", "getall")
 
 
-class SelectorGroup:
-    """Base class for a group of :ref:`selector declarations
-    <declarative-selectors>` that page object classes can share, by assigning
-    an instance of it as a class attribute.
-
-    See :ref:`sharing-selectors`."""
-
-    _owner: Any = None
-
-    def __set_name__(self, owner: type, name: str) -> None:
-        _check_unannotated(owner, name, "group")
-
-    def __get__(self, instance: object | None, owner: type | None = None) -> Self:
-        if instance is None:
-            return self
-        group = copy.copy(self)
-        group._owner = instance
-        return group
-
-    def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
-        if self._owner is None:
-            raise TypeError(
-                f"{type(self).__name__} can only be read through the page object "
-                f"class that it is assigned to."
-            )
-        return self._owner._selector_value(declaration)
-
-
 def _get_declaration(value: Any) -> _SelectorDeclaration | None:
     if not isinstance(value, _SelectorDeclaration):
         value = getattr(value, "selector_declaration", None)
@@ -187,20 +158,17 @@ def _build_selectors_dict(cls: type) -> dict[str, _SelectorDeclaration]:
     result: dict[str, _SelectorDeclaration] = {}
     for klass in reversed(cls.__mro__):
         for name, value in vars(klass).items():
-            # A subclass shadowing a declaration or a group with something
-            # else, e.g. a regular @field method, drops it from the schema.
-            for key in [k for k in result if k == name or k.startswith(f"{name}.")]:
-                del result[key]
-            if isinstance(value, SelectorGroup):
-                for inner_name, inner in _get_selectors_dict(type(value)).items():
-                    result[f"{name}.{inner_name}"] = inner
-            elif (declaration := _get_declaration(value)) is not None:
+            declaration = _get_declaration(value)
+            if declaration is None:
+                # A subclass shadowing a declaration with something else, e.g.
+                # a regular @field method, drops it from the schema.
+                result.pop(name, None)
+            else:
                 result[name] = declaration
     return result
 
 
 def _get_selectors_dict(cls: type) -> dict[str, _SelectorDeclaration]:
     """Return a dictionary with the selector declarations of *cls*: keys are
-    attribute names, dotted for declarations of a group, e.g. ``skus.meta``,
-    and values are declaration objects."""
+    attribute names, and values are declaration objects."""
     return _class_cached(cls, _SELECTORS_DICT_ATTRIBUTE, _build_selectors_dict)

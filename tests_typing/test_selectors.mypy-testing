@@ -28,7 +28,11 @@ class Page(WebPage):
 
     helper = css_get(".sku::text")
     helpers = css_getall(".sku::text")
-    skus = SkuSelectors()
+
+
+@attrs.define
+class GroupPage(WebPage):
+    skus: SkuSelectors
 
 
 @pytest.mark.mypy_testing
@@ -67,12 +71,22 @@ def test_declaration_all() -> None:
     reveal_type(page.helpers)  # R: list[str]
 
 
+@attrs.define
+class InheritingPage(WebPage, SkuSelectors):
+    pass
+
+
 @pytest.mark.mypy_testing
-def test_group() -> None:
-    page = Page(response=HttpResponse("http://example.com", b""))
-    reveal_type(page.skus)  # R: __main__.SkuSelectors
+def test_group(page: GroupPage) -> None:
     reveal_type(page.skus.meta)  # R: str | None
     reveal_type(page.skus.texts)  # R: list[str]
+
+
+@pytest.mark.mypy_testing
+def test_inherited_group() -> None:
+    page = InheritingPage(response=HttpResponse("http://example.com", b""))
+    reveal_type(page.meta)  # R: str | None
+    reveal_type(page.response)  # R: web_poet.page_inputs.http.HttpResponse
 
 
 @pytest.mark.mypy_testing

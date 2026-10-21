@@ -8,10 +8,20 @@ import parsel
 from w3lib.html import get_base_url
 
 from web_poet._frostwork import _check_class as _frostwork_check_class
-from web_poet._frostwork import _decodes_as_declared, _get_page
+from web_poet._frostwork import (
+    _decodes_as_declared,
+    _get_union_page,
+    _pending_objects,
+    _register,
+    _unregister,
+)
 from web_poet._frostwork import _extract as _frostwork_extract
+from web_poet._selectors import _get_selectors_dict
 
 if TYPE_CHECKING:
+    # typing.Self requires Python 3.11
+    from typing_extensions import Self
+
     from web_poet._selectors import _SelectorDeclaration
     from web_poet.page_inputs.url import RequestUrl, ResponseUrl
 
@@ -113,6 +123,12 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
 
     _cached_base_url = None
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # noqa: D102
+        obj = super().__new__(cls)
+        if _get_selectors_dict(cls):
+            _register(obj)
+        return obj
+
     @property
     def url(self) -> str:
         """Shortcut to HTML Response's URL, as a string."""
@@ -126,33 +142,57 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
     def _selector_input(self) -> str:
         return self.html
 
+    def _selector_response(self) -> Any:
+        """Return the response that the declarations of this object read."""
+        from web_poet.page_inputs import AnyResponse  # noqa: PLC0415
+
+        response: Any = self.response
+        if isinstance(response, AnyResponse):
+            response = response.response
+        return response
+
     def _selector_document(self) -> tuple[bytes | str, str | None]:
         """Return the raw document of this object and its encoding, for
         frostwork to scan directly instead of using ``self.selector``."""
-        body = getattr(self.response, "body", None)
+        response = self._selector_response()
+        body = getattr(response, "body", None)
         if body is None:
             # A response without a body, e.g. a browser response, has HTML that
             # has already been decoded.
-            return self.response.text, None
-        return body, getattr(self.response, "encoding", None)
+            return response.text, None
+        return body, getattr(response, "encoding", None)
 
     def _selector_values(self) -> dict[_SelectorDeclaration, Any]:
         """Return the values of the declarations of this object.
 
-        The first call extracts every declaration of the object with
-        frostwork, in a single pass. :meth:`_selector_value` adds the values
-        that it gets from parsel."""
+        The first call extracts with frostwork, in a single pass, the
+        declarations of this object and of every other object over the same
+        response that has not extracted its own yet, and gives each of them a
+        copy of the values. :meth:`_selector_value` adds the values that it
+        gets from parsel."""
         if hasattr(self, _VALUES_ATTRIBUTE):
             return getattr(self, _VALUES_ATTRIBUTE)
+        objects: list[ResponseShortcutsMixin] = [self]
         values: dict[_SelectorDeclaration, Any] = {}
-        page = _get_page(type(self))
-        if page is not None:
+        if _get_selectors_dict(type(self)):
+            response = self._selector_response()
+            objects += [
+                obj
+                for obj in _pending_objects()
+                if obj is not self
+                and not hasattr(obj, _VALUES_ATTRIBUTE)
+                and _response_or_none(obj) is response
+            ]
+            compiled = _get_union_page(type(obj) for obj in objects)
+            assert compiled is not None
             document = self._selector_document()
             if not _decodes_as_declared(document):
-                document = (self.response.text, None)
-            values = _frostwork_extract(page, document)
-        setattr(self, _VALUES_ATTRIBUTE, values)
-        return values
+                document = (response.text, None)
+            values = _frostwork_extract(compiled, document)
+        for obj in objects:
+            setattr(obj, _VALUES_ATTRIBUTE, dict(values))
+            _unregister(obj)
+        return getattr(self, _VALUES_ATTRIBUTE)
 
     def _selector_value(self, declaration: _SelectorDeclaration) -> Any:
         """Return the value of *declaration* for this object.
@@ -188,3 +228,12 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
         return str(super().urljoin(url))
+
+
+def _response_or_none(obj: ResponseShortcutsMixin) -> Any:
+    # An object whose __init__ failed before setting its response can still be
+    # registered until it is garbage-collected.
+    try:
+        return obj._selector_response()
+    except AttributeError:
+        return None
