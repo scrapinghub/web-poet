@@ -446,6 +446,14 @@ def test_dependencies_over_budget_other_response_kinds() -> None:
     )
 
 
+def test_dependency_over_other_response_kind() -> None:
+    """A page object without declarations can depend on one with declarations
+    that reads a different kind of response."""
+    browser_cls = _declaring_class("BrowserLayout", BrowserPage)
+    page_cls = type("Page", (WebPage,), {"__annotations__": {"browser": browser_cls}})
+    assert _frostwork_module._dependency_classes(page_cls) == (browser_cls,)
+
+
 def test_unresolvable_dependency_annotation() -> None:
     @attrs.define
     class ForwardPage(WebPage):
@@ -580,6 +588,25 @@ def test_read_page_object_is_not_kept_alive(response) -> None:
     gc.collect()
     assert key not in _frostwork_module._response_keys
     assert id(response) not in _frostwork_module._by_response
+
+
+def test_failed_init(response) -> None:
+    """A page object whose __init__ failed before it set its response stays
+    registered while referenced, without breaking the reads of others."""
+
+    class FailingPage(PricePage):
+        def __init__(self, response: HttpResponse):
+            raise ValueError("no response")
+
+    with pytest.raises(ValueError, match="no response") as exc_info:
+        FailingPage(response)
+    assert exc_info.tb.tb_next is not None
+    key = id(exc_info.tb.tb_next.tb_frame.f_locals["self"])
+    assert PricePage(response=response).price == "10.00"
+    assert key in _frostwork_module._unsorted
+    del exc_info
+    gc.collect()
+    assert key not in _frostwork_module._unsorted
 
 
 def test_pending_objects_are_resolved_once(monkeypatch) -> None:
