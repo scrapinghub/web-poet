@@ -60,7 +60,8 @@ Declared selectors must be within the `frostwork selector contract`_, and fit
 its budget together, or defining the class raises :exc:`TypeError`. They read
 the response as received, even if the page object overrides
 :attr:`~web_poet.mixins.ResponseShortcutsMixin.html` or
-:attr:`~web_poet.mixins.SelectableMixin.selector`. To extract a field with
+:attr:`~web_poet.mixins.SelectableMixin.selector`. To keep a field declarative,
+look for an equivalent expression within the contract; to extract it with
 parsel instead, write it as a method, e.g. ``self.css(".price::text").get()``.
 frostwork output can differ slightly from parsel’s.
 

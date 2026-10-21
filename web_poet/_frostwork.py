@@ -44,8 +44,10 @@ def _compile(names: dict[_SelectorDeclaration, str], owner: str) -> Page:
             )
         raise TypeError(
             f"frostwork cannot extract the selector declarations of {owner}:\n"
-            f"  - " + "\n  - ".join(problems) + "\nWrite some of these declarations "
-            "as methods to extract them with parsel."
+            f"  - " + "\n  - ".join(problems) + "\nRewrite them within the "
+            "frostwork selector contract "
+            "(https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md), "
+            "or write some of them as methods to extract them with parsel."
         )
     return page
 
