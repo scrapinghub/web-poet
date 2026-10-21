@@ -711,6 +711,41 @@ def test_selector_group_over_budget() -> None:
         page.p0
 
 
+def test_selector_groups_over_budget_without_page_declarations() -> None:
+    """Over-budget errors name only the classes that have declarations."""
+    budget_probe = frostwork.Page()
+    budget_probe.field("name", "h1")
+    count = budget_probe.check().max_members // 2 + 1
+    group_classes = [
+        type(
+            name,
+            (SelectorGroup,),
+            {f"g{i}": css_get(f".{name}{i}::text") for i in range(count)},
+        )
+        for name in ("Group1", "Group2")
+    ]
+
+    @attrs.define
+    class PlainPage(WebPage):
+        group1: group_classes[0]  # type: ignore[valid-type]
+        group2: group_classes[1]  # type: ignore[valid-type]
+
+        @field
+        def name(self) -> str | None:
+            return self.css("h1::text").get()
+
+    response = HttpResponse("http://example.com", b"", encoding="utf-8")
+    page = PlainPage(
+        response=response,
+        group1=group_classes[0](AnyResponse(response)),
+        group2=group_classes[1](AnyResponse(response)),
+    )
+    with pytest.raises(
+        TypeError, match=r"of Group[12], Group[12] together:\n  - over budget"
+    ):
+        page.name
+
+
 def test_nested_selector_group_single_pass(monkeypatch, response) -> None:
     """The selector groups of the dependencies of a page object are extracted
     in the same pass as its own declarations."""

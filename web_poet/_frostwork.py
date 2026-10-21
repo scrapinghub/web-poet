@@ -44,8 +44,8 @@ def _compile(names: dict[_SelectorDeclaration, str], owner: str) -> Page:
             )
         raise TypeError(
             f"frostwork cannot extract the selector declarations of {owner}:\n"
-            f"  - " + "\n  - ".join(problems) + "\nWrite some fields as methods "
-            "to extract them with parsel."
+            f"  - " + "\n  - ".join(problems) + "\nWrite some of these declarations "
+            "as methods to extract them with parsel."
         )
     return page
 
@@ -76,7 +76,7 @@ def _build_combined_page(
     for cls in classes:
         for declaration in _get_selectors_dict(cls).values():
             names.setdefault(declaration, f"_{len(names)}")
-    owner = ", ".join(cls.__qualname__ for cls in classes)
+    owner = ", ".join(cls.__qualname__ for cls in classes if _get_selectors_dict(cls))
     # Each class fits the frostwork budget, as checked on class definition, but
     # their declarations together may not, in which case this raises on the
     # first field read of the page object.
