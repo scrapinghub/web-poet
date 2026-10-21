@@ -178,10 +178,8 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             response = self._selector_response()
             objects += [
                 obj
-                for obj in _pending_objects()
-                if obj is not self
-                and not hasattr(obj, _VALUES_ATTRIBUTE)
-                and _response_or_none(obj) is response
+                for obj in _pending_objects(response)
+                if obj is not self and not hasattr(obj, _VALUES_ATTRIBUTE)
             ]
             compiled = _get_union_page(type(obj) for obj in objects)
             assert compiled is not None
@@ -228,12 +226,3 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         """Convert url to absolute, taking in account
         url and baseurl of the response"""
         return str(super().urljoin(url))
-
-
-def _response_or_none(obj: ResponseShortcutsMixin) -> Any:
-    # An object whose __init__ failed before setting its response can still be
-    # registered until it is garbage-collected.
-    try:
-        return obj._selector_response()
-    except AttributeError:
-        return None

@@ -198,8 +198,14 @@ def _extract(
 
 
 # Objects with selector declarations that have not extracted them yet, by id,
-# since page objects are often unhashable attrs classes.
-_pending: dict[int, weakref.ref[Any]] = {}
+# since page objects are often unhashable attrs classes. Objects are registered
+# before they have a response, so they start in _unsorted, and move to the
+# bucket of their response the first time that _pending_objects() sees them
+# with one, so that each lookup only scans the objects registered since the
+# previous one and those over the same response.
+_unsorted: dict[int, weakref.ref[Any]] = {}
+_by_response: dict[int, dict[int, weakref.ref[Any]]] = {}
+_response_keys: dict[int, int] = {}
 
 
 def _register(obj: Any) -> None:
@@ -208,14 +214,46 @@ def _register(obj: Any) -> None:
     key = id(obj)
 
     def forget(_: weakref.ref[Any]) -> None:
-        _pending.pop(key, None)
+        _forget(key)
 
-    _pending[key] = weakref.ref(obj, forget)
+    _unsorted[key] = weakref.ref(obj, forget)
+
+
+def _forget(key: int) -> None:
+    _unsorted.pop(key, None)
+    response_key = _response_keys.pop(key, None)
+    if response_key is not None:
+        bucket = _by_response[response_key]
+        del bucket[key]
+        if not bucket:
+            del _by_response[response_key]
 
 
 def _unregister(obj: Any) -> None:
-    _pending.pop(id(obj), None)
+    _forget(id(obj))
 
 
-def _pending_objects() -> list[Any]:
-    return [obj for ref in list(_pending.values()) if (obj := ref()) is not None]
+def _response_or_none(obj: Any) -> Any:
+    # An object whose __init__ failed before setting its response can still be
+    # registered until it is garbage-collected.
+    try:
+        return obj._selector_response()
+    except AttributeError:
+        return None
+
+
+def _pending_objects(response: Any) -> list[Any]:
+    """Return the registered objects that read *response*."""
+    for key, ref in list(_unsorted.items()):
+        if (obj := ref()) is None or (obj_response := _response_or_none(obj)) is None:
+            continue
+        del _unsorted[key]
+        _response_keys[key] = id(obj_response)
+        _by_response.setdefault(id(obj_response), {})[key] = ref
+    bucket = _by_response.get(id(response), {})
+    # A response attribute set again after sorting can point elsewhere.
+    return [
+        obj
+        for ref in list(bucket.values())
+        if (obj := ref()) is not None and _response_or_none(obj) is response
+    ]

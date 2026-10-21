@@ -562,10 +562,57 @@ def test_inherited_selector_group_init(response) -> None:
 def test_unread_page_object_is_not_kept_alive(response) -> None:
     page = PricePage(response=response)
     key = id(page)
-    assert key in _frostwork_module._pending
+    assert key in _frostwork_module._unsorted
     del page
     gc.collect()
-    assert key not in _frostwork_module._pending
+    assert key not in _frostwork_module._unsorted
+
+
+def test_read_page_object_is_not_kept_alive(response) -> None:
+    """An unread page object sorted by response by the read of another one
+    is forgotten when garbage-collected."""
+    page = PricePage(response=response)
+    key = id(page)
+    other = PricePage(HttpResponse("http://example.com", b"", encoding="utf-8"))
+    assert other.price is None
+    assert key in _frostwork_module._response_keys
+    del page
+    gc.collect()
+    assert key not in _frostwork_module._response_keys
+    assert id(response) not in _frostwork_module._by_response
+
+
+def test_pending_objects_are_resolved_once(monkeypatch) -> None:
+    """Each pending object has its response looked up once, however many
+    page objects over other responses are read meanwhile."""
+    pages = [
+        PricePage(HttpResponse("http://example.com", b"", encoding="utf-8"))
+        for _ in range(10)
+    ]
+    lookups: list[Any] = []
+    original = _frostwork_module._response_or_none
+
+    def counting_response_or_none(obj):
+        lookups.append(obj)
+        return original(obj)
+
+    monkeypatch.setattr(
+        _frostwork_module, "_response_or_none", counting_response_or_none
+    )
+    for page in pages:
+        assert page.price is None
+    assert len(lookups) == 2 * len(pages)
+
+
+def test_reassigned_response(response) -> None:
+    """A page object whose response is set again after another read sorted
+    it by response is extracted over its new response."""
+    empty = HttpResponse("http://example.com", b"", encoding="utf-8")
+    page = PricePage(response=empty)
+    assert PricePage(response=response).price == "10.00"
+    page.response = response
+    assert PricePage(response=empty).price is None
+    assert page.price == "10.00"
 
 
 def test_field_not_callable() -> None:
