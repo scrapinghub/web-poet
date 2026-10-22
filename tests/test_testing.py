@@ -64,7 +64,7 @@ def test_save_fixture_unicode_item(book_list_html_response, tmp_path) -> None:
 
 def test_save_fixture_datetime_item(book_list_html_response, tmp_path) -> None:
     base_dir = tmp_path / "fixtures" / "some.po"
-    datetime = dt.datetime(2026, 5, 14, 11, 22, 33, tzinfo=dt.timezone.utc)
+    datetime = dt.datetime(2026, 5, 14, 11, 22, 33, tzinfo=dt.UTC)
     date = dt.date(2026, 5, 14)
     item = {"datetime": datetime, "date": date}
 

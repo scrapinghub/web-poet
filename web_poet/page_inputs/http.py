@@ -11,7 +11,6 @@ from w3lib.encoding import (
     html_to_unicode,
     http_content_type_encoding,
     read_bom,
-    resolve_encoding,
 )
 from w3lib.url import canonicalize_url
 
@@ -170,7 +169,6 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
     )
     _encoding: str | None = attrs.field(default=None, kw_only=True)
 
-    _DEFAULT_ENCODING = "ascii"
     _cached_text: str | None = None
 
     @property
@@ -243,23 +241,9 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
     @memoizemethod_noargs
     def _body_inferred_encoding(self) -> str | None:
         content_type = self.headers.get("Content-Type", "")
-        body_encoding, text = html_to_unicode(
-            content_type,
-            self.body,
-            auto_detect_fun=self._auto_detect_fun,
-            default_encoding=self._DEFAULT_ENCODING,
-        )
+        body_encoding, text = html_to_unicode(content_type, self.body)
         self._cached_text = text
         return body_encoding
-
-    def _auto_detect_fun(self, body: bytes) -> str | None:
-        for enc in (self._DEFAULT_ENCODING, "utf-8", "cp1252"):
-            try:
-                body.decode(enc)
-            except UnicodeError:
-                continue
-            return resolve_encoding(enc)
-        return None
 
 
 def request_fingerprint(req: HttpRequest) -> str:
