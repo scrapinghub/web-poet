@@ -610,6 +610,34 @@ def test_urljoin_relative_html_base() -> None:
 
 
 @pytest.mark.parametrize(
+    "factory",
+    [
+        lambda url, html: HttpResponse(url, body=html.encode()),
+        lambda url, html: BrowserResponse(url, html=html),
+        lambda url, html: AnyResponse(HttpResponse(url, body=html.encode())),
+        lambda url, html: AnyResponse(BrowserResponse(url, html=html)),
+    ],
+)
+def test_urljoin_html_base_past_4096(factory) -> None:
+    html = f'<html><head><!--{"x" * 5000}--><base href="https://toscrape.com/">'
+    obj = factory("https://example.com", html)
+    assert str(obj.urljoin("foo")) == "https://toscrape.com/foo"
+
+
+def test_urljoin_does_not_decode_body() -> None:
+    obj = HttpResponse("https://example.com", body=b"<meta charset=utf-8>")
+    assert str(obj.urljoin("foo")) == "https://example.com/foo"
+    assert obj._cached_text is None
+
+
+def test_urljoin_html_base_encoding() -> None:
+    body = '<base href="https://toscrape.com/?q=é">'.encode("cp1252")
+    obj = HttpResponse("https://example.com", body=body, encoding="cp1252")
+    assert str(obj.urljoin("foo")) == "https://toscrape.com/foo"
+    assert obj._base_url == "https://toscrape.com/?q=%E9"
+
+
+@pytest.mark.parametrize(
     "cls",
     [
         RequestUrl,

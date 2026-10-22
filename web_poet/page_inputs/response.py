@@ -34,3 +34,6 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
 
     def _selector_kwargs(self) -> dict[str, Any]:
         return self.response._selector_kwargs()
+
+    def _url_shortcuts_kwargs(self) -> dict[str, Any]:
+        return self.response._url_shortcuts_kwargs()
