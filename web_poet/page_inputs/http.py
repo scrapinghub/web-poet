@@ -8,6 +8,7 @@ import parsel
 from packaging.version import Version
 from w3lib.encoding import (
     html_body_declared_encoding,
+    html_encoding,
     html_to_unicode,
     http_content_type_encoding,
     read_bom,
@@ -178,14 +179,9 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         using the detected encoding of the response, according
         to the web browser rules (respecting Content-Type header, etc.)
         """
-        # Access self.encoding before self._cached_text, because
-        # there is a chance self._cached_text would be already populated
-        # while detecting the encoding
-        encoding = self.encoding
         if self._cached_text is None:
-            fake_content_type_header = f"charset={encoding}"
-            encoding, text = html_to_unicode(fake_content_type_header, self.body)
-            self._cached_text = text
+            fake_content_type_header = f"charset={self.encoding}"
+            _, self._cached_text = html_to_unicode(fake_content_type_header, self.body)
         return self._cached_text
 
     def _selector_input(self) -> str:
@@ -196,9 +192,8 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         # UTF-8 bodies.
         if _PARSEL_BODY_ENCODING_FIXED and self.body:
             encoding = self.encoding
-            # self.text is cached if the encoding was inferred by decoding the
-            # body. Otherwise, the encoding that self.text would use is
-            # resolved the same way html_to_unicode() does.
+            # The encoding that self.text would use is resolved the same way
+            # html_to_unicode() does.
             if (
                 self._cached_text is None
                 and (
@@ -239,11 +234,8 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         return self.body.declared_encoding()
 
     @memoizemethod_noargs
-    def _body_inferred_encoding(self) -> str | None:
-        content_type = self.headers.get("Content-Type", "")
-        body_encoding, text = html_to_unicode(content_type, self.body)
-        self._cached_text = text
-        return body_encoding
+    def _body_inferred_encoding(self) -> str:
+        return html_encoding(self.headers.get("Content-Type", ""), self.body)
 
 
 def request_fingerprint(req: HttpRequest) -> str:

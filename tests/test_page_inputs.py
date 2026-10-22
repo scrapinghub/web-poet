@@ -512,7 +512,7 @@ def test_html5_meta_charset() -> None:
         ({"body": b"\xef\xbb\xbf<p>\xc3\xb1</p>"}, False),
         ({"encoding": "utf8"}, False),
         # Inferred encoding.
-        ({}, True),
+        ({}, False),
         # latin-1 is decoded as cp1252.
         (
             {"body": "<p>\u201cx\u201d</p>".encode("cp1252"), "encoding": "latin-1"},

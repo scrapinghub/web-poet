@@ -101,3 +101,14 @@ def _decode(body: bytes, headers: dict[str, str]) -> str:
 )
 def test_encoding(benchmark, body: bytes, headers: dict[str, str]) -> None:
     benchmark(_decode, body, headers)
+
+
+def _encoding(body: bytes, headers: dict[str, str]) -> str | None:
+    return HttpResponse("https://example.com", body=body, headers=headers).encoding
+
+
+@pytest.mark.parametrize(
+    ("body", "headers"), ENCODING_CASES.values(), ids=ENCODING_CASES
+)
+def test_encoding_without_text(benchmark, body: bytes, headers: dict[str, str]) -> None:
+    benchmark(_encoding, body, headers)
