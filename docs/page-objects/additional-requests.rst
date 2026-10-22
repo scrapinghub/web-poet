@@ -100,7 +100,7 @@ included, and build it from the response:
 
 
     @attrs.define
-    class PricePage(WebPage):
+    class OfferPage(WebPage):
         currency = field(css_get(".currency::text"))
 
         @field
@@ -114,8 +114,9 @@ included, and build it from the response:
 
         @field
         async def price(self) -> str | None:
-            response = await self.http.get("https://example.com/api/price")
-            return PricePage(response=response).price
+            url = self.urljoin(self.css("a.offer::attr(href)").get())
+            response = await self.http.get(url)
+            return OfferPage(response=response).price
 
 
 Concurrent requests

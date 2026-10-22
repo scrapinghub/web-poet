@@ -53,10 +53,11 @@ writing a method for it:
         images = field(css_getall("img::attr(src)"))
 
 Declared selectors are extracted with frostwork_, several times faster than
-with parsel. They must be within the `frostwork selector contract`_, or
-defining the class raises :exc:`TypeError`, and their output can differ
-slightly from parsel’s. To extract a field with parsel instead, write it as a
-method, e.g. ``self.css(".price::text").get()``.
+with parsel, and the more selectors you declare, the wider the gap. They must
+be within the `frostwork selector contract`_, or defining the class raises
+:exc:`TypeError`, and their output can differ slightly from parsel’s. To
+extract a field with parsel instead, write it as a method, e.g.
+``self.css(".price::text").get()``.
 
 .. _frostwork: https://github.com/scrapy/frostwork
 .. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md
