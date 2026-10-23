@@ -302,12 +302,47 @@ def passes(monkeypatch) -> list[Any]:
     """Return a list that gets an item for each frostwork pass."""
     calls: list[Any] = []
 
-    def counting_extract(*args):
+    def counting_extract(*args, **kwargs):
         calls.append(args)
-        return _frostwork_module._extract(*args)
+        return _frostwork_module._extract(*args, **kwargs)
 
     monkeypatch.setattr("web_poet.mixins._frostwork_extract", counting_extract)
     return calls
+
+
+def test_base_url_from_pass(passes, monkeypatch) -> None:
+    """The declarative pass finds the base URL anywhere in the document, and
+    the page object and its response reuse it."""
+    monkeypatch.setattr("web_poet.mixins.get_base_url", None)
+    body = f'<!--{"x" * 5000}--><base href="/a/?q=é"><h1>Foo</h1>'.encode("cp1252")
+    response = HttpResponse("http://example.com", body, encoding="cp1252")
+    page = Page(response=response)
+    assert page.name == "Foo"
+    assert page.base_url == "http://example.com/a/?q=%E9"
+    assert str(AnyResponse(response).urljoin("b")) == "http://example.com/a/b"
+    assert len(passes) == 1
+
+
+def test_relative_url() -> None:
+    page = Page(response=HttpResponse("", HTML.encode()))
+    assert page.name == " Foo "
+    assert page.base_url == ""
+
+
+@pytest.mark.parametrize("complete", [False, True])
+def test_seeded_values(passes, response, complete) -> None:
+    """Values seeded on the response are used when they cover every
+    declaration of the pass."""
+    compiled = _frostwork_module._get_union_page([Page])
+    assert compiled is not None
+    names = compiled[1]
+    seeded = dict.fromkeys(names, "seeded")
+    if not complete:
+        del seeded[next(iter(names))]
+    response._frostwork_values = seeded
+    page = Page(response=response)
+    assert (page.brand == "seeded") is complete
+    assert len(passes) == (not complete)
 
 
 @attrs.define

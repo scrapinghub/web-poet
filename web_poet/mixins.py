@@ -90,7 +90,7 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
 
 
 class UrlShortcutsMixin:
-    _cached_base_url = None
+    _cached_base_url: str | None = None
 
     def _url_shortcuts_input(self) -> str:
         return self._selector_input()  # type: ignore[attr-defined]
@@ -121,7 +121,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
 
     response: ResponseT
 
-    _cached_base_url = None
+    _cached_base_url: str | None = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # noqa: D102
         obj = super().__new__(cls)
@@ -183,10 +183,23 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             ]
             compiled = _get_union_page(type(obj) for obj in objects)
             assert compiled is not None
-            document = self._selector_document()
-            if not _decodes_as_declared(document):
-                document = (response.text, None)
-            values = _frostwork_extract(compiled, document)
+            # Values that a pass over the same response extracted earlier,
+            # e.g. in a Scrapy downloader middleware.
+            seeded = getattr(response, "_frostwork_values", None)
+            if seeded is not None and seeded.keys() >= compiled[1].keys():
+                values = seeded
+            else:
+                document = self._selector_document()
+                if not _decodes_as_declared(document):
+                    document = (response.text, None)
+                values, navigation = _frostwork_extract(
+                    compiled, document, str(response.url), base_url=True
+                )
+                if (
+                    isinstance(response, UrlShortcutsMixin)
+                    and response._cached_base_url is None
+                ):
+                    response._cached_base_url = navigation.base_url
         for obj in objects:
             setattr(obj, _VALUES_ATTRIBUTE, dict(values))
             _unregister(obj)
@@ -216,6 +229,12 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         if isinstance(self.response, SelectableMixin):
             return self.response._selector_kwargs()
         return super()._selector_kwargs()
+
+    @property
+    def _base_url(self) -> str:
+        if isinstance(self.response, UrlShortcutsMixin):
+            return self.response._base_url
+        return super()._base_url
 
     @property
     def base_url(self) -> str:

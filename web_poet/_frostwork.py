@@ -16,6 +16,8 @@ from web_poet._selectors import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from frostwork import Navigation
+
     from web_poet._selectors import _SelectorDeclaration
 
 _PAGE_ATTRIBUTE = "_web_poet_frostwork_page"
@@ -189,12 +191,31 @@ def _decodes_as_declared(document: tuple[bytes | str, str | None]) -> bool:
 def _extract(
     compiled: tuple[Page, dict[_SelectorDeclaration, str]],
     document: tuple[bytes | str, str | None],
-) -> dict[_SelectorDeclaration, Any]:
+    url: str,
+    *,
+    base_url: bool,
+    meta_refresh: bool = False,
+    scripting: bool = True,
+) -> tuple[dict[_SelectorDeclaration, Any], Navigation]:
     """Return the value of every declaration of *compiled*, a frostwork page
-    mapped to the names of its declarations, out of *document*."""
+    mapped to the names of its declarations, out of *document* at *url*, and
+    its navigation, as :meth:`frostwork.Page.extract_with_navigation` returns
+    it for *base_url*, *meta_refresh* and *scripting*."""
     page, names = compiled
-    values = page.extract(*document).to_dict()
-    return {declaration: values[name] for declaration, name in names.items()}
+    html, encoding = document
+    item, navigation = page.extract_with_navigation(
+        html,
+        url,
+        encoding,
+        base_url=base_url,
+        meta_refresh=meta_refresh,
+        scripting=scripting,
+    )
+    values = item.to_dict()
+    return (
+        {declaration: values[name] for declaration, name in names.items()},
+        navigation,
+    )
 
 
 # Objects with selector declarations that have not extracted them yet, by id,
