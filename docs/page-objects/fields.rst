@@ -30,6 +30,94 @@ For example:
         def foo(self) -> Optional[str]:
             return self.response.css(".foo").get()
 
+.. _declarative-selectors:
+
+Declarative selectors
+=====================
+
+When a field is exactly one selector, you can declare that selector with
+:func:`~web_poet.css_get`, :func:`~web_poet.css_getall`,
+:func:`~web_poet.xpath_get` or :func:`~web_poet.xpath_getall` instead of
+writing a method for it:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import WebPage, css_get, css_getall, field, xpath_get
+
+
+    @attrs.define
+    class MyPage(WebPage):
+        name = field(css_get("h1::text"), out=[str.strip])
+        brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
+        images = field(css_getall("img::attr(src)"))
+
+Declared selectors are extracted with frostwork_, several times faster than
+with parsel, and the more selectors you declare, the wider the gap. They must
+be within the `frostwork selector contract`_, or defining the class raises
+:exc:`TypeError`, and their output can differ slightly from parsel’s. To
+extract a field with parsel instead, write it as a method, e.g.
+``self.css(".price::text").get()``.
+
+.. _frostwork: https://github.com/scrapy/frostwork
+.. _frostwork selector contract: https://github.com/scrapy/frostwork/blob/main/docs/COMPATIBILITY.md
+
+Combining selectors
+-------------------
+
+Selector declarations can also be used on their own, as plain class attributes
+whose value you read on an instance, e.g. to combine several declarations into
+a single field:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import WebPage, css_get, field, xpath_get
+
+
+    @attrs.define
+    class MyPage(WebPage):
+        _sku_meta = xpath_get("//meta[@itemprop='sku']/@content")
+        _sku_text = css_get(".sku::text")
+
+        @field
+        def sku(self) -> str | None:
+            return self._sku_meta or self._sku_text
+
+.. _sharing-selectors:
+
+Sharing selectors
+-----------------
+
+To share selector declarations between page object classes, declare them in a
+subclass of :class:`~web_poet.SelectorGroup`, and make it a dependency of those
+classes, or a base class listed after their page object base class:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import SelectorGroup, WebPage, css_get, field, xpath_get
+
+
+    class SkuSelectors(SelectorGroup):
+        meta = xpath_get("//meta[@itemprop='sku']/@content")
+        text = css_get(".sku::text")
+
+
+    @attrs.define
+    class MyPage(WebPage):
+        skus: SkuSelectors
+
+        @field
+        def sku(self) -> str | None:
+            return self.skus.meta or self.skus.text
+
+
+    class MyOtherPage(WebPage, SkuSelectors):
+        @field
+        def sku(self) -> str | None:
+            return self.meta or self.text
+
 .. _fields-sync-async:
 
 Synchronous and asynchronous fields

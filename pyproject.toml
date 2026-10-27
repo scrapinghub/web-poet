@@ -28,6 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "attrs >= 21.3.0",
+    "frostwork >= 0.1.6",
     "parsel >= 1.5.0",
     "url-matcher >= 0.4.0",
     "multidict >= 0.5.0",
