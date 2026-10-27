@@ -199,3 +199,94 @@ times before giving up:
 If the reason your additional request fails is outdated or missing data from
 page object input, do not try to reproduce the request for that input as an
 additional request. :ref:`Request fresh input instead <retries-input>`.
+
+.. _fetcher:
+
+Fetching additional page objects
+================================
+
+:class:`~.HttpClient` handles plain HTTP requests and returns raw
+:class:`~.HttpResponse` objects. For additional requests that require
+the full power of the dependency injection system — for example, to render a
+secondary URL in a browser — use :class:`~.Fetcher` instead.
+
+:class:`~.Fetcher` lets you fetch a fully constructed page object for any
+URL at run time. The page object class you pass determines what dependencies
+are resolved, exactly as if you had called :meth:`Framework.get_page
+<web_poet.framework.Framework.get_page>` yourself.
+
+For the simple case of rendering a secondary URL in a browser, pass the
+built-in :class:`~.BrowserPage`:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import BrowserPage, Fetcher, HttpResponse, ItemPage, field
+
+
+    @attrs.define
+    class MyProductPage(ItemPage):
+        response: HttpResponse
+        fetcher: Fetcher
+
+        @field
+        async def related_title(self):
+            url = self.css("a.related::attr(href)").get()
+            related = await self.fetcher.get_page(url, BrowserPage)
+            return related.css("h1::text").get()
+
+It is also possible to define a custom page object class and pass that instead:
+
+.. code-block:: python
+
+    import attrs
+    from web_poet import BrowserResponse, Fetcher, HttpResponse, ItemPage, field
+
+
+    @attrs.define
+    class RelatedPage(ItemPage):
+        response: BrowserResponse
+
+        def title(self) -> str:
+            return self.css("h1::text").get()
+
+
+    @attrs.define
+    class MyProductPage(ItemPage):
+        response: HttpResponse
+        fetcher: Fetcher
+
+        @field
+        async def related_title(self):
+            url = self.css("a.related::attr(href)").get()
+            related: RelatedPage = await self.fetcher.get_page(url, RelatedPage)
+            return related.title()
+
+:meth:`Fetcher.get_page <.Fetcher.get_page>` returns the page object instance.
+:meth:`Fetcher.get_item <.Fetcher.get_item>` builds a page object and returns
+the result of calling ``to_item()`` on it. It accepts either a page object
+class or an item class; when given an item class, the framework uses its
+registry to find the right page object class for the request URL:
+
+.. code-block:: python
+
+    # Pass a page object class explicitly
+    item = await self.fetcher.get_item(url, RelatedPage)
+
+    # Pass an item class — the framework looks up the page class via the registry
+    item = await self.fetcher.get_item(url, RelatedItem)
+
+Both methods accept an optional ``page_params`` dict, identical to the
+``page_params`` argument of :meth:`Framework.get_page
+<web_poet.framework.Framework.get_page>`.
+
+.. warning::
+
+    Like :class:`~.HttpClient`, :class:`~.Fetcher` should only be used for
+    the kind of secondary data-loading described above. Using it for crawling
+    logic would defeat :ref:`the purpose of web-poet <overview>`.
+
+.. note::
+
+    :class:`~.Fetcher` support depends on the framework. When using the
+    :ref:`built-in framework <framework>`, it is available automatically.

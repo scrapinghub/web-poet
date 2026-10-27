@@ -170,6 +170,8 @@ class Framework:
                     "registry": self._registry,
                     "response_fetcher": response_fetcher,
                     "stats": self.stats,
+                    "get_page": self.get_page,
+                    "get_item": self.get_item,
                     **kwargs,
                 }
                 if playwright_engine_kw is not None:
