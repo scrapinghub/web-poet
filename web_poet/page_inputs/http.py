@@ -212,6 +212,9 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
                 return {"body": self.body, "encoding": "utf-8"}
         return super()._selector_kwargs()
 
+    def _url_shortcuts_kwargs(self) -> dict[str, Any]:
+        return {"text": self.body, "encoding": self.encoding}
+
     @property
     def encoding(self) -> str | None:
         """Encoding of the response"""

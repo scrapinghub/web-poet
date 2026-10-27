@@ -29,8 +29,11 @@ class AnyResponse(SelectableMixin, UrlShortcutsMixin):
         """The int status code of the HTTP response, if available."""
         return self.response.status
 
-    def _selector_input(self) -> str:
+    def _selector_input(self) -> str:  # pragma: nocover
         return self.text
 
     def _selector_kwargs(self) -> dict[str, Any]:
         return self.response._selector_kwargs()
+
+    def _url_shortcuts_kwargs(self) -> dict[str, Any]:
+        return self.response._url_shortcuts_kwargs()

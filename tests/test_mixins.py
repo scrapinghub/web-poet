@@ -85,12 +85,23 @@ def test_custom_baseurl() -> None:
     assert page.urljoin("http://example.com/1") == "http://example.com/1"
 
 
+def test_baseurl_does_not_decode_body() -> None:
+    response = HttpResponse(
+        url="http://www.example.com/path", body=b"<meta charset=utf-8>"
+    )
+    page = MyPage(response=response)
+    assert page.base_url == "http://www.example.com/path"
+    assert response._cached_text is None
+
+
 def test_duck_typed_response() -> None:
     class Response:
         url = "https://example.com"
-        text = "<p>foo</p>"
+        text = '<base href="https://example.org/"><p>foo</p>'
 
     class Page(ResponseShortcutsMixin):
         response = Response()
 
-    assert Page().css("p::text").get() == "foo"
+    page = Page()
+    assert page.css("p::text").get() == "foo"
+    assert page.base_url == "https://example.org/"

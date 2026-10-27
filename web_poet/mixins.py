@@ -20,6 +20,10 @@ class _ResponseLike(Protocol):
 
 ResponseT = TypeVar("ResponseT", bound=_ResponseLike)
 
+# Browsers honour <base href> anywhere in the document, so a <base> past this
+# many bytes or characters is missed.
+_BASE_URL_MAX_SCAN = 16384
+
 
 class SelectorShortcutsMixin:
     def xpath(self, query, **kwargs) -> parsel.SelectorList:
@@ -71,14 +75,17 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
 class UrlShortcutsMixin:
     _cached_base_url = None
 
-    def _url_shortcuts_input(self) -> str:
-        return self._selector_input()  # type: ignore[attr-defined]
+    def _url_shortcuts_kwargs(self) -> dict[str, Any]:
+        return {"text": self._selector_input()}  # type: ignore[attr-defined]
 
     @property
     def _base_url(self) -> str:
         if self._cached_base_url is None:
-            text = self._url_shortcuts_input()[:4096]
-            self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
+            self._cached_base_url = get_base_url(
+                baseurl=str(self.url),  # type: ignore[attr-defined]
+                max_scan=_BASE_URL_MAX_SCAN,
+                **self._url_shortcuts_kwargs(),
+            )
         return self._cached_base_url
 
     def urljoin(self, url: str | RequestUrl | ResponseUrl) -> RequestUrl:
@@ -119,6 +126,11 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
         if isinstance(self.response, SelectableMixin):
             return self.response._selector_kwargs()
         return super()._selector_kwargs()
+
+    def _url_shortcuts_kwargs(self) -> dict[str, Any]:
+        if isinstance(self.response, UrlShortcutsMixin):
+            return self.response._url_shortcuts_kwargs()
+        return super()._url_shortcuts_kwargs()
 
     @property
     def base_url(self) -> str:
