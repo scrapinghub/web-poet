@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable, Mapping
 from operator import attrgetter
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, overload
 
 import attrs
 from url_matcher import Patterns, URLMatcher
@@ -328,13 +328,58 @@ class RulesRegistry:
                 result[replaced_page] = page
         return result
 
-    def page_cls_for_item(self, url: _Url | str, item_cls: type) -> type | None:
-        """Return the page object class associated with the given URL that's able
-        to produce the given ``item_cls``."""
-        if item_cls is None:
+    @overload
+    def page_cls_for(self, url: _Url | str, cls: type[ItemPage]) -> type[ItemPage]: ...
+
+    @overload
+    def page_cls_for(self, url: _Url | str, cls: type) -> type[ItemPage] | None: ...
+
+    def page_cls_for(self, url: _Url | str, cls: type) -> type[ItemPage] | None:
+        """Return the page object class to use for *url* to get *cls*.
+
+        .. versionadded:: VERSION
+
+        *cls* may be an item class, in which case ``None`` is returned if no
+        page object class can produce it for *url*, or a page object class, in
+        which case *cls* itself is returned if no rule overrides it for *url*.
+
+        Overrides are followed to the end of the chain, i.e. if the page object
+        class that overrides *cls* is itself overridden, the last one is
+        returned.
+        """
+        if cls is None:
+            # Rules for page object classes with no item class are registered
+            # under a None item class.
             return None
-        matcher = self._item_matchers.get(item_cls)
-        return self._match_url_for_page_object(url, matcher)
+        page_cls: type[ItemPage] | None
+        if issubclass(cls, ItemPage):
+            page_cls = cls
+        else:
+            page_cls = self._match_url_for_page_object(
+                url, self._item_matchers.get(cls)
+            )
+            if page_cls is None:
+                return None
+        seen = {page_cls}
+        while True:
+            override = self._match_url_for_page_object(
+                url, self._overrides_matchers.get(page_cls)
+            )
+            if override is None or override in seen:
+                return page_cls
+            seen.add(override)
+            page_cls = override
+
+    def page_cls_for_item(  # noqa: D102
+        self, url: _Url | str, item_cls: type
+    ) -> type | None:
+        warnings.warn(
+            "RulesRegistry.page_cls_for_item() is deprecated, use "
+            "RulesRegistry.page_cls_for() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.page_cls_for(url, item_cls)
 
     def top_rules_for_item(
         self, url: _Url | str, item_cls: type

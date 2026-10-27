@@ -195,6 +195,22 @@ async def test_get_item_item_cls(registry):
 
 
 @pytest.mark.asyncio
+async def test_get_item_page_cls_override(registry):
+    class Page(ItemPage[SampleItem]):
+        def to_item(self):
+            raise NotImplementedError
+
+    @registry.handle_urls("https://a.example", instead_of=Page)
+    class OverridePage(ItemPage[SampleItem]):
+        def to_item(self):
+            return SAMPLE_ITEM
+
+    framework = Framework(registry=registry)
+    item = await framework.get_item("https://a.example", Page)
+    assert item == SAMPLE_ITEM
+
+
+@pytest.mark.asyncio
 async def test_get_item_no_page(registry):
     framework = Framework(registry=registry)
     with pytest.raises(

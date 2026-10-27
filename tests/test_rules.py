@@ -37,6 +37,7 @@ from tests.po_lib_to_return import (
 )
 from web_poet import (
     ApplyRule,
+    ItemPage,
     RulesRegistry,
     consume_modules,
     default_registry,
@@ -369,11 +370,17 @@ def test_overrides_for() -> None:
 
 
 def test_page_cls_for_item() -> None:
+    with pytest.warns(DeprecationWarning, match="page_cls_for"):
+        page_cls = default_registry.page_cls_for_item("https://example.com", Product)
+    assert page_cls == CustomProductPageDataTypeOnly
+
+
+def test_page_cls_for() -> None:
     # This is not associated with any rule.
     class FakeItem:
         pass
 
-    method = default_registry.page_cls_for_item
+    method = default_registry.page_cls_for
 
     for cls in [str, RequestUrl, ResponseUrl]:
         url = cls("https://example.com")
@@ -384,13 +391,58 @@ def test_page_cls_for_item() -> None:
         assert method(url, ProductMoreFields) == MoreProductPage
 
         # Type is ignored since item_cls shouldn't be None
-        assert method(url, None) is None  # type: ignore[arg-type]
+        assert method(url, None) is None  # type: ignore[call-overload]
 
         # When there's no rule specifying to return this FakeItem
         assert method(url, FakeItem) is None
 
         # When the URL itself doesn't have any ``to_return`` in any of its rules
         assert method(cls("https://example.org"), FakeItem) is None
+
+        assert method(url, ProductPage) == CustomProductPageNoReturns
+        # A page object class with no override for the URL is returned as is.
+        assert method(cls("https://example.org"), ProductPage) == ProductPage
+
+
+def test_page_cls_for_override_chain() -> None:
+    registry = RulesRegistry()
+
+    @attrs.define
+    class Item:
+        pass
+
+    @registry.handle_urls("example.com", priority=600)
+    class A(ItemPage[Item]):
+        pass
+
+    @registry.handle_urls("example.com", instead_of=A)
+    class B(ItemPage[Item]):
+        pass
+
+    @registry.handle_urls("example.com", instead_of=B)
+    class C(ItemPage[Item]):
+        pass
+
+    assert registry.page_cls_for("https://example.com", A) == C
+    assert registry.page_cls_for("https://example.com", B) == C
+    assert registry.page_cls_for("https://example.com", C) == C
+    # ``instead_of`` wins over ``priority`` when starting from the item class.
+    assert registry.page_cls_for("https://example.com", Item) == C
+
+
+def test_page_cls_for_override_cycle() -> None:
+    registry = RulesRegistry()
+
+    class A(ItemPage):
+        pass
+
+    class B(ItemPage):
+        pass
+
+    registry.add_rule(ApplyRule(Patterns(["example.com"]), use=B, instead_of=A))
+    registry.add_rule(ApplyRule(Patterns(["example.com"]), use=A, instead_of=B))
+
+    assert registry.page_cls_for("https://example.com", A) == B
 
 
 def test_top_rules_for_item() -> None:
