@@ -5,14 +5,9 @@ In general, users shouldn't import and use the contents of this module.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AnyStr, TypeAlias, overload
+from typing import AnyStr, Self, TypeAlias, overload
 
 from multidict import CIMultiDict
-
-if TYPE_CHECKING:
-    # typing.Self requires Python 3.11
-    from typing_extensions import Self
-
 
 _AnyStrDict: TypeAlias = dict[AnyStr, AnyStr | list[AnyStr] | tuple[AnyStr, ...]]
 

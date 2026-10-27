@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import gzip
+import re
 from typing import TYPE_CHECKING, Any
 
 import attrs
 import pytest
 
+from benchmarks.conftest import FIXTURES
 from benchmarks.pages import (
     ArticlePage,
     JmesPathArticlePage,
@@ -14,7 +17,7 @@ from benchmarks.pages import (
     ProductDetailsPage,
     ProductPage,
 )
-from web_poet import ItemPage
+from web_poet import HttpResponse, ItemPage
 
 if TYPE_CHECKING:
     import asyncio
@@ -56,3 +59,56 @@ def test_every_field_is_extracted(loop, page, name: str) -> None:
         if not getattr(item, field.name)
     ]
     assert not empty
+
+
+_META_CHARSET_RE = re.compile(rb"<meta[^>]*charset[^>]*>", re.IGNORECASE)
+
+
+def _encoding_cases() -> dict[str, tuple[bytes, dict[str, str]]]:
+    """Return the body and headers of each encoding benchmark, for every
+    combination of where the page declares its encoding and which encoding
+    it is."""
+    cases = {}
+    for encoding, fixture in (
+        ("utf-8", "article"),
+        ("windows-1252", "windows-1252"),
+        ("shift_jis", "shift_jis"),
+    ):
+        body = gzip.decompress((FIXTURES / f"{fixture}.html.gz").read_bytes())
+        undeclared = _META_CHARSET_RE.sub(b"", body)
+        cases |= {
+            f"header-{encoding}": (
+                undeclared,
+                {"Content-Type": f"text/html; charset={encoding}"},
+            ),
+            f"meta-{encoding}": (body, {"Content-Type": "text/html"}),
+            f"undeclared-{encoding}": (undeclared, {}),
+        }
+    return cases
+
+
+ENCODING_CASES = _encoding_cases()
+
+
+def _decode(body: bytes, headers: dict[str, str]) -> str:
+    response = HttpResponse("https://example.com", body=body, headers=headers)
+    response.encoding
+    return response.text
+
+
+@pytest.mark.parametrize(
+    ("body", "headers"), ENCODING_CASES.values(), ids=ENCODING_CASES
+)
+def test_encoding(benchmark, body: bytes, headers: dict[str, str]) -> None:
+    benchmark(_decode, body, headers)
+
+
+def _encoding(body: bytes, headers: dict[str, str]) -> str | None:
+    return HttpResponse("https://example.com", body=body, headers=headers).encoding
+
+
+@pytest.mark.parametrize(
+    ("body", "headers"), ENCODING_CASES.values(), ids=ENCODING_CASES
+)
+def test_encoding_without_text(benchmark, body: bytes, headers: dict[str, str]) -> None:
+    benchmark(_encoding, body, headers)

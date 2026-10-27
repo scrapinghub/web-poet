@@ -302,16 +302,16 @@ def test_http_response_json() -> None:
     assert response.json() == {"ключ": "значение"}
 
 
-def test_http_response_text() -> None:
-    """This tests a character which raises a UnicodeDecodeError when decoded in
-    'ascii'.
-
-    The backup series of encodings for decoding should be able to handle it.
-    """
-    text = "œ is a Weird Character"
-    body = HttpResponseBody(b"\x9c is a Weird Character")
-    response = HttpResponse("http://example.com", body=body)
-
+@pytest.mark.parametrize(
+    ("text", "encoding"),
+    [
+        ("Où sont les œufs ?", "cp1252"),
+        ("こんにちは、世界", "cp932"),
+    ],
+)
+def test_http_response_text_undeclared(text, encoding) -> None:
+    response = HttpResponse("http://example.com", body=text.encode(encoding))
+    assert response.encoding == encoding
     assert response.text == text
 
 
@@ -323,8 +323,8 @@ def test_http_response_text() -> None:
         ({}, None),
         ({"Content-type": "text/html; charset=iso-8859-1"}, "cp1252"),
         ({"Content-type": "text/html; charset=None"}, None),
-        ({"Content-type": "text/html; charset=gb2312"}, "gb18030"),
-        ({"Content-type": "text/html; charset=gbk"}, "gb18030"),
+        ({"Content-type": "text/html; charset=gb2312"}, "gbk"),
+        ({"Content-type": "text/html; charset=gbk"}, "gbk"),
         ({"Content-type": "text/html; charset=UNKNOWN"}, None),
     ],
 )
@@ -333,7 +333,7 @@ def test_http_headers_declared_encoding(headers, encoding) -> None:
     assert headers.declared_encoding() == encoding
 
     response = HttpResponse("http://example.com", body=b"", headers=headers)
-    assert response.encoding == encoding or HttpResponse._DEFAULT_ENCODING
+    assert response.encoding == (encoding or "utf-8")
 
 
 def test_http_response_utf16() -> None:
@@ -369,7 +369,7 @@ def test_utf8_body_detection() -> None:
 
     response = HttpResponse(
         "http://www.example.com",
-        body=b"\xc2",
+        body=b"\xc2 x",
         headers={"Content-type": "text/html; charset=None"},
     )
     assert response.encoding != "utf-8"
@@ -500,8 +500,8 @@ def test_html_headers_encoding_precedence() -> None:
 def test_html5_meta_charset() -> None:
     body = b"""<html><head><meta charset="gb2312" /><title>Some page</title><body>bla bla</body>"""
     response = HttpResponse("http://www.example.com", body=body)
-    assert response.encoding == "gb18030"
-    assert response.text == body.decode("gb18030")
+    assert response.encoding == "gbk"
+    assert response.text == body.decode("gbk")
 
 
 @pytest.mark.parametrize(
@@ -512,7 +512,7 @@ def test_html5_meta_charset() -> None:
         ({"body": b"\xef\xbb\xbf<p>\xc3\xb1</p>"}, False),
         ({"encoding": "utf8"}, False),
         # Inferred encoding.
-        ({}, True),
+        ({}, False),
         # latin-1 is decoded as cp1252.
         (
             {"body": "<p>\u201cx\u201d</p>".encode("cp1252"), "encoding": "latin-1"},

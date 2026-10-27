@@ -12,7 +12,7 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Zyte Group Ltd", email = "opensource@zyte.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -20,18 +20,18 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
     "attrs >= 21.3.0",
     "parsel >= 1.5.0",
     "url-matcher >= 0.4.0",
     "multidict >= 0.5.0",
-    "w3lib >= 1.22.0",
+    "w3lib >= 2.6.0",
     "async-lru >= 1.0.3",
     "itemadapter >= 0.8.0",
     "andi >= 0.5.0",
@@ -43,7 +43,7 @@ dependencies = [
 [project.optional-dependencies]
 framework = [
     "aiohttp >= 3.7.0",
-    "playwright >= 1.20.0",
+    "playwright >= 1.26.0",
 ]
 
 [project.entry-points."pytest11"]
@@ -107,9 +107,6 @@ filterwarnings = [
     # rules for the same item class and URL pattern are the norm.
     "ignore:The registry contains .* conflicting rules:UserWarning",
 ]
-
-[tool.ruff]
-target-version = "py310"  # until we migrate away from setup.py
 
 [tool.ruff.lint]
 extend-select = [
