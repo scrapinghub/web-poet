@@ -2,6 +2,65 @@
 Changelog
 =========
 
+0.25.0 (unreleased)
+-------------------
+
+Dependency changes:
+
+* frostwork_ 0.2.0+ is now required.
+
+* packaging 22.0+ is now required.
+
+* The ``framework`` extra now installs aiohttp instead of niquests, which the
+  :ref:`built-in framework <framework>` no longer uses.
+
+.. _frostwork: https://github.com/scrapy/frostwork
+
+Improvements:
+
+* Added :ref:`declarative selectors <declarative-selectors>`:
+  :func:`~web_poet.css_get`, :func:`~web_poet.css_getall`,
+  :func:`~web_poet.xpath_get` and :func:`~web_poet.xpath_getall` declare a
+  selector that you can pass to :func:`~web_poet.field` instead of a method,
+  or read as a class attribute, and :class:`~web_poet.SelectorGroup` lets page
+  object classes share them.
+
+  Declared selectors are extracted with frostwork_, several times faster than
+  with parsel.
+
+* Added :func:`~web_poet.layout_switch`, to forward the fields of a page
+  object to one of several :ref:`layout page objects <layouts>`.
+
+* Added a ``--web-poet-field-mode=per-field`` pytest option to the
+  :ref:`testing framework <web-poet-testing>`, to read each field directly
+  instead of through ``to_item()``, so that a field that raises an exception
+  no longer skips the tests of the other fields.
+
+* :ref:`Test fixtures <web-poet-testing>` now support items with
+  :class:`~datetime.date` and :class:`~datetime.datetime` values, saved in
+  ISO 8601 format.
+
+* Type checkers now infer the type of a :func:`~web_poet.field` from the
+  return type of its method.
+
+* When an item cannot be built out of the fields of a page object, the
+  :exc:`TypeError` now names the page object and item classes, and the fields
+  that the item class does not support.
+
+* The selector of an :class:`~web_poet.HttpResponse` with a UTF-8 body is now
+  built from the body bytes when using parsel 1.12.0+, which is faster.
+
+Bug fixes:
+
+* Fixed zero-argument ``super()`` in fields of slotted page object classes,
+  e.g. those defined with ``@attrs.define``.
+
+* Fixed the :ref:`testing framework <web-poet-testing>` for pytest 9.1.0+.
+
+* Fixed documentation references to
+  :class:`~web_poet.page_inputs.url.RequestUrl` and
+  :class:`~web_poet.page_inputs.url.ResponseUrl`.
+
 0.24.1 (2026-04-28)
 -------------------
 
