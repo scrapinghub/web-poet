@@ -48,7 +48,7 @@ writing a method for it:
 
     @attrs.define
     class MyPage(WebPage):
-        name = field(css_get("h1::text"), out=[str.strip])
+        name = field(css_get("h1::text"), out=[lambda name: name and name.strip()])
         brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
         images = field(css_getall("img::attr(src)"))
 
