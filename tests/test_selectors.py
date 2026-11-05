@@ -19,6 +19,8 @@ from web_poet import (
     HttpClient,
     HttpResponse,
     ItemPage,
+    MetaRefresh,
+    Navigation,
     Returns,
     SelectorExtractor,
     SelectorGroup,
@@ -406,9 +408,10 @@ def test_preextract_selectors(passes, monkeypatch) -> None:
     body = f'<base href="/a/"><meta http-equiv="refresh" content="5; url=b">{HTML}'
     response = HttpResponse("http://example.com", body.encode(), encoding="utf-8")
     classes = [MixedPage, PricePage, HttpResponse]
-    assert preextract_selectors(response, classes) == frostwork.Navigation(
-        "http://example.com/a/", frostwork.MetaRefresh(5, "http://example.com/a/b")
-    )
+    navigation = preextract_selectors(response, classes)
+    assert type(navigation) is Navigation
+    assert type(navigation.meta_refresh) is MetaRefresh
+    assert navigation == ("http://example.com/a/", (5, "http://example.com/a/b"))
     page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
     assert asyncio.run(page.to_item()) == {"sku": "SKU-1", "name": " Foo "}
     assert PricePage(response=response).price == "10.00"

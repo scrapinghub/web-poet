@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 import typing
 import weakref
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from frostwork import Page, detect_encoding, resolve_label
 
@@ -16,7 +16,7 @@ from web_poet._selectors import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from frostwork import Navigation
+    from frostwork import Navigation as _FrostworkNavigation
 
     from web_poet._selectors import _SelectorDeclaration
     from web_poet.page_inputs import HttpResponse
@@ -198,7 +198,7 @@ def _extract(
     base_url: bool,
     meta_refresh: bool = False,
     scripting: bool = True,
-) -> tuple[dict[_SelectorDeclaration, Any], Navigation]:
+) -> tuple[dict[_SelectorDeclaration, Any], _FrostworkNavigation]:
     """Return the value of every declaration of *compiled*, a frostwork page
     mapped to the names of its declarations, out of *document* at *url*, and
     its navigation, as :meth:`frostwork.Page.extract_with_navigation` returns
@@ -220,13 +220,34 @@ def _extract(
     )
 
 
+class MetaRefresh(NamedTuple):
+    """A meta refresh, as :attr:`~web_poet.Navigation.meta_refresh` reports it."""
+
+    delay: float
+    """The delay before the refresh, in seconds."""
+
+    url: str
+    """The absolute URL to load."""
+
+
+class Navigation(NamedTuple):
+    """The base URL and meta refresh of a response, as
+    :func:`~web_poet.preextract_selectors` returns them."""
+
+    base_url: str
+    """The URL that relative URLs of the response resolve against."""
+
+    meta_refresh: MetaRefresh | None
+    """The meta refresh that a web browser would follow, or ``None``."""
+
+
 def preextract_selectors(
     response: HttpResponse, classes: Iterable[Any]
 ) -> Navigation | None:
     """Extract the :ref:`declarative selectors <declarative-selectors>` of the
     page object *classes*, and of their dependencies, into *response*, for
-    page objects built from it to reuse, and return the base URL and meta
-    refresh of *response*, read in the same pass.
+    page objects built from it to reuse, and return the
+    :class:`~web_poet.Navigation` of *response*, read in the same pass.
 
     Classes other than page object classes are ignored. If there is nothing
     to extract, if the declarations go over the frostwork limit together, or
@@ -250,9 +271,14 @@ def preextract_selectors(
     values, navigation = _extract(
         compiled, document, str(response.url), base_url=True, meta_refresh=True
     )
+    assert navigation.base_url is not None
     setattr(response, _SEEDED_VALUES_ATTRIBUTE, values)
     response._cached_base_url = navigation.base_url
-    return navigation
+    meta_refresh = navigation.meta_refresh
+    return Navigation(
+        navigation.base_url,
+        None if meta_refresh is None else MetaRefresh(*meta_refresh),
+    )
 
 
 # Objects with selector declarations that have not extracted them yet, by id,

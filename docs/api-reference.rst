@@ -161,6 +161,10 @@ Fields
 
 .. autofunction:: web_poet.preextract_selectors
 
+.. autoclass:: web_poet.Navigation
+
+.. autoclass:: web_poet.MetaRefresh
+
 Layouts
 =======
 
