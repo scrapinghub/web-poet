@@ -159,6 +159,8 @@ Fields
 
 .. autoclass:: web_poet.SelectorGroup
 
+.. autofunction:: web_poet.preextract_selectors
+
 Layouts
 =======
 

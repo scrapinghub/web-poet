@@ -1,3 +1,4 @@
+from ._frostwork import preextract_selectors
 from ._layouts import layout_switch
 from ._selectors import css_get, css_getall, xpath_get, xpath_getall
 from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
@@ -75,6 +76,7 @@ __all__ = [
     "item_from_fields",
     "item_from_fields_sync",
     "layout_switch",
+    "preextract_selectors",
     "request_downloader_var",
     "validates_input",
     "xpath_get",

@@ -7,14 +7,15 @@ from urllib.parse import urljoin
 import parsel
 from w3lib.html import get_base_url
 
-from web_poet._frostwork import _check_class as _frostwork_check_class
 from web_poet._frostwork import (
+    _SEEDED_VALUES_ATTRIBUTE,
     _decodes_as_declared,
     _get_union_page,
     _pending_objects,
     _register,
     _unregister,
 )
+from web_poet._frostwork import _check_class as _frostwork_check_class
 from web_poet._frostwork import _extract as _frostwork_extract
 from web_poet._selectors import _get_selectors_dict
 
@@ -183,9 +184,8 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             ]
             compiled = _get_union_page(type(obj) for obj in objects)
             assert compiled is not None
-            # Values that a pass over the same response extracted earlier,
-            # e.g. in a Scrapy downloader middleware.
-            seeded = getattr(response, "_frostwork_values", None)
+            # Values that preextract_selectors() extracted earlier.
+            seeded = getattr(response, _SEEDED_VALUES_ATTRIBUTE, None)
             if seeded is not None and seeded.keys() >= compiled[1].keys():
                 values = seeded
             else:

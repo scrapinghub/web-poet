@@ -19,10 +19,12 @@ if TYPE_CHECKING:
     from frostwork import Navigation
 
     from web_poet._selectors import _SelectorDeclaration
+    from web_poet.page_inputs import HttpResponse
 
 _PAGE_ATTRIBUTE = "_web_poet_frostwork_page"
 _UNION_PAGES_ATTRIBUTE = "_web_poet_frostwork_union_pages"
 _DEPENDENCIES_ATTRIBUTE = "_web_poet_selector_dependencies"
+_SEEDED_VALUES_ATTRIBUTE = "_web_poet_frostwork_values"
 
 # Selector declaration modes, mapped to the frostwork page method with the same
 # cardinality.
@@ -216,6 +218,41 @@ def _extract(
         {declaration: values[name] for declaration, name in names.items()},
         navigation,
     )
+
+
+def preextract_selectors(
+    response: HttpResponse, classes: Iterable[Any]
+) -> Navigation | None:
+    """Extract the :ref:`declarative selectors <declarative-selectors>` of the
+    page object *classes*, and of their dependencies, into *response*, for
+    page objects built from it to reuse, and return the base URL and meta
+    refresh of *response*, read in the same pass.
+
+    Classes other than page object classes are ignored. If there is nothing
+    to extract, if the declarations go over the frostwork limit together, or
+    if the body of *response* does not decode with its declared encoding,
+    return ``None`` without extracting anything.
+    """
+    declaring = [
+        klass
+        for cls in classes
+        if isinstance(cls, type) and hasattr(cls, _SELECTORS_DICT_ATTRIBUTE)
+        for klass in (cls, *_dependency_classes(cls))
+        if _response_kind(klass) != "browser"
+    ]
+    try:
+        compiled = _get_union_page(declaring)
+    except TypeError:
+        return None
+    document = (response.body, response.encoding)
+    if compiled is None or not _decodes_as_declared(document):
+        return None
+    values, navigation = _extract(
+        compiled, document, str(response.url), base_url=True, meta_refresh=True
+    )
+    setattr(response, _SEEDED_VALUES_ATTRIBUTE, values)
+    response._cached_base_url = navigation.base_url
+    return navigation
 
 
 # Objects with selector declarations that have not extracted them yet, by id,

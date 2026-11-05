@@ -27,6 +27,7 @@ from web_poet import (
     css_getall,
     field,
     layout_switch,
+    preextract_selectors,
     xpath_get,
     xpath_getall,
 )
@@ -339,7 +340,7 @@ def test_seeded_values(passes, response, complete) -> None:
     seeded = dict.fromkeys(names, "seeded")
     if not complete:
         del seeded[next(iter(names))]
-    response._frostwork_values = seeded
+    setattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE, seeded)
     page = Page(response=response)
     assert (page.brand == "seeded") is complete
     assert len(passes) == (not complete)
@@ -396,6 +397,48 @@ def test_unrelated_page_objects_single_pass(passes, response, price_first) -> No
     assert page.name == " Foo "
     assert price_page.price == "10.00"
     assert len(passes) == 1
+
+
+def test_preextract_selectors(passes, monkeypatch) -> None:
+    """Page objects reuse the pass of preextract_selectors(), which also
+    returns the navigation of the response."""
+    monkeypatch.setattr("web_poet.mixins.get_base_url", None)
+    body = f'<base href="/a/"><meta http-equiv="refresh" content="5; url=b">{HTML}'
+    response = HttpResponse("http://example.com", body.encode(), encoding="utf-8")
+    classes = [MixedPage, PricePage, HttpResponse]
+    assert preextract_selectors(response, classes) == frostwork.Navigation(
+        "http://example.com/a/", frostwork.MetaRefresh(5, "http://example.com/a/b")
+    )
+    page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
+    assert asyncio.run(page.to_item()) == {"sku": "SKU-1", "name": " Foo "}
+    assert PricePage(response=response).price == "10.00"
+    assert page.base_url == "http://example.com/a/"
+    assert not passes
+
+
+@pytest.mark.parametrize(
+    "classes",
+    [
+        [],
+        [HttpResponse, len],
+        [type("BrowserNamePage", (BrowserPage,), {"name": css_get("h1::text")})],
+    ],
+)
+def test_preextract_selectors_nothing_to_extract(response, classes) -> None:
+    assert preextract_selectors(response, classes) is None
+    assert not hasattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE)
+
+
+def test_preextract_selectors_over_budget(response) -> None:
+    classes = [_declaring_class(name, WebPage) for name in ("A", "B")]
+    assert preextract_selectors(response, classes) is None
+    assert not hasattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE)
+
+
+def test_preextract_selectors_undeclared_encoding() -> None:
+    response = HttpResponse("http://example.com", HTML.encode(), encoding="cp437")
+    assert preextract_selectors(response, [PricePage]) is None
+    assert not hasattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE)
 
 
 def test_other_response_other_pass(passes) -> None:
