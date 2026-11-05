@@ -91,9 +91,7 @@ ENCODING_CASES = _encoding_cases()
 
 
 def _decode(body: bytes, headers: dict[str, str]) -> str:
-    response = HttpResponse("https://example.com", body=body, headers=headers)
-    response.encoding
-    return response.text
+    return HttpResponse("https://example.com", body=body, headers=headers).text
 
 
 @pytest.mark.parametrize(
@@ -103,7 +101,7 @@ def test_encoding(benchmark, body: bytes, headers: dict[str, str]) -> None:
     benchmark(_decode, body, headers)
 
 
-def _encoding(body: bytes, headers: dict[str, str]) -> str | None:
+def _encoding(body: bytes, headers: dict[str, str]) -> str:
     return HttpResponse("https://example.com", body=body, headers=headers).encoding
 
 

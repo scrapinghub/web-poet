@@ -27,7 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
-    "attrs >= 21.3.0",
+    "attrs >= 22.1.0",
     "parsel >= 1.5.0",
     "url-matcher >= 0.4.0",
     "multidict >= 0.5.0",
