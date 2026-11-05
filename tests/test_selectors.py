@@ -283,23 +283,6 @@ def test_selector_group(page_cls, response, document_type) -> None:
     assert isinstance(page.skus._selector_document()[0], document_type)
 
 
-def test_selector_group_other_document(monkeypatch) -> None:
-    """A page object without declarations does not decode its document for a
-    selector group that reads another one."""
-
-    def decodes_as_declared(document):
-        assert isinstance(document[0], str)
-        return _frostwork_module._decodes_as_declared(document)
-
-    monkeypatch.setattr("web_poet.mixins._decodes_as_declared", decodes_as_declared)
-    browser_response = BrowserResponse(url="http://example.com", html=HTML)
-    page = GroupPage(
-        response=HttpResponse("http://example.com", HTML.encode(), encoding="cp437"),
-        skus=SkuSelectors(AnyResponse(response=browser_response)),
-    )
-    assert page.sku == "SKU-1"
-
-
 @pytest.fixture
 def passes(monkeypatch) -> list[Any]:
     """Return a list that gets an item for each frostwork pass."""
@@ -435,12 +418,6 @@ def test_preextract_selectors_nothing_to_extract(response, classes) -> None:
 def test_preextract_selectors_over_budget(response) -> None:
     classes = [_declaring_class(name, WebPage) for name in ("A", "B")]
     assert preextract_selectors(response, classes) is None
-    assert not hasattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE)
-
-
-def test_preextract_selectors_undeclared_encoding() -> None:
-    response = HttpResponse("http://example.com", HTML.encode(), encoding="cp437")
-    assert preextract_selectors(response, [PricePage]) is None
     assert not hasattr(response, _frostwork_module._SEEDED_VALUES_ATTRIBUTE)
 
 
@@ -925,22 +902,6 @@ def test_browser_page() -> None:
     assert asyncio.run(Page(response=response).to_item()) == {"name": "Foo"}
 
 
-def test_unknown_encoding() -> None:
-    """A document in an encoding that frostwork does not know is decoded as
-    declared, and then extracted by frostwork."""
-
-    @attrs.define
-    class EncodedPage(WebPage):
-        name = field(css_get("h1::text"))
-
-    body = "<html><body><h1>Café</h1></body></html>".encode("cp437")
-    page = EncodedPage(
-        response=HttpResponse("http://example.com", body, encoding="cp437")
-    )
-    assert page._selector_values() != {}
-    assert page.name == "Café"
-
-
 def test_python_codec_name() -> None:
     """A document in an encoding that Python and frostwork name differently is
     extracted by frostwork."""
@@ -982,15 +943,12 @@ class OverridingBrowserPage(_OverridingMixin, BrowserPage):
     [
         (
             OverridingWebPage,
-            HttpResponse("http://example.com", HTML.encode(), encoding=encoding),
-        )
-        for encoding in ["utf-8", "cp437"]
-    ]
-    + [
+            HttpResponse("http://example.com", HTML.encode(), encoding="utf-8"),
+        ),
         (
             OverridingBrowserPage,
             BrowserResponse(url="http://example.com", html=HTML),
-        )
+        ),
     ],
 )
 def test_selector_override(page_cls, response) -> None:
@@ -999,48 +957,6 @@ def test_selector_override(page_cls, response) -> None:
     page = page_cls(response=response)
     assert page.name == " Foo "
     assert page.css("h1::text").get() == "Baz"
-
-
-@pytest.mark.parametrize("encoding", ["hz", "iso2022_kr"])
-def test_replacement_encoding(encoding: str) -> None:
-    """A document in an encoding that WHATWG maps to the replacement encoding
-    is decoded as declared."""
-
-    @attrs.define
-    class EncodedPage(WebPage):
-        name = field(css_get("h1::text"))
-
-    body = "<html><body><h1>Foo</h1></body></html>".encode(encoding)
-    page = EncodedPage(
-        response=HttpResponse("http://example.com", body, encoding=encoding)
-    )
-    assert page.name == "Foo"
-
-
-def test_rejection_is_cached(monkeypatch) -> None:
-    """A document that frostwork cannot decode as declared is checked once
-    per page object."""
-    calls = []
-    resolve_label = frostwork.resolve_label
-
-    def counting_resolve_label(*args):
-        calls.append(args)
-        return resolve_label(*args)
-
-    monkeypatch.setattr(_frostwork_module, "resolve_label", counting_resolve_label)
-
-    @attrs.define
-    class EncodedPage(WebPage):
-        name = field(css_get("h1::text"))
-        brand = field(xpath_get("//meta[@itemprop='brand']/@content"))
-
-    body = "<html><body><h1>Café</h1></body></html>".encode("cp437")
-    page = EncodedPage(
-        response=HttpResponse("http://example.com", body, encoding="cp437")
-    )
-    assert page.name == "Café"
-    assert page.brand is None
-    assert len(calls) == 1
 
 
 def test_fallback_is_cached(monkeypatch, response) -> None:

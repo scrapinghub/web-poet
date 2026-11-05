@@ -5,7 +5,7 @@ import typing
 import weakref
 from typing import TYPE_CHECKING, Any, NamedTuple
 
-from frostwork import Page, detect_encoding, resolve_label
+from frostwork import Page
 
 from web_poet._selectors import (
     _SELECTORS_DICT_ATTRIBUTE,
@@ -176,20 +176,6 @@ def _check_class(cls: type) -> None:
         )
 
 
-def _decodes_as_declared(document: tuple[bytes | str, str | None]) -> bool:
-    """Return whether frostwork decodes *document* with its declared
-    encoding."""
-    html, encoding = document
-    if encoding is not None:
-        # frostwork sniffs an encoding out of the document when it does not
-        # know the one given to it, and decodes encodings that WHATWG maps to
-        # "replacement" into a single replacement character.
-        label = resolve_label(encoding)
-        if label in {None, "replacement"} or label != detect_encoding(html, encoding):
-            return False
-    return True
-
-
 def _extract(
     compiled: tuple[Page, dict[_SelectorDeclaration, str]],
     document: tuple[bytes | str, str | None],
@@ -250,8 +236,7 @@ def preextract_selectors(
     :class:`~web_poet.Navigation` of *response*, read in the same pass.
 
     Classes other than page object classes are ignored. If there is nothing
-    to extract, if the declarations go over the frostwork limit together, or
-    if the body of *response* does not decode with its declared encoding,
+    to extract, or if the declarations go over the frostwork limit together,
     return ``None`` without extracting anything.
     """
     declaring = [
@@ -265,11 +250,14 @@ def preextract_selectors(
         compiled = _get_union_page(declaring)
     except TypeError:
         return None
-    document = (response.body, response.encoding)
-    if compiled is None or not _decodes_as_declared(document):
+    if compiled is None:
         return None
     values, navigation = _extract(
-        compiled, document, str(response.url), base_url=True, meta_refresh=True
+        compiled,
+        (response.body, response.encoding),
+        str(response.url),
+        base_url=True,
+        meta_refresh=True,
     )
     assert navigation.base_url is not None
     setattr(response, _SEEDED_VALUES_ATTRIBUTE, values)
