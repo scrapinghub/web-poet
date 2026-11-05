@@ -7,6 +7,7 @@ import pytest
 import requests
 
 from web_poet import BrowserResponse, RequestUrl, ResponseUrl, WebPage
+from web_poet.mixins import UrlShortcutsMixin
 from web_poet.page_inputs import (
     AnyResponse,
     BrowserHtml,
@@ -316,6 +317,19 @@ def test_http_response_text_undeclared(text, encoding) -> None:
 
 
 @pytest.mark.parametrize(
+    ("url", "encoding", "text"),
+    [
+        ("https://example.com", "cp866", "\u0412\u0430"),
+        ("https://example.jp", "cp932", "あ"),
+    ],
+)
+def test_http_response_text_undeclared_url(url, encoding, text) -> None:
+    response = HttpResponse(url, body=b"\x82\xa0")
+    assert response.encoding == encoding
+    assert response.text == text
+
+
+@pytest.mark.parametrize(
     ("headers", "encoding"),
     [
         ({"Content-type": "text/html; charset=utf-8"}, "utf-8"),
@@ -607,6 +621,20 @@ def test_urljoin_relative_html_base() -> None:
     new_url = obj.urljoin("foo")
     assert isinstance(new_url, RequestUrl)
     assert str(new_url) == "https://toscrape.com/foo"
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-16"])
+def test_urljoin_html_base_late(encoding) -> None:
+    html = f"<p>{'x' * 5000}</p><base href='https://toscrape.com/'>"
+    url = "https://example.com"
+    responses: list[UrlShortcutsMixin] = [
+        HttpResponse(url, body=html.encode(encoding)),
+        AnyResponse(HttpResponse(url, body=html.encode(encoding))),
+        WebPage(HttpResponse(url, body=html.encode(encoding))),
+        BrowserResponse(url, html=html),
+    ]
+    for response in responses:
+        assert str(response.urljoin("foo")) == "https://toscrape.com/foo"
 
 
 @pytest.mark.parametrize(

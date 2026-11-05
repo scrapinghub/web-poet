@@ -71,14 +71,16 @@ class SelectableMixin(abc.ABC, SelectorShortcutsMixin):
 class UrlShortcutsMixin:
     _cached_base_url = None
 
-    def _url_shortcuts_input(self) -> str:
-        return self._selector_input()  # type: ignore[attr-defined]
+    def _url_shortcuts_input(self) -> tuple[str | bytes, str]:
+        """Return the document of this object and its encoding, for
+        :func:`~w3lib.html.get_base_url`."""
+        return self._selector_input(), "utf-8"  # type: ignore[attr-defined]
 
     @property
     def _base_url(self) -> str:
         if self._cached_base_url is None:
-            text = self._url_shortcuts_input()[:4096]
-            self._cached_base_url = get_base_url(text, str(self.url))  # type: ignore[attr-defined]
+            text, encoding = self._url_shortcuts_input()
+            self._cached_base_url = get_base_url(text, str(self.url), encoding)  # type: ignore[attr-defined]
         return self._cached_base_url
 
     def urljoin(self, url: str | RequestUrl | ResponseUrl) -> RequestUrl:

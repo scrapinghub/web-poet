@@ -187,6 +187,9 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
     def _selector_input(self) -> str:
         return self.text
 
+    def _url_shortcuts_input(self) -> tuple[str | bytes, str]:
+        return self.body, self.encoding
+
     def _selector_kwargs(self) -> dict[str, Any]:
         # parsel treats an empty body as absent, and only detects JSON in
         # UTF-8 bodies.
@@ -206,7 +209,7 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
         return super()._selector_kwargs()
 
     @property
-    def encoding(self) -> str | None:
+    def encoding(self) -> str:
         """Encoding of the response"""
         return (
             self._encoding
@@ -235,7 +238,9 @@ class HttpResponse(SelectableMixin, UrlShortcutsMixin):
 
     @memoizemethod_noargs
     def _body_inferred_encoding(self) -> str:
-        return html_encoding(self.headers.get("Content-Type", ""), self.body)
+        return html_encoding(
+            self.headers.get("Content-Type", ""), self.body, url=str(self.url)
+        )
 
 
 def request_fingerprint(req: HttpRequest) -> str:
