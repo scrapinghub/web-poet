@@ -45,6 +45,9 @@ framework = [
     "aiohttp >= 3.7.0",
     "playwright >= 1.20.0",
 ]
+llm = [
+    "instructor >= 1.17.0",
+]
 
 [project.entry-points."pytest11"]
 "web-poet" = "web_poet.testing.pytest"

@@ -173,3 +173,9 @@ Built-in framework
 
 .. automodule:: web_poet.framework
     :members:
+
+LLM parsing
+===========
+
+.. automodule:: web_poet.llm
+    :members:
