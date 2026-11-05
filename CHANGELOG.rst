@@ -7,14 +7,20 @@ Changelog
 
 Dependency changes:
 
+* Removed support for Python 3.10, added support for Python 3.15.
+
 * frostwork_ 0.2.0+ is now required.
 
 * packaging 22.0+ is now required.
 
+* w3lib_ 2.6.0+ is now required.
+
 * The ``framework`` extra now installs aiohttp instead of niquests, which the
-  :ref:`built-in framework <framework>` no longer uses.
+  :ref:`built-in framework <framework>` no longer uses, and requires
+  playwright 1.26.0+.
 
 .. _frostwork: https://github.com/scrapy/frostwork
+.. _w3lib: https://github.com/scrapy/w3lib
 
 Improvements:
 
@@ -49,6 +55,13 @@ Improvements:
 
 * The selector of an :class:`~web_poet.HttpResponse` with a UTF-8 body is now
   built from the body bytes when using parsel 1.12.0+, which is faster.
+
+* When the encoding of an :class:`~web_poet.HttpResponse` is not declared, it
+  is now detected with w3lib_, using the response URL as a hint, instead of
+  trying only ASCII, UTF-8 and cp1252.
+
+* ``base_url`` and ``urljoin()`` now find ``<base>`` tags beyond the first
+  4096 characters of the response.
 
 Bug fixes:
 
