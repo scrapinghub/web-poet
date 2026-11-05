@@ -21,9 +21,7 @@ def comparison_error_message(
                 right=expected,
                 verbose=config.get_verbosity(pytest.Config.VERBOSITY_ASSERTIONS),
                 highlighter=assertion_util.dummy_highlighter,
-                assertion_text_diff_style=assertion_util.get_assertion_text_diff_style(
-                    config
-                ),
+                assertion_text_diff_style=config.getini("assertion_text_diff_style"),
             )
         )
     else:
