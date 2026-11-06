@@ -9,15 +9,17 @@ Dependency changes:
 
 * Removed support for Python 3.10, added support for Python 3.15.
 
-* frostwork_ 0.2.0+ is now required.
+* attrs 22.1.0+ is now required.
+
+* frostwork_ 0.2.2+ is now required.
 
 * packaging 22.0+ is now required.
 
 * w3lib_ 2.6.0+ is now required.
 
 * The ``framework`` extra now installs aiohttp instead of niquests, which the
-  :ref:`built-in framework <framework>` no longer uses, and requires
-  playwright 1.26.0+.
+  :ref:`built-in framework <framework>` no longer uses. It requires aiohttp
+  3.7.0+ and playwright 1.26.0+.
 
 .. _frostwork: https://github.com/scrapy/frostwork
 .. _w3lib: https://github.com/scrapy/w3lib
@@ -33,6 +35,10 @@ Improvements:
 
   Declared selectors are extracted with frostwork_, several times faster than
   with parsel.
+
+* Added :func:`~web_poet.preextract_selectors`, for frameworks to extract the
+  declarative selectors of the page objects to build from a response ahead of
+  time, and get its base URL and meta refresh in the same pass.
 
 * Added :func:`~web_poet.layout_switch`, to forward the fields of a page
   object to one of several :ref:`layout page objects <layouts>`.
