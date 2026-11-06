@@ -63,5 +63,10 @@ framework further to:
 
 -   Support :ref:`retries <framework-retries>`.
 
+-   Get the base URL and meta refresh of HTTP responses, if you need them, with
+    :func:`~web_poet.preextract_selectors`, which reads them in the same pass
+    that extracts the :ref:`declarative selectors <declarative-selectors>` of
+    the page objects to build from those responses.
+
 -   Let users set their own :ref:`rules <rules>`, e.g. to :ref:`solve conflicts
     <rule-conflicts>`.

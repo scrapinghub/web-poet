@@ -88,9 +88,11 @@ def test_custom_baseurl() -> None:
 def test_duck_typed_response() -> None:
     class Response:
         url = "https://example.com"
-        text = "<p>foo</p>"
+        text = '<base href="https://example.org/"><p>foo</p>'
 
     class Page(ResponseShortcutsMixin):
         response = Response()
 
-    assert Page().css("p::text").get() == "foo"
+    page = Page()
+    assert page.css("p::text").get() == "foo"
+    assert page.base_url == "https://example.org/"

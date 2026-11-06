@@ -10,7 +10,7 @@ import parsel
 
 from web_poet.fields import FieldsMixin, item_from_fields
 from web_poet.mixins import ResponseShortcutsMixin, SelectorShortcutsMixin
-from web_poet.page_inputs import BrowserResponse, HttpResponse
+from web_poet.page_inputs import AnyResponse, BrowserResponse, HttpResponse
 from web_poet.utils import (
     CallableT,
     cached_method,
@@ -167,6 +167,29 @@ class BrowserPage(ItemPage[ItemT], ResponseShortcutsMixin):
     """
 
     response: BrowserResponse
+
+
+# A virtual subclass of Injectable, so that page object classes can inherit
+# from both a group and WebPage or BrowserPage.
+@Injectable.register
+class SelectorGroup(ResponseShortcutsMixin):
+    """Base class for a group of :ref:`selector declarations
+    <declarative-selectors>` that page objects can share. See
+    :ref:`sharing-selectors`.
+
+    As a dependency, it reads the browser response if the request needs one,
+    and the HTTP response otherwise."""
+
+    # A plain __init__ leaves the response field of attrs page object classes
+    # that inherit from a group as they define it.
+    def __init__(self, response: AnyResponse):
+        if isinstance(self, ItemPage):
+            raise TypeError(
+                f"{type(self).__qualname__} inherits the __init__ of "
+                f"SelectorGroup. List SelectorGroup subclasses after the page "
+                f"object base class, e.g. class MyPage(WebPage, MySelectors)."
+            )
+        self.response = response
 
 
 @attr.s(auto_attribs=True)
