@@ -1,4 +1,4 @@
-from ._frostwork import MetaRefresh, Navigation, preextract_selectors
+from ._frostwork import HtmlMetadata, MetaRefresh, preextract_selectors
 from ._layouts import layout_switch
 from ._selectors import css_get, css_getall, xpath_get, xpath_getall
 from .annotated import AnnotatedInstance, annotation_decode, annotation_encode
@@ -46,6 +46,7 @@ __all__ = [
     "BrowserPage",
     "BrowserResponse",
     "Extractor",
+    "HtmlMetadata",
     "HttpClient",
     "HttpRequest",
     "HttpRequestBody",
@@ -56,7 +57,6 @@ __all__ = [
     "Injectable",
     "ItemPage",
     "MetaRefresh",
-    "Navigation",
     "PageParams",
     "RequestUrl",
     "ResponseUrl",

@@ -207,7 +207,8 @@ def _extract(
 
 
 class MetaRefresh(NamedTuple):
-    """A meta refresh, as :attr:`~web_poet.Navigation.meta_refresh` reports it."""
+    """A meta refresh, as :attr:`~web_poet.HtmlMetadata.meta_refresh` reports
+    it."""
 
     delay: float
     """The delay before the refresh, in seconds."""
@@ -216,9 +217,9 @@ class MetaRefresh(NamedTuple):
     """The absolute URL to load."""
 
 
-class Navigation(NamedTuple):
-    """The base URL and meta refresh of a response, as
-    :func:`~web_poet.preextract_selectors` returns them."""
+class HtmlMetadata(NamedTuple):
+    """The HTML metadata of a response, as
+    :func:`~web_poet.preextract_selectors` returns it."""
 
     base_url: str
     """The URL that relative URLs of the response resolve against."""
@@ -229,11 +230,11 @@ class Navigation(NamedTuple):
 
 def preextract_selectors(
     response: HttpResponse, classes: Iterable[Any]
-) -> Navigation | None:
+) -> HtmlMetadata | None:
     """Extract the :ref:`declarative selectors <declarative-selectors>` of the
     page object *classes*, and of their dependencies, into *response*, for
     page objects built from it to reuse, and return the
-    :class:`~web_poet.Navigation` of *response*, read in the same pass.
+    :class:`~web_poet.HtmlMetadata` of *response*, read in the same pass.
 
     Classes other than page object classes are ignored. If there is nothing
     to extract, or if the declarations go over the frostwork limit together,
@@ -263,7 +264,7 @@ def preextract_selectors(
     setattr(response, _SEEDED_VALUES_ATTRIBUTE, values)
     response._cached_base_url = navigation.base_url
     meta_refresh = navigation.meta_refresh
-    return Navigation(
+    return HtmlMetadata(
         navigation.base_url,
         None if meta_refresh is None else MetaRefresh(*meta_refresh),
     )
