@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 from zoneinfo import ZoneInfo
 
 import dateutil.parser
@@ -42,9 +42,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from itemadapter import ItemAdapter
-
-    # typing.Self requires Python 3.11
-    from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 

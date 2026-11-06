@@ -5,7 +5,15 @@ from typing import Any
 
 import attrs
 
-from web_poet import WebPage, cached_method, field
+from web_poet import (
+    WebPage,
+    cached_method,
+    css_get,
+    css_getall,
+    field,
+    xpath_get,
+    xpath_getall,
+)
 
 
 def _clean(value: str | None) -> str | None:
@@ -86,6 +94,32 @@ class ProductPage(WebPage[Product]):
     @field(out=[_clean_all])
     def breadcrumbs(self) -> list[str]:
         return self.css("#wayfinding-breadcrumbs_feature_div a::text").getall()
+
+
+class DeclarativeProductPage(ProductPage):
+    """ProductPage with every selector declared instead of queried in a
+    method."""
+
+    name = field(css_get("#productTitle::text"), out=[_clean])
+    brand = field(css_get("#bylineInfo::text"), out=[_clean])
+    price = field(css_get("span.a-price span.a-offscreen::text"), out=[_clean])
+    regular_price = field(
+        css_get("span.a-price.a-text-price span.a-offscreen::text"), out=[_clean]
+    )
+    rating = field(css_get("#acrPopover::attr(title)"), out=[_clean])
+    review_count = field(css_get("#acrCustomerReviewText::text"), out=[_clean])
+    availability = field(
+        xpath_get('//div[@id="availability"]//span/text()'), out=[_clean]
+    )
+    sku = field(xpath_get('//input[@id="SKUX"]/@value'), out=[_clean])
+    main_image = field(xpath_get('//img[@id="landingImage"]/@src'), out=[_clean])
+    images = field(css_getall("#altImages img::attr(src)"), out=[_clean_all])
+    features = field(
+        css_getall("#feature-bullets li span.a-list-item::text"), out=[_clean_all]
+    )
+    breadcrumbs = field(
+        css_getall("#wayfinding-breadcrumbs_feature_div a::text"), out=[_clean_all]
+    )
 
 
 @attrs.define(kw_only=True)
@@ -177,6 +211,23 @@ class ArticlePage(WebPage[Article]):
     @field(out=[_clean_all])
     def figures(self) -> list[str]:
         return self.css("article figure img::attr(src)").getall()
+
+
+class DeclarativeArticlePage(ArticlePage):
+    """ArticlePage with every selector declared instead of queried in a
+    method."""
+
+    headline = field(css_get("h1::text"), out=[_clean])
+    description = field(
+        css_get('meta[property="og:description"]::attr(content)'), out=[_clean]
+    )
+    image = field(css_get('meta[property="og:image"]::attr(content)'), out=[_clean])
+    date_published = field(xpath_get("//time/@datetime"), out=[_clean])
+    sections = field(css_getall("article h2::text"), out=[_clean_all])
+    paragraphs = field(
+        css_getall('article [data-component="text-block"] p::text'), out=[_clean_all]
+    )
+    figures = field(css_getall("article figure img::attr(src)"), out=[_clean_all])
 
 
 @attrs.define(kw_only=True)
@@ -338,3 +389,35 @@ class MinimalPage(WebPage[Minimal]):
     @field(out=[_clean])
     def link(self) -> str | None:
         return self.xpath("//a/@href").get()
+
+
+class DeclarativeJobPostingPage(JobPostingPage):
+    """JobPostingPage with every selector declared instead of queried in a
+    method."""
+
+    title = field(css_get("h1::text"), out=[_clean])
+    company = field(css_get(".topcard__org-name-link::text"), out=[_clean])
+    location = field(css_get(".topcard__flavor--bullet::text"), out=[_clean])
+    posted = field(css_get(".posted-time-ago__text::text"), out=[_clean])
+    applicants = field(css_get(".num-applicants__caption::text"), out=[_clean])
+    description = field(
+        css_getall(".show-more-less-html__markup ::text"), out=[" ".join, _clean]
+    )
+    criteria_labels = field(
+        css_getall(".description__job-criteria-subheader::text"), out=[_clean_all]
+    )
+    criteria_values = field(
+        xpath_getall(
+            '//span[contains(@class, "description__job-criteria-text")]/text()'
+        ),
+        out=[_clean_all],
+    )
+
+
+class DeclarativeMinimalPage(MinimalPage):
+    """MinimalPage with every selector declared instead of queried in a
+    method."""
+
+    title = field(css_get("title::text"), out=[_clean])
+    heading = field(css_get("h1::text"), out=[_clean])
+    link = field(xpath_get("//a/@href"), out=[_clean])
