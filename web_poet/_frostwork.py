@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 import typing
 import weakref
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 from frostwork import Page
 
@@ -12,11 +12,12 @@ from web_poet._selectors import (
     _class_cached,
     _get_selectors_dict,
 )
+from web_poet.html_metadata import HtmlMetadata, MetaRefresh
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from frostwork import Navigation as _FrostworkNavigation
+    from frostwork import Navigation as _FrostworkMetadata
 
     from web_poet._selectors import _SelectorDeclaration
     from web_poet.page_inputs import HttpResponse
@@ -184,14 +185,14 @@ def _extract(
     base_url: bool,
     meta_refresh: bool = False,
     scripting: bool = True,
-) -> tuple[dict[_SelectorDeclaration, Any], _FrostworkNavigation]:
+) -> tuple[dict[_SelectorDeclaration, Any], _FrostworkMetadata]:
     """Return the value of every declaration of *compiled*, a frostwork page
     mapped to the names of its declarations, out of *document* at *url*, and
-    its navigation, as :meth:`frostwork.Page.extract_with_navigation` returns
-    it for *base_url*, *meta_refresh* and *scripting*."""
+    its HTML metadata, as :meth:`frostwork.Page.extract_with_navigation`
+    returns it for *base_url*, *meta_refresh* and *scripting*."""
     page, names = compiled
     html, encoding = document
-    item, navigation = page.extract_with_navigation(
+    item, metadata = page.extract_with_navigation(
         html,
         url,
         encoding,
@@ -202,30 +203,8 @@ def _extract(
     values = item.to_dict()
     return (
         {declaration: values[name] for declaration, name in names.items()},
-        navigation,
+        metadata,
     )
-
-
-class MetaRefresh(NamedTuple):
-    """A meta refresh, as :attr:`~web_poet.HtmlMetadata.meta_refresh` reports
-    it."""
-
-    delay: float
-    """The delay before the refresh, in seconds."""
-
-    url: str
-    """The absolute URL to load."""
-
-
-class HtmlMetadata(NamedTuple):
-    """The HTML metadata of a response, as
-    :func:`~web_poet.preextract_selectors` returns it."""
-
-    base_url: str
-    """The URL that relative URLs of the response resolve against."""
-
-    meta_refresh: MetaRefresh | None
-    """The meta refresh that a web browser would follow, or ``None``."""
 
 
 def preextract_selectors(
@@ -234,7 +213,8 @@ def preextract_selectors(
     """Extract the :ref:`declarative selectors <declarative-selectors>` of the
     page object *classes*, and of their dependencies, into *response*, for
     page objects built from it to reuse, and return the
-    :class:`~web_poet.HtmlMetadata` of *response*, read in the same pass.
+    :class:`~web_poet.html_metadata.HtmlMetadata` of *response*, read in the
+    same pass.
 
     Classes other than page object classes are ignored. If there is nothing
     to extract, or if the declarations go over the frostwork limit together,
@@ -253,19 +233,19 @@ def preextract_selectors(
         return None
     if compiled is None:
         return None
-    values, navigation = _extract(
+    values, metadata = _extract(
         compiled,
         (response.body, response.encoding),
         str(response.url),
         base_url=True,
         meta_refresh=True,
     )
-    assert navigation.base_url is not None
+    assert metadata.base_url is not None
     setattr(response, _SEEDED_VALUES_ATTRIBUTE, values)
-    response._cached_base_url = navigation.base_url
-    meta_refresh = navigation.meta_refresh
+    response._cached_base_url = metadata.base_url
+    meta_refresh = metadata.meta_refresh
     return HtmlMetadata(
-        navigation.base_url,
+        metadata.base_url,
         None if meta_refresh is None else MetaRefresh(*meta_refresh),
     )
 

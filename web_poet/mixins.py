@@ -187,7 +187,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
             if seeded is not None and seeded.keys() >= compiled[1].keys():
                 values = seeded
             else:
-                values, navigation = _frostwork_extract(
+                values, metadata = _frostwork_extract(
                     compiled,
                     self._selector_document(),
                     str(response.url),
@@ -197,7 +197,7 @@ class ResponseShortcutsMixin(Generic[ResponseT], SelectableMixin, UrlShortcutsMi
                     isinstance(response, UrlShortcutsMixin)
                     and response._cached_base_url is None
                 ):
-                    response._cached_base_url = navigation.base_url
+                    response._cached_base_url = metadata.base_url
         for obj in objects:
             setattr(obj, _VALUES_ATTRIBUTE, dict(values))
             _unregister(obj)

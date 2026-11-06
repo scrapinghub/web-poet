@@ -16,11 +16,9 @@ from web_poet import (
     AnyResponse,
     BrowserPage,
     BrowserResponse,
-    HtmlMetadata,
     HttpClient,
     HttpResponse,
     ItemPage,
-    MetaRefresh,
     Returns,
     SelectorExtractor,
     SelectorGroup,
@@ -36,6 +34,7 @@ from web_poet import (
 from web_poet import _frostwork as _frostwork_module
 from web_poet._frostwork import _get_page
 from web_poet._selectors import _get_selectors_dict
+from web_poet.html_metadata import HtmlMetadata, MetaRefresh
 from web_poet.mixins import ResponseShortcutsMixin
 from web_poet.pages import is_injectable
 from web_poet.testing import Fixture
@@ -392,9 +391,9 @@ def test_preextract_selectors(passes, monkeypatch) -> None:
     response = HttpResponse("http://example.com", body.encode(), encoding="utf-8")
     classes = [MixedPage, PricePage, HttpResponse]
     metadata = preextract_selectors(response, classes)
-    assert type(metadata) is HtmlMetadata
-    assert type(metadata.meta_refresh) is MetaRefresh
-    assert metadata == ("http://example.com/a/", (5, "http://example.com/a/b"))
+    assert metadata == HtmlMetadata(
+        "http://example.com/a/", MetaRefresh(5, "http://example.com/a/b")
+    )
     page = MixedPage(response=response, skus=SkuSelectors(AnyResponse(response)))
     assert asyncio.run(page.to_item()) == {"sku": "SKU-1", "name": " Foo "}
     assert PricePage(response=response).price == "10.00"

@@ -161,9 +161,9 @@ Fields
 
 .. autofunction:: web_poet.preextract_selectors
 
-.. autoclass:: web_poet.HtmlMetadata
+.. autoclass:: web_poet.html_metadata.HtmlMetadata
 
-.. autoclass:: web_poet.MetaRefresh
+.. autoclass:: web_poet.html_metadata.MetaRefresh
 
 Layouts
 =======
