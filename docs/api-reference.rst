@@ -21,6 +21,10 @@ Page Inputs
     :members:
     :undoc-members:
 
+.. automodule:: web_poet.page_inputs.fetcher
+    :members:
+    :undoc-members:
+
 .. automodule:: web_poet.page_inputs.http
     :members:
     :undoc-members:
