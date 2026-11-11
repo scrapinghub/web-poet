@@ -24,7 +24,7 @@ Page Inputs
 .. automodule:: web_poet.page_inputs.http
     :members:
     :undoc-members:
-    :inherited-members: str,bytes,MultiDict
+    :inherited-members: str,bytes,MultiDict,CIMultiDict
     :show-inheritance:
 
 .. automodule:: web_poet.page_inputs.url
