@@ -54,6 +54,9 @@ framework = [
 Homepage = "https://github.com/scrapinghub/web-poet"
 Documentation = "https://web-poet.readthedocs.io/en/stable/"
 
+[dependency-groups]
+docs = ["sphinx-rtd-theme"]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/web_poet",
